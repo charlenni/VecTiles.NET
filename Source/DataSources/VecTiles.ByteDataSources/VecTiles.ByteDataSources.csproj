@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\VecTiles.Common\VecTiles.Common.csproj" />
+  </ItemGroup>
+
 </Project>

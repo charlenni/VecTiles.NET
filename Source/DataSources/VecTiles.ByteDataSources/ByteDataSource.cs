@@ -5,8 +5,9 @@
 using System.Collections.Concurrent;
 using System.Reflection;
 using System.Text;
+using VecTiles.DataSources.Extensions;
 
-namespace VecTiles.DataSources.ByteDataSource;
+namespace VecTiles.DataSources;
 
 /// <summary>
 /// Get binary data, that isn't organized in tiles, from different sources as byte array

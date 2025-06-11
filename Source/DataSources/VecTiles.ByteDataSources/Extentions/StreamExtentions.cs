@@ -2,7 +2,7 @@
 // The Mapsui authors licensed this file under the MIT license.
 // See the LICENSE file in the project root for full license information.
 
-namespace VecTiles.DataSources.ByteDataSource.Extensions;
+namespace VecTiles.DataSources.Extensions;
 
 /// <summary>
 /// Extensions for class Stream.

@@ -1,4 +1,5 @@
 ﻿using VecTiles.Common.Enums;
+using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Interfaces;
 
@@ -28,4 +29,10 @@ public interface ITileDataSource
     /// Type of this source.
     /// </summary>
     SourceType SourceType { get; }
+
+    /// <summary>
+    /// Asynchronously retrieves the tile data for the specified tile.
+    /// Returns the tile data as a byte array, or null if the tile is not available.
+    /// </summary>
+    Task<byte[]?> GetTileAsync(Tile tile);
 }

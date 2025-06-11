@@ -12,5 +12,5 @@ public interface IVectorTileDataSource : ITileDataSource
     /// </summary>
     /// <param name="tile">The tile for which to retrieve the vector tile.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the vector tile, or null if not found.</returns>
-    Task<VectorTile?> GetTileAsync(Tile tile);
+    Task<VectorTile?> GetVectorTileAsync(Tile tile);
 }

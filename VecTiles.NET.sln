@@ -18,6 +18,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.ByteDataSources", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Common", "Source\VecTiles.Common\VecTiles.Common.csproj", "{C65375E0-AC98-C986-C8BD-EB5FF704EB37}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.DataSources.Tests", "Tests\VecTiles.DataSources.Tests\VecTiles.DataSources.Tests.csproj", "{336F62A5-81D4-35A3-70B4-8BBFE50EE935}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.TileDataSources", "Source\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj", "{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +40,14 @@ Global
 		{C65375E0-AC98-C986-C8BD-EB5FF704EB37}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C65375E0-AC98-C986-C8BD-EB5FF704EB37}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C65375E0-AC98-C986-C8BD-EB5FF704EB37}.Release|Any CPU.Build.0 = Release|Any CPU
+		{336F62A5-81D4-35A3-70B4-8BBFE50EE935}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{336F62A5-81D4-35A3-70B4-8BBFE50EE935}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{336F62A5-81D4-35A3-70B4-8BBFE50EE935}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{336F62A5-81D4-35A3-70B4-8BBFE50EE935}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,6 +55,8 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{7F32BCAC-7FC5-4426-BA76-F69F4C5AF88C} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{A806AA41-5B96-4B84-BBA5-FEB79F5B5114} = {2B8A5F94-12D5-40D3-A890-3A262BB520E0}
+		{336F62A5-81D4-35A3-70B4-8BBFE50EE935} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C} = {2B8A5F94-12D5-40D3-A890-3A262BB520E0}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45A2AA7-DCD5-4D17-81AC-3622204FAFAE}

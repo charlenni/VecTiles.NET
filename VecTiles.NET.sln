@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
@@ -21,6 +21,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.DataSources.Tests", "Tests\VecTiles.DataSources.Tests\VecTiles.DataSources.Tests.csproj", "{336F62A5-81D4-35A3-70B4-8BBFE50EE935}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.TileDataSources", "Source\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj", "{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Converters", "Converters", "{B12671CC-7A17-4A76-BF16-42FBF260E973}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Mapbox", "Source\Converters\VecTiles.Converters.Mapbox\VecTiles.Converters.Mapbox.csproj", "{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Tests", "Tests\VecTiles.Converters.Tests\VecTiles.Converters.Tests.csproj", "{899F24A9-FDB0-4E70-A8A6-4C31481C1437}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,6 +54,14 @@ Global
 		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{899F24A9-FDB0-4E70-A8A6-4C31481C1437}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{899F24A9-FDB0-4E70-A8A6-4C31481C1437}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{899F24A9-FDB0-4E70-A8A6-4C31481C1437}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{899F24A9-FDB0-4E70-A8A6-4C31481C1437}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -57,6 +71,8 @@ Global
 		{A806AA41-5B96-4B84-BBA5-FEB79F5B5114} = {2B8A5F94-12D5-40D3-A890-3A262BB520E0}
 		{336F62A5-81D4-35A3-70B4-8BBFE50EE935} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{9AEAC250-135A-6E08-DBEA-D3842DCABD7C} = {2B8A5F94-12D5-40D3-A890-3A262BB520E0}
+		{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17} = {B12671CC-7A17-4A76-BF16-42FBF260E973}
+		{899F24A9-FDB0-4E70-A8A6-4C31481C1437} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45A2AA7-DCD5-4D17-81AC-3622204FAFAE}

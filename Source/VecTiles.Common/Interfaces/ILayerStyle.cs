@@ -8,7 +8,7 @@ namespace VecTiles.Common.Interfaces;
 /// It includes properties for style identification, type, zoom range, visibility, filtering, and source information.
 /// The Update method allows the style to refresh its paint properties based on the provided evaluation context.
 /// </summary>
-public interface ITileStyle
+public interface ILayerStyle
 {
     /// <summary>
     /// Name of style
@@ -18,7 +18,7 @@ public interface ITileStyle
     /// <summary>
     /// Type of this style
     /// </summary>
-    StyleType StyleType { get; }
+    LayerStyleType StyleType { get; }
 
     /// <summary>
     /// Minimal zoom from which this style layer is used

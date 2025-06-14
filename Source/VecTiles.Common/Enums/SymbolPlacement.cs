@@ -1,4 +1,4 @@
-﻿namespace VecxTiles.Common.Enums;
+﻿namespace VecTiles.Common.Enums;
 
 /// <summary>
 /// Specifies the placement of a symbol relative to its geometry.

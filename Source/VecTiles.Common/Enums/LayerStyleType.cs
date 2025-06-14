@@ -1,9 +1,9 @@
 ﻿namespace VecTiles.Common.Enums;
 
 /// <summary>
-/// Specifies the type of style applied to map features.
+/// Specifies the type of layer style applied to map features of the layer.
 /// </summary>
-public enum StyleType
+public enum LayerStyleType
 {
     /// <summary>
     /// Style is for a tile background.

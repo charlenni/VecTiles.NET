@@ -82,13 +82,13 @@ public class MapboxSource
     public SourceType SourceType { get; set; }
 
     [JsonProperty("tiles")]
-    public IList<string> Tiles { get; set; } = [];
+    public IList<string>? Tiles { get; set; }
 
     [JsonProperty("tileSize")]
     public int TileSize { get; set; } = 512;
 
     [JsonProperty("url")]
-    public string Url { get; set; } = string.Empty;
+    public string? Url { get; set; }
 
     [JsonProperty("urls")]
     public string[] Urls { get; set; } = [];

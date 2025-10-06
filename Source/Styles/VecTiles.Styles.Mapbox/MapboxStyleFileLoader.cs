@@ -52,8 +52,15 @@ public class MapboxStyleFileLoader
         }
 
         if (mapboxSprites == null)
+        {
             throw new ArgumentException("Sprite file isn't valid");
+        }
 
-        return new MapboxSpriteFile(bitmapBytes, mapboxSprites);
+        foreach (var sprite in mapboxSprites.Values)
+        {
+            sprite.Binary = bitmapBytes;
+        }
+
+        return new MapboxSpriteFile(mapboxSprites);
     }
 }

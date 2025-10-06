@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Styles\VecTiles.Styles.Mapbox\VecTiles.Styles.Mapbox.csproj" />
+    <ProjectReference Include="..\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
+  </ItemGroup>
+
+</Project>

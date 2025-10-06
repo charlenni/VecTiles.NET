@@ -22,7 +22,7 @@ public class MapboxLayerStyle : ILayerStyle
     public IFilter Filter { get; set; } = new EmptyFilter();
 
     [JsonProperty("layout")]
-    public MapboxLayout Layout { get; set; } = new MapboxLayout();
+    public MapboxLayerStyleLayout Layout { get; set; } = new MapboxLayerStyleLayout();
 
     [JsonProperty("maxzoom")]
     public int MaxZoom { get; set; } = -1;
@@ -34,7 +34,7 @@ public class MapboxLayerStyle : ILayerStyle
     public int MinZoom { get; set; } = -1;
 
     [JsonProperty("paint")]
-    public MapboxPaint Paint { get; set; } = new MapboxPaint();
+    public MapboxLayerStylePaint Paint { get; set; } = new MapboxLayerStylePaint();
 
     [JsonProperty("slot")]
     public string Slot { get; set; } = string.Empty;

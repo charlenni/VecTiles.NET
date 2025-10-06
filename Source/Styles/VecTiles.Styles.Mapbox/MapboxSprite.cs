@@ -6,7 +6,7 @@ namespace VecTiles.Styles.Mapbox;
 /// <summary>
 /// Class holding information about bitmap regions data (sprites) in Json format
 /// </summary>
-public class MapboxSprite : IBitmapRegion
+public class MapboxSprite : ISprite
 {
     [JsonProperty("x")]
     public int X { get; set; }
@@ -32,5 +32,7 @@ public class MapboxSprite : IBitmapRegion
     [JsonProperty("strechY")]
     public IList<float> StrechY { get; set; } = [];
 
-    public object? Image { get; set; }
+    public byte[] Binary { get; set; }
+
+    public object? Native { get; set; }
 }

@@ -10,7 +10,7 @@ namespace VecTiles.Styles.Mapbox;
 /// <summary>
 /// Class holding Layout data in Json format
 /// </summary>
-public class MapboxLayout
+public class MapboxLayerStyleLayout
 {
     [JsonProperty("visibility")]
     public string Visibility { get; set; } = "visible";
@@ -190,5 +190,5 @@ public class MapboxLayout
     [JsonProperty("text-writing-mode")]
     public string[] TextWritingMode { get; set; } = [];
 
-    public static MapboxLayout Empty = new MapboxLayout();
+    public static MapboxLayerStyleLayout Empty = new MapboxLayerStyleLayout();
 }

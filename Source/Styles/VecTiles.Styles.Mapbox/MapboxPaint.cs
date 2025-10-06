@@ -1,248 +1,357 @@
-﻿using Newtonsoft.Json;
-using VecTiles.Common.Enums;
+﻿using VecTiles.Common.Enums;
+using VecTiles.Common.Extensions;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Styles.Mapbox.Expressions;
-using VecTiles.Styles.Mapbox.Json.Converter;
 
 namespace VecTiles.Styles.Mapbox;
 
-public class MapboxPaint
+public class MapboxPaint : IPaint
 {
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("background-color")]
-    public StoppedColor BackgroundColor { get; set; } = new StoppedColor { Default = Color.Black };
-    
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("background-emissive-strength")]
-    public StoppedFloat BackgroundEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
+    EvaluationContext? _lastContext;
+    float _strokeWidth;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("background-opacity")]
-    public StoppedFloat BackgroundOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+    public MapboxPaint(string id)
+    {
+        Id = id;
+    }
 
-    [JsonConverter(typeof(StoppedStringConverter))]
-    [JsonProperty("background-pattern")]
-    public StoppedString BackgroundPattern { get; set; } = new StoppedString() { Default = string.Empty };
+    // Id of layer for this OMTPaint
+    public string Id { get; }
 
-    [JsonConverter(typeof(StoppedBooleanConverter))]
-    [JsonProperty("fill-antialias")]
-    public StoppedBoolean FillAntialias { get; set; } = new StoppedBoolean() { Default = true };
+    public PaintStyle Style { get; private set; }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("fill-color")]
-    public StoppedColor FillColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public Color Color { get; private set; }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("fill-emissive-strength")]
-    public StoppedFloat FillEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
+    public Color OutlineColor { get; private set; }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("fill-opacity")]
-    public StoppedFloat FillOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+    public float Opacity { get; private set; }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("fill-outline-color")]
-    public StoppedColor FillOutlineColor { get; set; } = new StoppedColor() { Default = new Color(0, 0, 0, 0) };
+    public bool IsAntialias { get; private set; }
 
-    [JsonConverter(typeof(StoppedStringConverter))]
-    [JsonProperty("fill-pattern")]
-    public StoppedString FillPattern { get; set; } = new StoppedString() { Default = string.Empty };
+    public float StrokeWidth { get; private set; }
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("fill-translate")]
-    public StoppedFloatArray FillTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
+    public StrokeCap StrokeCap { get; private set; }
 
-    [JsonProperty("fill-translate-anchor")]
-    public string FillTranslateAnchor { get; set; } = "map";
+    public StrokeJoin StrokeJoin { get; private set; }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-blur")]
-    public StoppedFloat LineBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
+    public float StrokeMiter { get; private set; }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("line-color")]
-    public StoppedColor LineColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public ISprite Pattern { get; private set; }
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("line-dasharray")]
-    public StoppedFloatArray LineDashArray { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
+    public float[]? DashArray { get; private set; }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-emissive-strength")]
-    public StoppedFloat LineEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
+    public void Update(EvaluationContext context)
+    {
+        if (_lastContext != null && context.Equals(_lastContext))
+            return;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-gap-width")]
-    public StoppedFloat LineGapWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
+        if (variableColor || variableOpacity)
+        {
+            var c = variableColor && funcColor != null ? funcColor(context) : color;
+            var o = variableOpacity && funcOpacity != null ? funcOpacity(context) : opacity;
+            Color = c.WithAlpha((byte)(c.A * o));
+        }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("line-gradient")]
-    public StoppedColor LineGradient { get; set; } = new StoppedColor() { Default = Color.Empty };
+        if (variableOutlineColor || variableOpacity)
+        {
+            var c = variableOutlineColor && funcOutlineColor != null ? funcOutlineColor(context) : outlineColor;
+            var o = variableOpacity && funcOpacity != null ? funcOpacity(context) : opacity;
+            OutlineColor = c.WithAlpha((byte)(c.A * o));
+        }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-occlusion-opacity")]
-    public StoppedFloat LineOcclusionOpacity { get; set; } = new StoppedFloat() { Default = 0.0f };
+        if (variableStyle && funcStyle != null)
+        {
+            Style = funcStyle(context);
+        }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-offset")]
-    public StoppedFloat LineOffset { get; set; } = new StoppedFloat() { Default = 0.0f };
+        if (variableAntialias && funcAntialias != null)
+        {
+            IsAntialias = funcAntialias(context);
+        }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-opacity")]
-    public StoppedFloat LineOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+        if (variableStrokeWidth && funcStrokeWidth != null)
+        {
+            StrokeWidth = funcStrokeWidth(context) * context.Scale;
+        }
+        else
+        {
+            StrokeWidth = _strokeWidth * context.Scale;
+        }
 
-    [JsonConverter(typeof(StoppedStringConverter))]
-    [JsonProperty("line-pattern")]
-    public StoppedString LinePattern { get; set; } = new StoppedString { Default = string.Empty };
+        if (variableStrokeCap && funcStrokeCap != null)
+        {
+            StrokeCap = funcStrokeCap(context);
+        }
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("line-translate")]
-    public StoppedFloatArray LineTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
+        if (variableStrokeJoin && funcStrokeJoin != null)
+        {
+            StrokeJoin = funcStrokeJoin(context);
+        }
 
-    [JsonProperty("line-translate-anchor")]
-    public string LineTranslateAnchor { get; set; } = "map";
+        if (variableStrokeMiter && funcStrokeMiter != null)
+        {
+            StrokeMiter = funcStrokeMiter(context);
+        }
 
-    [JsonProperty("line-trim-offset")]
-    public float[] LineTrimOffset { get; set; } = [0, 0];
+        if (variablePattern && funcPattern != null)
+        {
+            Pattern = funcPattern(context);
+        }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-width")]
-    public StoppedFloat LineWidth { get; set; } = new StoppedFloat() { Default = 1.0f };
+        // We have to multiply the dasharray with the linewidth
+        if (variableDashArray && funcDashArray != null)
+        {
+            var array = funcDashArray(context);
+            for (var i = 0; i < array.Length; i++)
+                array[i] = array[i] * StrokeWidth;
+            DashArray = array;
+        }
+        else if (fixDashArray != null && fixDashArray.Length > 0)
+        {
+            var array = new float[fixDashArray.Length];
+            for (var i = 0; i < array.Length; i++)
+                array[i] = fixDashArray[i] * StrokeWidth;
+            DashArray = array;
+        }
+        else 
+        {
+            DashArray = null;
+        }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("icon-color")]
-    public StoppedColor IconColor { get; set; } = new StoppedColor { Default = Color.Black };
+        _lastContext = new EvaluationContext(context.Zoom, context.Scale, context.Rotation, context.Attributes);
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-brightness-max")]
-    public StoppedFloat IconColorBrightnessMax { get; set; } = new StoppedFloat { Default = 1.0f };
+        return;
+    }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-brightness-min")]
-    public StoppedFloat IconColorBrightnessMin { get; set; } = new StoppedFloat { Default = 0.0f };
+    #region Color
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-contrast")]
-    public StoppedFloat IconColorContrast { get; set; } = new StoppedFloat { Default = 0.0f };
+    Color color = Color.Empty;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-saturation")]
-    public StoppedFloat IconColorSaturation { get; set; } = new StoppedFloat { Default = 0.0f };
+    bool variableColor = false;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-emissive-strength")]
-    public StoppedFloat IconEmissiveStrength { get; set; } = new StoppedFloat() { Default = 1.0f };
+    Func<EvaluationContext, Color>? funcColor;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-halo-blur")]
-    public StoppedFloat IconHaloBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
+    public void SetFixColor(Color c)
+    {
+        variableColor = false;
+        color = c;
+        Color = color.WithAlpha((byte)(color.A * opacity));
+    }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("icon-halo-color")]
-    public StoppedColor IconHaloColor { get; set; } = new StoppedColor { Default = Color.Empty };
+    public void SetVariableColor(Func<EvaluationContext, Color> func)
+    {
+        variableColor = true;
+        funcColor = func;
+    }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-halo-width")]
-    public StoppedFloat IconHaloWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
+    #endregion
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-image-cross-fade")]
-    public StoppedFloat IconImageCrossFade { get; set; } = new StoppedFloat() { Default = 0.0f };
+    #region OutlineColor
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-occlusion-opacity")]
-    public StoppedFloat IconOcclusionOpacity { get; set; } = new StoppedFloat() { Default = 0.0f };
+    Color outlineColor = Color.Empty;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-opacity")]
-    public StoppedFloat IconOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+    bool variableOutlineColor = false;
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("icon-translate")]
-    public StoppedFloatArray IconTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
+    Func<EvaluationContext, Color>? funcOutlineColor;
 
-    [JsonConverter(typeof(StoppedEnumConverter<MapAlignment>))]
-    [JsonProperty("icon-translate-anchor")]
-    public StoppedEnum<MapAlignment> IconTranslateAnchor { get; set; } = new StoppedEnum<MapAlignment> { Default = MapAlignment.Map };
+    public void SetFixOutlineColor(Color c)
+    {
+        variableOutlineColor = false;
+        outlineColor = c;
+        Color = outlineColor.WithAlpha((byte)(outlineColor.A * opacity));
+    }
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("text-color")]
-    public StoppedColor TextColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public void SetVariableOutlineColor(Func<EvaluationContext, Color> func)
+    {
+        variableOutlineColor = true;
+        funcOutlineColor = func;
+    }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-emissive-strength")]
-    public StoppedFloat TextEmissiveStrength { get; set; } = new StoppedFloat() { Default = 1.0f };
+    #endregion
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-halo-blur")]
-    public StoppedFloat TextHaloBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
+    #region Opacity
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("text-halo-color")]
-    public StoppedColor TextHaloColor { get; set; } = new StoppedColor { Default = Color.Empty };
+    float opacity = 1.0f;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-halo-width")]
-    public StoppedFloat TextHaloWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
+    bool variableOpacity = false;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-occlusion-opacity")]
-    public StoppedFloat TextOcclusionOpacity { get; set; } = new StoppedFloat() { Default = 0.0f };
+    Func<EvaluationContext, float>? funcOpacity;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-opacity")]
-    public StoppedFloat TextOpacity { get; set; } = new StoppedFloat { Default = 1.0f };
+    public void SetFixOpacity(float o)
+    {
+        variableOpacity = false;
+        opacity = o;
+        Color = color.WithAlpha((byte)(color.A * opacity));
+    }
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("text-translate")]
-    public StoppedFloatArray TextTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
+    public void SetVariableOpacity(Func<EvaluationContext, float> func)
+    {
+        variableOpacity = true;
+        funcOpacity = func;
+    }
 
-    [JsonConverter(typeof(StoppedEnumConverter<MapAlignment>))]
-    [JsonProperty("text-translate-anchor")]
-    public StoppedEnum<MapAlignment> TextTranslateAnchor { get; set; } = new StoppedEnum<MapAlignment> { Default = MapAlignment.Map };
+    #endregion
 
-    [JsonProperty("raster-brightness-max")]
-    public StoppedFloat RasterBrightnessMax { get; set; } = new StoppedFloat { Default = 1.0f };
+    #region Style
 
-    [JsonProperty("raster-brightness-min")]
-    public StoppedFloat RasterBrightnessMin { get; set; } = new StoppedFloat { Default = 0.0f };
+    bool variableStyle = false;
 
-    [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("raster-color")]
-    public StoppedColor RasterColor { get; set; } = new StoppedColor() { Default = Color.Empty };
+    Func<EvaluationContext, PaintStyle>? funcStyle;
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("raster-color-mix")]
-    public StoppedFloatArray RasterColorMix { get; set; } = new StoppedFloatArray { Default = [0.2126f, 0.7152f, 0.0722f, 0.0f] };
+    public void SetFixStyle(PaintStyle style)
+    {
+        variableStyle = false;
+        Style = style;
+    }
 
-    [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("raster-color-range")]
-    public StoppedFloatArray RasterColorRange { get; set; } = new StoppedFloatArray() { Default = [] };
+    public void SetVariableStyle(Func<EvaluationContext, PaintStyle> func)
+    {
+        variableStyle = true;
+        funcStyle = func;
+    }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-contrast")]
-    public StoppedFloat RasterContrast { get; set; } = new StoppedFloat() { Default = 0.0f };
+    #endregion
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-emissive-strength")]
-    public StoppedFloat RasterEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
+    #region Antialias
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-fade-duration")]
-    public StoppedFloat RasterFadeDuration { get; set; } = new StoppedFloat() { Default = 300.0f };
+    bool variableAntialias = false;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-hue-rotate")]
-    public StoppedFloat RasterHueRotate { get; set; } = new StoppedFloat() { Default = 0.0f };
+    Func<EvaluationContext, bool>? funcAntialias;
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-opacity")]
-    public StoppedFloat RasterOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+    public void SetFixAntialias(bool antialias)
+    {
+        variableAntialias = false;
+        IsAntialias = antialias;
+    }
 
-    [JsonProperty("raster-resampling")]
-    public string RasterResampling { get; set; } = "linear";
+    public void SetVariableAntialias(Func<EvaluationContext, bool> func)
+    {
+        variableAntialias = true;
+        funcAntialias = func;
+    }
 
-    [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-saturation")]
-    public StoppedFloat RasterSaturation { get; set; } = new StoppedFloat() { Default = 0.0f };
+    #endregion
+
+    #region StrokeWidth
+
+    bool variableStrokeWidth = false;
+
+    Func<EvaluationContext, float>? funcStrokeWidth;
+
+    public void SetFixStrokeWidth(float width)
+    {
+        variableStrokeWidth = false;
+        _strokeWidth = width;
+    }
+
+    public void SetVariableStrokeWidth(Func<EvaluationContext, float> func)
+    {
+        variableStrokeWidth = true;
+        funcStrokeWidth = func;
+    }
+
+    #endregion
+
+    #region StrokeCap
+
+    bool variableStrokeCap = false;
+
+    Func<EvaluationContext, StrokeCap>? funcStrokeCap;
+
+    public void SetFixStrokeCap(StrokeCap cap)
+    {
+        variableStrokeCap = false;
+        StrokeCap = cap;
+    }
+
+    public void SetVariableStrokeCap(Func<EvaluationContext, StrokeCap> func)
+    {
+        variableStrokeCap = true;
+        funcStrokeCap = func;
+    }
+
+    #endregion
+
+    #region StrokeJoin
+
+    bool variableStrokeJoin = false;
+
+    Func<EvaluationContext, StrokeJoin>? funcStrokeJoin;
+
+    public void SetFixStrokeJoin(StrokeJoin join)
+    {
+        variableStrokeJoin = false;
+        StrokeJoin = join;
+    }
+
+    public void SetVariableStrokeJoin(Func<EvaluationContext, StrokeJoin> func)
+    {
+        variableStrokeJoin = true;
+        funcStrokeJoin = func;
+    }
+
+    #endregion
+
+    #region StrokeMiter
+
+    bool variableStrokeMiter = false;
+
+    Func<EvaluationContext, float>? funcStrokeMiter;
+
+    public void SetFixStrokeMiter(float miter)
+    {
+        variableStrokeMiter = false;
+        StrokeMiter = miter;
+    }
+
+    public void SetVariableStrokeMiter(Func<EvaluationContext, float> func)
+    {
+        variableStrokeMiter = true;
+        funcStrokeMiter = func;
+    }
+
+    #endregion
+
+    #region Pattern
+
+    bool variablePattern = false;
+
+    Func<EvaluationContext, MapboxSprite>? funcPattern;
+
+    public void SetFixPattern(MapboxSprite sprite)
+    {
+        variablePattern = false;
+        Pattern = sprite;
+    }
+
+    public void SetVariablePattern(Func<EvaluationContext, MapboxSprite> func)
+    {
+        variablePattern = true;
+        funcPattern = func;
+    }
+
+    #endregion
+
+    #region DashArray
+
+    bool variableDashArray = false;
+    float[] fixDashArray = [];
+
+    Func<EvaluationContext, float[]>? funcDashArray;
+
+    public void SetFixDashArray(float[] array)
+    {
+        variableDashArray = false;
+        fixDashArray = new float[array.Length];
+        for (int i = 0; i < array.Length; i++)
+            fixDashArray[i] = array[i];
+    }
+
+    public void SetVariableDashArray(Func<EvaluationContext, float[]> func)
+    {
+        variableDashArray = true;
+        funcDashArray = func;
+    }
+
+    #endregion
 }

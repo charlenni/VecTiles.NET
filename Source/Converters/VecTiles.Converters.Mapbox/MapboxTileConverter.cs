@@ -1,7 +1,6 @@
 ﻿using System.IO.Compression;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Converters.Mapbox.Parser;
 
 namespace VecTiles.Converters.Mapbox;
 

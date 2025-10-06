@@ -1,10 +1,29 @@
 ﻿using System.Globalization;
+using VecTiles.Common.Enums;
 using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Extensions
 {
     public static class StringExtensions
     {
+        /// <summary>
+        /// Converts a string to a <see cref="TextJustify"/> value.
+        /// Returns <see cref="TextJustify.Left"/> for "left", <see cref="TextJustify.Right"/> for "right",
+        /// <see cref="TextJustify.Center"/> for "center", and <see cref="TextJustify.Auto"/> for any other value.
+        /// </summary>
+        /// <param name="text">The string to convert.</param>
+        /// <returns>The corresponding <see cref="TextJustify"/> value.</returns>
+        public static TextJustify ToTextJustify(this string text)
+        {
+            return text switch
+            {
+                "left" => TextJustify.Left,
+                "right" => TextJustify.Right,
+                "center" => TextJustify.Center,
+                _ => TextJustify.Auto
+            };
+        }
+
         /// <summary>
         /// Converts a string in Mapbox GL format to a Color
         /// 

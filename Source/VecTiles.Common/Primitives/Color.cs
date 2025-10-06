@@ -12,6 +12,10 @@ public record Color (byte R, byte G, byte B, byte A)
     // Default colors
     public static Color Empty = new(0, 0, 0, 0);
     public static Color Black = new(0, 0, 0, 255);
+    public static Color White = new(255, 255, 255, 255);
+    public static Color Red = new(255, 0, 0, 255);
+    public static Color Green = new(0, 255, 0, 255);
+    public static Color Blue = new(0, 0, 255, 255);
 
     /// <summary>
     /// Returns a string representation of the color in the format: Color [R{R};G{G};B{B};A{A}]

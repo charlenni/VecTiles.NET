@@ -1,5 +1,6 @@
 ﻿namespace VecTiles.Common.Interfaces;
 
-public interface ISprite : IBitmap, IBitmapRegion
+public interface ISprite : IBitmapRegion
 {
+    IBitmap Atlas { get; }
 }

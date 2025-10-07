@@ -26,7 +26,7 @@ public interface IPaint
 
     float StrokeMiter { get; }
 
-    ISprite Pattern { get; }
+    ISprite? Pattern { get; }
 
     float[]? DashArray { get; }
 

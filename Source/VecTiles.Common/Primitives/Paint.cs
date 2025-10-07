@@ -1,16 +1,15 @@
 ﻿using VecTiles.Common.Enums;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Interfaces;
-using VecTiles.Common.Primitives;
 
-namespace VecTiles.Styles.Mapbox;
+namespace VecTiles.Common.Primitives;
 
-public class MapboxPaint : IPaint
+public class Paint : IPaint
 {
     EvaluationContext? _lastContext;
     float _strokeWidth;
 
-    public MapboxPaint(string id)
+    public Paint(string id)
     {
         Id = id;
     }
@@ -20,9 +19,9 @@ public class MapboxPaint : IPaint
 
     public PaintStyle Style { get; private set; }
 
-    public Color Color { get; private set; }
+    public Color Color { get; private set; } = Color.Black;
 
-    public Color OutlineColor { get; private set; }
+    public Color OutlineColor { get; private set; } = Color.Black;
 
     public float Opacity { get; private set; }
 
@@ -36,7 +35,7 @@ public class MapboxPaint : IPaint
 
     public float StrokeMiter { get; private set; }
 
-    public ISprite Pattern { get; private set; }
+    public ISprite? Pattern { get; private set; }
 
     public float[]? DashArray { get; private set; }
 
@@ -316,15 +315,15 @@ public class MapboxPaint : IPaint
 
     bool variablePattern = false;
 
-    Func<EvaluationContext, MapboxSprite>? funcPattern;
+    Func<EvaluationContext, Sprite>? funcPattern;
 
-    public void SetFixPattern(MapboxSprite sprite)
+    public void SetFixPattern(Sprite sprite)
     {
         variablePattern = false;
         Pattern = sprite;
     }
 
-    public void SetVariablePattern(Func<EvaluationContext, MapboxSprite> func)
+    public void SetVariablePattern(Func<EvaluationContext, Sprite> func)
     {
         variablePattern = true;
         funcPattern = func;

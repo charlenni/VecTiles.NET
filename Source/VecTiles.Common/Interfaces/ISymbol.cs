@@ -1,5 +1,4 @@
-﻿using NetTopologySuite.Index.Quadtree;
-using VecTiles.Common.Primitives;
+﻿using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Interfaces;
 
@@ -26,6 +25,4 @@ public interface ISymbol
     int Rank { get; }
 
     bool AllowOthers { get; }
-
-    void Draw(object canvas, EvaluationContext context, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter);
 }

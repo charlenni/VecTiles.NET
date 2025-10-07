@@ -2,7 +2,7 @@
 
 namespace VecTiles.Renderers.Common.Interfaces;
 
-public interface IStyledLayer
+public interface ILayerRenderer
 {
     void Draw(object canvas, EvaluationContext context);
 }

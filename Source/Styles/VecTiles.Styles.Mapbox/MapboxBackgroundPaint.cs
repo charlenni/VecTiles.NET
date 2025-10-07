@@ -7,14 +7,14 @@ namespace VecTiles.Styles.Mapbox;
 
 public static class MapboxBackgroundPaint
 {
-    public static MapboxPaint CreatePaint(ILayerStyle style, Func<string, MapboxSprite> spriteFactory)
+    public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
     {
         var mapboxStyle = (MapboxLayerStyle)style;
 
         // Background has only properties in Paint, no in Layout
         var paint = mapboxStyle.Paint;
 
-        var brush = new MapboxPaint(mapboxStyle.Name);
+        var brush = new Paint(mapboxStyle.Name);
 
         brush.SetFixStyle(PaintStyle.Fill);
 

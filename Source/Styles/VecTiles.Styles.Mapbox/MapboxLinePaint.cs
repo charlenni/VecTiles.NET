@@ -6,7 +6,7 @@ namespace VecTiles.Styles.Mapbox;
 
 public static class MapboxLinePaint
 {
-    public static MapboxPaint CreatePaint(ILayerStyle style, Func<string, MapboxSprite> spriteFactory)
+    public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
     {
         if (style is not MapboxLayerStyle mapboxStyle)
         {
@@ -16,7 +16,7 @@ public static class MapboxLinePaint
         var layout = mapboxStyle.Layout;
         var paint = mapboxStyle.Paint;
 
-        var brush = new MapboxPaint(mapboxStyle.Name);
+        var brush = new Paint(mapboxStyle.Name);
 
         // Set defaults
         brush.SetFixColor(new Color(0, 0, 0, 255));

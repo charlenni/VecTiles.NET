@@ -5,7 +5,7 @@ namespace VecTiles.Styles.Mapbox;
 
 public static class MapboxRasterPaint
 {
-    public static MapboxPaint CreatePaint(ILayerStyle style, Func<string, MapboxSprite> spriteFactory)
+    public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
     {
         if (style is not MapboxLayerStyle mapboxStyle)
         {
@@ -15,7 +15,7 @@ public static class MapboxRasterPaint
         // Raster has only properties in Paint, no in Layout
         var paint = mapboxStyle.Paint;
 
-        var brush = new MapboxPaint(mapboxStyle.Name);
+        var brush = new Paint(mapboxStyle.Name);
 
         // raster-opacity
         //   Optional number. Defaults to 1.

@@ -6,15 +6,17 @@ using VecTiles.Renderers.Common.Interfaces;
 
 namespace VecTiles.Renderers.Skia;
 
-public class BackgroundLayer : IStyledLayer
+public class RasterLayerRenderer : ILayerRenderer
 {
     readonly SKRect _tileRect;
     readonly IPaint _paint;
+    readonly SKBitmap _bitmap;
 
-    public BackgroundLayer(SKRect rect, IPaint paint)
+    public RasterLayerRenderer(SKRect rect, IPaint paint, SKBitmap bitmap)
     {
         _tileRect = rect;
         _paint = paint;
+        _bitmap = bitmap.Copy();
     }
 
     public void Draw(object canvas, EvaluationContext context)
@@ -24,9 +26,11 @@ public class BackgroundLayer : IStyledLayer
             return;
         }
 
-        foreach (var skPaint in _paint.ToSKPaint(context))
+        var skPaints = _paint.ToSKPaint(context);
+
+        foreach (var skPaint in skPaints)
         {
-            skCanvas.DrawRect(_tileRect, skPaint);
+            skCanvas.DrawBitmap(_bitmap, _tileRect, skPaint);
         }
     }
 }

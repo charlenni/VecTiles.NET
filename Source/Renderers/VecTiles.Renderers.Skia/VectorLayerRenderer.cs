@@ -6,13 +6,13 @@ using VecTiles.Renderers.Common.Interfaces;
 
 namespace VecTiles.Renderers.Skia;
 
-public class VectorLayer : IStyledLayer
+public class VectorLayerRenderer : ILayerRenderer
 {
     readonly IEnumerable<SKPath> _paths;
     readonly bool _clip;
     readonly IPaint _paint;
 
-    public VectorLayer(IEnumerable<SKPath> paths, bool clip, IPaint paint)
+    public VectorLayerRenderer(IEnumerable<SKPath> paths, bool clip, IPaint paint)
     {
         _paths = paths;
         _clip = clip;

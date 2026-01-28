@@ -6,7 +6,7 @@ public interface IRenderedTile
 {
     public Tile Tile { get; }
 
-    public IDictionary<string, IStyledLayer> RenderedLayers { get; }
+    public IDictionary<string, ILayerRenderer> RenderedLayers { get; }
 
     public IDictionary<string, ISymbolLayer> RenderedSymbols { get; }
 }

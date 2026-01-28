@@ -6,55 +6,68 @@ namespace VecTiles.Renderers.Skia.Extensions;
 
 public static class IFeatureExtensions
 {
-    public static SKPath ToSKPath(this IFeature feature)
+    public static List<SKPath> ToSKPath(this IFeature feature)
     {
         return GeometryToSKPath(feature.Geometry);
     }
 
-    private static SKPath GeometryToSKPath(Geometry geometry)
-    { 
-        var path = new SKPath();
+    private static List<SKPath> GeometryToSKPath(Geometry geometry)
+    {
+        SKPath path;
+        var paths = new List<SKPath>();
 
         switch (geometry)
         {
             case Point point:
+                path = new SKPath();
                 path.AddCircle((float)point.X, (float)point.Y, 3); // kleiner Kreis als Marker
+                paths.Add(path);
                 break;
 
             case MultiPoint multiPoint:
                 foreach (Point pt in multiPoint.Geometries)
                 {
+                    path = new SKPath();
                     path.AddCircle((float)pt.X, (float)pt.Y, 3);
+                    paths.Add(path);
                 }
                 break;
 
             case LineString line:
+                path = new SKPath();
                 AddLineStringToPath(path, line);
+                paths.Add(path);
                 break;
 
             case MultiLineString multiLine:
                 foreach (LineString lineStr in multiLine.Geometries)
                 {
+                    path = new SKPath();
                     AddLineStringToPath(path, lineStr);
+                    paths.Add(path);
                 }
                 break;
 
             case Polygon polygon:
+                path = new SKPath();
                 AddPolygonToPath(path, polygon);
+                paths.Add(path);
                 break;
 
             case MultiPolygon multiPolygon:
                 foreach (Polygon poly in multiPolygon.Geometries)
                 {
+                    path = new SKPath();
                     AddPolygonToPath(path, poly);
+                    paths.Add(path);
                 }
                 break;
 
             case GeometryCollection collection:
                 foreach (Geometry geom in collection.Geometries)
                 {
-                    var subPath = GeometryToSKPath(geom);
-                    path.AddPath(subPath);
+                    var subPaths = GeometryToSKPath(geom);
+                    paths.AddRange(subPaths);
                 }
                 break;
 
@@ -62,7 +75,7 @@ public static class IFeatureExtensions
                 throw new NotSupportedException($"Geometry type '{geometry.GeometryType}' is not supported.");
         }
 
-        return path;
+        return paths;
     }
 
     private static void AddLineStringToPath(SKPath path, LineString line)

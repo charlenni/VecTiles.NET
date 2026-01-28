@@ -31,6 +31,8 @@ public class VectorTileDataSource : IVectorTileDataSource
 
     /// <inheritdoc/>
     public SourceType SourceType => _dataSource.SourceType;
+    
+    public Scheme Scheme => _dataSource.Scheme;
 
     /// <inheritdoc/>
     public Task<byte[]?> GetTileAsync(Tile requestedTile) => _dataSource.GetTileAsync(requestedTile);
@@ -38,6 +40,9 @@ public class VectorTileDataSource : IVectorTileDataSource
     /// <inheritdoc/>
     public async Task<VectorTile?> GetVectorTileAsync(Tile requestedTile)
     {
+        if (!requestedTile.IsValid)
+            return null;
+        
         var providedTile = requestedTile;
         var data = await _dataSource.GetTileAsync(requestedTile);
 
@@ -47,6 +52,6 @@ public class VectorTileDataSource : IVectorTileDataSource
             data = await _dataSource.GetTileAsync(providedTile);
         }
 
-        return data == null ? null : await _converter.Convert(requestedTile, providedTile, data);
+        return data == null ? null : await _converter.Convert(requestedTile, providedTile, _dataSource.Scheme, data);
     }
 }

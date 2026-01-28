@@ -24,70 +24,80 @@ public class TextPointSymbol : Symbol
     /// <summary>
     /// Is symbol optional?
     /// </summary>
-    public bool Optional { get; internal set; }
+    public bool Optional { get; init; }
 
     /// <summary>
     /// Allow other symbols to overlap this symbol
     /// </summary>
-    public bool AllowOverlap { get; internal set; }
+    public bool AllowOverlap { get; init; }
 
     /// <summary>
     /// Rotation of symbol in degrees
     /// </summary>
-    public float Rotation { get; internal set; }
+    public float Rotation { get; init; }
 
     /// <summary>
     /// Keep the text upright, so that is easier to read
     /// </summary>
-    public bool KeepUpright { get; internal set; }
+    public bool KeepUpright { get; init; }
 
     /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]
     /// </summary>
-    public Point Anchor { get; internal set; } = new(0, 0);
+    public Point Anchor { get; init; } = new(0, 0);
 
     /// <summary>
     /// Offset from point in pixels
     /// </summary>
-    public Point Offset { get; internal set; } = new(0, 0);
+    public Point Offset { get; init; } = new(0, 0);
 
     /// <summary>
     /// Function to calculate color to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, Color>? Color { get; internal set; }
+    public Func<EvaluationContext, Color>? Color { get; init; }
 
     /// <summary>
     /// Function to calculate opacity of symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? Opacity { get; internal set; }
+    public Func<EvaluationContext, float>? Opacity { get; init; }
 
+    /// <summary>
+    /// Text alignment in MaxWidth
+    /// </summary>
+    public TextJustify Alignment { get; init; }
+    
+    /// <summary>
+    /// Text direction (LTR, RTL, Auto)
+    /// </summary>
+    public TextDirection Direction { get; init; }
+    
     /// <summary>
     /// Function to calculate halo color to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, Color>? HaloColor { get; internal set; }
+    public Func<EvaluationContext, Color>? HaloColor { get; init; }
 
     /// <summary>
     /// Function to calculate halo blur to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? HaloBlur { get; internal set; }
+    public Func<EvaluationContext, float>? HaloBlur { get; init; }
 
     /// <summary>
     /// Function to calculate halo width to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? HaloWidth { get; internal set; }
+    public Func<EvaluationContext, float>? HaloWidth { get; init; }
 
     /// <summary>
     /// Function to calculate translate of symbols point from EvaluationContext in pixels
     /// </summary>
-    public Func<EvaluationContext, Point>? Translate { get; internal set; }
+    public Func<EvaluationContext, Point>? Translate { get; init; }
 
     /// <summary>
     /// Function to calculate anchor of translate (map or viewport) from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; internal set; }
+    public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; init; }
 
     /// <summary>
     /// Maximum width for the text. If the text exceeds the max width, it will be wrapped.
     /// </summary>
-    public Func<EvaluationContext, float, float>? MaxWidth { get; internal set; }
+    public Func<EvaluationContext, float, float>? MaxWidth { get; init; }
 }

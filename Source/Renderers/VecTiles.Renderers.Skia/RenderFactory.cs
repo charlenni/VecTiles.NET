@@ -1,6 +1,7 @@
 ﻿using NetTopologySuite.Features;
 using SkiaSharp;
 using VecTiles.Common.Interfaces;
+using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
 
@@ -12,13 +13,17 @@ public class RenderFactory : IRenderFactory
 
     Dictionary<string, IPaint> _paints;
     ISymbolFactory _symbolFactory;
+    private ISymbolRenderer _pointSymbolRenderer = new PointSymbolRenderer();
+    private ISymbolRenderer _iconPointSymbolRenderer = new IconPointSymbolRenderer();
+    private ISymbolRenderer _iconLineSymbolRenderer = new IconLineSymbolRenderer();
+    private ISymbolRenderer _textPointSymbolRenderer = new TextPointSymbolRenderer();
 
     public RenderFactory(IEnumerable<ILayerStyle> styles, IPaintFactory paintFactory, ISymbolFactory symbolFactory)
     {
         _symbolFactory = symbolFactory;
         _paints = new Dictionary<string, IPaint>(styles.Count());
 
-        // Create for each style a IPaint, which then creates a SKPaint for a given evaluation context
+        // Create for each style a IPaint, which then creates later a SKPaint for a given evaluation context
         foreach (var style in styles)
         {
             var paint = paintFactory.CreatePaint(style);
@@ -30,12 +35,12 @@ public class RenderFactory : IRenderFactory
         }
     }
 
-    public IStyledLayer CreateBackgroundLayer(ILayerStyle style)
+    public ILayerRenderer CreateBackgroundLayer(ILayerStyle style)
     {
-        return new BackgroundLayer(_tileRect, _paints[style.Name]);
+        return new BackgroundLayerRenderer(_tileRect, _paints[style.Name]);
     }
 
-    public IStyledLayer CreateRasterLayer(ILayerStyle style, byte[] data)
+    public ILayerRenderer CreateRasterLayer(ILayerStyle style, byte[] data)
     {
         using var bitmap = SKBitmap.Decode(data);
 
@@ -44,34 +49,42 @@ public class RenderFactory : IRenderFactory
             throw new Exception("Not possible to decode image");
         }
 
-        return new RasterLayer(_tileRect, _paints[style.Name], bitmap);
+        return new RasterLayerRenderer(_tileRect, _paints[style.Name], bitmap);
     }
 
-    public IStyledLayer CreateVectorFillLayer(ILayerStyle style, IEnumerable<IFeature> features)
+    public ILayerRenderer CreateVectorFillLayer(ILayerStyle style, IEnumerable<IFeature> features)
     {
         var paths = new List<SKPath>(features!.Count());
 
         // Draw features that belong to a fill style (draw path by path)
         foreach (var feature in features!)
         {
-            var path = feature.ToSKPath();
+            var pathList = feature.ToSKPath();
 
-            paths.Add(path);
+            paths.AddRange(pathList);
         }
 
-        return new VectorLayer(paths, true, _paints[style.Name]);
+        return new VectorLayerRenderer(paths, true, _paints[style.Name]);
     }
 
-    public IStyledLayer CreateVectorLineLayer(ILayerStyle style, IEnumerable<IFeature> features)
+    public ILayerRenderer CreateVectorLineLayer(ILayerStyle style, IEnumerable<IFeature> features)
     {
-        var path = new SKPath();
+        var paths = new SKPath();
 
         // Draw features that belong to a line style (add path by path and draw them at the end together)
         foreach (var feature in features!)
         {
-            path.AddPath(feature.ToSKPath());
+            var pathList = feature.ToSKPath();
+            
+            foreach (var path in pathList)
+                paths.AddPath(path);
         }
 
-        return new VectorLayer([path], false, _paints[style.Name]);
+        return new VectorLayerRenderer([paths], false, _paints[style.Name]);
+    }
+
+    public ISymbol? CreateSymbol(Tile tile, ILayerStyle style, EvaluationContext context, IFeature feature)
+    {
+        return _symbolFactory.CreateSymbol(tile, style, context, feature);
     }
 }

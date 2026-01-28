@@ -33,6 +33,9 @@ public class HttpTileDataSource : ITileDataSource
     public SourceType SourceType { get; set; }
 
     /// <inheritdoc/>
+    public Scheme Scheme { get; set; }
+
+    /// <inheritdoc/>
     public Task<byte[]?> GetBytesAsync(string source)
     {
         throw new NotImplementedException();

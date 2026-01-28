@@ -19,13 +19,13 @@ public class Paint : IPaint
 
     public PaintStyle Style { get; private set; }
 
-    public Color Color { get; private set; } = Color.Black;
+    public Color Color { get; private set; }
 
     public Color OutlineColor { get; private set; } = Color.Black;
 
-    public float Opacity { get; private set; }
+    public float Opacity => opacity;
 
-    public bool IsAntialias { get; private set; }
+    public bool IsAntialias { get; private set; } = true;
 
     public float StrokeWidth { get; private set; }
 
@@ -157,7 +157,7 @@ public class Paint : IPaint
     {
         variableOutlineColor = false;
         outlineColor = c;
-        Color = outlineColor.WithAlpha((byte)(outlineColor.A * opacity));
+        OutlineColor = outlineColor.WithAlpha((byte)(outlineColor.A * opacity));
     }
 
     public void SetVariableOutlineColor(Func<EvaluationContext, Color> func)

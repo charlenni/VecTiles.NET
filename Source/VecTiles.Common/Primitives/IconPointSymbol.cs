@@ -25,55 +25,55 @@ public class IconPointSymbol : Symbol
     /// <summary>
     /// Is symbol optional?
     /// </summary>
-    public bool Optional { get; internal set; }
+    public bool Optional { get; init; }
 
     /// <summary>
     /// Allow other symbols to overlap this symbol
     /// </summary>
-    public bool AllowOverlap { get; internal set; }
+    public bool AllowOverlap { get; init; }
 
     /// <summary>
     /// Scale of symbol
     /// </summary>
-    public float Scale { get; internal set; }
+    public float Scale { get; init; }
 
     /// <summary>
     /// Rotation of symbol in degrees
     /// </summary>
-    public float Rotation { get; internal set; }
+    public float Rotation { get; init; }
 
     /// <summary>
     /// Padding around symbol in pixel
     /// </summary>
-    public int Padding { get; internal set; }
+    public int Padding { get; init; }
 
     /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]
     /// </summary>
-    public Point Anchor { get; internal set; } = new(0, 0);
+    public Point Anchor { get; init; } = new(0, 0);
 
     /// <summary>
     /// Offset from point in pixels
     /// </summary>
-    public Point Offset { get; internal set; } = new(0, 0);
+    public Point Offset { get; init; } = new(0, 0);
 
     /// <summary>
     /// Function to calculate color filter to use when drawing symbol from EvaluationContext as SKColorFilter
     /// </summary>
-    public Func<EvaluationContext, ColorFilter>? ColorFilter { get; internal set; }
+    public Func<EvaluationContext, float[]>? ColorFilter { get; init; }
 
     /// <summary>
     /// Function to calculate opacity of symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? Opacity { get; internal set; }
+    public Func<EvaluationContext, float>? Opacity { get; init; }
 
     /// <summary>
     /// Function to calculate translate of symbols point from EvaluationContext in pixels
     /// </summary>
-    public Func<EvaluationContext, Point>? Translate { get; internal set; }
+    public Func<EvaluationContext, Point>? Translate { get; init; }
 
     /// <summary>
     /// Function to calculate anchor of translate (map or viewport) from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; internal set; }
+    public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; init; }
 }

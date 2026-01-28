@@ -11,7 +11,6 @@ public static class IPaintExtension
         paint.Update(context);
 
         var skPaint = new SKPaint {
-
             Style = (SKPaintStyle)paint.Style,
             Color = paint.Color.ToSKColor(),
             BlendMode = SKBlendMode.SrcOver,
@@ -24,17 +23,16 @@ public static class IPaintExtension
 
         if (paint.Pattern != null)
         {
-            if (paint.Pattern.Native == null)
+            if (paint.Pattern.Atlas.Native == null)
             {
-                paint.Pattern.Native = SKImage.FromEncodedData(paint.Pattern.Binary).Subset(new SKRectI(paint.Pattern.X, paint.Pattern.Y, paint.Pattern.X + paint.Pattern.Width, paint.Pattern.Y + paint.Pattern.Height));
+                paint.Pattern.Atlas.Native = SKImage.FromEncodedData(paint.Pattern.Atlas.Binary).Subset(new SKRectI(paint.Pattern.X, paint.Pattern.Y, paint.Pattern.X + paint.Pattern.Width, paint.Pattern.Y + paint.Pattern.Height));
             }
-            skPaint.Shader = ((SKImage)paint.Pattern.Native).ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
+            skPaint.Shader = ((SKImage)paint.Pattern.Atlas.Native).ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
         }
         
         if (paint.DashArray != null)
         {
             skPaint.PathEffect = SKPathEffect.CreateDash(paint.DashArray, 0);
-
         }
 
         if (skPaint.Style != SKPaintStyle.StrokeAndFill)
@@ -49,7 +47,7 @@ public static class IPaintExtension
             Style = SKPaintStyle.Stroke,
             Color = paint.OutlineColor.ToSKColor(),
             BlendMode = SKBlendMode.SrcOver,
-            IsAntialias = skPaint.IsAntialias,
+            IsAntialias = paint.IsAntialias,
             StrokeWidth = skPaint.StrokeWidth,
             StrokeCap = skPaint.StrokeCap,
             StrokeJoin = skPaint.StrokeJoin,

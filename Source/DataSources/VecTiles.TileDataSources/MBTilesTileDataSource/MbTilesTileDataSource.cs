@@ -50,6 +50,17 @@ public class MbTilesTileDataSource : ITileDataSource
         using var connection = new SQLiteConnection(connectionString);
 
         Schema = schema ?? ReadSchemaFromDatabase(connection, determineZoomLevelsFromTilesTable);
+        Scheme = Schema.YAxis == YAxis.OSM ? Scheme.Xyz : Scheme.Tms;
+
+        // If we have Pbf as format, then we have a vector source type. In all other cases 
+        // it is a raster source type.
+        if (Enum.TryParse<MbTilesFormat>(Schema.Format, true, out var format))
+            SourceType = format == MbTilesFormat.Pbf ? SourceType.Vector : SourceType.Raster;
+        else
+            SourceType = SourceType.Raster;
+        
+        MinZoom = Schema.Resolutions.Keys.Min();
+        MaxZoom = Schema.Resolutions.Keys.Max();
         Type = type == MbTilesType.None ? ReadType(connection) : type;
         Version = ReadString(connection, "version");
         Attribution = new Attribution(ReadString(connection, "attribution"));
@@ -115,11 +126,13 @@ public class MbTilesTileDataSource : ITileDataSource
     /// </summary>
     public Attribution Attribution { get; set; }
 
-    public int MinZoom => throw new NotImplementedException();
+    public int MinZoom { get; private set; }
 
-    public int MaxZoom => throw new NotImplementedException();
+    public int MaxZoom { get; private set; }
 
-    public SourceType SourceType => throw new NotImplementedException();
+    public SourceType SourceType { get; private set; }
+
+    public Scheme Scheme { get; }
 
     /// <summary>
     /// Get binary data for tile from database
@@ -128,7 +141,7 @@ public class MbTilesTileDataSource : ITileDataSource
     /// <returns>Task which returns binary data</returns>
     public async Task<byte[]?> GetTileAsync(Tile tile)
     {
-        tile = Schema.YAxis == YAxis.TMS ? tile.InvertY() : tile;
+        //tile = Schema.YAxis == YAxis.OSM ? tile : tile.InvertY();
 
         if (!IsTileIndexValid(tile))
             return null;
@@ -158,11 +171,12 @@ public class MbTilesTileDataSource : ITileDataSource
         var zoomLevels = ReadZoomLevels(connection);
         var format = ReadFormat(connection);
         var extent = ReadExtent(connection);
+        var yaxis = ReadYAxis(connection);
 
         if (determineZoomLevelsFromTilesTable)
             zoomLevels = ReadZoomLevelsFromTilesTable(connection);
 
-        return new GlobalSphericalMercator(format.ToString(), YAxis.TMS, zoomLevels, extent: extent);
+        return new GlobalSphericalMercator(format.ToString(), yaxis, zoomLevels, extent: extent);
     }
 
     private static int[]? ReadZoomLevels(SQLiteConnection connection)
@@ -210,13 +224,31 @@ public class MbTilesTileDataSource : ITileDataSource
         }
     }
 
+    private static YAxis ReadYAxis(SQLiteConnection connection)
+    {
+        const string sql = "SELECT \"value\" FROM metadata WHERE \"name\"=?;";
+
+        try
+        {
+            var schemeString = connection.ExecuteScalar<string>(sql, "scheme");
+
+            if (schemeString.Equals("XYZ", StringComparison.CurrentCultureIgnoreCase))
+                return YAxis.OSM;
+
+            return YAxis.TMS;
+        }
+        catch (Exception)
+        {
+            return YAxis.TMS;
+        }
+    }
+    
     private static Extent ReadExtent(SQLiteConnection connection)
     {
         const string sql = "SELECT \"value\" FROM metadata WHERE \"name\"=?;";
 
         try
         {
-
             var extentString = connection.ExecuteScalar<string>(sql, "bounds");
             var components = extentString.Split(',');
             var extent = new Extent(

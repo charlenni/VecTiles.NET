@@ -12,7 +12,7 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageReference Include="protobuf-net" Version="3.2.56" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
@@ -22,7 +22,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.Mapbox\VecTiles.Converters.Mapbox.csproj" />
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.SDFFont\VecTiles.Converters.SdfFont.csproj" />
     <ProjectReference Include="..\..\Source\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
   </ItemGroup>
 
@@ -31,10 +32,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Files\" />
+    <Folder Include="Files\Fonts\Roboto Condensed Italic\" />
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="..\..\Files\Fonts\Roboto Condensed Italic\0-255.pbf" Link="Files\Fonts\Roboto Condensed Italic\0-255.pbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\Files\Fonts\Roboto Condensed Italic\1024-1279.pbf" Link="Files\Fonts\Roboto Condensed Italic\1024-1279.pbf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="..\..\Files\LICENSE.md" Link="Files\LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

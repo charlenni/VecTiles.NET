@@ -16,12 +16,12 @@ given tile.
 #### Converters
 
 Converters take a given tile as byte array and convert this to a VectorTile (see NTS for this). In the moment there is 
-only one converter implemented. It could convert Mapbox Vector Tiles (MVT) in PBF or zipped PBF format to VectorTile 
+only one converter implemented. It could convert Mapbox/OpenMapTiles Vector Tiles (MVT) in PBF or zipped PBF format to VectorTile 
 objects. 
 
 It is possible to add other converters for other vector tile formats later, e.g. Mapsforge.
 
-A VectorTile consits of different layers. Each layer has a name and contains a list of features. Each feature has 
+A VectorTile consists of different layers. Each layer has a name and contains a list of features. Each feature has 
 one or more geometries and some attributes.
 
 #### VectorTileDataSource
@@ -30,11 +30,11 @@ A VectorTileDataSource combines a TileDataSource (which delivers tile data) with
 tile data to a VectorTile). 
 
 With this it is possible to get a VectorTile for a given tile coordinate (x, y, zoom). If a tile is not available, 
-a tile of a lower zoom level is retrived and clipped to the requested tile.
+a tile of a lower zoom level is retrieved and clipped to the requested tile.
 
 #### Styles
 
-There are different styles for styling vector maps out there. In the moment there is only one style implemented:
+There are different styles for styling vector maps out there. At the moment there is only one style implemented:
 Mapbox style format (https://docs.mapbox.com/mapbox-gl-js/style-spec/).
 
 #### Mapbox Style
@@ -55,7 +55,7 @@ bitmap. The rendering is zoom dependent.
 
 There are different types of symbols: point, line and polygon symbols. 
 
-A point symbol (e.g. city name) consits of a sprite and a text (one or both). Both could be placed around the given 
+A point symbol (e.g. city name) consists of a sprite and a text (one or both). Both could be placed around the given 
 point with different anchor points. There are more than one possible place to show text or sprite, depending on, if the 
 place on the map is already occupied by another symbol.
 

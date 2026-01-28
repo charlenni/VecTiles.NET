@@ -1,4 +1,5 @@
-﻿using VecTiles.Common.Primitives;
+﻿using NetTopologySuite.Geometries;
+using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Interfaces;
 
@@ -23,6 +24,6 @@ public interface ISymbol
     /// Rank of this symbol for sorting
     /// </summary>
     int Rank { get; }
-
+  
     bool AllowOthers { get; }
 }

@@ -25,17 +25,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.TileDataSources", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Converters", "Converters", "{B12671CC-7A17-4A76-BF16-42FBF260E973}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Mapbox", "Source\Converters\VecTiles.Converters.Mapbox\VecTiles.Converters.Mapbox.csproj", "{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.OpenMapTiles", "Source\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj", "{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Tests", "Tests\VecTiles.Converters.Tests\VecTiles.Converters.Tests.csproj", "{899F24A9-FDB0-4E70-A8A6-4C31481C1437}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", "{20D41C3B-D288-4A0E-9B2B-9681C5AA91AE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Mapbox.Benchmark", "Benchmarks\VecTiles.Converters.Mapbox.Benchmark\VecTiles.Converters.Mapbox.Benchmark.csproj", "{7A7C84C1-AECC-4DCD-97C4-676B7E09884A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.OpenMapTiles.Benchmark", "Benchmarks\VecTiles.Converters.OpenMapTiles.Benchmark\VecTiles.Converters.OpenMapTiles.Benchmark.csproj", "{7A7C84C1-AECC-4DCD-97C4-676B7E09884A}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Styles", "Styles", "{35D8B1E7-56F4-4913-A89B-6622468EF9F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Styles.Mapbox", "Source\Styles\VecTiles.Styles.Mapbox\VecTiles.Styles.Mapbox.csproj", "{AC086188-C627-4967-9B6A-B41B524BE1D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Styles.OpenMapTiles", "Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj", "{AC086188-C627-4967-9B6A-B41B524BE1D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Styles.Tests", "Tests\VecTiles.Styles.Tests\VecTiles.Styles.Tests.csproj", "{E036B0C8-062A-4129-A58A-200EDA74C110}"
 EndProject
@@ -60,6 +60,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Controls", "Controls", "{8B05454C-5823-4A6E-99E1-DEC177DBB40B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Controls.Mapsui", "Source\Controls\VecTiles.Control.Mapsui\VecTiles.Controls.Mapsui.csproj", "{EA2A0453-A588-8A71-BBCA-ED4F6E245184}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.SdfFont", "Source\Converters\VecTiles.Converters.SDFFont\VecTiles.Converters.SdfFont.csproj", "{6A964568-96A4-4D06-9B2F-7D8F871921C9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Renderers.Test", "Tests\VecTiles.Renderers.Test\VecTiles.Renderers.Test.csproj", "{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -127,6 +131,14 @@ Global
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -149,6 +161,8 @@ Global
 		{C409A541-BCE1-AB78-8C5E-81376D641BEE} = {A59BDEE2-F69F-44CC-9608-C6517FC5B123}
 		{FC38099B-FF20-AFD4-2C1E-E789D5C71E43} = {382ED19A-CA43-49F5-96A0-95AFA17E1D42}
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184} = {8B05454C-5823-4A6E-99E1-DEC177DBB40B}
+		{6A964568-96A4-4D06-9B2F-7D8F871921C9} = {B12671CC-7A17-4A76-BF16-42FBF260E973}
+		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45A2AA7-DCD5-4D17-81AC-3622204FAFAE}

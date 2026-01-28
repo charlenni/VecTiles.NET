@@ -29,6 +29,11 @@ public interface ITileDataSource
     /// Type of this source.
     /// </summary>
     SourceType SourceType { get; }
+    
+    /// <summary>
+    /// Scheme of this tile source
+    /// </summary>
+    Scheme Scheme { get; }
 
     /// <summary>
     /// Asynchronously retrieves the tile data for the specified tile.

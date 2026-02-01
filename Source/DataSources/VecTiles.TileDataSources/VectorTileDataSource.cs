@@ -31,27 +31,30 @@ public class VectorTileDataSource : IVectorTileDataSource
 
     /// <inheritdoc/>
     public SourceType SourceType => _dataSource.SourceType;
-    
-    public Scheme Scheme => _dataSource.Scheme;
+
+    /// <summary>
+    /// IVectorTileDataSources use always Xyz independently from the underlying data source
+    /// </summary>
+    public Scheme Scheme => Scheme.Xyz;
 
     /// <inheritdoc/>
-    public Task<byte[]?> GetTileAsync(Tile requestedTile) => _dataSource.GetTileAsync(requestedTile);
+    public Task<byte[]?> GetTileAsync(Tile requestedTile) => _dataSource.GetTileAsync(_dataSource.Scheme == Scheme.Xyz ? requestedTile : requestedTile.InvertY());
 
     /// <inheritdoc/>
     public async Task<VectorTile?> GetVectorTileAsync(Tile requestedTile)
     {
         if (!requestedTile.IsValid)
             return null;
-        
+
         var providedTile = requestedTile;
-        var data = await _dataSource.GetTileAsync(requestedTile);
+        var data = await _dataSource.GetTileAsync(_dataSource.Scheme == Scheme.Xyz ? requestedTile : requestedTile.InvertY());
 
         while (data == null && providedTile.Zoom > 0)
         {
             providedTile = providedTile.Parent;
-            data = await _dataSource.GetTileAsync(providedTile);
+            data = await _dataSource.GetTileAsync(_dataSource.Scheme == Scheme.Xyz ? providedTile : providedTile.InvertY());
         }
 
-        return data == null ? null : await _converter.Convert(requestedTile, providedTile, _dataSource.Scheme, data);
+        return data == null ? null : await _converter.Convert(requestedTile, providedTile, data);
     }
 }

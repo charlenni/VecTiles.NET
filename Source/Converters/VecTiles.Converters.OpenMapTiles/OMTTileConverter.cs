@@ -1,5 +1,4 @@
 ﻿using System.IO.Compression;
-using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -22,7 +21,7 @@ public class OMTTileConverter : ITileConverter
     /// <param name="scheme">Scheme of provided tile</param>
     /// <param name="data">Binary array with the data of providedTile</param>
     /// <returns>Converted data as VectorTile</returns>
-    public Task<VectorTile?> Convert(Tile requestedTile, Tile providedTile, Scheme scheme, byte[] data)
+    public Task<VectorTile?> Convert(Tile requestedTile, Tile providedTile, byte[] data)
     {
         Stream stream = new MemoryStream(data);
 
@@ -31,7 +30,7 @@ public class OMTTileConverter : ITileConverter
             stream = new GZipStream(stream, CompressionMode.Decompress);
         }
 
-        return Task.FromResult<VectorTile?>(Parser.Parser.Parse(stream, requestedTile, providedTile, scheme));
+        return Task.FromResult<VectorTile?>(Parser.Parser.Parse(stream, requestedTile, providedTile));
     }
 
     /// <summary>

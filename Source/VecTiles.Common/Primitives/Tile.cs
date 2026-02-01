@@ -24,7 +24,8 @@ public class Tile
         this.X = x;
         this.Y = y;
         this.Zoom = zoom;
-        this.CalculateBounds();
+
+        (Left, Top, Right, Bottom) = GetTileBounds(x, y, zoom);
     }
 
     /// <summary>
@@ -36,98 +37,45 @@ public class Tile
         this.Y = y;
         this.Zoom = zoom;
 
+        (Left, Top, Right, Bottom) = GetTileBounds(x, y, zoom);
+
         _id = Tile.CalculateTileId(zoom, x, y);
-        this.CalculateBounds();
-    }
-
-    private void CalculateBounds()
-    {
-        //double zoomPow = (1 << this.Zoom); // Math.Pow(2.0, this.Zoom)
-        //double n = Math.PI - ((2.0 * Math.PI * this.Y) / zoomPow);
-
-        //this.Left = (double)((this.X / zoomPow * 360.0) - 180.0);
-        //this.Top = (double)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-
-        //n = Math.PI - ((2.0 * Math.PI * (this.Y + 1)) / zoomPow);
-        //this.Right = (double)(((this.X + 1) / zoomPow * 360.0) - 180.0);
-        //this.Bottom = (double)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-
-        double[] bbox = GetBBox(this.X, this.Y, this.Zoom);
-
-        this.Left = bbox[0];
-        this.Bottom = bbox[1];
-        this.Right = bbox[2];
-        this.Top = bbox[3];
-
-        this.CenterLat = (double)((this.Top + this.Bottom) / 2.0);
-        this.CenterLon = (double)((this.Left + this.Right) / 2.0);
-    }
-
-    /// <summary>
-    /// Get the bounding box for a xyz tile. In the form of a double array [minX, minY, maxX, maxY]
-    /// </summary>
-    /// <param name="x"></param>
-    /// <param name="y"></param>
-    /// <param name="zoom"></param>
-    /// <returns></returns>
-    internal static double[] GetBBox(int x, int y, int zoom)
-    {
-        double zoomPow = (1 << zoom); // Math.Pow(2.0, this.Zoom)
-        double n = Math.PI - ((2.0 * Math.PI * y) / zoomPow);
-        double left = (double)((x / zoomPow * 360.0) - 180.0);
-        double top = (double)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-
-        n = Math.PI - ((2.0 * Math.PI * (y + 1)) / zoomPow);
-        double right = (double)(((x + 1) / zoomPow * 360.0) - 180.0);
-        double bottom = (double)(180.0 / Math.PI * Math.Atan(Math.Sinh(n)));
-
-        return new double[] { left, bottom, right, top };
     }
 
     /// <summary>
     /// The X position of the tile.
     /// </summary>
-    public int X { get; private set; }
+    public int X { get; init; }
 
     /// <summary>
     /// The Y position of the tile.
     /// </summary>
-    public int Y { get; private set; }
+    public int Y { get; init; }
 
     /// <summary>
     /// The zoom level for this tile.
     /// </summary>
-    public int Zoom { get; private set; }
+    public int Zoom { get; init; }
 
     /// <summary>
-    /// Gets the top.
+    /// The left position for this tile.
     /// </summary>
-    public double Top { get; private set; }
+    public double Left { get; init; }
 
     /// <summary>
-    /// Get the bottom.
+    /// The top position for this tile.
     /// </summary>
-    public double Bottom { get; private set; }
+    public double Top { get; init; }
 
     /// <summary>
-    /// Get the left.
+    /// The right position for this tile.
     /// </summary>
-    public double Left { get; private set; }
+    public double Right { get; init; }
 
     /// <summary>
-    /// Gets the right.
+    /// The bottom position for this tile.
     /// </summary>
-    public double Right { get; private set; }
-
-    /// <summary>
-    /// Gets the center lat.
-    /// </summary>
-    public double CenterLat { get; private set; }
-
-    /// <summary>
-    /// Gets the center lon.
-    /// </summary>
-    public double CenterLon { get; private set; }
+    public double Bottom { get; init; }
 
     /// <summary>
     /// Gets the parent tile.
@@ -331,89 +279,6 @@ public class Tile
     }
 
     /// <summary>
-    /// Returns the tile at the given location at the given zoom.
-    /// </summary>
-    public static Tile? CreateAroundLocation(double lat, double lon, int zoom)
-    {
-        if (!Tile.CreateAroundLocation(lat, lon, zoom, out int x, out int y))
-        {
-            return null;
-        }
-
-        return new Tile(x, y, zoom);
-    }
-
-    /// <summary>
-    /// Returns the tile at the given location at the given zoom.
-    /// </summary>
-    public static ulong CreateAroundLocationId(double lat, double lon, int zoom)
-    {
-        if (!Tile.CreateAroundLocation(lat, lon, zoom, out int x, out int y))
-        {
-            return ulong.MaxValue;
-        }
-
-        return Tile.CalculateTileId(zoom, x, y);
-    }
-
-    /// <summary>
-    /// A fast method of calculating x-y without creating a tile object.
-    /// </summary>
-    public static bool CreateAroundLocation(double lat, double lon, int zoom, out int x, out int y)
-    {
-        if (lon == 180)
-        {
-            lon -= 0.000001;
-        }
-
-        if (lat > 85.0511 || lat < -85.0511)
-        {
-            x = 0;
-            y = 0;
-            return false;
-        }
-
-        double scale = (1 << zoom);
-
-        x = (int)((lon + 180.0) / 360.0 * scale);
-        double latRad = lat * Math.PI / 180.0;
-        y = (int)((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * scale);
-        return true;
-    }
-
-    /// <summary>
-    /// Gets the tile id the given lat/lon belongs to one zoom level lower.
-    /// </summary>
-    public ulong GetSubTileIdFor(double lat, double lon)
-    {
-        const int factor = 2;
-        int zoom = this.Zoom + 1;
-        int x = 0, y = 0;
-        if (lat >= this.CenterLat && lon < this.CenterLon)
-        {
-            x = this.X * factor;
-            y = this.Y * factor;
-        }
-        else if (lat >= this.CenterLat && lon >= this.CenterLon)
-        {
-            x = this.X * factor + factor - 1;
-            y = this.Y * factor;
-        }
-        else if (lat < this.CenterLat && lon < this.CenterLon)
-        {
-            x = this.X * factor;
-            y = this.Y * factor + factor - 1;
-        }
-        else if (lat < this.CenterLat && lon >= this.CenterLon)
-        {
-            x = this.X * factor + factor - 1;
-            y = this.Y * factor + factor - 1;
-        }
-
-        return Tile.CalculateTileId(zoom, x, y);
-    }
-
-    /// <summary>
     /// Returns the subtiles of this tile at the given zoom.
     /// </summary>
     public TileRange GetSubTiles(int zoom)
@@ -461,44 +326,24 @@ public class Tile
 
         return new Tile(this.X, n - this.Y - 1, this.Zoom);
     }
+    
+    // Earth circumference in EPSG:3857 (Web Mercator)
+    private const double EarthCircumference = 40075016.68557848;
+    private const double InitialResolution = EarthCircumference / 512.0;
 
-    internal (double x, double y) SubCoordinates(double lat, double lon)
+    // Calc four corners of given tile in EPSG:3857 coordinate system
+    private static (double minX, double minY, double maxX, double maxY) GetTileBounds(int x, int y, int zoom)
     {
-        double leftOffset = lon - this.Left;
-        double bottomOffset = lat - this.Bottom;
+        // Calc resolution pro pixel for this zoom level
+        double resolution = InitialResolution / Math.Pow(2, zoom);
 
-        return (this.X + (leftOffset / (this.Right - this.Left)),
-            this.Y + (bottomOffset / (this.Top - this.Bottom)));
-    }
+        // Calc geographical boarders of tile in EPSG:3857
+        double minX = -EarthCircumference / 2.0 + x * 512.0 * resolution;
+        double maxX = -EarthCircumference / 2.0 + (x + 1) * 512.0 * resolution;
 
-    public string ToGeoJson()
-    {
-        return $@"{{
-                ""type"": ""Polygon"",
-                ""coordinates"": [
-                  [
-                    [
-                      {this.Left},
-                      {this.Bottom}
-                    ],
-                    [
-                      {this.Right},
-                      {this.Bottom}
-                    ],
-                    [
-                      {this.Right},
-                      {this.Top}
-                    ],
-                    [
-                      {this.Left},
-                      {this.Top}
-                    ],
-                    [
-                      {this.Left},
-                      {this.Bottom}
-                    ]
-                  ]
-                ]
-              }}";
+        double minY = EarthCircumference / 2.0 - (y + 1) * 512.0 * resolution;
+        double maxY = EarthCircumference / 2.0 - y * 512.0 * resolution;
+
+        return (minX, minY, maxX, maxY);
     }
 }

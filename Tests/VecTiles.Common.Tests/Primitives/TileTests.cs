@@ -83,14 +83,6 @@ namespace VecTiles.Common.Tests.Primitives
         }
 
         [Fact]
-        public void Tile_CreateAroundLocation_Works()
-        {
-            var tile = Tile.CreateAroundLocation(0, 0, 2);
-            Assert.NotNull(tile);
-            Assert.True(tile.IsValid);
-        }
-
-        [Fact]
         public void Tile_GetSubTiles_ReturnsCorrectRange()
         {
             var tile = new Tile(1, 1, 2);
@@ -112,15 +104,6 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal(2, invX.Y);
             Assert.Equal(1, invY.X);
             Assert.Equal(5, invY.Y);
-        }
-
-        [Fact]
-        public void Tile_ToGeoJson_ReturnsValidJson()
-        {
-            var tile = new Tile(0, 0, 0);
-            var geoJson = tile.ToGeoJson();
-            Assert.Contains(@"""type"": ""Polygon""", geoJson);
-            Assert.Contains(@"""coordinates"":", geoJson);
         }
     }
 }

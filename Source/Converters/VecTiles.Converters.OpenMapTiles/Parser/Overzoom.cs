@@ -14,7 +14,7 @@ internal record Overzoom(double Scale, long OffsetX, long OffsetY)
         return new Coordinate(x * 0.125 * Scale - OffsetX, y * 0.125 * Scale - OffsetY);
     }
 
-    internal static Overzoom CreateFromTiles(Tile requestedTile, Tile providedTile, Scheme scheme)
+    internal static Overzoom CreateFromTiles(Tile requestedTile, Tile providedTile)
     {
         if (requestedTile.Zoom == providedTile.Zoom)
         {
@@ -23,9 +23,7 @@ internal record Overzoom(double Scale, long OffsetX, long OffsetY)
 
         var scale = 1 << (requestedTile.Zoom - providedTile.Zoom);
         var offsetX = (requestedTile.X - providedTile.X * scale) * 512;
-        var offsetY = scheme == Scheme.Tms
-            ? (scale - requestedTile.Y + providedTile.Y * scale - 1) * 512
-            : (requestedTile.Y - providedTile.Y * scale) * 512;
+        var offsetY = (requestedTile.Y - providedTile.Y * scale) * 512;
         
         var minX = offsetX;
         var maxX = offsetX + 512;

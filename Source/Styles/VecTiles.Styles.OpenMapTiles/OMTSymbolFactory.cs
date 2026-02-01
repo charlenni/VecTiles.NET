@@ -62,7 +62,7 @@ public class OMTSymbolFactory : ISymbolFactory
             return null;
         }*/
 
-        var point = ConvertFromLatLon(tile, geometryPoint);
+        var point = ConvertFrom(tile, geometryPoint);
         var builderKey = (style.Name, (int)context.Zoom);
 
         if (!_iconBuilders.ContainsKey(builderKey))
@@ -165,7 +165,7 @@ public class OMTSymbolFactory : ISymbolFactory
             var x = seq.GetX(i);
             var y = seq.GetY(i);
 
-            (var worldX, var worldY) = ConvertFromLatLon(_tile, x, y);
+            (var worldX, var worldY) = ConvertFrom(_tile, x, y);
 
             seq.SetX(i, worldX);
             seq.SetY(i, worldY);
@@ -181,30 +181,22 @@ public class OMTSymbolFactory : ISymbolFactory
         return result;
     }
 
-    private static Point ConvertFromLatLon(Tile tile, Point point)
+    private static Point ConvertFrom(Tile tile, Point point)
     {
-        (var x, var y) = ConvertFromLatLon(tile, point.X, point.Y);
+        (var x, var y) = ConvertFrom(tile, point.X, point.Y);
 
         return new Point(x, y);
     }
 
-    private static (double, double) ConvertFromLatLon(Tile tile, double pointX, double pointY)
+    private static (double, double) ConvertFrom(Tile tile, double pointX, double pointY)
     {
-        const double radius = 6378137.0;
-        const double pi180 = Math.PI / 180.0;
-        const double pi360 = Math.PI / 360.0;
-        const double pi4 = Math.PI / 4.0;
+        double left = tile.Left;
+        double bottom = tile.Bottom;
+        double right = tile.Right;
+        double top = tile.Top;
 
-        double LonToX(double lon) => radius * pi180 * lon;
-        double LatToY(double lat) => radius * Math.Log(Math.Tan(pi4 + pi360 * lat));
-
-        double left = LonToX(tile.Left);
-        double bottom = LatToY(tile.Bottom);
-        double right = LonToX(tile.Right);
-        double top = LatToY(tile.Top);
-
-        var worldPointX = left + (right - left) * pointX / 512.0;
-        var worldPointY = top - (top - bottom) * pointY / 512.0;
+        var worldPointX = tile.Left + (tile.Right - tile.Left) * pointX / 512.0;
+        var worldPointY = tile.Top + (tile.Bottom - tile.Top) * pointY / 512.0;
 
         return (worldPointX, worldPointY);
     }

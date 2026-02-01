@@ -18,11 +18,10 @@ public static class Parser
     /// Parses an unzipped tile in OpenMapTiles format.
     /// </summary>
     /// <param name="stream">Stream containing tile data in Pbf format.</param>
-    /// <param name="inverted">Flag, if the y-axis has to be inverted.</param>
     /// <param name="requestedTile">The tile being requested.</param>
     /// <param name="providedTile">The tile provided in the data stream.</param>
     /// <returns>A VectorTile containing layers and features parsed from the stream.</returns>
-    public static VectorTile Parse(Stream stream, Tile requestedTile, Tile providedTile, Scheme scheme)
+    public static VectorTile Parse(Stream stream, Tile requestedTile, Tile providedTile)
     {
         // Check if the stream is null or empty
         if (stream == null)
@@ -47,7 +46,7 @@ public static class Parser
         }
 
         // Create overzoom transformation if needed
-        Overzoom overzoom = Overzoom.CreateFromTiles(requestedTile, providedTile, scheme);
+        Overzoom overzoom = Overzoom.CreateFromTiles(requestedTile, providedTile);
 
         // Iterate through each layer in the PbfTile
         foreach (var pbfLayer in pbfTile.Layers)

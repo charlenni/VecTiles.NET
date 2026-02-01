@@ -17,8 +17,7 @@ public interface ITileConverter
     /// </summary>
     /// <param name="requestedTile">Tile we want to have</param>
     /// <param name="providedTile">Tile to which the data belongs. Could be from a lower zoom level.</param>
-    /// <param name="scheme">Scheme used for tiles</param>
     /// <param name="data">Binary data from the provided tile</param>
     /// <returns>Vector tile</returns>
-    Task<VectorTile?> Convert(Tile requestedTile, Tile providedTile, Scheme scheme, byte[] data);
+    Task<VectorTile?> Convert(Tile requestedTile, Tile providedTile, byte[] data);
 }

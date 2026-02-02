@@ -1,0 +1,56 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AvaloniaResource Include="Assets\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\..\Files\osm-liberty.json" Link="Files\osm-liberty.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty.json" Link="Files\Sprites\osm-liberty.json" />
+    <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty.png" Link="Files\Sprites\osm-liberty.png" />
+    <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty@2x.json" Link="Files\Sprites\osm-liberty%402x.json" />
+    <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty@2x.png" Link="Files\Sprites\osm-liberty%402x.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+
+    <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
+    <PackageReference Include="Avalonia" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Diagnostics" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="11.3.11" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.3.11" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Mapsui.Avalonia" Version="5.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
+    <PackageReference Include="protobuf-net" Version="3.2.56" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />
+    <PackageReference Include="System.Reactive" Version="6.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Source\Controls\VecTiles.Control.Mapsui\VecTiles.Controls.Mapsui.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Files\Sprites\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\Files\LICENSE.md" Link="Files\LICENSE.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\..\Files\natural_earth_2_shaded_relief.raster.mbtiles" Link="Files\natural_earth_2_shaded_relief.raster.mbtiles">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\..\Files\zurich.mbtiles" Link="Files\zurich.mbtiles">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

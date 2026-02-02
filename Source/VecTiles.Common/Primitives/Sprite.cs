@@ -26,6 +26,8 @@ public class Sprite : ISprite
 
     public int Height { get; set; }
 
+    public object? Native { get; set; }
+
     public float PixelRatio { get; set; } = 1.0f;
 
     public IList<float> Content { get; set; } = [];

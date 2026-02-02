@@ -23,11 +23,11 @@ public static class IPaintExtension
 
         if (paint.Pattern != null)
         {
-            if (paint.Pattern.Atlas.Native == null)
-            {
-                paint.Pattern.Atlas.Native = SKImage.FromEncodedData(paint.Pattern.Atlas.Binary).Subset(new SKRectI(paint.Pattern.X, paint.Pattern.Y, paint.Pattern.X + paint.Pattern.Width, paint.Pattern.Y + paint.Pattern.Height));
-            }
-            skPaint.Shader = ((SKImage)paint.Pattern.Atlas.Native).ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
+            paint.Pattern.Atlas.Native ??= SKImage.FromEncodedData(paint.Pattern.Atlas.Binary);
+            paint.Pattern.Native ??= ((SKImage) paint.Pattern.Atlas.Native).Subset(new SKRectI(paint.Pattern.X, paint.Pattern.Y,
+                paint.Pattern.X + paint.Pattern.Width, paint.Pattern.Y + paint.Pattern.Height));
+            
+            skPaint.Shader = ((SKImage)paint.Pattern.Native).ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
         }
         
         if (paint.DashArray != null)

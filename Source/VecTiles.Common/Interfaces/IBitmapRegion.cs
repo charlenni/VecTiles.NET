@@ -24,4 +24,9 @@ public interface IBitmapRegion
     /// Gets the height of the region.
     /// </summary>
     int Height { get; }
+    
+    /// <summary>
+    /// Store for native bitmap region
+    /// </summary>
+    object? Native { get; set; }
 }

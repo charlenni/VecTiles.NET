@@ -196,7 +196,7 @@ public class OMTSymbolFactory : ISymbolFactory
         double top = tile.Top;
 
         var worldPointX = tile.Left + (tile.Right - tile.Left) * pointX / 512.0;
-        var worldPointY = tile.Top + (tile.Bottom - tile.Top) * pointY / 512.0;
+        var worldPointY = tile.Top - (tile.Top - tile.Bottom) * pointY / 512.0;
 
         return (worldPointX, worldPointY);
     }

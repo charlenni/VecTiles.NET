@@ -25,7 +25,7 @@ public class Tile
         this.Y = y;
         this.Zoom = zoom;
 
-        (Left, Top, Right, Bottom) = GetTileBounds(x, y, zoom);
+        (Left, Bottom, Right, Top) = GetTileBounds(x, y, zoom);
     }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class Tile
         this.Y = y;
         this.Zoom = zoom;
 
-        (Left, Top, Right, Bottom) = GetTileBounds(x, y, zoom);
+        (Left, Bottom, Right, Top) = GetTileBounds(x, y, zoom);
 
         _id = Tile.CalculateTileId(zoom, x, y);
     }

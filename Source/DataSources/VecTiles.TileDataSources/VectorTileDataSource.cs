@@ -33,7 +33,7 @@ public class VectorTileDataSource : IVectorTileDataSource
     public SourceType SourceType => _dataSource.SourceType;
 
     /// <summary>
-    /// IVectorTileDataSources use always Xyz independently from the underlying data source
+    /// IVectorTileDataSources use always Xyz independently of the underlying data source
     /// </summary>
     public Scheme Scheme => Scheme.Xyz;
 

@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+	<TargetFrameworks>net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mapsui" Version="5.0.2" />
+    <PackageReference Include="Mapsui.Rendering.Skia" Version="5.0.2" />
+    <PackageReference Include="Mapsui.Tiling" Version="5.0.2" />
+    <PackageReference Include="NetTopologySuite.IO.VectorTiles" Version="1.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
+    <PackageReference Include="protobuf-net" Version="3.2.56" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
+    <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />
+    <ProjectReference Include="..\..\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
+  </ItemGroup>
+
+</Project>

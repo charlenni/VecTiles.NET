@@ -141,7 +141,7 @@ public class MbTilesTileDataSource : ITileDataSource
     /// <returns>Task which returns binary data</returns>
     public async Task<byte[]?> GetTileAsync(Tile tile)
     {
-        //tile = Schema.YAxis == YAxis.OSM ? tile : tile.InvertY();
+        tile = Schema.YAxis == YAxis.OSM ? tile : tile.InvertY();
 
         if (!IsTileIndexValid(tile))
             return null;

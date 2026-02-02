@@ -38,7 +38,7 @@ public class VectorTileDataSource : IVectorTileDataSource
     public Scheme Scheme => Scheme.Xyz;
 
     /// <inheritdoc/>
-    public Task<byte[]?> GetTileAsync(Tile requestedTile) => _dataSource.GetTileAsync(_dataSource.Scheme == Scheme.Xyz ? requestedTile : requestedTile.InvertY());
+    public Task<byte[]?> GetTileAsync(Tile requestedTile) => _dataSource.GetTileAsync(requestedTile);
 
     /// <inheritdoc/>
     public async Task<VectorTile?> GetVectorTileAsync(Tile requestedTile)
@@ -47,12 +47,12 @@ public class VectorTileDataSource : IVectorTileDataSource
             return null;
 
         var providedTile = requestedTile;
-        var data = await _dataSource.GetTileAsync(_dataSource.Scheme == Scheme.Xyz ? requestedTile : requestedTile.InvertY());
+        var data = await _dataSource.GetTileAsync(requestedTile);
 
         while (data == null && providedTile.Zoom > 0)
         {
             providedTile = providedTile.Parent;
-            data = await _dataSource.GetTileAsync(_dataSource.Scheme == Scheme.Xyz ? providedTile : providedTile.InvertY());
+            data = await _dataSource.GetTileAsync(providedTile);
         }
 
         return data == null ? null : await _converter.Convert(requestedTile, providedTile, data);

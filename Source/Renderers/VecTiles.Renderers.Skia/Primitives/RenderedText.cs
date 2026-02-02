@@ -6,9 +6,9 @@ namespace VecTiles.Renderers.Skia.Primitives;
 
 public class RenderedText
 {
-    public RenderedText(string text)
+    public RenderedText(string text, Style? style = null)
     {
-        TextStyle = new Style();
+        TextStyle = style ?? new Style();
         
         Text = new TextBlock();
         Text.AddText(text, TextStyle);    

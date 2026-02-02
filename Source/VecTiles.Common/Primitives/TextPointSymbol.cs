@@ -72,6 +72,16 @@ public class TextPointSymbol : Symbol
     public TextDirection Direction { get; init; }
     
     /// <summary>
+    /// Font names
+    /// </summary>
+    public string[] FontNames { get; init; }
+
+    /// <summary>
+    /// Function to calculate font size of symbol text from EvaluationContext
+    /// </summary>
+    public Func<EvaluationContext, float>? FontSize { get; init; }
+
+    /// <summary>
     /// Function to calculate halo color to use when drawing symbol from EvaluationContext
     /// </summary>
     public Func<EvaluationContext, Color>? HaloColor { get; init; }

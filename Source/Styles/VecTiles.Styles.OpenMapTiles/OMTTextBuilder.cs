@@ -13,8 +13,8 @@ public class OMTTextBuilder
 {
     private OMTLayerStyle _style;
     private EvaluationContext _context;
-    private string[] _textFont;
-    private float _fontSize;
+    private string[] _fontNames;
+    private Func<EvaluationContext, float> _fontSize;
     private float _lineHeight;
     private float _letterSpacing;
     private string _textMask;
@@ -47,9 +47,9 @@ public class OMTTextBuilder
             throw new FontNotFoundException($"Font missing for style '{style.Name}'");
         }
 
-        _textFont = style.Layout.TextFont;
+        _fontNames = style.Layout.TextFont;
+        _fontSize = (ctx) => style.Layout.TextSize.Evaluate(ctx);
 
-        _fontSize = style.Layout.TextSize.Evaluate(_context);
         _lineHeight = style.Layout.TextLineHeight.Evaluate(context);
         _letterSpacing = style.Layout.TextLetterSpacing.Evaluate(context);
 
@@ -61,7 +61,7 @@ public class OMTTextBuilder
 
         _rotation = style.Layout.TextRotate.Evaluate(context);
         _anchor = style.Layout.TextAnchor.ToPoint();
-        _offset = style.Layout.TextOffset.Evaluate(context).ToPoint(_fontSize);
+        _offset = style.Layout.TextOffset.Evaluate(context).ToPoint(_fontSize.Invoke(context));
 
         _transform = style.Layout.TextTransform;
         _alignment = CreateAlignment(style.Layout.TextJustify, style.Layout.TextAnchor);
@@ -109,6 +109,8 @@ public class OMTTextBuilder
             Alignment = _alignment,
             Direction = TextDirection.Auto,
             Opacity = _opacity,
+            FontNames = _fontNames,
+            FontSize = _fontSize,
             HaloBlur = _haloBlur,
             HaloColor = _haloColor,
             HaloWidth = _haloWidth,

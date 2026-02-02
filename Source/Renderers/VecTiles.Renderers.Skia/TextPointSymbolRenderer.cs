@@ -1,5 +1,4 @@
-﻿using System.Net.Mime;
-using NetTopologySuite.Geometries;
+﻿using NetTopologySuite.Geometries;
 using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using Topten.RichTextKit;
@@ -123,7 +122,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         text.Text.ApplyStyle(0, text.Text.Length, textStyle);
 
         // Translate to right position respecting the correction (leading space before TextBlocks text starts)
-        canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth - text.LeftRightCorrection), (float)(symbol.Anchor.Y * text.MeasuredHeight));
+        canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth), (float)(symbol.Anchor.Y * text.MeasuredHeight));
 
         text.Text.Paint(canvas);
 
@@ -137,7 +136,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return new Envelope();
         }
 
-        symbol.Renderer ??= new RenderedText(symbol.Text);
+        symbol.Renderer ??= new RenderedText(symbol.Text, CreateFonts(symbol.FontNames));
         
         var text = (RenderedText) symbol.Renderer;
 
@@ -150,13 +149,15 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return text.LastEnvelope;
         }
 
+        text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
+        
         // Set max width to the correct value
         text.Text.MaxWidth = symbol.MaxWidth.Invoke(context, text.TextStyle.FontSize);
         text.Text.ApplyStyle(0, text.Text.Length, text.TextStyle);
 
         // MeasuredWidth and MeasuredHeight need many CPU cycles, so save them for later use
-        text.MeasuredWidth = text.MeasuredWidth;
-        text.MeasuredHeight = text.MeasuredHeight;
+        text.MeasuredWidth = text.Text.MeasuredWidth;
+        text.MeasuredHeight = text.Text.MeasuredHeight;
         // MaxWidth could be greater than MeasuredWidth. Then there is some space around the text.
         // To save another call to MeasuredWidth (with another time-consuming layout), we save the 
         // amount of space in front of the text and remove this when drawing the text.

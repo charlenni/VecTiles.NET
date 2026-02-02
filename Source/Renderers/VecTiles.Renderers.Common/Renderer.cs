@@ -12,7 +12,7 @@ namespace VecTiles.Renderers.Common;
 /// </summary>
 public class Renderer
 {
-    IEnumerable<ITileDataSource> _sources;
+    IEnumerable<KeyValuePair<string, ITileDataSource>> _sources;
     IEnumerable<ILayerStyle> _styles;
     IRenderFactory _renderFactory;
 
@@ -22,7 +22,7 @@ public class Renderer
     /// <param name="sources">Tile sources to use for data</param>
     /// <param name="styles">Tile styles to use to render </param>
     /// <param name="renderFactory">Factory to render tile styles</param>
-    public Renderer(IEnumerable<ITileDataSource> sources, IEnumerable<ILayerStyle> styles, IRenderFactory renderFactory)
+    public Renderer(IEnumerable<KeyValuePair<string, ITileDataSource>> sources, IEnumerable<ILayerStyle> styles, IRenderFactory renderFactory)
     {
         _sources = sources;
         _styles = styles;
@@ -41,20 +41,20 @@ public class Renderer
             //    continue;
             //}
 
-            switch (source.SourceType)
+            switch (source.Value.SourceType)
             {
                 case SourceType.Raster:
-                    var binaryTileData = await source.GetTileAsync(tile);
+                    var binaryTileData = await source.Value.GetTileAsync(tile);
                     if (binaryTileData != null)
                     {
-                        rawTiles.Add(source.Name.ToLower(), binaryTileData);
+                        rawTiles.Add(source.Key.ToLower(), binaryTileData);
                     }
                     break;
                 case SourceType.Vector:
-                    var tileData = await ((IVectorTileDataSource)source).GetVectorTileAsync(tile);
+                    var tileData = await ((IVectorTileDataSource)source.Value).GetVectorTileAsync(tile);
                     if (tileData != null)
                     {
-                        rawTiles.Add(source.Name.ToLower(), tileData);
+                        rawTiles.Add(source.Key.ToLower(), tileData);
                     }
                     break;
             }

@@ -1,6 +1,7 @@
 ﻿using BruTile;
 using BruTile.Cache;
 using Mapsui;
+using VecTiles.Common.Interfaces;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Skia;
 using VecTiles.Styles.OpenMapTiles;
@@ -20,7 +21,7 @@ public class OMTRenderedTileSource : IRenderedTileSource
         var minZoom = 0;
         var maxZoom = 24;
 
-        _renderer = new Renderer(omtStyleFile.Sources.Select(s => (VecTiles.Common.Interfaces.ITileDataSource)s.Value.DataSource), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new OMTPaintFactory(omtStyleFile.Sprites), new OMTSymbolFactory(omtStyleFile.Sprites)));
+        _renderer = new Renderer(omtStyleFile.Sources.Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, (ITileDataSource)s.Value.DataSource)), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new OMTPaintFactory(omtStyleFile.Sprites), new OMTSymbolFactory(omtStyleFile.Sprites)));
         _cache = new MemoryCache<RenderedTileFeature>(200, 300);
 
         Schema = new GlobalSphericalMercator512(YAxis.OSM, minZoom, maxZoom);  // Default format in VecTiles.NET

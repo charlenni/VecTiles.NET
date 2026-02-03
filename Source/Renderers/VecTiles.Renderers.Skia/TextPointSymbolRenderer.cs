@@ -111,6 +111,8 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         canvas.RotateDegrees(symbol.Rotation);
 
         var text = (RenderedText) symbol.Renderer;
+
+        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
         
         var textStyle = (Style)text.Text.GetStyleAtOffset(0);
 
@@ -122,7 +124,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         text.Text.ApplyStyle(0, text.Text.Length, textStyle);
 
         // Translate to right position respecting the correction (leading space before TextBlocks text starts)
-        canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth), (float)(symbol.Anchor.Y * text.MeasuredHeight));
+        canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth) - text.Text.MeasuredPadding.Left, (float)(symbol.Anchor.Y * text.MeasuredHeight - text.Text.MeasuredPadding.Top));
 
         text.Text.Paint(canvas);
 
@@ -149,6 +151,8 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return text.LastEnvelope;
         }
 
+        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
+
         text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
         
         // Set max width to the correct value
@@ -159,27 +163,14 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         text.MeasuredWidth = text.Text.MeasuredWidth;
         text.MeasuredHeight = text.Text.MeasuredHeight;
         // MaxWidth could be greater than MeasuredWidth. Then there is some space around the text.
-        // To save another call to MeasuredWidth (with another time-consuming layout), we save the 
-        // amount of space in front of the text and remove this when drawing the text.
-        text.LeftRightCorrection = (float)(text.Text.MaxWidth - text.MeasuredWidth) * symbol.Alignment switch
-        {
-            TextJustify.Left => 0f,
-            TextJustify.Center => 0.5f,
-            TextJustify.Right => 1.0f,
-            TextJustify.Auto => text.Text.BaseDirection switch
-            {
-                TextDirection.LTR => 0.0f,
-                TextDirection.RTL => 1.0f,
-                _ => 0.0f  // TODO: Not sure what happens with TextDirection.Auto
-            },
-            _ => 0.0f
-        };
-
+        // This could be access by MeasuredPadding.
+        text.LeftRightCorrection = 0f;
+        
         var anchor = new SKPoint((float)(symbol.Anchor.X * text.MeasuredWidth), (float)(symbol.Anchor.Y * text.MeasuredHeight));
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
 
         // We now could calc the rough envelope of text
-        var envelope = new Envelope(0 + offset.X, text.MeasuredWidth + offset.X, 0 + offset.Y, text.MeasuredHeight + offset.Y);
+        var envelope = new Envelope(0 + offset.X + text.Text.MeasuredPadding.Left, text.MeasuredWidth + offset.X + text.Text.MeasuredPadding.Left, 0 + offset.Y + text.Text.MeasuredPadding.Top, text.MeasuredHeight + offset.Y + text.Text.MeasuredPadding.Top);
 
         if (symbol.Rotation != 0.0)
         {

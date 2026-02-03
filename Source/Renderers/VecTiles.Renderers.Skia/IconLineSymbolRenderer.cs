@@ -27,7 +27,7 @@ public class IconLineSymbolRenderer : ISymbolRenderer
 
         using var pathMeasure = new SKPathMeasure(path);
         
-        for (var pos = symbol.Spacing; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+        for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
         {
             pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
 
@@ -57,7 +57,7 @@ public class IconLineSymbolRenderer : ISymbolRenderer
 
         using var pathMeasure = new SKPathMeasure(path);
         
-        for (var pos = symbol.Spacing; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+        for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
         {
             pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
                 
@@ -109,7 +109,11 @@ public class IconLineSymbolRenderer : ISymbolRenderer
 
         canvas.Translate((float)(symbol.Anchor.X * symbol.Icon.Width * symbol.Scale - symbol.Padding), (float)(symbol.Anchor.Y * symbol.Icon.Height * symbol.Scale - symbol.Padding));
 
-        canvas.DrawImage(symbol.Icon.Atlas.ToSKImage(), symbol.Envelope!.ToSKRect(), (new Envelope(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding).ToSKRect()), paint);
+        symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
+        symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
+            symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
+
+        canvas.DrawImage((SKImage)symbol.Icon.Native, new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding), paint);
 
         canvas.Restore();
     }

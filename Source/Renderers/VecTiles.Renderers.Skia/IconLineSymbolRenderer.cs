@@ -12,6 +12,7 @@ namespace VecTiles.Renderers.Skia;
 
 public class IconLineSymbolRenderer : ISymbolRenderer
 {
+    private static readonly SKSamplingOptions _samplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Green, StrokeWidth = 1, IsStroke = true };
 
     public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false, bool showUnvalidBorders = false)
@@ -91,7 +92,7 @@ public class IconLineSymbolRenderer : ISymbolRenderer
 
     private static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX, double screenY, double rotation)
     {
-        SKPaint paint = new SKPaint();
+        SKPaint paint = new SKPaint() { IsAntialias = true };
 
         canvas.Save();
 
@@ -125,7 +126,9 @@ public class IconLineSymbolRenderer : ISymbolRenderer
         symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
             symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
 
-        canvas.DrawImage((SKImage)symbol.Icon.Native, new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding), paint);
+        var dest = new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding);
+        
+        canvas.DrawImage((SKImage)symbol.Icon.Native, dest, _samplingOptions, paint);
 
         canvas.Restore();
     }

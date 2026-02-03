@@ -1,4 +1,5 @@
 ﻿using SkiaSharp;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Converters.OpenMapTiles;
 using VecTiles.DataSources.MbTiles;
@@ -30,9 +31,8 @@ public class SkiaRendererTests
         var symbolFactory = new OMTSymbolFactory(spriteDictionary);
         var renderFactory = new RenderFactory(omtStyleFile.Layers, paintFactory, symbolFactory);
 
-        _renderer = new Renderer([vectorDataSource],  omtStyleFile.Layers, renderFactory);
+        _renderer = new Renderer([new KeyValuePair<string, ITileDataSource>(vectorDataSource.Name, vectorDataSource)],  omtStyleFile.Layers, renderFactory);
     }
-
 
     [Theory]
     [InlineData(0, 0, 0)]

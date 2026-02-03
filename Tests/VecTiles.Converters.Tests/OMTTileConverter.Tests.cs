@@ -18,12 +18,12 @@ public class OMTConverterTests
 
         Assert.True(dataSource.Version == "3.15.0");
 
-        var tile = new Tile(8580, 10645, 14);
+        var tile = new Tile(8580, 5738, 14);
 
         var vectorTile = await vectorDataSource.GetVectorTileAsync(tile);
 
         Assert.NotNull(vectorTile);
-        Assert.True(vectorTile.TileId == 263894745);
+        Assert.True(vectorTile.TileId == 183498457);
         Assert.True(vectorTile.IsEmpty == false);
         Assert.True(vectorTile.Layers.Count == 13);
         Assert.True(vectorTile.Layers[10].Name == "water");

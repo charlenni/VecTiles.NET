@@ -76,7 +76,7 @@ namespace VecTiles.Styles.MapboxTests
 
             Assert.True(mapboxStyleFile != null);
             Assert.True(mapboxStyleFile.Sprites != null);
-            Assert.True(mapboxStyleFile.Sprites.Sprites.Count() == 241);
+            Assert.True(mapboxStyleFile.Sprites.Sprites.Count() == 244);
         }
         [Fact]
         public async Task CheckSpritePropertiesTest()
@@ -89,7 +89,7 @@ namespace VecTiles.Styles.MapboxTests
             Assert.True(mapboxStyleFile.Sprites.Sprites.Any());
 
             // Check that a known sprite exists
-            var sprite = mapboxStyleFile.Sprites.Sprites.FirstOrDefault(s => s.Key == "airport_15");
+            var sprite = mapboxStyleFile.Sprites.Sprites.FirstOrDefault(s => s.Key == "airport_11");
             Assert.NotNull(sprite.Value);
             Assert.True(sprite.Value.Width > 0);
             Assert.True(sprite.Value.Height > 0);

@@ -29,6 +29,12 @@ public class IconLineSymbolRenderer : ISymbolRenderer
         
         for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
         {
+            if (pathMeasure.Length < symbol.Spacing)
+            {
+                // We could only place one symbol in this part, so set it in the middle
+                pos = pathMeasure.Length / 2;
+            }
+            
             pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
 
             var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
@@ -59,6 +65,12 @@ public class IconLineSymbolRenderer : ISymbolRenderer
         
         for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
         {
+            if (pathMeasure.Length < symbol.Spacing)
+            {
+                // We could only place one symbol in this part, so set it in the middle
+                pos = pathMeasure.Length / 2;
+            }
+            
             pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
                 
             var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;

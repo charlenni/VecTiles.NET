@@ -119,9 +119,23 @@ public class TextLineSymbolRenderer : ISymbolRenderer
         canvas.Translate(symbol.Offset.ToSKPoint());
         canvas.RotateDegrees((float)rotation);
 
-        //canvas.Translate((float)(symbol.Anchor.X * symbol.Icon.Width * symbol.Scale - symbol.Padding), (float)(symbol.Anchor.Y * symbol.Icon.Height * symbol.Scale - symbol.Padding));
+        var text = (RenderedText) symbol.Renderer;
 
-        //canvas.DrawImage((SKImage)symbol.Icon.Native, new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding), paint);
+        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
+        
+        var textStyle = (Style)text.Text.GetStyleAtOffset(0);
+
+        textStyle.TextColor = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f));
+        textStyle.HaloBlur = symbol.HaloBlur.Invoke(context);
+        textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
+        textStyle.HaloWidth = symbol.HaloWidth.Invoke(context);
+
+        text.Text.ApplyStyle(0, text.Text.Length, textStyle);
+
+        // Translate to right position respecting the correction (leading space before TextBlocks text starts)
+        canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth) - text.Text.MeasuredPadding.Left, (float)(symbol.Anchor.Y * text.MeasuredHeight - text.Text.MeasuredPadding.Top));
+
+        text.Text.Paint(canvas);
 
         canvas.Restore();
     }

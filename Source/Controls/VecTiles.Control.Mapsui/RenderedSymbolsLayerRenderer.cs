@@ -51,13 +51,13 @@ public static class RenderedSymbolsLayerRenderer
                 }
             }
 
-            if (symbol is IconLineSymbol iconLineSymbol)
+            if (symbol is LineSymbol lineSymbol)
             {
                 Func<double, double, (double, double)> worldToScreenConverter = (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
 
-                if (IconLineSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowValidBorders, renderedLayer.ShowInvalidBorders))
+                if (LineSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowValidBorders, renderedLayer.ShowInvalidBorders))
                 {
-                    IconLineSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter);
+                    LineSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter);
                 }
             }
 

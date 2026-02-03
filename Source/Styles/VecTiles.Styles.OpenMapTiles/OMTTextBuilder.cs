@@ -23,8 +23,11 @@ public class OMTTextBuilder
     private bool _allowOthers;
     private float _scale;
     private float _rotation;
+    private readonly MapAlignment _rotationAlignment;
+    private readonly int _padding;
     private Point _anchor;
     private Point _offset;
+    private readonly float _spacing;
     private TextTransform _transform;
     private TextJustify _alignment;
     private Func<EvaluationContext, Color> _color;
@@ -60,8 +63,11 @@ public class OMTTextBuilder
         _allowOthers = style.Layout.TextIgnorePlacement;
 
         _rotation = style.Layout.TextRotate.Evaluate(context);
+        _rotationAlignment = style.Layout.TextRotationAlignment;
+        _padding = (int)style.Layout.TextPadding.Evaluate(context);
         _anchor = style.Layout.TextAnchor.ToPoint();
         _offset = style.Layout.TextOffset.Evaluate(context).ToPoint(_fontSize.Invoke(context));
+        _spacing = style.Layout.SymbolSpacing.Evaluate(context);
 
         _transform = style.Layout.TextTransform;
         _alignment = CreateAlignment(style.Layout.TextJustify, style.Layout.TextAnchor);
@@ -105,6 +111,51 @@ public class OMTTextBuilder
             Rotation = _rotation,
             Anchor = _anchor,
             Offset = _offset,
+            Color = _color,
+            Alignment = _alignment,
+            Direction = TextDirection.Auto,
+            Opacity = _opacity,
+            FontNames = _fontNames,
+            FontSize = _fontSize,
+            HaloBlur = _haloBlur,
+            HaloColor = _haloColor,
+            HaloWidth = _haloWidth,
+            Translate = _translate,
+            TranslateAnchor = _translateAnchor,
+            MaxWidth = _maxWidth,
+            SortOrder = _sortOrder(_context, tile),
+            Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
+            Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,
+            Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"]!.ToString() ?? string.Empty) : 0,
+        };
+
+        return symbol;
+    }
+
+    public TextLineSymbol? Build(Tile tile, Geometry geometry, IFeature feature)
+    {
+        _context.Feature = feature;
+
+        var text = _textMask.ReplaceWithTags(_context)
+            .ReplaceWithTransforms(_transform);
+
+        if (string.IsNullOrEmpty(text))
+        {
+            return null;
+        }
+
+        var symbol = new TextLineSymbol(tile, geometry, text)
+        {
+            Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
+            Optional = _optional,
+            AllowOverlap = _allowOverlap,
+            AllowOthers = _allowOthers,
+            Rotation = _rotation,
+            RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Map : _rotationAlignment,
+            Padding = _padding,
+            Anchor = _anchor,
+            Offset = _offset,
+            Spacing = _spacing,
             Color = _color,
             Alignment = _alignment,
             Direction = TextDirection.Auto,

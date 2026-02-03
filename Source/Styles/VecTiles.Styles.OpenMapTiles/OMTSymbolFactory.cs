@@ -106,9 +106,9 @@ public class OMTSymbolFactory : ISymbolFactory
 
         var geometry = ConvertToWorldCoordinates(tile, feature.Geometry);
 
-        Symbol? symbol = null;
-
         var builderKey = (style.Name, (int)context.Zoom);
+        IconLineSymbol? icon = null;
+        TextLineSymbol? text = null;
 
         if (!style.Layout.IconImage.HasOnlyDefault)
         {
@@ -116,8 +116,8 @@ public class OMTSymbolFactory : ISymbolFactory
             {
                 _iconBuilders[builderKey] = new OMTIconBuilder(style, spriteFactory, context);
             }
-
-            symbol = _iconBuilders[builderKey].Build(tile, geometry, feature);
+            
+            icon = _iconBuilders[builderKey].Build(tile, geometry, feature);
         }
 
         if (!string.IsNullOrEmpty(style.Layout.TextField))
@@ -127,19 +127,22 @@ public class OMTSymbolFactory : ISymbolFactory
                 _textBuilders[builderKey] = new OMTTextBuilder(style, context);
             }
 
-            //symbol = _textBuilders[builderKey].Build(tile, geometry, feature);
+            text = _textBuilders[builderKey].Build(tile, geometry, feature);
         }
 
-        if (symbol == null)
+        var symbol = new LineSymbol(tile, geometry, icon, text)
         {
-            return null;
-        }
+            Class = feature.Attributes.Exists("class") ? feature.Attributes["class"].ToString() : string.Empty,
+            Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() : string.Empty,
+            Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"].ToString()) : int.MaxValue
+        };
 
-        symbol.Class = feature.Attributes.Exists("class") ? feature.Attributes["class"].ToString() : string.Empty;
-        symbol.Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() : string.Empty;
-        symbol.Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"].ToString()) : int.MaxValue;
+         if (symbol is {HasIcon: false, HasText: false})
+         {
+             return null;
+         }
 
-        return symbol;
+         return symbol;
     }
 
     private static ISymbol? CreateLineCenterSymbol(Tile tile, OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context, IFeature feature)

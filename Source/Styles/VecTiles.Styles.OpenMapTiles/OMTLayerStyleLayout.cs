@@ -173,8 +173,9 @@ public class OMTLayerStyleLayout
     [JsonProperty("text-rotate")]
     public StoppedFloat TextRotate { get; set; } = new StoppedFloat { Default = 0.0f };
 
+    [JsonConverter(typeof(EnumConverter<MapAlignment>))]
     [JsonProperty("text-rotation-alignment")]
-    public string TextRotationAlignment { get; set; } = "auto";
+    public MapAlignment TextRotationAlignment { get; set; }  = MapAlignment.Auto;
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("text-size")]

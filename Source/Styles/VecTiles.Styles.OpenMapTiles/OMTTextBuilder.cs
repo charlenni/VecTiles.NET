@@ -24,6 +24,7 @@ public class OMTTextBuilder
     private float _scale;
     private float _rotation;
     private readonly MapAlignment _rotationAlignment;
+    private bool _keepUpright;
     private readonly int _padding;
     private Point _anchor;
     private Point _offset;
@@ -64,6 +65,7 @@ public class OMTTextBuilder
 
         _rotation = style.Layout.TextRotate.Evaluate(context);
         _rotationAlignment = style.Layout.TextRotationAlignment;
+        _keepUpright = style.Layout.TextKeepUpright;
         _padding = (int)style.Layout.TextPadding.Evaluate(context);
         _anchor = style.Layout.TextAnchor.ToPoint();
         _offset = style.Layout.TextOffset.Evaluate(context).ToPoint(_fontSize.Invoke(context));
@@ -152,6 +154,7 @@ public class OMTTextBuilder
             AllowOthers = _allowOthers,
             Rotation = _rotation,
             RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Map : _rotationAlignment,
+            KeepUpright = _keepUpright,
             Padding = _padding,
             Anchor = _anchor,
             Offset = _offset,

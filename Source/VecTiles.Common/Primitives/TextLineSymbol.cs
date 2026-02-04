@@ -50,7 +50,7 @@ public class TextLineSymbol : Symbol
     /// <summary>
     /// Keep the text upright, so that is easier to read
     /// </summary>
-    public bool KeepUpright { get; init; }
+    public bool KeepUpright { get; init; } = true;
 
     /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]

@@ -54,7 +54,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             {
                 if (showInvalidBorders && symbol.Name != otherSymbol.Name)
                 {
-                    canvas.DrawRect(new SKRect((float)symbol.Envelope.MinX, (float)symbol.Envelope.MaxY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MinY), DebugPaint);
+                    canvas.DrawRect(new SKRect((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MaxY), DebugPaint);
                 }
 
                 return false;

@@ -13,7 +13,7 @@ namespace VecTiles.Renderers.Skia;
 public class IconLineSymbolRenderer : ISymbolRenderer
 {
     private static readonly SKSamplingOptions _samplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
-    private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Green, StrokeWidth = 1, IsStroke = true };
+    private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Aqua, StrokeWidth = 1, IsStroke = true };
 
     public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false, bool showUnvalidBorders = false)
     {
@@ -90,13 +90,14 @@ public class IconLineSymbolRenderer : ISymbolRenderer
         }
     }
 
-    private static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX, double screenY, double rotation)
+    private static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX,
+        double screenY, double rotation)
     {
-        SKPaint paint = new SKPaint() { IsAntialias = true };
+        SKPaint paint = new SKPaint() {IsAntialias = true};
 
         canvas.Save();
 
-        canvas.Translate((float)screenX, (float)screenY);
+        canvas.Translate((float) screenX, (float) screenY);
 
         if (symbol.ColorFilter != null)
         {
@@ -118,19 +119,26 @@ public class IconLineSymbolRenderer : ISymbolRenderer
 
         canvas.Scale(1f / context.Scale);
         canvas.Translate(symbol.Offset.ToSKPoint());
-        canvas.RotateDegrees((float)rotation);
+        canvas.RotateDegrees((float) rotation);
 
-        canvas.Translate((float)(symbol.Anchor.X * symbol.Icon.Width * symbol.Scale - symbol.Padding), (float)(symbol.Anchor.Y * symbol.Icon.Height * symbol.Scale - symbol.Padding));
+        canvas.Translate((float) (symbol.Anchor.X * symbol.Icon.Width * symbol.Scale - symbol.Padding),
+            (float) (symbol.Anchor.Y * symbol.Icon.Height * symbol.Scale - symbol.Padding));
 
         symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
         symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
             symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
 
-        var dest = new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding);
-        
-        canvas.DrawImage((SKImage)symbol.Icon.Native, dest, _samplingOptions, paint);
+        var dest = new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding,
+            symbol.Icon.Height * symbol.Scale + symbol.Padding);
+
+        canvas.DrawImage((SKImage) symbol.Icon.Native, dest, _samplingOptions, paint);
 
         canvas.Restore();
+
+        // TODO: Remove, is only for testing
+        canvas.DrawRect(
+            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                (float) symbol.Envelope!.MaxY), DebugPaint);
     }
 
     private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX, double screenY)

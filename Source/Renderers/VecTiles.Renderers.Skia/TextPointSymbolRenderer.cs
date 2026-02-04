@@ -63,7 +63,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         if (showValidBorders)
         {
-            canvas.DrawRect(new SKRect((float)symbol.Envelope.MinX, (float)symbol.Envelope.MaxY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MinY), DebugPaint);
+            canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
         }
 
         return true;
@@ -76,15 +76,16 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return;
         }
 
-        //var envelope = CreateEnvelope(canvas, context, screenX, screenY);
         var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
 
-        if (!symbol.Envelope.IsNull)
+        if (symbol.Envelope is null || symbol.Envelope.IsNull)
         {
-            DrawText(canvas, context, symbol, screenX, screenY);
-
-            tree.Insert(symbol.Envelope, symbol);
+            return;
         }
+
+        DrawText(canvas, context, symbol, screenX, screenY);
+
+        tree.Insert(symbol.Envelope, symbol);
     }
 
     private static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY)
@@ -116,6 +117,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         
         var textStyle = (Style)text.Text.GetStyleAtOffset(0);
 
+        textStyle.FontSize = symbol.FontSize.Invoke(context);
         textStyle.TextColor = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f));
         textStyle.HaloBlur = symbol.HaloBlur.Invoke(context);
         textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
@@ -129,6 +131,11 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         text.Text.Paint(canvas);
 
         canvas.Restore();
+
+        // TODO: Remove, is only for testing
+        canvas.DrawRect(
+            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                (float) symbol.Envelope!.MaxY), DebugPaint);
     }
 
     private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY)
@@ -142,14 +149,15 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         
         var text = (RenderedText) symbol.Renderer;
 
-        if (text.LastContext != null 
+        // With this optimization the envelope isn't moved around with the map
+        /*if (text.LastContext != null 
             && context.Zoom == text.LastContext.Zoom 
             && context.Scale == text.LastContext.Scale 
             && context.Rotation == text.LastContext.Rotation)
         {
             // Nothing changed, so return the last envelope
             return text.LastEnvelope;
-        }
+        }*/
 
         text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
 
@@ -170,7 +178,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
 
         // We now could calc the rough envelope of text
-        var envelope = new Envelope(0 + offset.X + text.Text.MeasuredPadding.Left, text.MeasuredWidth + offset.X + text.Text.MeasuredPadding.Left, 0 + offset.Y + text.Text.MeasuredPadding.Top, text.MeasuredHeight + offset.Y + text.Text.MeasuredPadding.Top);
+        var envelope = new Envelope(offset.X, offset.X + text.MeasuredWidth, offset.Y, offset.Y + text.MeasuredHeight);
 
         if (symbol.Rotation != 0.0)
         {

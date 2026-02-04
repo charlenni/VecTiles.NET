@@ -41,7 +41,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
-            if (!symbol.Envelope?.Intersects(otherSymbol.Envelope) ?? true)
+            if (!symbol.Envelope.Intersects(otherSymbol.Envelope))
             {
                 continue;
             }
@@ -50,7 +50,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             {
                 if (showUnvalidBorders && sym.Name != symbol.Name)
                 {
-                    canvas.DrawRect(new Envelope((float)symbol.Envelope.MinX, (float)symbol.Envelope.MaxY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MinY).ToSKRect(), DebugPaint);
+                    canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
                 }
 
                 return false;
@@ -59,7 +59,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
 
         if (showValidBorders)
         {
-            canvas.DrawRect(new Envelope((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MaxY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MinY).ToSKRect(), DebugPaint);
+            canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
         }
 
         return true;
@@ -168,6 +168,11 @@ public class IconPointSymbolRenderer : ISymbolRenderer
         canvas.DrawImage((SKImage)symbol.Icon.Native, dest, _samplingOptions, paint);
 
         canvas.Restore();
+
+        // TODO: Remove, is only for testing
+        canvas.DrawRect(
+            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                (float) symbol.Envelope!.MaxY), DebugPaint);
     }
     
     internal static (float rotationDeg, float scaleX, float scaleY, Point translation) AnalyzeCanvasTransform(SKCanvas canvas)

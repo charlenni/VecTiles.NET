@@ -10,14 +10,13 @@ using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Renderers.Skia.Primitives;
 using VecTiles.Styles.OpenMapTiles.Extensions;
-using TextDirection = Topten.RichTextKit.TextDirection;
 
 namespace VecTiles.Renderers.Skia;
 
 public class TextLineSymbolRenderer : ISymbolRenderer
 {
     private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
-    private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Green, StrokeWidth = 1, IsStroke = true };
+    private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 1, IsStroke = true };
 
     public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false, bool showUnvalidBorders = false)
     {
@@ -83,6 +82,16 @@ public class TextLineSymbolRenderer : ISymbolRenderer
             rotation -= (float)(symbol.RotationAlignment is MapAlignment.Map or MapAlignment.Auto ? tangent : 0.0);
             rotation %= 360;
 
+            if (symbol.KeepUpright && rotation is > 90 and < 270)
+            {
+                rotation -= 180;
+            }
+
+            if (symbol.KeepUpright && rotation is < -90 and > -270)
+            {
+                rotation += 180;
+            }
+
             if (!CheckForSingleSpace(canvas, context, symbol, tree, nextPosition.X, nextPosition.Y, rotation, false))
             {
                 continue;
@@ -138,9 +147,14 @@ public class TextLineSymbolRenderer : ISymbolRenderer
         text.Text.Paint(canvas);
 
         canvas.Restore();
+
+        // TODO: Remove, is only for testing
+        canvas.DrawRect(
+            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                (float) symbol.Envelope!.MaxY), DebugPaint);
     }
 
-    private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY)
+    private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation)
     {
         if (symbol.Text == null)
         {
@@ -168,11 +182,16 @@ public class TextLineSymbolRenderer : ISymbolRenderer
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
 
         // We now could calc the rough envelope of text
-        var envelope = new Envelope(0 + offset.X + text.Text.MeasuredPadding.Left, text.MeasuredWidth + offset.X + text.Text.MeasuredPadding.Left, 0 + offset.Y + text.Text.MeasuredPadding.Top, text.MeasuredHeight + offset.Y + text.Text.MeasuredPadding.Top);
+        var envelope = new Envelope(offset.X, offset.X + text.MeasuredWidth, offset.Y, offset.Y + text.MeasuredHeight);
 
         if (symbol.Rotation != 0.0)
         {
             envelope.RotateDegrees(symbol.Rotation);
+        }
+
+        if (rotation != 0.0)
+        {
+            envelope.RotateDegrees(rotation);
         }
 
         envelope.Translate(screenX, screenY);
@@ -184,9 +203,9 @@ public class TextLineSymbolRenderer : ISymbolRenderer
 
             if (translateAnchor == MapAlignment.Map)
             {
-                var rotation = context.Rotation * Math.PI / 180.0;
-                var cos = Math.Cos(rotation);
-                var sin = Math.Sin(rotation);
+                var rot = context.Rotation * Math.PI / 180.0;
+                var cos = Math.Cos(rot);
+                var sin = Math.Sin(rot);
                 var x = translate.X * cos - translate.Y * sin;
                 var y = translate.X * sin + translate.Y * cos;
                 translate = new Point((float)x, (float)y);
@@ -200,8 +219,7 @@ public class TextLineSymbolRenderer : ISymbolRenderer
 
     private static bool CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showUnvalidBorders)
     {
-
-        symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY);
+        symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY, rotation);
 
         var symbols = tree.Query(symbol.Envelope);
 

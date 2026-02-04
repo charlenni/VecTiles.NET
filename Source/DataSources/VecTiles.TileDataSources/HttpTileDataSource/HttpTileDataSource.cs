@@ -1,4 +1,5 @@
-﻿using BruTile.Predefined;
+﻿using BruTile;
+using BruTile.Predefined;
 using BruTile.Web;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -22,6 +23,8 @@ public class HttpTileDataSource : ITileDataSource
 
     /// <inheritdoc/>
     public string Name => _httpTileSource.Name;
+
+    public string Attribution { get; set; }
 
     /// <inheritdoc/>
     public int MinZoom { get; set; }

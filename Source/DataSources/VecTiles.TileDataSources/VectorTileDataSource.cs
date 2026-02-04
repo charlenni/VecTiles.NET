@@ -24,6 +24,9 @@ public class VectorTileDataSource : IVectorTileDataSource
     public string Name => _dataSource.Name;
 
     /// <inheritdoc/>
+    public string Attribution => _dataSource.Attribution;
+
+    /// <inheritdoc/>
     public int MinZoom => _dataSource.MinZoom;
 
     /// <inheritdoc/>

@@ -63,7 +63,7 @@ public class MbTilesTileDataSource : ITileDataSource
         MaxZoom = Schema.Resolutions.Keys.Max();
         Type = type == MbTilesType.None ? ReadType(connection) : type;
         Version = ReadString(connection, "version");
-        Attribution = new Attribution(ReadString(connection, "attribution"));
+        Attribution = ReadString(connection, "attribution");
         Description = ReadString(connection, "description");
         Name = ReadString(connection, "name");
         Json = ReadString(connection, "json");
@@ -124,7 +124,7 @@ public class MbTilesTileDataSource : ITileDataSource
     /// <summary>
     /// Attribution for MBTiles file content
     /// </summary>
-    public Attribution Attribution { get; set; }
+    public string Attribution { get; set; }
 
     public int MinZoom { get; private set; }
 

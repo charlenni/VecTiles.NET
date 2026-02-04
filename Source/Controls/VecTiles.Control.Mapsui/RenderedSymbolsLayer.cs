@@ -27,7 +27,7 @@ public class RenderedSymbolsLayer : BaseLayer
 
         TileSource = tileSource;
         CustomLayerRendererName = customLayerRendererName;
-
+        
         _extent = TileSource.Schema.Extent.ToMRect();
     }
 

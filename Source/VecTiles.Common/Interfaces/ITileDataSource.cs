@@ -16,6 +16,11 @@ public interface ITileDataSource
     string Name { get; }
 
     /// <summary>
+    /// Attribution of source.
+    /// </summary>
+    string Attribution { get; }
+    
+    /// <summary>
     /// Minimal zoom level for tile source.
     /// </summary>
     int MinZoom { get; }

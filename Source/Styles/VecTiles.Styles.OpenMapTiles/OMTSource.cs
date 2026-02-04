@@ -114,6 +114,9 @@ public class OMTSource
         if (dataSource == null)
             return;
 
+        if (dataSource.Attribution is not null)
+            Attribution = dataSource.Attribution;
+        
         if (SourceType == SourceType.Vector)
             dataSource = new VectorTileDataSource(dataSource, new OMTTileConverter());
         

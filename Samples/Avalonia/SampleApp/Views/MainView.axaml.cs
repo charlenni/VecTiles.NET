@@ -4,7 +4,11 @@ using Mapsui.Extensions;
 using Mapsui.Rendering.Skia;
 using Mapsui.Widgets.InfoWidgets;
 using System.IO;
+using System.Linq;
 using System.Reactive;
+using BruTile;
+using Mapsui.Rendering.Skia.SkiaWidgets;
+using Mapsui.Styles;
 using Mapsui.Tiling;
 using Mapsui.Tiling.Layers;
 using VecTiles.Controls.Mapsui;
@@ -33,6 +37,12 @@ public partial class MainView : UserControl
         //MapControl.Map.Layers.Add(OpenStreetMap.CreateTileLayer());
         MapControl.Map.Layers.Add(tileLayer);
         MapControl.Map.Layers.Add(_symbolsLayer);
+
+        // The PerformanceWidget is created as part of the map.
+        var performanceWidget = MapControl.Map.Widgets.OfType<PerformanceWidget>().First();
+        performanceWidget.Performance.IsActive = Mapsui.Widgets.ActiveMode.Yes; // The default in ActiveMode.OnlyInDebugMode which is usually the best option. This is just to show how to change it.
+        performanceWidget.BackColor = Color.FromRgba(255, 255, 32, 32);
+        performanceWidget.Opacity = 1;
 
         MapControl.Map.Widgets.Add(new MouseCoordinatesWidget());
 

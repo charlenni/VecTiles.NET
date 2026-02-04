@@ -34,7 +34,7 @@ public class OMTRenderedTileSource : IRenderedTileSource
                 continue;
             
             var name = RemoveHtmlTags(s.Value.Attribution);
-            var url =  ExtractHtmlUrl(s.Value.Attribution) ?? s.Value.Url;
+            var url =  ExtractHtmlUrl(s.Value.Attribution) ?? (s.Value.Url ?? string.Empty);
             var attribution = new Attribution(name, url);
             Attribution = attribution;
             break;

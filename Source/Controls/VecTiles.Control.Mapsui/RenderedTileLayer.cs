@@ -3,7 +3,6 @@ using Mapsui;
 using Mapsui.Tiling.Fetcher;
 using Mapsui.Tiling.Layers;
 using Mapsui.Tiling.Rendering;
-using VecTiles.Renderers.Common;
 
 namespace VecTiles.Controls.Mapsui;
 
@@ -34,7 +33,7 @@ public class RenderedTileLayer : TileLayer
         // Save for later use, so that not always has to be converted
         _renderedTileSource = tileSource;
         // Set style of this layer
-        Style = new RenderedTileStyle(new TileInformation {Text = true});
+        Style = new RenderedTileStyle();
     }
     
     private static Func<TileInfo, Task<IFeature?>> CreateFetchDelegate(

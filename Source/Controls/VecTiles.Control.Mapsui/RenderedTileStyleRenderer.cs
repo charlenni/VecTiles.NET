@@ -7,17 +7,12 @@ using Mapsui.Rendering;
 using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Styles;
 using SkiaSharp;
-using VecTiles.Renderers.Skia.Extensions;
 
 namespace VecTiles.Controls.Mapsui;
 
 public class RenderedTileStyleRenderer : ISkiaStyleRenderer
 {
     private readonly SKRect _tileRect = new SKRect(0, 0, 512, 512);
-    private readonly SKPoint _tileInformationText = new SKPoint(20, 40);
-    private readonly SKFont _tileInformationFont = new SKFont(SKTypeface.Default, 16);
-    private readonly SKPaint _tileInformationPaint = new SKPaint { Style = SKPaintStyle.Stroke, StrokeWidth = 2, Color = SKColors.Red };
-
 
     public bool Draw(SKCanvas canvas, Viewport viewport, ILayer layer, IFeature feature, IStyle style, RenderService renderService, long iteration)
     {
@@ -51,11 +46,6 @@ public class RenderedTileStyleRenderer : ISkiaStyleRenderer
                 pair.Value.Draw(canvas, context);
             }
 
-            if (renderedTileStyle.TileInformation != null)
-            {
-                DrawTileInformation(canvas, renderedTile, renderedTileStyle);
-            }
-
             canvas.Restore();
         }
         catch (Exception ex)
@@ -68,7 +58,7 @@ public class RenderedTileStyleRenderer : ISkiaStyleRenderer
 
     private float CreateMatrix(SKCanvas canvas, Viewport viewport, MRect extent)
     {
-        float scale = 1.0f;
+        float scale;
 
         if (viewport.IsRotated() && viewport.Rotation != 0.0)
         {
@@ -101,22 +91,6 @@ public class RenderedTileStyleRenderer : ISkiaStyleRenderer
         }
 
         return scale;
-    }
-
-    private void DrawTileInformation(SKCanvas canvas, VecTiles.Renderers.Common.Interfaces.IRenderedTile renderedTile, RenderedTileStyle renderedTileStyle)
-    {
-        _tileInformationPaint.Color = renderedTileStyle.TileInformation.Color.ToSKColor();
-
-        if (renderedTileStyle.TileInformation.Border)
-        {
-            _tileInformationPaint.StrokeWidth = renderedTileStyle.TileInformation.BorderSize;
-            canvas.DrawRect(_tileRect, _tileInformationPaint);
-        }
-        if (renderedTileStyle.TileInformation.Text)
-        {
-            _tileInformationFont.Size = renderedTileStyle.TileInformation.TextSize;
-            canvas.DrawText($"Tile {renderedTile.Tile}", _tileInformationText, SKTextAlign.Left, _tileInformationFont, _tileInformationPaint);
-        }
     }
 
     private static MPoint RoundToPixel(ScreenPosition point)

@@ -45,9 +45,9 @@ public static class RenderedSymbolsLayerRenderer
             {
                 Func<double, double, (double, double)> worldToScreenConverter = (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
 
-                if (PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowValidBorders, renderedLayer.ShowInvalidBorders))
+                if (PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowInvalidBorders))
                 {
-                    PointSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter);
+                    PointSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter, renderedLayer.ShowValidBorders);
                 }
             }
 
@@ -55,9 +55,9 @@ public static class RenderedSymbolsLayerRenderer
             {
                 Func<double, double, (double, double)> worldToScreenConverter = (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
 
-                if (LineSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowValidBorders, renderedLayer.ShowInvalidBorders))
+                if (LineSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowInvalidBorders))
                 {
-                    LineSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter);
+                    LineSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter, renderedLayer.ShowValidBorders);
                 }
             }
 

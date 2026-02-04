@@ -19,7 +19,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
     private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Blue, StrokeWidth = 1, IsStroke = true };
 
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false, bool showInvalidBorders = false)
+    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showInvalidBorders = false)
     {
         if (sym is not TextPointSymbol symbol)
         {
@@ -61,15 +61,10 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             }
         }
 
-        if (showValidBorders)
-        {
-            canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
-        }
-
         return true;
     }
 
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter)
+    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false)
     {
         if (sym is not TextPointSymbol symbol)
         {
@@ -83,12 +78,12 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return;
         }
 
-        DrawText(canvas, context, symbol, screenX, screenY);
+        DrawText(canvas, context, symbol, screenX, screenY, showValidBorders);
 
         tree.Insert(symbol.Envelope, symbol);
     }
 
-    private static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY)
+    private static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY, bool showValidBorders = false)
     {
         canvas.Save();
 
@@ -132,10 +127,12 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         canvas.Restore();
 
-        // TODO: Remove, is only for testing
-        canvas.DrawRect(
-            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
-                (float) symbol.Envelope!.MaxY), DebugPaint);
+        if (showValidBorders)
+        {
+            canvas.DrawRect(
+                new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                    (float) symbol.Envelope!.MaxY), DebugPaint);
+        }
     }
 
     private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY)

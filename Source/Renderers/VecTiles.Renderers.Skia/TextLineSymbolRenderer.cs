@@ -18,7 +18,7 @@ public class TextLineSymbolRenderer : ISymbolRenderer
     private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 1, IsStroke = true };
 
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false, bool showUnvalidBorders = false)
+    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showUnvalidBorders = false)
     {
         if (sym is not TextLineSymbol symbol)
         {
@@ -56,7 +56,7 @@ public class TextLineSymbolRenderer : ISymbolRenderer
         return false;
     }
 
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter)
+    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false)
     {
         if (sym is not TextLineSymbol symbol)
         {
@@ -97,13 +97,13 @@ public class TextLineSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
-            DrawText(canvas, context, symbol, nextPosition.X, nextPosition.Y, rotation);
+            DrawText(canvas, context, symbol, nextPosition.X, nextPosition.Y, rotation, showValidBorders);
 
             tree.Insert(symbol.Envelope, symbol);
         }
     }
 
-    private static void DrawText(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation)
+    private static void DrawText(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
     {
         SKPaint paint = new SKPaint();
 
@@ -148,10 +148,12 @@ public class TextLineSymbolRenderer : ISymbolRenderer
 
         canvas.Restore();
 
-        // TODO: Remove, is only for testing
-        canvas.DrawRect(
-            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
-                (float) symbol.Envelope!.MaxY), DebugPaint);
+        if (showValidBorders)
+        {
+            canvas.DrawRect(
+                new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                    (float) symbol.Envelope!.MaxY), DebugPaint);
+        }
     }
 
     private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation)

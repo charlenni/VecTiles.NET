@@ -15,7 +15,7 @@ public class IconLineSymbolRenderer : ISymbolRenderer
     private static readonly SKSamplingOptions _samplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Aqua, StrokeWidth = 1, IsStroke = true };
 
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false, bool showUnvalidBorders = false)
+    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showUnvalidBorders = false)
     {
         if (sym is not IconLineSymbol symbol)
         {
@@ -53,7 +53,7 @@ public class IconLineSymbolRenderer : ISymbolRenderer
         return false;
     }
 
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter)
+    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false)
     {
         if (sym is not IconLineSymbol symbol)
         {
@@ -84,14 +84,14 @@ public class IconLineSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
-            DrawIcon(canvas, context, symbol, nextPosition.X, nextPosition.Y, rotation);
+            DrawIcon(canvas, context, symbol, nextPosition.X, nextPosition.Y, rotation, showValidBorders);
 
             tree.Insert(symbol.Envelope, symbol);
         }
     }
 
     private static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX,
-        double screenY, double rotation)
+        double screenY, double rotation, bool showValidBorders = false)
     {
         SKPaint paint = new SKPaint() {IsAntialias = true};
 
@@ -135,10 +135,12 @@ public class IconLineSymbolRenderer : ISymbolRenderer
 
         canvas.Restore();
 
-        // TODO: Remove, is only for testing
-        canvas.DrawRect(
-            new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
-                (float) symbol.Envelope!.MaxY), DebugPaint);
+        if (showValidBorders)
+        {
+            canvas.DrawRect(
+                new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
+                    (float) symbol.Envelope!.MaxY), DebugPaint);
+        }
     }
 
     private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX, double screenY)

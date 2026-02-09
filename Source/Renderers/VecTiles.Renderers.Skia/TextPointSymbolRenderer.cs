@@ -30,6 +30,15 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY);
 
+        if (symbol.Envelope.MaxX < canvas.LocalClipBounds.Left ||
+            symbol.Envelope.MinY < canvas.LocalClipBounds.Top ||
+            symbol.Envelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
+            symbol.Envelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
+        {
+            // Symbol isn't visible
+            return false;
+        }
+
         var symbols = tree.Query(symbol.Envelope);
 
         foreach (var other in symbols)
@@ -50,15 +59,17 @@ public class TextPointSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
-            if (!symbol.AllowOthers)
+            if (symbol.AllowOthers && otherSymbol.AllowOthers)
             {
-                if (showInvalidBorders && symbol.Name != otherSymbol.Name)
-                {
-                    canvas.DrawRect(new SKRect((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MaxY), DebugPaint);
-                }
-
-                return false;
+                continue;
             }
+
+            if (showInvalidBorders && symbol.Name != otherSymbol.Name)
+            {
+                canvas.DrawRect(new SKRect((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MaxY), DebugPaint);
+            }
+
+            return false;
         }
 
         return true;
@@ -156,21 +167,24 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return text.LastEnvelope;
         }*/
 
-        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
+        if (context.Zoom != text.LastContext.Zoom)
+        {
+            text.Text.Alignment = symbol.Alignment.ToTextAlignment();
 
-        text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
-        
-        // Set max width to the correct value
-        text.Text.MaxWidth = symbol.MaxWidth.Invoke(context, text.TextStyle.FontSize);
-        text.Text.ApplyStyle(0, text.Text.Length, text.TextStyle);
+            text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
 
-        // MeasuredWidth and MeasuredHeight need many CPU cycles, so save them for later use
-        text.MeasuredWidth = text.Text.MeasuredWidth;
-        text.MeasuredHeight = text.Text.MeasuredHeight;
-        // MaxWidth could be greater than MeasuredWidth. Then there is some space around the text.
-        // This could be access by MeasuredPadding.
-        text.LeftRightCorrection = 0f;
-        
+            // Set max width to the correct value
+            text.Text.MaxWidth = symbol.MaxWidth.Invoke(context, text.TextStyle.FontSize);
+            text.Text.ApplyStyle(0, text.Text.Length, text.TextStyle);
+
+            // MeasuredWidth and MeasuredHeight need many CPU cycles, so save them for later use
+            text.MeasuredWidth = text.Text.MeasuredWidth;
+            text.MeasuredHeight = text.Text.MeasuredHeight;
+            // MaxWidth could be greater than MeasuredWidth. Then there is some space around the text.
+            // This could be access by MeasuredPadding.
+            text.LeftRightCorrection = 0f;
+        }
+
         var anchor = new SKPoint((float)(symbol.Anchor.X * text.MeasuredWidth), (float)(symbol.Anchor.Y * text.MeasuredHeight));
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
 

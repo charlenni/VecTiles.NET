@@ -26,6 +26,15 @@ public class IconPointSymbolRenderer : ISymbolRenderer
 
         symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY);
 
+        if (symbol.Envelope.MaxX < canvas.LocalClipBounds.Left ||
+            symbol.Envelope.MinY < canvas.LocalClipBounds.Top ||
+            symbol.Envelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
+            symbol.Envelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
+        {
+            // Symbol isn't visible
+            return false;
+        }
+
         var symbols = tree.Query(symbol.Envelope);
 
         foreach (var other in symbols)
@@ -46,15 +55,17 @@ public class IconPointSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
-            if (!otherSymbol.AllowOthers)
+            if (symbol.AllowOthers && otherSymbol.AllowOthers)
             {
-                if (showUnvalidBorders && sym.Name != symbol.Name)
-                {
-                    canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
-                }
-
-                return false;
+                continue;
             }
+
+            if (showUnvalidBorders && sym.Name != symbol.Name)
+            {
+                canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
+            }
+
+            return false;
         }
 
         return true;

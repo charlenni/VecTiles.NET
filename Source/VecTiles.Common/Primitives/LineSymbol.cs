@@ -4,7 +4,7 @@ namespace VecTiles.Common.Primitives;
 
 public class LineSymbol : Symbol
 {
-    public LineSymbol(Tile tile, Geometry geometry, IconLineSymbol? icon, TextLineSymbol? text) : base(tile)
+    public LineSymbol(Tile tile, ulong id, Geometry geometry, IconLineSymbol? icon, TextLineSymbol? text) : base(tile, id)
     {
         Geometry = geometry;
         IconSymbol = icon;
@@ -54,6 +54,11 @@ public class LineSymbol : Symbol
     public bool HasIcon => IconSymbol != null;
 
     public bool HasText => TextSymbol != null;
+
+    /// <summary>
+    /// Space between two symbols in pixel
+    /// </summary>
+    public float Spacing { get; init; }
 
     public void SetDrawFlags(bool drawIcon, bool drawText)
     {

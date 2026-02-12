@@ -6,7 +6,7 @@ namespace VecTiles.Common.Primitives;
 
 public class IconPointSymbol : Symbol
 {
-    public IconPointSymbol(Tile tile, Point point, ISprite sprite) : base(tile)
+    public IconPointSymbol(Tile tile, ulong id, Point point, ISprite sprite) : base(tile, id)
     {
         Point = point;
         Icon = sprite;
@@ -46,6 +46,11 @@ public class IconPointSymbol : Symbol
     /// Padding around symbol in pixel
     /// </summary>
     public int Padding { get; init; }
+
+    /// <summary>
+    /// Keep the icon upright, so that is easier to read
+    /// </summary>
+    public bool KeepUpright { get; init; } = false;
 
     /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]

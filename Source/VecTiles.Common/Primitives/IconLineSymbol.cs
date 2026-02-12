@@ -6,7 +6,7 @@ namespace VecTiles.Common.Primitives;
 
 public class IconLineSymbol : Symbol
 {
-    public IconLineSymbol(Tile tile, Geometry geometry, ISprite sprite) : base(tile)
+    public IconLineSymbol(Tile tile, ulong id, Geometry geometry, ISprite sprite) : base(tile, id)
     {
         Geometry = geometry;
         Icon = sprite;
@@ -53,6 +53,11 @@ public class IconLineSymbol : Symbol
     public int Padding { get; init; }
 
     /// <summary>
+    /// Keep the icon upright, so that is easier to read
+    /// </summary>
+    public bool KeepUpright { get; init; } = false;
+
+    /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]
     /// </summary>
     public Point Anchor { get; init; } = new(0, 0);
@@ -61,11 +66,6 @@ public class IconLineSymbol : Symbol
     /// Offset from point in pixels
     /// </summary>
     public Point Offset { get; init; } = new(0, 0);
-
-    /// <summary>
-    /// Space between two symbols in pixel
-    /// </summary>
-    public float Spacing { get; init; }
 
     /// <summary>
     /// Function to calculate color filter to use when drawing symbol from EvaluationContext as SKColorFilter
@@ -86,4 +86,34 @@ public class IconLineSymbol : Symbol
     /// Function to calculate anchor of translate (map or viewport) from EvaluationContext
     /// </summary>
     public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; init; }
+            
+    public IconLineSymbol Copy()
+    {
+        var result = new IconLineSymbol(Tile, Id, Geometry, Icon)
+        {
+            Name = Name,
+            SortOrder = SortOrder,
+            Class = Class,
+            Subclass = Subclass,
+            Rank = Rank,
+            AllowOthers = AllowOthers,
+            Envelope = Envelope?.Copy(),
+            Renderer = Renderer,
+            Optional = Optional,
+            AllowOverlap = AllowOverlap,
+            Scale = Scale,
+            Rotation = Rotation,
+            RotationAlignment = RotationAlignment,
+            Padding = Padding,
+            KeepUpright = KeepUpright,
+            Anchor = Anchor,
+            Offset = Offset,
+            Translate = Translate,
+            ColorFilter = ColorFilter,
+            Opacity = Opacity,
+            TranslateAnchor = TranslateAnchor
+        };
+
+        return result;
+    }
 }

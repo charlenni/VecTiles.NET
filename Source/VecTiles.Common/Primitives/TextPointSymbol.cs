@@ -5,7 +5,7 @@ namespace VecTiles.Common.Primitives;
 
 public class TextPointSymbol : Symbol
 {
-    public TextPointSymbol(Tile tile, Point point, string text) : base(tile)
+    public TextPointSymbol(Tile tile, ulong id, Point point, string text) : base(tile, id)
     {
         Point = point;
         Text = text;

@@ -1,12 +1,11 @@
 ﻿using NetTopologySuite.Geometries;
 using VecTiles.Common.Enums;
-using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Common.Primitives;
 
 public class TextLineSymbol : Symbol
 {
-    public TextLineSymbol(Tile tile, Geometry geometry, string text) : base(tile)
+    public TextLineSymbol(Tile tile, ulong id, Geometry geometry, string text) : base(tile, id)
     {
         Geometry = geometry;
         Text = text;
@@ -61,11 +60,6 @@ public class TextLineSymbol : Symbol
     /// Offset from point in pixels
     /// </summary>
     public Point Offset { get; init; } = new(0, 0);
-
-    /// <summary>
-    /// Space between two symbols in pixel
-    /// </summary>
-    public float Spacing { get; init; }
 
     /// <summary>
     /// Function to calculate color to use when drawing symbol from EvaluationContext
@@ -126,4 +120,38 @@ public class TextLineSymbol : Symbol
     /// Maximum width for the text. If the text exceeds the max width, it will be wrapped.
     /// </summary>
     public Func<EvaluationContext, float, float>? MaxWidth { get; init; }
+
+    public TextLineSymbol Copy()
+    {
+        var result = new TextLineSymbol(Tile, Id, Geometry, Text)
+        {
+            Name = Name,
+            SortOrder = SortOrder,
+            Class = Class,
+            Subclass = Subclass,
+            Rank = Rank,
+            AllowOthers = AllowOthers,
+            Envelope = Envelope?.Copy(),
+            Renderer = Renderer,
+            Optional = Optional,
+            AllowOverlap = AllowOverlap,
+            Rotation = Rotation,
+            RotationAlignment = RotationAlignment,
+            Padding = Padding,
+            KeepUpright = KeepUpright,
+            Anchor = Anchor,
+            Offset = Offset,
+            Direction = Direction,
+            FontNames = FontNames,
+            FontSize = FontSize,
+            HaloColor = HaloColor,
+            HaloBlur = HaloBlur,
+            HaloWidth = HaloWidth,
+            Translate = Translate,
+            TranslateAnchor = TranslateAnchor,
+            MaxWidth = MaxWidth,
+        };
+
+        return result;
+    }
 }

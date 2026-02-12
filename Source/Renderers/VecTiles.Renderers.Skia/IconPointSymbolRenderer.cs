@@ -128,9 +128,17 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             return;
         }
 
-        DrawIcon(canvas, context, symbol, screenX, screenY, showValidBorders);
-
-        tree.Insert(symbol.Envelope, symbol);
+        if (symbol.Envelope is not null &&
+            symbol.Envelope.MinX >= canvas.LocalClipBounds.Left &&
+            symbol.Envelope.MinY >= canvas.LocalClipBounds.Top &&
+            symbol.Envelope.MaxX <= canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width &&
+            symbol.Envelope.MaxY <= canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
+        {
+            // Draw icon
+            DrawIcon(canvas, context, symbol, screenX, screenY, showValidBorders);
+            // Add symbol to tree
+            tree.Insert(symbol.Envelope, symbol);
+        }
     }
 
     private static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, double screenX, double screenY, bool showValidBorders = false)

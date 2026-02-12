@@ -10,7 +10,6 @@ using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Renderers.Skia.Primitives;
 using VecTiles.Styles.OpenMapTiles.Extensions;
-using TextDirection = Topten.RichTextKit.TextDirection;
 
 namespace VecTiles.Renderers.Skia;
 
@@ -89,9 +88,17 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return;
         }
 
-        DrawText(canvas, context, symbol, screenX, screenY, showValidBorders);
-
-        tree.Insert(symbol.Envelope, symbol);
+        if (symbol.Envelope is not null &&
+            symbol.Envelope.MinX >= canvas.LocalClipBounds.Left &&
+            symbol.Envelope.MinY >= canvas.LocalClipBounds.Top &&
+            symbol.Envelope.MaxX <= canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width &&
+            symbol.Envelope.MaxY <= canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
+        {
+            // Draw text
+            DrawText(canvas, context, symbol, screenX, screenY, showValidBorders);
+            // Add symbol to tree
+            tree.Insert(symbol.Envelope, symbol);
+        }
     }
 
     private static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY, bool showValidBorders = false)

@@ -15,9 +15,6 @@ public class RenderFactory : IRenderFactory
     ISymbolFactory _symbolFactory;
     private ISymbolRenderer _pointSymbolRenderer = new PointSymbolRenderer();
     private ISymbolRenderer _iconPointSymbolRenderer = new IconPointSymbolRenderer();
-    private ISymbolRenderer _iconLineSymbolRenderer = new IconLineSymbolRenderer();
-    private ISymbolRenderer _textPointSymbolRenderer = new TextPointSymbolRenderer();
-    //private ISymbolRenderer _textLineSymbolRenderer = new TextLineSymbolRenderer();
 
     public RenderFactory(IEnumerable<ILayerStyle> styles, IPaintFactory paintFactory, ISymbolFactory symbolFactory)
     {

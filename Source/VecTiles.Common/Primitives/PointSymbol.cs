@@ -4,7 +4,7 @@ namespace VecTiles.Common.Primitives;
 
 public class PointSymbol : Symbol
 {
-    public PointSymbol(Tile tile, Point point, IconPointSymbol? icon, TextPointSymbol? text) : base(tile)
+    public PointSymbol(Tile tile, ulong id, Point point, IconPointSymbol? icon, TextPointSymbol? text) : base(tile, id)
     {
         Point = point;
         IconSymbol = icon;

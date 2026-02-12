@@ -3,13 +3,24 @@ using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Common.Primitives;
 
-public abstract class Symbol(Tile tile) : ISymbol
+public abstract class Symbol : ISymbol
 {
+    public Symbol(Tile tile, ulong id)
+    {
+        Tile = tile;
+        Id = id;
+    }
+    
     /// <summary>
     /// Tile to which this symbol belongs
     /// </summary>
-    public Tile Tile { get; } = tile;
+    public Tile Tile { get; init; }
 
+    /// <summary>
+    /// Id of this symbol
+    /// </summary>
+    public ulong Id { get; init; }
+    
     /// <summary>
     /// Name of feature this symbol belongs to
     /// </summary>

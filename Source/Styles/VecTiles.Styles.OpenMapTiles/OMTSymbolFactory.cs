@@ -78,8 +78,9 @@ public class OMTSymbolFactory : ISymbolFactory
         }
 
         var text = _textBuilders[builderKey].Build(tile, point, feature);
+        var id = (ulong)feature.Attributes["id"];
 
-        var symbol = new PointSymbol(tile, point, icon, text)
+        var symbol = new PointSymbol(tile, id, point, icon, text)
         {
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"].ToString() : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() : string.Empty,
@@ -130,11 +131,15 @@ public class OMTSymbolFactory : ISymbolFactory
             text = _textBuilders[builderKey].Build(tile, geometry, feature);
         }
 
-        var symbol = new LineSymbol(tile, geometry, icon, text)
+        var id = (ulong)feature.Attributes["id"];
+
+        var symbol = new LineSymbol(tile, id, geometry, icon, text)
         {
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"].ToString() : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() : string.Empty,
-            Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"].ToString()) : int.MaxValue
+            Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"].ToString()) : int.MaxValue,
+            Spacing = style.Layout.SymbolSpacing.Evaluate(context),
+
         };
 
          if (symbol is {HasIcon: false, HasText: false})

@@ -6,104 +6,18 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Exceptions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Renderers.Skia.Primitives;
 using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Renderers.Skia;
 
-public class TextLineSymbolRenderer : ISymbolRenderer
+public static class TextLineSymbolRenderer
 {
     private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 1, IsStroke = true };
 
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showUnvalidBorders = false)
-    {
-        if (sym is not TextLineSymbol symbol)
-        {
-            return false;
-        }
-
-        var path = CreateScreenPath(symbol, worldToScreenConverter);
-
-        // Check, if at least one symbol has space on map
-
-        using var pathMeasure = new SKPathMeasure(path);
-        
-        for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
-        {
-            if (pathMeasure.Length < symbol.Spacing)
-            {
-                // We could only place one symbol in this part, so set it in the middle
-                pos = pathMeasure.Length / 2;
-            }
-            
-            pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
-
-            var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
-            var rotation = -symbol.Rotation;
-            rotation -= (float)(symbol.RotationAlignment == MapAlignment.Map || symbol.RotationAlignment == MapAlignment.Auto ? tangent : 0.0);
-            rotation %= 360;
-
-            if (CheckForSingleSpace(canvas, context, symbol, tree, nextPosition.X, nextPosition.Y, rotation, showUnvalidBorders))
-            {
-                // There is at least space for one symbol
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false)
-    {
-        if (sym is not TextLineSymbol symbol)
-        {
-            return;
-        }
-        
-        var path = CreateScreenPath(symbol, worldToScreenConverter);
-
-        using var pathMeasure = new SKPathMeasure(path);
-        
-        for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
-        {
-            if (pathMeasure.Length < symbol.Spacing)
-            {
-                // We could only place one symbol in this part, so set it in the middle
-                pos = pathMeasure.Length / 2;
-            }
-            
-            pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
-                
-            var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
-            var rotation = -symbol.Rotation;
-            rotation -= (float)(symbol.RotationAlignment is MapAlignment.Map or MapAlignment.Auto ? tangent : 0.0);
-            rotation %= 360;
-
-            if (symbol.KeepUpright && rotation is > 90 and < 270)
-            {
-                rotation -= 180;
-            }
-
-            if (symbol.KeepUpright && rotation is < -90 and > -270)
-            {
-                rotation += 180;
-            }
-
-            if (!CheckForSingleSpace(canvas, context, symbol, tree, nextPosition.X, nextPosition.Y, rotation, false))
-            {
-                continue;
-            }
-
-            DrawText(canvas, context, symbol, nextPosition.X, nextPosition.Y, rotation, showValidBorders);
-
-            tree.Insert(symbol.Envelope, symbol);
-        }
-    }
-
-    private static void DrawText(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
+    public static void DrawText(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
     {
         SKPaint paint = new SKPaint();
 
@@ -156,7 +70,7 @@ public class TextLineSymbolRenderer : ISymbolRenderer
         }
     }
 
-    private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation)
+    public static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation)
     {
         if (symbol.Text == null)
         {
@@ -219,7 +133,7 @@ public class TextLineSymbolRenderer : ISymbolRenderer
         return envelope;
     }
 
-    private static bool CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showUnvalidBorders)
+    public static bool CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showUnvalidBorders)
     {
         symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY, rotation);
 
@@ -267,32 +181,8 @@ public class TextLineSymbolRenderer : ISymbolRenderer
 
         return true;
     }
-
-    /// <summary>
-    /// Transfer the world coordinates of geometry to screen coordinates
-    /// </summary>
-    /// <param name="symbol">Symbol with geometry to convert</param>
-    /// <param name="worldToScreenConverter">Converter from world to screen coordinates</param>
-    /// <returns>Path with screen coordinates</returns>
-    private static SKPath CreateScreenPath(TextLineSymbol symbol, Func<double, double, (double, double)> worldToScreenConverter)
-    {
-        var path = new SKPath();
-
-        var (nextPointX, nextPointY) = worldToScreenConverter(symbol.Geometry.Coordinates[0].X, symbol.Geometry.Coordinates[0].Y);
-
-        path.MoveTo((float)nextPointX, (float)nextPointY);
-
-        for (var i = 1; i < symbol.Geometry.Coordinates.Length; i++)
-        {
-            (nextPointX, nextPointY) = worldToScreenConverter(symbol.Geometry.Coordinates[i].X, symbol.Geometry.Coordinates[i].Y);
-
-            path.LineTo((float)nextPointX, (float)nextPointY);
-        }
-
-        return path;
-    }
     
-    private static Style? CreateFonts(string[] names)
+    public static Style? CreateFonts(string[] names)
     {
         if (names == null || names.Length == 0)
         {

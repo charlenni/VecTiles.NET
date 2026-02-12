@@ -15,7 +15,7 @@ public class OMTStyleFileLoader
         using (var sr = new StreamReader(jsonStream))
         using (var jsonTextReader = new JsonTextReader(sr))
         {
-            omtStyleFile = serializer.Deserialize< OMTStyleFile>(jsonTextReader);
+            omtStyleFile = serializer.Deserialize<OMTStyleFile>(jsonTextReader);
         }
 
         if (omtStyleFile == null)

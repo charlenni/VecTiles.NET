@@ -1,5 +1,5 @@
-﻿using ProtoBuf;
-using System.ComponentModel;
+﻿using System.ComponentModel;
+using ProtoBuf;
 
 namespace VecTiles.Converters.OpenMapTiles.Pbf;
 

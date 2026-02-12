@@ -1,5 +1,5 @@
-﻿using VecTiles.Common.Primitives;
-using VecTiles.Common.Enums;
+﻿using VecTiles.Common.Enums;
+using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Interfaces;
 

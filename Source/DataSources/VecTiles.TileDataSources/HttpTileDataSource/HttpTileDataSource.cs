@@ -1,5 +1,4 @@
-﻿using BruTile;
-using BruTile.Predefined;
+﻿using BruTile.Predefined;
 using BruTile.Web;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;

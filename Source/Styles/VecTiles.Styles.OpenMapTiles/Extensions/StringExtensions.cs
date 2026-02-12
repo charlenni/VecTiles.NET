@@ -1,6 +1,6 @@
-﻿using NetTopologySuite.Features;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.RegularExpressions;
+using NetTopologySuite.Features;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Primitives;
 

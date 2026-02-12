@@ -1,7 +1,6 @@
 ﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using ProtoBuf;
-using VecTiles.Common.Enums;
 using VecTiles.Common.Primitives;
 using VecTiles.Converters.OpenMapTiles.Pbf;
 

@@ -1,5 +1,4 @@
 ﻿using ProtoBuf;
-using System.ComponentModel;
 
 namespace VecTiles.Converters.SdfFont.Pbf;
 

@@ -1,6 +1,5 @@
 ﻿using Mapsui;
 using Mapsui.Layers;
-using Mapsui.Projections;
 using VecTiles.Renderers.Common.Interfaces;
 
 namespace VecTiles.Controls.Mapsui;

@@ -3,10 +3,10 @@ using BruTile;
 using BruTile.Cache;
 using Mapsui;
 using VecTiles.Common.Interfaces;
+using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Skia;
 using VecTiles.Styles.OpenMapTiles;
-using VecTiles.Controls.Mapsui.Extensions;
 
 namespace VecTiles.Controls.Mapsui;
 

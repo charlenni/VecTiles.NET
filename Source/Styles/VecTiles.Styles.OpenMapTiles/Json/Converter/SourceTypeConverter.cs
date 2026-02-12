@@ -1,6 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using System.ComponentModel;
 using VecTiles.Common.Enums;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;

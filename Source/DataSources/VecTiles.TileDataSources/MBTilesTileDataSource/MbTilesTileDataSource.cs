@@ -1,7 +1,7 @@
-﻿using BruTile;
+﻿using System.Globalization;
+using BruTile;
 using BruTile.Predefined;
 using SQLite;
-using System.Globalization;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;

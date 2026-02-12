@@ -3,11 +3,9 @@ using Mapsui;
 using Mapsui.Layers;
 using Mapsui.Rendering.Skia;
 using Mapsui.Tiling.Extensions;
-using System.Linq;
 using VecTiles.Common.Interfaces;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
-using VecTiles.Renderers.Skia;
 
 namespace VecTiles.Controls.Mapsui;
 

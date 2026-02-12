@@ -4,8 +4,8 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Exceptions;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Primitives;
-using VecTiles.Styles.OpenMapTiles.Extensions;
 using VecTiles.Styles.OpenMapTiles.Enums;
+using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
@@ -69,7 +69,6 @@ public class OMTTextBuilder
         _padding = (int)style.Layout.TextPadding.Evaluate(context);
         _anchor = style.Layout.TextAnchor.ToPoint();
         _offset = style.Layout.TextOffset.Evaluate(context).ToPoint(_fontSize.Invoke(context));
-        _spacing = style.Layout.SymbolSpacing.Evaluate(context);
 
         _transform = style.Layout.TextTransform;
         _alignment = CreateAlignment(style.Layout.TextJustify, style.Layout.TextAnchor);
@@ -104,7 +103,9 @@ public class OMTTextBuilder
             return null;
         }
 
-        var symbol = new TextPointSymbol(tile, point, text)
+        var id = (ulong)feature.Attributes["id"];
+        
+        var symbol = new TextPointSymbol(tile, id, point, text)
         {
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
             Optional = _optional,
@@ -146,7 +147,9 @@ public class OMTTextBuilder
             return null;
         }
 
-        var symbol = new TextLineSymbol(tile, geometry, text)
+        var id = (ulong)feature.Attributes["id"];
+
+        var symbol = new TextLineSymbol(tile, id, geometry, text)
         {
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
             Optional = _optional,
@@ -158,7 +161,6 @@ public class OMTTextBuilder
             Padding = _padding,
             Anchor = _anchor,
             Offset = _offset,
-            Spacing = _spacing,
             Color = _color,
             Alignment = _alignment,
             Direction = TextDirection.Auto,

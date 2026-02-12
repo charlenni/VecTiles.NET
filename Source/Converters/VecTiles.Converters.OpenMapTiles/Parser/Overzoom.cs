@@ -1,5 +1,4 @@
 ﻿using NetTopologySuite.Geometries;
-using VecTiles.Common.Enums;
 using VecTiles.Common.Primitives;
 
 namespace VecTiles.Converters.OpenMapTiles.Parser;

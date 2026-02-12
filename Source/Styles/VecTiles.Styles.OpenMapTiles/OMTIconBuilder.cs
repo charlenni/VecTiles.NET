@@ -4,8 +4,8 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Styles.OpenMapTiles.Extensions;
 using VecTiles.Styles.OpenMapTiles.Enums;
+using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles
 {
@@ -22,6 +22,7 @@ namespace VecTiles.Styles.OpenMapTiles
         private readonly float _rotation;
         private readonly MapAlignment _rotationAlignment;
         private readonly int _padding;
+        private readonly bool _keepUpright;
         private readonly Point _anchor;
         private readonly Point _offset;
         private readonly float _spacing;
@@ -47,9 +48,9 @@ namespace VecTiles.Styles.OpenMapTiles
             _rotation = style.Layout.IconRotate.Evaluate(context);
             _rotationAlignment = style.Layout.IconRotationAlignment;
             _padding = (int)style.Layout.IconPadding.Evaluate(context);
+            _keepUpright = style.Layout.IconKeepUpright;
             _anchor = style.Layout.IconAnchor.ToPoint();
             _offset = style.Layout.IconOffset.Evaluate(context).ToPoint(_scale);
-            _spacing = style.Layout.SymbolSpacing.Evaluate(context);
 
             _colorFilter = (ctx) => CreateColorFilter(
                 style.Paint.IconColorBrightnessMin.Evaluate(ctx),
@@ -79,7 +80,9 @@ namespace VecTiles.Styles.OpenMapTiles
                 return null;
             }
 
-            var symbol = new IconPointSymbol(tile, point, sprite!)
+            var id = (ulong)feature.Attributes["id"];
+
+            var symbol = new IconPointSymbol(tile, id, point, sprite!)
             {
                 Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
                 Optional = _optional,
@@ -88,6 +91,7 @@ namespace VecTiles.Styles.OpenMapTiles
                 Scale = _scale,
                 Rotation = _rotation,
                 Padding = _padding,
+                KeepUpright = _keepUpright,
                 Anchor = _anchor,
                 Offset = _offset,
                 ColorFilter = _colorFilter,
@@ -112,7 +116,9 @@ namespace VecTiles.Styles.OpenMapTiles
                 return null;
             }
 
-            var symbol = new IconLineSymbol(tile, geometry, sprite!)
+            var id = (ulong)feature.Attributes["id"];
+
+            var symbol = new IconLineSymbol(tile, id, geometry, sprite!)
             {
                 Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
                 Optional = _optional,
@@ -122,9 +128,9 @@ namespace VecTiles.Styles.OpenMapTiles
                 Rotation = _rotation,
                 RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Map : _rotationAlignment,
                 Padding = _padding,
+                KeepUpright = _keepUpright,
                 Anchor = _anchor,
                 Offset = _offset,
-                Spacing = _spacing,
                 ColorFilter = _colorFilter,
                 Opacity = _opacity,
                 Translate = _translate,

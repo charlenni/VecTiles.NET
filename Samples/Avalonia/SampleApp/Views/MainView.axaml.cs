@@ -1,19 +1,14 @@
-﻿using Avalonia;
+﻿using System.IO;
+using System.Linq;
+using System.Reactive;
+using Avalonia;
 using Avalonia.Controls;
 using Mapsui.Extensions;
 using Mapsui.Rendering.Skia;
-using Mapsui.Widgets.InfoWidgets;
-using System.IO;
-using System.Linq;
-using System.Reactive;
-using BruTile;
-using Mapsui.Rendering.Skia.SkiaWidgets;
 using Mapsui.Styles;
-using Mapsui.Tiling;
-using Mapsui.Tiling.Layers;
+using Mapsui.Widgets.InfoWidgets;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
-using VecTiles.Renderers.Common;
 
 namespace SampleApp.Views;
 

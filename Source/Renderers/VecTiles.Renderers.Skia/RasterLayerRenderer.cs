@@ -1,8 +1,8 @@
 ﻿using SkiaSharp;
-using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia.Extensions;
 
 namespace VecTiles.Renderers.Skia;
 

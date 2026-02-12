@@ -1,5 +1,5 @@
-﻿using ProtoBuf;
-using System.IO.Compression;
+﻿using System.IO.Compression;
+using ProtoBuf;
 using VecTiles.Converters.SdfFont.Pbf;
 
 namespace VecTiles.Converters.SdfFont;

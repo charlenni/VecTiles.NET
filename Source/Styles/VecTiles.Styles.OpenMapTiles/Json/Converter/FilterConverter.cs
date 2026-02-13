@@ -67,6 +67,9 @@ public class FilterConverter : JsonConverter
                 return filter.Count == 3 && (filter[1].Type == JTokenType.Array || filter[2].Type == JTokenType.Array);
             case "any":
             case "all":
+                // If we only have an "all" as filter
+                if (filter.Count == 1)
+                    return false;
                 for (int i = 1; i < filter.Count; i++)
                 {
                     if (!IsExpressionFilter(filter[i] as JArray) && filter.Type != JTokenType.Boolean)
@@ -75,6 +78,7 @@ public class FilterConverter : JsonConverter
 
                 return true;
         }
+        
         return true;
     }
 

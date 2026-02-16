@@ -85,11 +85,13 @@ namespace VecTiles.Styles.OpenMapTiles
             var symbol = new IconPointSymbol(tile, id, point, sprite!)
             {
                 Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
+                StyleName = _style.Name,
                 Optional = _optional,
                 AllowOverlap = _allowOverlap,
                 AllowOthers = _allowOthers,
                 Scale = _scale,
                 Rotation = _rotation,
+                RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Viewport : _rotationAlignment,
                 Padding = _padding,
                 KeepUpright = _keepUpright,
                 Anchor = _anchor,
@@ -121,6 +123,7 @@ namespace VecTiles.Styles.OpenMapTiles
             var symbol = new IconLineSymbol(tile, id, geometry, sprite!)
             {
                 Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
+                StyleName = _style.Name,
                 Optional = _optional,
                 AllowOverlap = _allowOverlap,
                 AllowOthers = _allowOthers,

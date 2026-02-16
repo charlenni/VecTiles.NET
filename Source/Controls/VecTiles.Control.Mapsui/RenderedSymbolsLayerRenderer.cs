@@ -30,7 +30,7 @@ public static class RenderedSymbolsLayerRenderer
 
         var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel());
         var scale = 1f; // / canvas.TotalMatrix.ScaleX;
-        var rotation = viewport.Rotation * Math.PI / 180.0;
+        var rotation = -viewport.Rotation; // * Math.PI / 180.0;
 
         var context = new EvaluationContext((float)viewport.Resolution.ToZoomLevel(), (float)(1f / scale), (float)viewport.Rotation);
 
@@ -45,9 +45,9 @@ public static class RenderedSymbolsLayerRenderer
             {
                 Func<double, double, (double, double)> worldToScreenConverter = (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
 
-                if (PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowInvalidBorders))
+                if (PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, rotation, renderedLayer.ShowInvalidBorders))
                 {
-                    PointSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter, renderedLayer.ShowValidBorders);
+                    PointSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter, rotation, renderedLayer.ShowValidBorders);
                 }
             }
 
@@ -55,9 +55,9 @@ public static class RenderedSymbolsLayerRenderer
             {
                 Func<double, double, (double, double)> worldToScreenConverter = (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
 
-                if (LineSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, renderedLayer.ShowInvalidBorders))
+                if (LineSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, worldToScreenConverter, rotation, renderedLayer.ShowInvalidBorders))
                 {
-                    LineSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter, renderedLayer.ShowValidBorders);
+                    LineSymbolRenderer.Draw(canvas, context, symbol, ref tree, worldToScreenConverter, rotation, renderedLayer.ShowValidBorders);
                 }
             }
 

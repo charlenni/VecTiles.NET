@@ -108,10 +108,13 @@ public class OMTTextBuilder
         var symbol = new TextPointSymbol(tile, id, point, text)
         {
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
+            StyleName = _style.Name,
             Optional = _optional,
             AllowOverlap = _allowOverlap,
             AllowOthers = _allowOthers,
             Rotation = _rotation,
+            RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Viewport : _rotationAlignment,
+            Padding = _padding,
             Anchor = _anchor,
             Offset = _offset,
             Color = _color,
@@ -152,6 +155,7 @@ public class OMTTextBuilder
         var symbol = new TextLineSymbol(tile, id, geometry, text)
         {
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
+            StyleName = _style.Name,
             Optional = _optional,
             AllowOverlap = _allowOverlap,
             AllowOthers = _allowOthers,

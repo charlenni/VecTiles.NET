@@ -10,6 +10,8 @@ public class PointSymbol : Symbol
         IconSymbol = icon;
         TextSymbol = text;
 
+        StyleName = icon is not null ? icon.StyleName : text is not null ? text.StyleName :  string.Empty;
+
         DrawIcon = (IconSymbol != null);
         DrawText = (TextSymbol != null);
         DrawIconWithoutText = (TextSymbol == null) || TextSymbol.Optional;

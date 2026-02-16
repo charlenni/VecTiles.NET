@@ -12,30 +12,77 @@ namespace VecTiles.Renderers.Skia;
 
 public class IconPointSymbolRenderer : ISymbolRenderer
 {
-    private static readonly SKSamplingOptions _samplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
+    private static readonly SKSamplingOptions SamplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Green, StrokeWidth = 1, IsStroke = true };
 
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showUnvalidBorders = false)
+    public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
     {
-        if (sym is not IconPointSymbol symbol)
+        SKPaint paint = new SKPaint() { IsAntialias = true };
+
+        if (symbol.ColorFilter != null)
+        {
+            paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
+        }
+
+        canvas.Save();
+
+        canvas.Translate((float) screenX, (float) screenY);
+        canvas.Scale(1f / context.Scale);
+    
+        if (symbol.RotationAlignment == MapAlignment.Map)
+        {
+            canvas.RotateDegrees((float)rotation);
+        }
+
+        canvas.Scale(symbol.Scale);
+        canvas.RotateDegrees(symbol.Rotation);
+        
+        var x = (float)symbol.Envelope.MinX;
+        var y = (float)symbol.Envelope.MinY;
+
+        canvas.DrawImage((SKImage)symbol.Icon.Native, x, y, SamplingOptions, paint);
+
+        canvas.Restore();
+
+        if (showValidBorders)
+        {
+            canvas.DrawRect(
+                new SKRect((float) symbol.ScreenEnvelope!.MinX, (float) symbol.ScreenEnvelope!.MinY, (float) symbol.ScreenEnvelope!.MaxX,
+                    (float) symbol.ScreenEnvelope!.MaxY), DebugPaint);
+        }
+    }
+
+    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showUnvalidBorders)
+    {
+        symbol.Envelope ??= CreateEnvelope(symbol, context);
+
+        if (symbol.Envelope is null)
         {
             return false;
         }
         
-        var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
+        // Save it for later use
+        var screenEnvelope = symbol.Envelope.Copy();
+        
+        // Move symbol's envelope at the screen position
+        if (rotation != 0.0 && symbol.RotationAlignment == MapAlignment.Map)
+        {
+            screenEnvelope.RotateDegrees(rotation);
+        }
 
-        symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY);
+        screenEnvelope.Translate(screenX, screenY);
 
-        if (symbol.Envelope.MaxX < canvas.LocalClipBounds.Left ||
-            symbol.Envelope.MinY < canvas.LocalClipBounds.Top ||
-            symbol.Envelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
-            symbol.Envelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
+        // Check, if symbol is visible
+        if (screenEnvelope.MaxX < canvas.LocalClipBounds.Left ||
+            screenEnvelope.MinY < canvas.LocalClipBounds.Top ||
+            screenEnvelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
+            screenEnvelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
         {
             // Symbol isn't visible
             return false;
         }
-
-        var symbols = tree.Query(symbol.Envelope);
+ 
+        var symbols = tree.Query(screenEnvelope);
 
         foreach (var other in symbols)
         {
@@ -43,14 +90,14 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             {
                 continue;
             }
-            
-            if (otherSymbol.Envelope == null)
+
+            if (otherSymbol.ScreenEnvelope == null)
             {
                 // Should not happen
                 continue;
             }
 
-            if (!symbol.Envelope.Intersects(otherSymbol.Envelope))
+            if (!screenEnvelope.Intersects(otherSymbol.ScreenEnvelope))
             {
                 continue;
             }
@@ -59,39 +106,49 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             {
                 continue;
             }
-
-            if (showUnvalidBorders && sym.Name != symbol.Name)
+            
+            if (showUnvalidBorders && symbol.Name != otherSymbol.Name)
             {
-                canvas.DrawRect(new SKRect((float)symbol.Envelope!.MinX, (float)symbol.Envelope!.MinY, (float)symbol.Envelope!.MaxX, (float)symbol.Envelope!.MaxY), DebugPaint);
+                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY, (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
             }
 
             return false;
         }
 
+        symbol.ScreenEnvelope = screenEnvelope;
+
         return true;
     }
 
-    private static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, double screenX, double screenY)
+    private static Envelope? CreateEnvelope(IconPointSymbol symbol, EvaluationContext context)
     {
         if (symbol.Icon == null)
         {
-            return new Envelope();
+            return null;
         }
 
-        var width = symbol.Icon.Width * symbol.Scale + symbol.Padding * 2;
-        var height = symbol.Icon.Height * symbol.Scale + symbol.Padding * 2;
+        // We already calculated for this symbol an envelope, so use this
+        if (symbol.Envelope is not null)
+        {
+            return symbol.Envelope;
+        }
+
+        symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
+        symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
+            symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
+
+        var width = symbol.Icon.Width * symbol.Scale;
+        var height = symbol.Icon.Height * symbol.Scale;
         var anchor = new Point(symbol.Anchor.X * width, symbol.Anchor.Y * height);
         var offset = new Point(anchor.X + symbol.Offset.X, anchor.Y + symbol.Offset.Y);
 
-        // We now could calc the rughly envelope of icon
-        var envelope = new Envelope(0 + offset.X, width + offset.X, 0 + offset.Y, height + offset.Y);
+        // We now could calc the rough envelope of icon
+        var envelope = new Envelope(offset.X - symbol.Padding, offset.X + width + symbol.Padding, offset.Y - symbol.Padding, offset.Y + height + symbol.Padding);
 
         if (symbol.Rotation != 0.0)
         {
             envelope.RotateDegrees(symbol.Rotation);
         }
-
-        envelope.Translate(screenX, screenY);
 
         if (symbol.Translate != null)
         {
@@ -105,107 +162,12 @@ public class IconPointSymbolRenderer : ISymbolRenderer
                 var sin = Math.Sin(rotation);
                 var x = translate.X * cos - translate.Y * sin;
                 var y = translate.X * sin + translate.Y * cos;
-                translate = new Point((float)x, (float)y);
+                translate = new Point((float) x, (float) y);
             }
 
             envelope.Translate(translate.X, translate.Y);
         }
 
         return envelope;
-    }
-
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false)
-    {
-        if (sym is not IconPointSymbol symbol)
-        {
-            return;
-        }
-        
-        var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
-
-        if (symbol.Envelope is null || symbol.Envelope.IsNull)
-        {
-            return;
-        }
-
-        if (symbol.Envelope is not null &&
-            symbol.Envelope.MinX >= canvas.LocalClipBounds.Left &&
-            symbol.Envelope.MinY >= canvas.LocalClipBounds.Top &&
-            symbol.Envelope.MaxX <= canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width &&
-            symbol.Envelope.MaxY <= canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
-        {
-            // Draw icon
-            DrawIcon(canvas, context, symbol, screenX, screenY, showValidBorders);
-            // Add symbol to tree
-            tree.Insert(symbol.Envelope, symbol);
-        }
-    }
-
-    private static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, double screenX, double screenY, bool showValidBorders = false)
-    {
-        SKPaint paint = new SKPaint() { IsAntialias = true };
-
-        canvas.Save();
-
-        canvas.Translate((float)screenX, (float)screenY);
-
-        if (symbol.ColorFilter != null)
-        {
-            paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
-        }
-
-        if (symbol.Translate != null)
-        {
-            var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
-            var translateAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
-
-            if (translateAnchor == MapAlignment.Viewport)
-            {
-                canvas.RotateDegrees(-context.Rotation);
-            }
-
-            canvas.Translate(translate.ToSKPoint());
-        }
-
-        canvas.Scale(1f / context.Scale);
-        canvas.Translate(symbol.Offset.ToSKPoint());
-        canvas.RotateDegrees(symbol.Rotation);
-
-        canvas.Translate((float)(symbol.Anchor.X * symbol.Icon.Width * symbol.Scale - symbol.Padding), (float)(symbol.Anchor.Y * symbol.Icon.Height * symbol.Scale - symbol.Padding));
-
-        symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
-        symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
-            symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
-
-        var dest = new SKRect(symbol.Padding, symbol.Padding, symbol.Icon.Width * symbol.Scale + symbol.Padding, symbol.Icon.Height * symbol.Scale + symbol.Padding);
-        
-        canvas.DrawImage((SKImage)symbol.Icon.Native, dest, _samplingOptions, paint);
-
-        canvas.Restore();
-
-        if (showValidBorders)
-        {
-            canvas.DrawRect(
-                new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
-                    (float) symbol.Envelope!.MaxY), DebugPaint);
-        }
-    }
-    
-    internal static (float rotationDeg, float scaleX, float scaleY, Point translation) AnalyzeCanvasTransform(SKCanvas canvas)
-    {
-        var m = canvas.TotalMatrix;
-
-        // Rotation berechnen (in Grad)
-        float rotationRad = (float)Math.Atan2(m.SkewY, m.ScaleY);
-        float rotationDeg = (float)(rotationRad * (180f / Math.PI));
-
-        // Skalierung berechnen (Betrag der Vektoren)
-        float scaleX = (float)Math.Sqrt(m.ScaleX * m.ScaleX + m.SkewX * m.SkewX);
-        float scaleY = (float)Math.Sqrt(m.SkewY * m.SkewY + m.ScaleY * m.ScaleY);
-
-        // Translation (Position)
-        var translation = new Point(m.TransX, m.TransY);
-
-        return (rotationDeg, scaleX, scaleY, translation);
-    }
+    } 
 }

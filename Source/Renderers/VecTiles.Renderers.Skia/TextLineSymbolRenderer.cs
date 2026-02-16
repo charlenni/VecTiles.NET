@@ -3,7 +3,6 @@ using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using Topten.RichTextKit;
 using VecTiles.Common.Enums;
-using VecTiles.Common.Exceptions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Skia.Extensions;
@@ -14,7 +13,6 @@ namespace VecTiles.Renderers.Skia;
 
 public static class TextLineSymbolRenderer
 {
-    private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 1, IsStroke = true };
 
     public static void DrawText(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
@@ -24,40 +22,29 @@ public static class TextLineSymbolRenderer
         canvas.Save();
 
         canvas.Translate((float)screenX, (float)screenY);
-
-        if (symbol.Translate != null)
+        canvas.Scale(1f / context.Scale);
+        
+        if (symbol.RotationAlignment == MapAlignment.Map)
         {
-            var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
-            var translateAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
-
-            if (translateAnchor == MapAlignment.Viewport)
-            {
-                canvas.RotateDegrees(-context.Rotation);
-            }
-
-            canvas.Translate(translate.ToSKPoint());
+            canvas.RotateDegrees((float)rotation);
         }
 
-        canvas.Scale(1f / context.Scale);
-        canvas.Translate(symbol.Offset.ToSKPoint());
-        canvas.RotateDegrees((float)rotation);
+        var text = (RenderedText)symbol.Native;
 
-        var text = (RenderedText) symbol.Renderer;
-
-        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
-        
-        var textStyle = (Style)text.Text.GetStyleAtOffset(0);
+        var textStyle = text.TextStyle;
 
         textStyle.TextColor = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f));
         textStyle.HaloBlur = symbol.HaloBlur.Invoke(context);
         textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
         textStyle.HaloWidth = symbol.HaloWidth.Invoke(context);
 
-        text.Text.ApplyStyle(0, text.Text.Length, textStyle);
-
         // Translate to right position respecting the correction (leading space before TextBlocks text starts)
-        canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth) - text.Text.MeasuredPadding.Left, (float)(symbol.Anchor.Y * text.MeasuredHeight - text.Text.MeasuredPadding.Top));
+        //canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth) - text.Text.MeasuredPadding.Left, (float)(symbol.Anchor.Y * text.MeasuredHeight - text.Text.MeasuredPadding.Top));
+        canvas.Translate((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY);
 
+        // Correction, because RichTextKit draws with MaxWidth coordinates but we use only real text size
+        canvas.Translate(symbol.Padding - text.LeftRightCorrection, symbol.Padding);
+        // Draw text with RichTextKit
         text.Text.Paint(canvas);
 
         canvas.Restore();
@@ -65,22 +52,140 @@ public static class TextLineSymbolRenderer
         if (showValidBorders)
         {
             canvas.DrawRect(
-                new SKRect((float) symbol.Envelope!.MinX, (float) symbol.Envelope!.MinY, (float) symbol.Envelope!.MaxX,
-                    (float) symbol.Envelope!.MaxY), DebugPaint);
+                new SKRect((float) symbol.ScreenEnvelope!.MinX, (float) symbol.ScreenEnvelope!.MinY, (float) symbol.ScreenEnvelope!.MaxX,
+                    (float) symbol.ScreenEnvelope!.MaxY), DebugPaint);
         }
     }
+    
+    public static void DrawTextOnPath(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, SKPath path, double screenX, double screenY, bool showValidBorders)
+    {
+        SKPaint paint = new SKPaint();
 
-    public static Envelope CreateEnvelope(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation)
+        var text = (RenderedText) symbol.Native;
+        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
+        
+        var textStyle = (Style)text.Text.GetStyleAtOffset(0);
+        var font = new SKFont();
+
+        canvas.DrawTextOnPath("Test", path, new SKPoint(0, 0), font, paint);
+    }
+
+    /// <summary>
+    /// Check, if one symbol fits on the path. Respects visible in clipped bounds,
+    /// enough space on the path and no other symbol occupies the place.
+    /// </summary>
+    /// <param name="canvas">Canvas with clipping bounds</param>
+    /// <param name="context">Context for creating envelope</param>
+    /// <param name="path">Path on which this symbol should placed</param>
+    /// <param name="startPos">Start position on path where the first symbol should placed</param>
+    /// <param name="symbol">Symbol that should be placed on the path</param>
+    /// <param name="tree">Tree with all other already placed symbols</param>
+    /// <param name="screenX">X position for creating screen envelope of symbol</param>
+    /// <param name="screenY">Y position for creating screen envelope of symbol</param>
+    /// <param name="rotation">Rotation of screen for creating screen envelope of symbol</param>
+    /// <param name="showInvalidBorders">Flag, if invalid borders should be drawn</param>
+    /// <returns></returns>
+    public static bool CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, SKPath path, double startPos, 
+        TextLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showInvalidBorders)
+    {
+        symbol.Envelope ??= CreateEnvelope(symbol, context);
+
+        if (symbol.Envelope is null)
+        {
+            return false;
+        }
+        
+        // Is there enough space to fit text on a segment
+        if (!path.CanFitOnNextLineSegment((float)startPos, (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX)))
+        {
+            return false;
+        }
+        
+        // Save it for later use
+        var screenEnvelope = symbol.Envelope.Copy();
+        
+        // Move symbol's envelope at the screen position
+        if (rotation != 0.0)
+        {
+            screenEnvelope.RotateDegrees(rotation);
+        }
+
+        screenEnvelope.Translate(screenX, screenY);
+
+        // Check, if symbol is visible
+        if (screenEnvelope.MaxX < canvas.LocalClipBounds.Left ||
+            screenEnvelope.MinY < canvas.LocalClipBounds.Top ||
+            screenEnvelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
+            screenEnvelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
+        {
+            // Symbol isn't visible
+            return false;
+        }
+ 
+        var symbols = tree.Query(screenEnvelope);
+
+        foreach (var other in symbols)
+        {
+            if (other is not Symbol otherSymbol)
+            {
+                continue;
+            }
+            
+            if (otherSymbol.ScreenEnvelope == null)
+            {
+                // Should not happen
+                continue;
+            }
+
+            if (!screenEnvelope.Intersects(otherSymbol.ScreenEnvelope))
+            {
+                continue;
+            }
+
+            if (symbol.AllowOthers  && otherSymbol.AllowOthers)
+            {
+                continue;
+            }
+            
+            if (showInvalidBorders && symbol.Name != otherSymbol.Name)
+            {
+                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY, (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
+            }
+
+            return false;
+        }
+
+        symbol.ScreenEnvelope = screenEnvelope;
+        
+        return true;
+    }
+
+    /// <summary>
+    /// Create an envelope around text symbol.
+    /// (0, 0) is the anchor point of this symbol.
+    /// </summary>
+    /// <param name="symbol">Symbol to create an envelope for</param>
+    /// <param name="context">Context to use for this calculation</param>
+    /// <returns>Envelope for a valid symbol, else null</returns>
+    private static Envelope? CreateEnvelope(TextLineSymbol symbol, EvaluationContext context)
     {
         if (symbol.Text == null)
         {
-            return new Envelope();
+            return null;
         }
 
-        symbol.Renderer ??= new RenderedText(symbol.Text, CreateFonts(symbol.FontNames));
+        // We already calculated for this symbol an envelope, so use this
+        if (symbol.Envelope is not null)
+        {
+            return symbol.Envelope;
+        }
         
-        var text = (RenderedText) symbol.Renderer;
+        symbol.Native ??= new RenderedText(symbol.Text, FontCache.CreateFonts(symbol.StyleName, symbol.FontNames));
+        
+        var text = (RenderedText)symbol.Native;
 
+        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
+        
         text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
         
         // Set max width to the correct value
@@ -90,27 +195,31 @@ public static class TextLineSymbolRenderer
         // MeasuredWidth and MeasuredHeight need many CPU cycles, so save them for later use
         text.MeasuredWidth = text.Text.MeasuredWidth;
         text.MeasuredHeight = text.Text.MeasuredHeight;
-        // MaxWidth could be greater than MeasuredWidth. Then there is some space around the text.
-        // This could be access by MeasuredPadding.
-        text.LeftRightCorrection = 0f;
+        
+        // We don't want any padding on the left, so remove it. Costs a second time the layout
+        if ((text.Text.MeasuredPadding.Left > 0 || text.Text.MeasuredPadding.Right > 0) && text.Text.LineCount == 1)
+        {
+            text.Text.MaxWidth = null;
+            text.MeasuredWidth = text.Text.MeasuredWidth;
+            text.MeasuredHeight = text.Text.MeasuredHeight;
+        }
+        
+        text.LeftRightCorrection = text.Text.MeasuredPadding.Left;
 
         var anchor = new SKPoint((float)(symbol.Anchor.X * text.MeasuredWidth), (float)(symbol.Anchor.Y * text.MeasuredHeight));
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
+        var padding = symbol.Padding;
 
-        // We now could calc the rough envelope of text
-        var envelope = new Envelope(offset.X, offset.X + text.MeasuredWidth, offset.Y, offset.Y + text.MeasuredHeight);
+        // We now could calc the rough envelope of text respecting the overhang e.g. from italic characters)
+        var envelope = new Envelope(offset.X - padding - text.Text.MeasuredOverhang.Left, 
+            offset.X + padding + text.MeasuredWidth + text.Text.MeasuredOverhang.Right, 
+            offset.Y - padding - text.Text.MeasuredPadding.Top, 
+            offset.Y + padding + text.MeasuredHeight + text.Text.MeasuredOverhang.Bottom);
 
         if (symbol.Rotation != 0.0)
         {
             envelope.RotateDegrees(symbol.Rotation);
         }
-
-        if (rotation != 0.0)
-        {
-            envelope.RotateDegrees(rotation);
-        }
-
-        envelope.Translate(screenX, screenY);
 
         if (symbol.Translate != null)
         {
@@ -129,145 +238,7 @@ public static class TextLineSymbolRenderer
 
             envelope.Translate(translate.X, translate.Y);
         }
-
-        return envelope;
-    }
-
-    public static bool CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showUnvalidBorders)
-    {
-        symbol.Envelope = CreateEnvelope(canvas, context, symbol, screenX, screenY, rotation);
-
-        if (symbol.Envelope.MaxX < canvas.LocalClipBounds.Left ||
-            symbol.Envelope.MinY < canvas.LocalClipBounds.Top ||
-            symbol.Envelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
-            symbol.Envelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
-        {
-            // Symbol isn't visible
-            return false;
-        }
- 
-        var symbols = tree.Query(symbol.Envelope);
-
-        foreach (var other in symbols)
-        {
-            if (other is not Symbol otherSymbol)
-            {
-                continue;
-            }
-            
-            if (otherSymbol.Envelope == null)
-            {
-                // Should not happen
-                continue;
-            }
-
-            if (!symbol.Envelope.Intersects(otherSymbol.Envelope))
-            {
-                continue;
-            }
-
-            if (symbol.AllowOthers  && otherSymbol.AllowOthers)
-            {
-                continue;
-            }
-            
-            if (showUnvalidBorders && symbol.Name != otherSymbol.Name)
-            {
-                canvas.DrawRect(new SKRect((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY, (float)symbol.Envelope.MaxX, (float)symbol.Envelope.MaxY), DebugPaint);
-            }
-
-            return false;
-        }
-
-        return true;
-    }
-    
-    public static Style? CreateFonts(string[] names)
-    {
-        if (names == null || names.Length == 0)
-        {
-            throw new FontNotFoundException($"Font of style not found");
-        }
-
-        foreach (var name in names)
-        {
-            var textStyle = CreateFont(name);
-
-            if (textStyle != null)
-            {
-                return textStyle;
-            }
-        }
         
-        throw new FontNotFoundException(names.Length == 1 ? $"Font '{names[0]}' not found" : $"Fonts '{string.Join(", ", names)}' not found");
-    }
-    
-    private static Topten.RichTextKit.Style? CreateFont(string fontName)
-    {
-        if (string.IsNullOrEmpty(fontName))
-        {
-            return null;
-        }
-
-        if (TextStyles.TryGetValue(fontName, out var textStyle))
-        {
-            return textStyle;
-        }
-
-        textStyle = new Topten.RichTextKit.Style();
-
-        // TODO: Create correct family name
-        var fontFamilyName = fontName;
-
-        if (fontFamilyName.Contains("condensed", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWidth = SKFontStyleWidth.Condensed;
-            fontFamilyName = fontFamilyName.Replace("condensed", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        textStyle.FontWeight = 400;
-
-        if (fontFamilyName.Contains("regular", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWeight = 400;
-            fontFamilyName = fontFamilyName.Replace("regular", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        if (fontFamilyName.Contains("medium", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWeight = 500;
-            fontFamilyName = fontFamilyName.Replace("medium", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        if (fontFamilyName.Contains("bold", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWeight = 500;
-            fontFamilyName = fontFamilyName.Replace("bold", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        if (fontFamilyName.Contains("italic", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontItalic = true;
-            fontFamilyName = fontFamilyName.Replace("italic", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        fontFamilyName = fontFamilyName.Replace("  ", " ").Trim();
-
-        var fontManager = SKFontManager.Default;
-        var typeface = fontManager.MatchFamily(fontFamilyName);
-
-        // Check, if result is the font family asked for
-        bool fontExists = typeface != null && typeface.FamilyName.Equals(fontFamilyName, StringComparison.OrdinalIgnoreCase);
-
-        if (!fontExists)
-        {
-            return null;
-        }
-
-        textStyle.FontFamily = fontFamilyName;
-
-        TextStyles.Add(fontName, textStyle);
-
-        return textStyle;
+        return envelope;
     }
 }

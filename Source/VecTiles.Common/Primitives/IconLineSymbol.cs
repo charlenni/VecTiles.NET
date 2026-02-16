@@ -92,13 +92,15 @@ public class IconLineSymbol : Symbol
         var result = new IconLineSymbol(Tile, Id, Geometry, Icon)
         {
             Name = Name,
+            StyleName = StyleName,
             SortOrder = SortOrder,
             Class = Class,
             Subclass = Subclass,
             Rank = Rank,
             AllowOthers = AllowOthers,
             Envelope = Envelope?.Copy(),
-            Renderer = Renderer,
+            ScreenEnvelope = ScreenEnvelope?.Copy(),
+            Native = Native,
             Optional = Optional,
             AllowOverlap = AllowOverlap,
             Scale = Scale,

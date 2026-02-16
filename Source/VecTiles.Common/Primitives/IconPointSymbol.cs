@@ -43,6 +43,11 @@ public class IconPointSymbol : Symbol
     public float Rotation { get; init; }
 
     /// <summary>
+    /// Rotation alignment (map or viewport) for rotation
+    /// </summary>
+    public MapAlignment RotationAlignment { get; init; }
+
+    /// <summary>
     /// Padding around symbol in pixel
     /// </summary>
     public int Padding { get; init; }
@@ -81,4 +86,36 @@ public class IconPointSymbol : Symbol
     /// Function to calculate anchor of translate (map or viewport) from EvaluationContext
     /// </summary>
     public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; init; }
+    
+    public IconPointSymbol Copy()
+    {
+        var result = new IconPointSymbol(Tile, Id, Point, Icon)
+        {
+            Name = Name,
+            StyleName = StyleName,
+            SortOrder = SortOrder,
+            Class = Class,
+            Subclass = Subclass,
+            Rank = Rank,
+            AllowOthers = AllowOthers,
+            Envelope = Envelope?.Copy(),
+            ScreenEnvelope = ScreenEnvelope?.Copy(),
+            Native = Native,
+            Optional = Optional,
+            AllowOverlap = AllowOverlap,
+            Scale = Scale,
+            Rotation = Rotation,
+            RotationAlignment = RotationAlignment,
+            Padding = Padding,
+            KeepUpright = KeepUpright,
+            Anchor = Anchor,
+            Offset = Offset,
+            Translate = Translate,
+            ColorFilter = ColorFilter,
+            Opacity = Opacity,
+            TranslateAnchor = TranslateAnchor
+        };
+
+        return result;
+    }
 }

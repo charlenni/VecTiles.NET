@@ -1,16 +1,17 @@
-﻿using System.Runtime.InteropServices.Marshalling;
-using NetTopologySuite.Index.Quadtree;
+﻿using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia.Primitives;
 
 namespace VecTiles.Renderers.Skia;
 
 public class LineSymbolRenderer : ISymbolRenderer
 {
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showUnvalidBorders = false)
+    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, 
+        Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showUnvalidBorders = false)
     {
         if (sym is not LineSymbol symbol)
         {
@@ -23,7 +24,7 @@ public class LineSymbolRenderer : ISymbolRenderer
 
         using var pathMeasure = new SKPathMeasure(path);
 
-        for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+        for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
         {
             if (pathMeasure.Length < symbol.Spacing)
             {
@@ -42,6 +43,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                 var iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment, tangent, symbol.IconSymbol.KeepUpright);
 
                 spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                    path, pos, 
                     symbol.IconSymbol!, tree, nextPosition.X,
                     nextPosition.Y, iconRotation, showUnvalidBorders);
             }
@@ -53,6 +55,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                 var textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment, tangent, symbol.TextSymbol.KeepUpright);
 
                 spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                    path, pos, 
                     symbol.TextSymbol!, tree, nextPosition.X,
                     nextPosition.Y, textRotation, showUnvalidBorders);
             }
@@ -68,7 +71,8 @@ public class LineSymbolRenderer : ISymbolRenderer
         return false;
     }
 
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter, bool showValidBorders = false)
+    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, 
+        Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false)
     {
         if (sym is not LineSymbol symbol)
         {
@@ -79,7 +83,7 @@ public class LineSymbolRenderer : ISymbolRenderer
 
         using var pathMeasure = new SKPathMeasure(path);
         
-        for (var pos = 0f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+        for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
         {
             var iconDrawn = false;
             var textDrawn = false;
@@ -101,7 +105,9 @@ public class LineSymbolRenderer : ISymbolRenderer
             {
                 iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment, tangent, symbol.IconSymbol.KeepUpright);
 
-                spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context, symbol.IconSymbol!,
+                spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                    path, pos, 
+                    symbol.IconSymbol!,
                     tree, nextPosition.X,
                     nextPosition.Y, iconRotation, false);
             }
@@ -114,6 +120,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                 textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment, tangent, symbol.TextSymbol.KeepUpright);
 
                 spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                    path, pos,
                     symbol.TextSymbol!, tree, nextPosition.X,
                     nextPosition.Y, textRotation, false);
             }
@@ -130,17 +137,22 @@ public class LineSymbolRenderer : ISymbolRenderer
             {
                 TextLineSymbolRenderer.DrawText(canvas, context, symbol.TextSymbol!, nextPosition.X, nextPosition.Y, textRotation, showValidBorders);
 
+                if (!symbol.HasIcon)
+                {
+                    pos += ((RenderedText) symbol.TextSymbol.Native).MeasuredWidth;
+                }
+                
                 textDrawn = true;
             }
 
             if (iconDrawn)
             {
-                tree.Insert(symbol.IconSymbol!.Envelope, symbol.IconSymbol.Copy());
+                tree.Insert(symbol.IconSymbol!.ScreenEnvelope, symbol.IconSymbol.Copy());
             }
 
             if (textDrawn)
             {
-                tree.Insert(symbol.TextSymbol!.Envelope, symbol.TextSymbol.Copy());
+                tree.Insert(symbol.TextSymbol!.ScreenEnvelope, symbol.TextSymbol.Copy());
             }
         }
     }

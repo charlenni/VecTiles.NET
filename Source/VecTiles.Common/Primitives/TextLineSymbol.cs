@@ -126,13 +126,15 @@ public class TextLineSymbol : Symbol
         var result = new TextLineSymbol(Tile, Id, Geometry, Text)
         {
             Name = Name,
+            StyleName = StyleName,
             SortOrder = SortOrder,
             Class = Class,
             Subclass = Subclass,
             Rank = Rank,
             AllowOthers = AllowOthers,
             Envelope = Envelope?.Copy(),
-            Renderer = Renderer,
+            ScreenEnvelope = ScreenEnvelope?.Copy(),
+            Native = Native,
             Optional = Optional,
             AllowOverlap = AllowOverlap,
             Rotation = Rotation,

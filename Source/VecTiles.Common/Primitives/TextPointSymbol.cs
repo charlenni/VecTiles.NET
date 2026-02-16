@@ -37,6 +37,16 @@ public class TextPointSymbol : Symbol
     public float Rotation { get; init; }
 
     /// <summary>
+    /// Rotation alignment (map or viewport) for rotation
+    /// </summary>
+    public MapAlignment RotationAlignment { get; init; }
+
+    /// <summary>
+    /// Padding around symbol in pixel
+    /// </summary>
+    public int Padding { get; init; }
+
+    /// <summary>
     /// Keep the text upright, so that is easier to read
     /// </summary>
     public bool KeepUpright { get; init; }
@@ -110,4 +120,40 @@ public class TextPointSymbol : Symbol
     /// Maximum width for the text. If the text exceeds the max width, it will be wrapped.
     /// </summary>
     public Func<EvaluationContext, float, float>? MaxWidth { get; init; }
+
+    public TextPointSymbol Copy()
+    {
+        var result = new TextPointSymbol(Tile, Id, Point, Text)
+        {
+            Name = Name,
+            StyleName = StyleName,
+            SortOrder = SortOrder,
+            Class = Class,
+            Subclass = Subclass,
+            Rank = Rank,
+            AllowOthers = AllowOthers,
+            Envelope = Envelope?.Copy(),
+            ScreenEnvelope = ScreenEnvelope?.Copy(),
+            Native = Native,
+            Optional = Optional,
+            AllowOverlap = AllowOverlap,
+            Rotation = Rotation,
+            RotationAlignment = RotationAlignment,
+            Padding = Padding,
+            KeepUpright = KeepUpright,
+            Anchor = Anchor,
+            Offset = Offset,
+            Direction = Direction,
+            FontNames = FontNames,
+            FontSize = FontSize,
+            HaloColor = HaloColor,
+            HaloBlur = HaloBlur,
+            HaloWidth = HaloWidth,
+            Translate = Translate,
+            TranslateAnchor = TranslateAnchor,
+            MaxWidth = MaxWidth,
+        };
+
+        return result;
+    }
 }

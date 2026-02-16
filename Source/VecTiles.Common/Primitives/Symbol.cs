@@ -27,6 +27,11 @@ public abstract class Symbol : ISymbol
     public string Name { get; init; } = string.Empty;
 
     /// <summary>
+    /// Style name of feature this symbol belongs to
+    /// </summary>
+    public string StyleName { get; init; } = string.Empty;
+
+    /// <summary>
     /// Sort order to use for this symbol
     /// </summary>
     public double SortOrder { get; init; }
@@ -51,12 +56,18 @@ public abstract class Symbol : ISymbol
     /// </summary>
     public bool AllowOthers { get; init; }
 
-    // TODO
-    // Remove, for test only
+    /// <summary>
+    /// Envelope of symbol
+    /// </summary>
     public Envelope? Envelope { get; set; }
+
+    /// <summary>
+    /// Envelope of symbol on screen. Only for the active layout process.
+    /// </summary>
+    public Envelope? ScreenEnvelope { get; set; }
 
     /// <summary>
     /// Property holding a native object for the renderer
     /// </summary>
-    public object Renderer { get; set; }
+    public object? Native { get; set; }
 }

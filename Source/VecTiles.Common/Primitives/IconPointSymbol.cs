@@ -60,7 +60,7 @@ public class IconPointSymbol : Symbol
     /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]
     /// </summary>
-    public Point Anchor { get; init; } = new(0, 0);
+    public Point Anchor { get; init; } = new(0.5, 0.5);
 
     /// <summary>
     /// Offset from point in pixels

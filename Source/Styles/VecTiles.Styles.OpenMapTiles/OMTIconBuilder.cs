@@ -50,7 +50,7 @@ namespace VecTiles.Styles.OpenMapTiles
             _padding = (int)style.Layout.IconPadding.Evaluate(context);
             _keepUpright = style.Layout.IconKeepUpright;
             _anchor = style.Layout.IconAnchor.ToPoint();
-            _offset = style.Layout.IconOffset.Evaluate(context).ToPoint(_scale);
+            _offset = style.Layout.IconOffset.Evaluate(context).ToPoint();
 
             _colorFilter = (ctx) => CreateColorFilter(
                 style.Paint.IconColorBrightnessMin.Evaluate(ctx),

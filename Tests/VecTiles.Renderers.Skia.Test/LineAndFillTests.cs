@@ -4,20 +4,19 @@ using VecTiles.Common.Primitives;
 using VecTiles.Converters.OpenMapTiles;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.Renderers.Common;
-using VecTiles.Renderers.Skia;
 using VecTiles.Styles.OpenMapTiles;
 using VecTiles.TileDataSources;
 
-namespace VecTiles.Renderers.Test;
+namespace VecTiles.Renderers.Skia.Test;
 
-public class SkiaRendererTests
+public class LineAndFillTests
 {
     private const string Folder = "files";
     private readonly string _dataFile = Path.Combine(Folder, "zurich.mbtiles");
     private readonly string _styleFile = Path.Combine(Folder, "osm-liberty.json");
     private readonly Renderer _renderer;
 
-    public SkiaRendererTests()
+    public LineAndFillTests()
     {
         var dataSource = new MbTilesTileDataSource(_dataFile, determineZoomLevelsFromTilesTable: true, determineTileRangeFromTilesTable: true);
         var converter = new OMTTileConverter();
@@ -65,20 +64,13 @@ public class SkiaRendererTests
             var renderedTile = (RenderedTile)(await _renderer.Render(tile));
             var renderContext = new EvaluationContext(tile.Zoom);
 
-            var imageInfo = new SKImageInfo {Width = 512, Height = 512, ColorType = SKColorType.Rgba8888, AlphaType = SKAlphaType.Premul};
-
-            using var bitmap = new SKBitmap(imageInfo);
+            using var bitmap = Utilities.CreateBitmap(512, 512);
             using (var canvas = new SKCanvas(bitmap))
             {
                 renderedTile?.Draw(canvas, renderContext);
             }
 
-            using (var image = SKImage.FromBitmap(bitmap))
-            using (var data = image.Encode(SKEncodedImageFormat.Png, 100))
-            await using (var stream = File.OpenWrite(Path.Combine(Folder, $"Tile-{x}x-{y}y-{zoom}z.png")))
-            {
-                data.SaveTo(stream);
-            }
+            Utilities.SaveAndDestroyBitmap(bitmap, Path.Combine(Folder, $"Tile-{x}x-{y}y-{zoom}z.png"));
         }
         catch (Exception e)
         {

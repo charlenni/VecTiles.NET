@@ -21,64 +21,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Using Include="Xunit"/>
-    </ItemGroup>
-
-    <ItemGroup>
-      <Content Include="..\..\Files\Fonts\Roboto Condensed Italic.ttf">
-        <Link>Files\Fonts\Roboto Condensed Italic.ttf</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\..\Files\Fonts\Roboto Medium.ttf">
-        <Link>Files\Fonts\Roboto Medium.ttf</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\..\Files\Fonts\Roboto Regular.ttf">
-        <Link>Files\Fonts\Roboto Regular.ttf</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-      <Content Include="..\..\Files\osm-liberty.json">
-        <Link>Files\osm-liberty.json</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-
-    <ItemGroup>
-      <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty.json">
-        <Link>Files\Sprites\osm-liberty.json</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
-      <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty.png">
-        <Link>Files\Sprites\osm-liberty.png</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
-      <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty@2x.json">
-        <Link>Files\Sprites\osm-liberty@2x.json</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
-      <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty@2x.png">
-        <Link>Files\Sprites\osm-liberty@2x.png</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </EmbeddedResource>
-    </ItemGroup>
-
-    <ItemGroup>
-      <None Include="..\..\Files\LICENSE.md">
-        <Link>Files\LICENSE.md</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Include="..\..\Files\natural_earth_2_shaded_relief.raster.mbtiles">
-        <Link>Files\natural_earth_2_shaded_relief.raster.mbtiles</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Include="..\..\Files\switzerland_zurich.mbtiles">
-        <Link>Files\switzerland_zurich.mbtiles</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Include="..\..\Files\zurich.mbtiles">
-        <Link>Files\zurich.mbtiles</Link>
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <Using Include="Xunit" />
     </ItemGroup>
 
     <ItemGroup>

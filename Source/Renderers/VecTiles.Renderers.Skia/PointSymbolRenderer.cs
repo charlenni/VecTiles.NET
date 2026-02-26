@@ -24,7 +24,7 @@ public class PointSymbolRenderer : ISymbolRenderer
 
         if (symbol.IconSymbol is not null)
         {
-            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol, tree, screenX, screenY, rotation, showUnvalidBorders);
+            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol, tree, screenX, screenY, showUnvalidBorders);
         }
 
         if (symbol.TextSymbol is not null)
@@ -59,7 +59,7 @@ public class PointSymbolRenderer : ISymbolRenderer
         {
             iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment, rotation, symbol.IconSymbol.KeepUpright);
 
-            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol!, tree, screenX, screenY, iconRotation, false);
+            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol!, tree, screenX, screenY, false);
         }
 
         var spaceForTextAvailable = false;
@@ -75,7 +75,7 @@ public class PointSymbolRenderer : ISymbolRenderer
         if (spaceForIconAvailable && symbol.HasIcon && (spaceForTextAvailable || symbol.DrawIconWithoutText))
         {
             // Draw icon
-            IconPointSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, screenX, screenY, iconRotation, showValidBorders);
+            IconPointSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, screenX, screenY, showValidBorders);
 
             iconDrawn = true;
         }

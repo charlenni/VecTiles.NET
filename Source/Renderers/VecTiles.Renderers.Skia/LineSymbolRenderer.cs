@@ -45,7 +45,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                 spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
                     path, pos, 
                     symbol.IconSymbol!, tree, nextPosition.X,
-                    nextPosition.Y, iconRotation, showUnvalidBorders);
+                    nextPosition.Y, showUnvalidBorders);
             }
 
             bool spaceForTextAvailable = false;
@@ -109,7 +109,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                     path, pos, 
                     symbol.IconSymbol!,
                     tree, nextPosition.X,
-                    nextPosition.Y, iconRotation, false);
+                    nextPosition.Y, false);
             }
 
             var spaceForTextAvailable = false;
@@ -128,7 +128,7 @@ public class LineSymbolRenderer : ISymbolRenderer
             if (spaceForIconAvailable && symbol.HasIcon && (spaceForTextAvailable || symbol.DrawIconWithoutText))
             {
                 // Draw icon
-                IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X, nextPosition.Y, iconRotation, showValidBorders);
+                IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X, nextPosition.Y, showValidBorders);
 
                 iconDrawn = true;
             }

@@ -206,7 +206,7 @@ public static class TextLineSymbolRenderer
         
         text.LeftRightCorrection = text.Text.MeasuredPadding.Left;
 
-        var anchor = new SKPoint((float)(symbol.Anchor.X * text.MeasuredWidth), (float)(symbol.Anchor.Y * text.MeasuredHeight));
+        var anchor = new SKPoint((float)(-symbol.Anchor.X * text.MeasuredWidth), (float)(-symbol.Anchor.Y * text.MeasuredHeight));
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
         var padding = symbol.Padding;
 

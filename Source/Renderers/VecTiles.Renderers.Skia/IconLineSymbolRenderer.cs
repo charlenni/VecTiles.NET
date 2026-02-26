@@ -11,48 +11,94 @@ namespace VecTiles.Renderers.Skia;
 
 public static class IconLineSymbolRenderer
 {
+    private static readonly SKPaint _paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
     private static readonly SKSamplingOptions SamplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Aqua, StrokeWidth = 1, IsStroke = true };
 
     public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX,
-        double screenY, double rotation, bool showValidBorders = false)
+        double screenY, bool showValidBorders = false)
     {
-        SKPaint paint = new SKPaint() {IsAntialias = true};
+        _paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
 
         if (symbol.ColorFilter != null)
         {
-            paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
+            _paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
+        }
+
+        var image = (SKImage)symbol.Icon.Native!;
+        var imgWidth = image.Width;
+        var imgHeight = image.Height;
+        var anchorX = (float)symbol.Anchor.X;
+        var anchorY = (float)symbol.Anchor.Y;
+        var offsetX = (float)symbol.Offset.X;
+        var offsetY = (float)symbol.Offset.Y;
+        var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
+        var transX = (float)translate.X;
+        var transY = (float)translate.Y;
+        var transAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
+
+        // TranslateAnchor could only be Map or Viewport
+        transAnchor = transAnchor == MapAlignment.Auto ? MapAlignment.Map : transAnchor;
+
+        if (transAnchor == MapAlignment.Map)
+        {
+            var radRotation = context.Rotation * Math.PI / 180.0;
+            var cos = Math.Cos(radRotation);
+            var sin = Math.Sin(radRotation);
+            var x = transX * cos - transY * sin;
+            var y = transX * sin + transY * cos;
+            transX = (float)x;
+            transY = (float)y;
         }
 
         canvas.Save();
-        
-        canvas.Translate((float) screenX, (float) screenY);
-        canvas.Scale(1f / context.Scale);
+
+        canvas.Translate((float)screenX, (float)screenY);
+        canvas.Translate(transX, transY);
+        canvas.Scale(1f / context.Scale * symbol.Scale);
+
+        var rotation = symbol.Rotation;
 
         if (symbol.RotationAlignment == MapAlignment.Map)
         {
-            canvas.RotateDegrees((float) rotation);
+            rotation += context.Rotation;
         }
 
-        canvas.Scale(symbol.Scale);
-        canvas.RotateDegrees(symbol.Rotation);
+        rotation = (rotation + 360) % 360;
 
-        var x = (float)symbol.Envelope.MinX;
-        var y = (float)symbol.Envelope.MinY;
+        canvas.RotateDegrees(rotation, 0f, 0f);
 
-        canvas.DrawImage((SKImage) symbol.Icon.Native, x, y, SamplingOptions, paint);
+        if (symbol.KeepUpright && rotation > 90 && rotation < 270)
+        {
+            canvas.RotateDegrees(180f,
+                (0.5f - anchorX) * imgWidth,
+                (0.5f - anchorY) * imgHeight);
+        }
+
+        canvas.DrawImage(image,
+            -anchorX * imgWidth + offsetX,
+            -anchorY * imgHeight + offsetY,
+            SamplingOptions,
+            _paint);
 
         canvas.Restore();
 
         if (showValidBorders)
         {
             canvas.DrawRect(
-                new SKRect((float) symbol.ScreenEnvelope!.MinX, (float) symbol.ScreenEnvelope!.MinY, (float) symbol.ScreenEnvelope!.MaxX,
-                    (float) symbol.ScreenEnvelope!.MaxY), DebugPaint);
+                new SKRect((float)symbol.ScreenEnvelope!.MinX, (float)symbol.ScreenEnvelope!.MinY,
+                (float)symbol.ScreenEnvelope!.MaxX, (float)symbol.ScreenEnvelope!.MaxY), DebugPaint);
         }
     }
 
-    public static bool CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, SKPath path, double startPos, IconLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showUnvalidBorders)
+    public static bool CheckForSingleSpace(SKCanvas canvas, 
+        EvaluationContext context, 
+        SKPath path, double startPos, 
+        IconLineSymbol symbol, 
+        Quadtree<ISymbol> tree, 
+        double screenX, 
+        double screenY, 
+        bool showUnvalidBorders)
     {
         symbol.Envelope ??= CreateEnvelope(symbol, context);
 
@@ -71,9 +117,9 @@ public static class IconLineSymbolRenderer
         var screenEnvelope = symbol.Envelope.Copy();
         
         // Move symbol's envelope at the screen position
-        if (rotation != 0.0)
+        if (context.Rotation != 0.0)
         {
-            screenEnvelope.RotateDegrees(rotation);
+            screenEnvelope.RotateDegrees(context.Rotation);
         }
 
         screenEnvelope.Translate(screenX, screenY);

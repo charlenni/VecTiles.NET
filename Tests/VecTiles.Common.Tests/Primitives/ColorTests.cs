@@ -17,7 +17,7 @@ public class ColorTests
     [Fact]
     public void Empty_IsAllZero()
     {
-        var color = Color.Empty;
+        var color = Colors.Empty;
         Assert.Equal((byte)0, color.R);
         Assert.Equal((byte)0, color.G);
         Assert.Equal((byte)0, color.B);
@@ -27,7 +27,7 @@ public class ColorTests
     [Fact]
     public void Black_IsOpaqueBlack()
     {
-        var color = Color.Black;
+        var color = Colors.Black;
         Assert.Equal((byte)0, color.R);
         Assert.Equal((byte)0, color.G);
         Assert.Equal((byte)0, color.B);

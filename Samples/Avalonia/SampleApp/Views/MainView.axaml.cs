@@ -14,7 +14,7 @@ namespace SampleApp.Views;
 
 public partial class MainView : UserControl
 {
-    private readonly string _path = "files";
+    private readonly string _path = "Files";
     private readonly RenderedSymbolsLayer _symbolsLayer;
 
     public MainView()

@@ -44,7 +44,7 @@ public class OMTLayerStyleLayout
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("icon-color")]
-    public StoppedColor IconColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public StoppedColor IconColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonProperty("icon-ignore-placement")]
     public bool IconIgnorePlacement { get; set; } = false;

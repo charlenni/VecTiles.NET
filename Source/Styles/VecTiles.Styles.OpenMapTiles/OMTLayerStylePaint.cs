@@ -10,7 +10,7 @@ public class OMTLayerStylePaint
 {
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("background-color")]
-    public StoppedColor BackgroundColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public StoppedColor BackgroundColor { get; set; } = new StoppedColor { Default = Colors.Black };
     
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("background-emissive-strength")]
@@ -30,7 +30,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("fill-color")]
-    public StoppedColor FillColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public StoppedColor FillColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("fill-emissive-strength")]
@@ -61,7 +61,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("line-color")]
-    public StoppedColor LineColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public StoppedColor LineColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
     [JsonProperty("line-dasharray")]
@@ -77,7 +77,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("line-gradient")]
-    public StoppedColor LineGradient { get; set; } = new StoppedColor() { Default = Color.Empty };
+    public StoppedColor LineGradient { get; set; } = new StoppedColor() { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("line-occlusion-opacity")]
@@ -111,7 +111,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("icon-color")]
-    public StoppedColor IconColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public StoppedColor IconColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("icon-color-brightness-max")]
@@ -139,7 +139,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("icon-halo-color")]
-    public StoppedColor IconHaloColor { get; set; } = new StoppedColor { Default = Color.Empty };
+    public StoppedColor IconHaloColor { get; set; } = new StoppedColor { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("icon-halo-width")]
@@ -167,7 +167,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("text-color")]
-    public StoppedColor TextColor { get; set; } = new StoppedColor { Default = Color.Black };
+    public StoppedColor TextColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("text-emissive-strength")]
@@ -179,7 +179,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("text-halo-color")]
-    public StoppedColor TextHaloColor { get; set; } = new StoppedColor { Default = Color.Empty };
+    public StoppedColor TextHaloColor { get; set; } = new StoppedColor { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("text-halo-width")]
@@ -209,7 +209,7 @@ public class OMTLayerStylePaint
 
     [JsonConverter(typeof(StoppedColorConverter))]
     [JsonProperty("raster-color")]
-    public StoppedColor RasterColor { get; set; } = new StoppedColor() { Default = Color.Empty };
+    public StoppedColor RasterColor { get; set; } = new StoppedColor() { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
     [JsonProperty("raster-color-mix")]

@@ -11,20 +11,20 @@ namespace VecTiles.Renderers.Skia;
 
 public class IconPointSymbolRenderer : ISymbolRenderer
 {
-    private static readonly SKPaint _paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
+    private static readonly SKPaint Paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
     private static readonly SKSamplingOptions SamplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Green, StrokeWidth = 1, IsStroke = true };
 
     public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, double screenX, double screenY, bool showValidBorders = false)
     {
-        _paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
+        Paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
 
         if (symbol.ColorFilter != null)
         {
-            _paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
+            Paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
         }
 
-        var image = (SKImage)symbol.Icon.Native!;
+        var image = (SKBitmap)symbol.Icon.Native!;
         var imgWidth = image.Width;
         var imgHeight = image.Height;
         var anchorX = (float)symbol.Anchor.X;
@@ -56,29 +56,30 @@ public class IconPointSymbolRenderer : ISymbolRenderer
         canvas.Translate(transX, transY);
         canvas.Scale(1f / context.Scale * symbol.Scale);
 
-        var rotation = symbol.Rotation;
+        var totalRotation = symbol.Rotation;
 
         if (symbol.RotationAlignment == MapAlignment.Map)
         {
-            rotation += context.Rotation;
+            totalRotation += context.Rotation;
         }
 
-        rotation = (rotation + 360) % 360;
+        totalRotation = (totalRotation + 360) % 360;
 
-        canvas.RotateDegrees(rotation, 0f, 0f);
+        canvas.RotateDegrees(totalRotation, 
+            -anchorX * imgWidth, 
+            -anchorY * imgHeight);
 
-        if (symbol.KeepUpright && rotation > 90 && rotation < 270)
+        if (symbol.KeepUpright && totalRotation > 90 && totalRotation < 270)
         {
             canvas.RotateDegrees(180f, 
                 (0.5f - anchorX) * imgWidth, 
                 (0.5f - anchorY) * imgHeight);
         }
 
-        canvas.DrawImage(image,
+        canvas.DrawBitmap(image,
             -anchorX * imgWidth + offsetX,
             -anchorY * imgHeight + offsetY,
-            SamplingOptions,
-            _paint);
+            Paint);
 
         canvas.Restore();
 
@@ -178,29 +179,53 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             return symbol.Envelope;
         }
 
-        symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
-        symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
-            symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
+        var width = (int)Math.Ceiling(symbol.Icon.Width * symbol.Scale);
+        var height = (int)Math.Ceiling(symbol.Icon.Height * symbol.Scale);
 
-        var width = symbol.Icon.Width * symbol.Scale;
-        var height = symbol.Icon.Height * symbol.Scale;
+        if (symbol.Icon.Native is null)
+        {
+            symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
+
+            var spriteBitmap = new SKBitmap(width, height,
+                ((SKImage)symbol.Icon.Atlas.Native).ColorType,
+                ((SKImage)symbol.Icon.Atlas.Native).AlphaType);
+            var spriteRect = new SKRect(symbol.Icon.X, symbol.Icon.Y, 
+                symbol.Icon.X + symbol.Icon.Width,
+                symbol.Icon.Y + symbol.Icon.Height);
+
+            using (var canvas = new SKCanvas(spriteBitmap))
+            {
+                canvas.DrawImage((SKImage)symbol.Icon.Atlas.Native, spriteRect, 
+                    new SKRect(0, 0, width, height),
+                    SamplingOptions
+                );
+            }
+
+            spriteBitmap.SetImmutable();
+            
+            symbol.Icon.Native = spriteBitmap;
+        }
+
         var anchor = new Point(symbol.Anchor.X * width, symbol.Anchor.Y * height);
         var offset = new Point(-anchor.X + symbol.Offset.X * symbol.Scale, -anchor.Y + symbol.Offset.Y * symbol.Scale);
 
         // We now could calc the rough envelope of icon
         var envelope = new Envelope(offset.X - symbol.Padding, offset.X + width + symbol.Padding, offset.Y - symbol.Padding, offset.Y + height + symbol.Padding);
 
-        var rotation = symbol.Rotation + (symbol.RotationAlignment == MapAlignment.Map ? context.Rotation : 0);
+        var totalRotation = symbol.Rotation + (symbol.RotationAlignment == MapAlignment.Map ? context.Rotation : 0);
 
-        if (rotation != 0.0)
+        if (totalRotation != 0.0)
         {
-            envelope.RotateDegrees(rotation);
+            envelope.RotateDegreesAroundAnchor(totalRotation, symbol.Anchor.X, symbol.Anchor.Y);
         }
 
         if (symbol.Translate != null)
         {
             var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
             var translateAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
+
+            // TranslateAnchor could only be Map or Viewport
+            translateAnchor = translateAnchor == MapAlignment.Auto ? MapAlignment.Map : translateAnchor;
 
             if (translateAnchor == MapAlignment.Map)
             {
@@ -212,10 +237,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
                 translate = new Point((float) x, (float) y);
             }
 
-            if (translateAnchor != MapAlignment.Auto)
-            {
-                envelope.Translate(translate.X, translate.Y);
-            }
+            envelope.Translate(translate.X, translate.Y);
         }
 
         return envelope;

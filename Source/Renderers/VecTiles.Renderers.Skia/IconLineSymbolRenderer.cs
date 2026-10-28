@@ -16,7 +16,7 @@ public static class IconLineSymbolRenderer
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Aqua, StrokeWidth = 1, IsStroke = true };
 
     public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX,
-        double screenY, bool showValidBorders = false)
+        double screenY, float iconRotation, bool showValidBorders = false)
     {
         _paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
 
@@ -25,7 +25,7 @@ public static class IconLineSymbolRenderer
             _paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
         }
 
-        var image = (SKImage)symbol.Icon.Native!;
+        var image = (SKBitmap)symbol.Icon.Native!;
         var imgWidth = image.Width;
         var imgHeight = image.Height;
         var anchorX = (float)symbol.Anchor.X;
@@ -57,7 +57,7 @@ public static class IconLineSymbolRenderer
         canvas.Translate(transX, transY);
         canvas.Scale(1f / context.Scale * symbol.Scale);
 
-        var rotation = symbol.Rotation;
+        var rotation = iconRotation;
 
         if (symbol.RotationAlignment == MapAlignment.Map)
         {
@@ -75,10 +75,9 @@ public static class IconLineSymbolRenderer
                 (0.5f - anchorY) * imgHeight);
         }
 
-        canvas.DrawImage(image,
+        canvas.DrawBitmap(image,
             -anchorX * imgWidth + offsetX,
             -anchorY * imgHeight + offsetY,
-            SamplingOptions,
             _paint);
 
         canvas.Restore();
@@ -184,13 +183,31 @@ public static class IconLineSymbolRenderer
         {
             return symbol.Envelope;
         }
-        
-        symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
-        symbol.Icon.Native ??= ((SKImage) symbol.Icon.Atlas.Native).Subset(new SKRectI(symbol.Icon.X, symbol.Icon.Y,
-            symbol.Icon.X + symbol.Icon.Width, symbol.Icon.Y + symbol.Icon.Height));
 
-        var width = symbol.Icon.Width * symbol.Scale;
-        var height = symbol.Icon.Height * symbol.Scale;
+        var width = (int)Math.Ceiling(symbol.Icon.Width * symbol.Scale);
+        var height = (int)Math.Ceiling(symbol.Icon.Height * symbol.Scale);
+
+        if (symbol.Icon.Native is null)
+        {
+            symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
+
+            var spriteBitmap = new SKBitmap(width, height,
+                ((SKImage)symbol.Icon.Atlas.Native).ColorType,
+                ((SKImage)symbol.Icon.Atlas.Native).AlphaType);
+            var spriteRect = new SKRect(symbol.Icon.X, symbol.Icon.Y, 
+                symbol.Icon.X + symbol.Icon.Width,
+                symbol.Icon.Y + symbol.Icon.Height);
+
+            using (var canvas = new SKCanvas(spriteBitmap))
+            {
+                canvas.DrawImage((SKImage)symbol.Icon.Atlas.Native, spriteRect, 
+                    new SKRect(0, 0, width, height)
+                );
+            }
+
+            symbol.Icon.Native = spriteBitmap;
+        }
+
         var anchor = new Point(symbol.Anchor.X * width, symbol.Anchor.Y * height);
         var offset = new Point(anchor.X + symbol.Offset.X, anchor.Y + symbol.Offset.Y);
 

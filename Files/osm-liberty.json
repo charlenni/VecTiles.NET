@@ -9,18 +9,18 @@
   "sources": {
     "openmaptiles": {
       "type": "vector",
-      "url": "mbtiles://files/zurich.mbtiles"
+      "url": "mbtiles://Files/zurich.mbtiles"
     },
     "natural_earth_shaded_relief": {
       "maxzoom": 6,
       "tileSize": 256,
       "tiles": [
-        "mbtiles://files/natural_earth_2_shaded_relief.raster.mbtiles"
+        "mbtiles://Files/natural_earth_2_shaded_relief.raster.mbtiles"
       ],
       "type": "raster"
     }
   },
-  "sprite": "embedded://sprites/osm-liberty",
+  "sprite": "embedded://Sprites/osm-liberty",
   "glyphs": "https://orangemug.github.io/font-glyphs/glyphs/{fontstack}/{range}.pbf",
   "layers": [
     {
@@ -1395,11 +1395,14 @@
       "filter": ["all", ["==", "$type", "Point"], [">=", "rank", 20]],
       "layout": {
         "icon-image": "{class}_11",
+        "icon-rotate": 0,
+        "text-rotate": 0,
         "text-anchor": "top",
         "text-field": "{name}",
         "text-font": ["Roboto Condensed Italic"],
         "text-max-width": 9,
         "text-offset": [0, 0.6],
+        "text-padding": 2,
         "text-size": 12
       },
       "paint": {
@@ -1517,8 +1520,12 @@
       "layout": {
         "icon-image": "default_{ref_length}",
         "icon-rotation-alignment": "viewport",
+        "icon-rotate": 0,
+        "icon-padding": 2,
         "symbol-placement": {"base": 1, "stops": [[10, "point"], [11, "line"]]},
         "symbol-spacing": 500,
+        "text-rotate": 0,
+        "text-padding": 2,
         "text-field": "{ref}",
         "text-font": ["Roboto Regular"],
         "text-offset": [0, 0.1],

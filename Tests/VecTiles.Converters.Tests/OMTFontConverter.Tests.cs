@@ -4,12 +4,12 @@ namespace VecTiles.Converters.Tests;
 
 public class OMTFontConverterTests
 {
-    readonly string _path = "files\\fonts\\roboto condensed italic\\";
+    readonly string _path = Path.Combine("Files", "Fonts", "Roboto Condensed Italic");
 
     [Fact]
     public async Task FontConverter_0_255_Test()
     {
-        var data = File.ReadAllBytes(_path + "0-255.pbf");
+        var data = File.ReadAllBytes(Path.Combine(_path, "0-255.pbf"));
 
         var fontConverter = new SdfFontConverter();
         var fontGlyphs = await fontConverter.Convert(data);
@@ -44,7 +44,7 @@ public class OMTFontConverterTests
     [Fact]
     public async Task FontConverter_1024_1279_Test()
     {
-        var data = File.ReadAllBytes(_path + "1024-1279.pbf");
+        var data = File.ReadAllBytes(Path.Combine(_path, "1024-1279.pbf"));
 
         var fontConverter = new SdfFontConverter();
         var fontGlyphs = await fontConverter.Convert(data);

@@ -7,7 +7,7 @@ namespace VecTiles.Converters.Tests;
 
 public class OMTConverterTests
 {
-    readonly string _path = "files\\zurich.mbtiles";
+    readonly string _path = Path.Combine("Files", "zurich.mbtiles");
 
     [Fact]
     public async Task VectorTileConverterTest()

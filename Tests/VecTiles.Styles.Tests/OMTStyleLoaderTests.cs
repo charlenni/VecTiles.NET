@@ -4,7 +4,7 @@ namespace VecTiles.Styles.MapboxTests
 {
     public class OMTStyleLoaderTests
     {
-        readonly string _path = "files";
+        readonly string _path = "Files";
 
         [Fact]
         public async Task CheckStyleFileMetadataTest()

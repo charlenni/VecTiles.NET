@@ -5,7 +5,7 @@ namespace VecTiles.DataSources.Tests;
 
 public class MBTilesDataSourceTests
 {
-    readonly string _path = "Files\\zurich.mbtiles";
+    readonly string _path = Path.Combine("Files", "zurich.mbtiles");
 
     [Fact]
     public void CheckMetaDataTest()

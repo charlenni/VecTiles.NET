@@ -61,11 +61,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Controls", "Controls", "{8B
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Controls.Mapsui", "Source\Controls\VecTiles.Control.Mapsui\VecTiles.Controls.Mapsui.csproj", "{EA2A0453-A588-8A71-BBCA-ED4F6E245184}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.SdfFont", "Source\Converters\VecTiles.Converters.SDFFont\VecTiles.Converters.SdfFont.csproj", "{6A964568-96A4-4D06-9B2F-7D8F871921C9}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Renderers.Test", "Tests\VecTiles.Renderers.Test\VecTiles.Renderers.Test.csproj", "{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Renderers.Skia.Test", "Tests\VecTiles.Renderers.Skia.Test\VecTiles.Renderers.Skia.Test.csproj", "{875D2599-9DCD-4FB8-997B-71C37F4B2CC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.SdfFont", "Source\Converters\VecTiles.Converters.SdfFont\VecTiles.Converters.SdfFont.csproj", "{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -133,10 +133,6 @@ Global
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6A964568-96A4-4D06-9B2F-7D8F871921C9}.Release|Any CPU.Build.0 = Release|Any CPU
 		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -145,6 +141,10 @@ Global
 		{875D2599-9DCD-4FB8-997B-71C37F4B2CC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{875D2599-9DCD-4FB8-997B-71C37F4B2CC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{875D2599-9DCD-4FB8-997B-71C37F4B2CC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -167,9 +167,9 @@ Global
 		{C409A541-BCE1-AB78-8C5E-81376D641BEE} = {A59BDEE2-F69F-44CC-9608-C6517FC5B123}
 		{FC38099B-FF20-AFD4-2C1E-E789D5C71E43} = {382ED19A-CA43-49F5-96A0-95AFA17E1D42}
 		{EA2A0453-A588-8A71-BBCA-ED4F6E245184} = {8B05454C-5823-4A6E-99E1-DEC177DBB40B}
-		{6A964568-96A4-4D06-9B2F-7D8F871921C9} = {B12671CC-7A17-4A76-BF16-42FBF260E973}
 		{D441E360-D8C3-4A3F-ABBE-164D9A34F9A9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{875D2599-9DCD-4FB8-997B-71C37F4B2CC9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC} = {B12671CC-7A17-4A76-BF16-42FBF260E973}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45A2AA7-DCD5-4D17-81AC-3622204FAFAE}

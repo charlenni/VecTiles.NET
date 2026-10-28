@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" />
-    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.SDFFont\VecTiles.Converters.SdfFont.csproj" />
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.SdfFont\VecTiles.Converters.SdfFont.csproj" />
     <ProjectReference Include="..\..\Source\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
   </ItemGroup>
 
@@ -32,7 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Files\Fonts\Roboto Condensed Italic\" />
+    <Folder Include="files\fonts\Roboto Condensed Italic\" />
   </ItemGroup>
 
   <ItemGroup>
@@ -51,9 +51,10 @@
     <None Include="..\..\Files\switzerland_zurich.mbtiles" Link="Files\switzerland_zurich.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\Files\zurich.mbtiles" Link="Files\zurich.mbtiles">
+    <Content Include="..\..\Files\zurich.mbtiles">
+      <Link>Files/zurich.mbtiles</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    </Content>
   </ItemGroup>
 
 </Project>

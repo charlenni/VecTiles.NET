@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.SdfFont\VecTiles.Converters.SdfFont.csproj" />
     <ProjectReference Include="..\..\Source\VecTiles.Common\VecTiles.Common.csproj" />
   </ItemGroup>
 

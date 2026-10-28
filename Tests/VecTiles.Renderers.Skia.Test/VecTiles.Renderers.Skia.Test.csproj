@@ -43,6 +43,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
+    <PackageReference Include="SkiaSharp" Version="3.119.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.2" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5">
       <PrivateAssets>all</PrivateAssets>
@@ -73,6 +75,156 @@
     <None Include="..\..\Files\zurich.mbtiles" Link="Files\zurich.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Update="Files\Originals\Text-KeepUpright-False-0.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-False-45.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-False-135.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-False-225.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-False-315.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-True-45.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-True-135.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-True-225.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-KeepUpright-True-315.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Offset-0x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Offset-0x-20y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Offset-20x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Translate-0x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Translate-0x-10y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Translate-10x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-0x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-0x-50y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-0x-100y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-50x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-50x-50y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-50x-100y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-100x-0y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-100x-50y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Anchor-100x-100y.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Icon-TranslateAnchor-Map-Alignment-Map.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Icon-TranslateAnchor-Map-Alignment-Viewport.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Icon-TranslateAnchor-Viewport-Alignment-Map.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Icon-TranslateAnchor-Viewport-Alignment-Viewport.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-0.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-15.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-45.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-90.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-135.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-180.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-225.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-270.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-315.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-Rotation-360.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Auto-45-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Map-15-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Map-30-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Map-45-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Viewport-15-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Viewport-30-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-RotationAlignment-Viewport-45-30.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-TranslateAnchor-Map-Alignment-Map.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-TranslateAnchor-Map-Alignment-Viewport.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-TranslateAnchor-Viewport-Alignment-Map.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\Text-TranslateAnchor-Viewport-Alignment-Viewport.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -82,172 +234,163 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Files\Originals\Anchor-0x-0y.png">
+    <None Update="Files\Originals\Icon-Anchor-0x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-0x-100y.png">
+    <None Update="Files\Originals\Icon-Anchor-0x-100y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-0x-50y.png">
+    <None Update="Files\Originals\Icon-Anchor-0x-50y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-100x-0y.png">
+    <None Update="Files\Originals\Icon-Anchor-100x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-100x-100y.png">
+    <None Update="Files\Originals\Icon-Anchor-100x-100y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-100x-50y.png">
+    <None Update="Files\Originals\Icon-Anchor-100x-50y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-50x-0y.png">
+    <None Update="Files\Originals\Icon-Anchor-50x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-50x-100y.png">
+    <None Update="Files\Originals\Icon-Anchor-50x-100y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Anchor-50x-50y.png">
+    <None Update="Files\Originals\Icon-Anchor-50x-50y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-False-135.png">
+    <None Update="Files\Originals\Icon-KeepUpright-False-135.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-False-215.png">
+    <None Update="Files\Originals\Icon-KeepUpright-False-225.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-False-225.png">
+    <None Update="Files\Originals\Icon-KeepUpright-False-315.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-False-305.png">
+    <None Update="Files\Originals\Icon-KeepUpright-False-45.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-False-315.png">
+    <None Update="Files\Originals\Icon-KeepUpright-True-135.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-False-45.png">
+    <None Update="Files\Originals\Icon-KeepUpright-True-225.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-True-135.png">
+    <None Update="Files\Originals\Icon-KeepUpright-True-315.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-True-215.png">
+    <None Update="Files\Originals\Icon-KeepUpright-True-45.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-True-225.png">
+    <None Update="Files\Originals\Icon-Offset-0x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-True-305.png">
+    <None Update="Files\Originals\Icon-Offset-0x-20y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-True-315.png">
+    <None Update="Files\Originals\Icon-Offset-20x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\KeepUpright-True-45.png">
+    <None Update="Files\Originals\Icon-OffsetWithScale-0x-0y-2scale.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Offset-0x-0y.png">
+    <None Update="Files\Originals\Icon-OffsetWithScale-0x-20y-2scale.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Offset-0x-20y.png">
+    <None Update="Files\Originals\Icon-OffsetWithScale-20x-0y-2scale.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Offset-20x-0y.png">
+    <None Update="Files\Originals\Icon-Opacity-100.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\OffsetWithScale-0x-0y-2scale.png">
+    <None Update="Files\Originals\Icon-Opacity-25.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\OffsetWithScale-0x-20y-2scale.png">
+    <None Update="Files\Originals\Icon-Opacity-50.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\OffsetWithScale-20x-0y-2scale.png">
+    <None Update="Files\Originals\Icon-Padding-0.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Opacity-100.png">
+    <None Update="Files\Originals\Icon-Padding-4.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Opacity-25.png">
+    <None Update="Files\Originals\Icon-Padding-8.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Opacity-50.png">
+    <None Update="Files\Originals\Icon-Rotation-0.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Padding-0.png">
+    <None Update="Files\Originals\Icon-Rotation-135.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Padding-4.png">
+    <None Update="Files\Originals\Icon-Rotation-15.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Padding-8.png">
+    <None Update="Files\Originals\Icon-Rotation-180.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-0.png">
+    <None Update="Files\Originals\Icon-Rotation-225.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-135.png">
+    <None Update="Files\Originals\Icon-Rotation-270.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-15.png">
+    <None Update="Files\Originals\Icon-Rotation-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-180.png">
+    <None Update="Files\Originals\Icon-Rotation-315.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-225.png">
+    <None Update="Files\Originals\Icon-Rotation-360.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-270.png">
+    <None Update="Files\Originals\Icon-Rotation-45.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-30.png">
+    <None Update="Files\Originals\Icon-Rotation-90.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-315.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Auto-45-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-360.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Map-15-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-45.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Map-30-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Rotation-90.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Map-45-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Auto-45-30.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Viewport-15-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Map-15-30.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Viewport-30-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Map-30-30.png">
+    <None Update="Files\Originals\Icon-RotationAlignment-Viewport-45-30.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Map-45-30.png">
+    <None Update="Files\Originals\Icon-Translate-0x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Viewport-15-30.png">
+    <None Update="Files\Originals\Icon-Translate-0x-10y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Viewport-30-30.png">
+    <None Update="Files\Originals\Icon-Translate-10x-0y.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\RotationAlignment-Viewport-45-30.png">
+    <None Update="Files\Originals\Text-Font.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Translate-0x-0y.png">
+    <None Update="Files\Originals\Text-Opacity.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Files\Originals\Translate-0x-10y.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Files\Originals\Translate-10x-0y.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Files\Originals\TranslateAnchor-Map.png">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="Files\Originals\TranslateAnchor-Viewport.png">
+    <None Update="Files\Originals\Text-Padding.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

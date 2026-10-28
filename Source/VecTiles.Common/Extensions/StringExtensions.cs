@@ -41,7 +41,7 @@ namespace VecTiles.Common.Extensions
         /// <returns>Converted Skia SKColor</returns>
         public static Color FromString(this string from)
         {
-            Color result = Color.Empty;
+            Color result = Colors.Empty;
 
             from = from.Trim().ToLower();
 

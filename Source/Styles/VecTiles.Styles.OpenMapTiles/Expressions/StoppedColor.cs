@@ -8,7 +8,7 @@ namespace VecTiles.Styles.OpenMapTiles.Expressions;
 public class StoppedColor : IStopped<Color>
 {
     bool _hasDefault = false;
-    Color _default = Color.Empty;
+    Color _default = Colors.Empty;
 
     /// <summary>
     /// Default value to use, if nothing else is set
@@ -34,7 +34,7 @@ public class StoppedColor : IStopped<Color>
     public bool IsConstant => !_hasStops;
 
     bool _hasSingleVal = false;
-    Color _singleVal = Color.Empty;
+    Color _singleVal = Colors.Empty;
 
     /// <summary>
     /// SingleVal to use, if there are no stops
@@ -112,7 +112,7 @@ public class StoppedColor : IStopped<Color>
                             var progress = zoom - lastZoom;
                             var difference = nextZoom - lastZoom;
                             if (difference < float.Epsilon)
-                                return Color.Empty;
+                                return Colors.Empty;
                             float factor;
                             if (Base - 1 < float.Epsilon)
                                 factor = progress / difference;
@@ -148,7 +148,7 @@ public class StoppedColor : IStopped<Color>
             return Default;
         }
 
-        return Color.Empty;
+        return Colors.Empty;
     }
 
     public Color PossibleOutputs()

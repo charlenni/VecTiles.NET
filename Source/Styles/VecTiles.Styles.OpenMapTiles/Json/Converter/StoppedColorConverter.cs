@@ -44,7 +44,7 @@ public class StoppedColorConverter : JsonConverter
             return stoppedColor;
         }
 
-        return new StoppedColor() { SingleVal = token?.Value<string>()?.FromString() ?? Color.Black };
+        return new StoppedColor() { SingleVal = token?.Value<string>()?.FromString() ?? Colors.Black };
     }
 
     public override bool CanWrite => false;

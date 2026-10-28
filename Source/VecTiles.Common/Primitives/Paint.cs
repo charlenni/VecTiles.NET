@@ -21,7 +21,7 @@ public class Paint : IPaint
 
     public Color Color { get; private set; }
 
-    public Color OutlineColor { get; private set; } = Color.Black;
+    public Color OutlineColor { get; private set; } = Colors.Black;
 
     public float Opacity => opacity;
 
@@ -124,7 +124,7 @@ public class Paint : IPaint
 
     #region Color
 
-    Color color = Color.Empty;
+    Color color = Colors.Empty;
 
     bool variableColor = false;
 
@@ -147,7 +147,7 @@ public class Paint : IPaint
 
     #region OutlineColor
 
-    Color outlineColor = Color.Empty;
+    Color outlineColor = Colors.Empty;
 
     bool variableOutlineColor = false;
 

@@ -64,12 +64,12 @@ public class TextPointSymbol : Symbol
     /// <summary>
     /// Function to calculate color to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, Color>? Color { get; init; }
+    public Func<EvaluationContext, Color>? Color { get; init; } = (ctx) => Colors.Black;
 
     /// <summary>
     /// Function to calculate opacity of symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? Opacity { get; init; }
+    public Func<EvaluationContext, float>? Opacity { get; init; } = (ctx) => 1f;
 
     /// <summary>
     /// Text alignment in MaxWidth
@@ -94,17 +94,17 @@ public class TextPointSymbol : Symbol
     /// <summary>
     /// Function to calculate halo color to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, Color>? HaloColor { get; init; }
+    public Func<EvaluationContext, Color>? HaloColor { get; init; } = (ctx) => Colors.Empty;
 
     /// <summary>
     /// Function to calculate halo blur to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? HaloBlur { get; init; }
+    public Func<EvaluationContext, float>? HaloBlur { get; init; } = (ctx) => 0;
 
     /// <summary>
     /// Function to calculate halo width to use when drawing symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? HaloWidth { get; init; }
+    public Func<EvaluationContext, float>? HaloWidth { get; init; } = (ctx) => 0;
 
     /// <summary>
     /// Function to calculate translate of symbols point from EvaluationContext in pixels
@@ -146,6 +146,8 @@ public class TextPointSymbol : Symbol
             Direction = Direction,
             FontNames = FontNames,
             FontSize = FontSize,
+            Color = Color,
+            Opacity = Opacity,
             HaloColor = HaloColor,
             HaloBlur = HaloBlur,
             HaloWidth = HaloWidth,

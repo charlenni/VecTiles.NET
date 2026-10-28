@@ -128,7 +128,7 @@ public class LineSymbolRenderer : ISymbolRenderer
             if (spaceForIconAvailable && symbol.HasIcon && (spaceForTextAvailable || symbol.DrawIconWithoutText))
             {
                 // Draw icon
-                IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X, nextPosition.Y, showValidBorders);
+                IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X, nextPosition.Y, iconRotation, showValidBorders);
 
                 iconDrawn = true;
             }

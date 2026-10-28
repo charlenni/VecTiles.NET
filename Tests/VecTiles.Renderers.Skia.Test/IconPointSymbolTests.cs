@@ -15,7 +15,7 @@ public class IconPointSymbolTests
     private SKBitmap _bitmap;
     private SKCanvas _canvas;
     private SKPaint _paint = new SKPaint();
-    private SKFont _font = new SKFont(SKTypeface.FromFamilyName("SansSerif", SKFontStyle.Bold));
+    private SKFont _font = new SKFont(SKTypeface.FromFamilyName("Roboto", SKFontStyle.Bold));
     private Sprite _sprite;
     private EvaluationContext _context = new EvaluationContext(0, 1, 0);
 
@@ -53,7 +53,7 @@ public class IconPointSymbolTests
             Offset = new Point(x, y),
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"Offset-{x}x-{y}y.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-Offset-{x}x-{y}y.png"));
     }
 
     [Theory]
@@ -69,7 +69,7 @@ public class IconPointSymbolTests
             Offset = new Point(x, y),
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"OffsetWithScale-{x}x-{y}y-{scale}scale.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-OffsetWithScale-{x}x-{y}y-{scale}scale.png"));
     }
 
     [Theory]
@@ -90,7 +90,7 @@ public class IconPointSymbolTests
             Anchor = new Point(x, y),
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"Anchor-{x*100}x-{y*100}y.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-Anchor-{x*100}x-{y*100}y.png"));
     }
 
     [Theory]
@@ -106,7 +106,7 @@ public class IconPointSymbolTests
             Opacity = ctx => (float)opacity
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"Opacity-{opacity * 100}.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-Opacity-{opacity * 100}.png"));
     }
 
     [Theory]
@@ -122,26 +122,29 @@ public class IconPointSymbolTests
             Translate = ctx => new Point(tx, ty)
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"Translate-{tx}x-{ty}y.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-Translate-{tx}x-{ty}y.png"));
     }
 
     [Theory]
-    [InlineData(0, 75)] // Map
-    [InlineData(1, 75)] // Viewport
-    public void TranslateAnchorTest(int translateAnchor, float mapRotation)
+    [InlineData(0, 0, 75)] // Map
+    [InlineData(0, 1, 75)] // Map
+    [InlineData(1, 0, 75)] // Viewport
+    [InlineData(1, 1, 75)] // Viewport
+    public void TranslateAnchorTest(int translateAnchor, int alignment, float mapRotation)
     {
         var anchor = (MapAlignment)translateAnchor;
+        var rotationAlignment = (MapAlignment)alignment;
         var rotationContext = new EvaluationContext(0, 1, mapRotation);
         var symbol = new IconPointSymbol(new Tile(0, 0, 0), 0, new Point(0, 0), _sprite)
         {
             Anchor = new Point(0, 0),
             Scale = 1,
-            RotationAlignment = MapAlignment.Viewport,
+            RotationAlignment = rotationAlignment,
             Translate = ctx => new Point(30, 10),
             TranslateAnchor = ctx => anchor
         };
 
-        Assert.True(DrawAndCompare(symbol, rotationContext, $"TranslateAnchor-{anchor}.png"));
+        Assert.True(DrawAndCompare(symbol, rotationContext, $"Icon-TranslateAnchor-{anchor}-Alignment-{rotationAlignment}.png"));
     }
 
     [Theory]
@@ -165,7 +168,7 @@ public class IconPointSymbolTests
             Rotation = (float)rotation
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"Rotation-{rotation}.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-Rotation-{rotation}.png"));
     }
 
     [Theory]
@@ -188,7 +191,7 @@ public class IconPointSymbolTests
             RotationAlignment = align
         };
 
-        Assert.True(DrawAndCompare(symbol, rotationContext, $"RotationAlignment-{align}-{rotation}-{mapRotation}.png"));
+        Assert.True(DrawAndCompare(symbol, rotationContext, $"Icon-RotationAlignment-{align}-{rotation}-{mapRotation}.png"));
     }
 
     [Theory]
@@ -204,7 +207,7 @@ public class IconPointSymbolTests
             Padding = padding
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"Padding-{padding}.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-Padding-{padding}.png"));
     }
 
     [Theory]
@@ -226,7 +229,7 @@ public class IconPointSymbolTests
             KeepUpright = keepUpright
         };
 
-        Assert.True(DrawAndCompare(symbol, _context, $"KeepUpright-{keepUpright}-{rotation}.png"));
+        Assert.True(DrawAndCompare(symbol, _context, $"Icon-KeepUpright-{keepUpright}-{rotation}.png"));
     }
 
     [Fact]

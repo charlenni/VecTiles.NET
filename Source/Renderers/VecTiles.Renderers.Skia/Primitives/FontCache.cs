@@ -24,10 +24,10 @@ public static class FontCache
                 return textStyle;
             }
         }
-        
+
         throw new FontNotFoundException(names.Length == 1 ? $"Font '{names[0]}' not found" : $"Fonts '{string.Join(", ", names)}' not found");
     }
-    
+
     private static Topten.RichTextKit.Style? CreateFont(string styleName, string fontName)
     {
         if (string.IsNullOrEmpty(fontName))
@@ -43,41 +43,9 @@ public static class FontCache
         textStyle = new Topten.RichTextKit.Style();
 
         // TODO: Create correct family name
-        var fontFamilyName = fontName;
-
-        if (fontFamilyName.Contains("condensed", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWidth = SKFontStyleWidth.Condensed;
-            fontFamilyName = fontFamilyName.Replace("condensed", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        textStyle.FontWeight = 400;
-
-        if (fontFamilyName.Contains("regular", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWeight = 400;
-            fontFamilyName = fontFamilyName.Replace("regular", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        if (fontFamilyName.Contains("medium", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWeight = 500;
-            fontFamilyName = fontFamilyName.Replace("medium", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        if (fontFamilyName.Contains("bold", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontWeight = 500;
-            fontFamilyName = fontFamilyName.Replace("bold", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        if (fontFamilyName.Contains("italic", System.StringComparison.InvariantCultureIgnoreCase))
-        {
-            textStyle.FontItalic = true;
-            fontFamilyName = fontFamilyName.Replace("italic", "", System.StringComparison.InvariantCultureIgnoreCase);
-        }
-
-        fontFamilyName = fontFamilyName.Replace("  ", " ").Trim();
+        var fontFamilyName = fontName.CreateFontWidth(ref textStyle)
+            .CreateFontWeight(ref textStyle)
+            .CreateFontItalic(ref textStyle);
 
         var fontManager = SKFontManager.Default;
         var typeface = fontManager.MatchFamily(fontFamilyName);
@@ -95,5 +63,71 @@ public static class FontCache
         TextStyles.Add((styleName, fontName), textStyle);
 
         return textStyle;
+    }
+
+    private static string CreateFontWidth(this string fontName, ref Style textStyle)
+    {
+        fontName = fontName.CheckForFontWidth(ref textStyle, SKFontStyleWidth.UltraCondensed)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.ExtraCondensed)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.Condensed)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.SemiCondensed)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.Normal)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.SemiExpanded)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.Expanded)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.ExtraExpanded)
+            .CheckForFontWidth(ref textStyle, SKFontStyleWidth.UltraExpanded);
+
+        return fontName.Replace("  ", " ").Trim();
+    }
+
+    private static string CheckForFontWidth(this string fontName, ref Style textStyle, SKFontStyleWidth width)
+    {
+        if (fontName.Contains(width.ToString(), System.StringComparison.InvariantCultureIgnoreCase))
+        {
+            textStyle.FontWidth = width;
+            fontName = fontName.Replace(width.ToString(), "", System.StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        return fontName;
+    }
+
+    private static string CreateFontWeight(this string fontName, ref Style textStyle)
+    {
+        fontName = fontName.CheckForFontWeight(ref textStyle, "regular", 400)
+            .CheckForFontWeight(ref textStyle, "invisible", 0)
+            .CheckForFontWeight(ref textStyle, "thin", 100)
+            .CheckForFontWeight(ref textStyle, "extralight", 200)
+            .CheckForFontWeight(ref textStyle, "light", 300)
+            .CheckForFontWeight(ref textStyle, "normal", 400)
+            .CheckForFontWeight(ref textStyle, "medium", 500)
+            .CheckForFontWeight(ref textStyle, "semibold", 600)
+            .CheckForFontWeight(ref textStyle, "bold", 700)
+            .CheckForFontWeight(ref textStyle, "textrabold", 800)
+            .CheckForFontWeight(ref textStyle, "black", 900)
+            .CheckForFontWeight(ref textStyle, "extrablack", 1000);
+
+        return fontName.Replace("  ", " ").Trim();
+    }
+
+    private static string CheckForFontWeight(this string fontName, ref Style textStyle, string name, int weight)
+    {
+        if (fontName.Contains(name, System.StringComparison.InvariantCultureIgnoreCase))
+        {
+            textStyle.FontWeight = weight;
+            fontName = fontName.Replace(name, "", System.StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        return fontName;
+    }
+
+    private static string CreateFontItalic(this string fontName, ref Style textStyle)
+    {
+        if (fontName.Contains("italic", System.StringComparison.InvariantCultureIgnoreCase))
+        {
+            textStyle.FontItalic = true;
+            fontName = fontName.Replace("italic", "", System.StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        return fontName.Replace("  ", " ").Trim();
     }
 }

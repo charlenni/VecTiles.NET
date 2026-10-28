@@ -11,7 +11,7 @@ namespace VecTiles.Renderers.Skia.Test;
 
 public class LineAndFillTests
 {
-    private const string Folder = "files";
+    private const string Folder = "Files";
     private readonly string _dataFile = Path.Combine(Folder, "zurich.mbtiles");
     private readonly string _styleFile = Path.Combine(Folder, "osm-liberty.json");
     private readonly Renderer _renderer;
@@ -61,7 +61,7 @@ public class LineAndFillTests
 
         try
         {
-            var renderedTile = (RenderedTile)(await _renderer.Render(tile));
+            var renderedTile = (RenderedTile?)(await _renderer.Render(tile));
             var renderContext = new EvaluationContext(tile.Zoom);
 
             using var bitmap = Utilities.CreateBitmap(512, 512);

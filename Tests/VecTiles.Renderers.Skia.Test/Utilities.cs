@@ -22,6 +22,11 @@ public static class Utilities
     {
         var directory = Path.GetDirectoryName(filename);
 
+        if (string.IsNullOrEmpty(directory))
+        {
+            return;
+        }
+        
         if (!Directory.Exists(directory))
         {
             Directory.CreateDirectory(directory);

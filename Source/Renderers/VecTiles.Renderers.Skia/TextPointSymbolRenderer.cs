@@ -13,22 +13,51 @@ namespace VecTiles.Renderers.Skia;
 
 public class TextPointSymbolRenderer : ISymbolRenderer
 {
+    private static readonly SKPaint _paint = new SKPaint();
     private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
     private static readonly SKPaint DebugPaint = new SKPaint {Color = SKColors.Blue, StrokeWidth = 1, IsStroke = true};
 
     public static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
     {
-        SKPaint paint = new SKPaint();
+        var anchorX = (float)symbol.Anchor.X;
+        var anchorY = (float)symbol.Anchor.Y;
+        var offsetX = (float)symbol.Offset.X;
+        var offsetY = (float)symbol.Offset.Y;
+        var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
+        var transX = (float)translate.X;
+        var transY = (float)translate.Y;
+        var transAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
+
+        // TranslateAnchor could only be Map or Viewport
+        transAnchor = transAnchor == MapAlignment.Auto ? MapAlignment.Map : transAnchor;
+
+        if (transAnchor == MapAlignment.Map)
+        {
+            var radRotation = context.Rotation * Math.PI / 180.0;
+            var cos = Math.Cos(radRotation);
+            var sin = Math.Sin(radRotation);
+            var x = transX * cos - transY * sin;
+            var y = transX * sin + transY * cos;
+            transX = (float)x;
+            transY = (float)y;
+        }
 
         canvas.Save();
 
-        canvas.Translate((float)screenX, (float)screenY);
+        canvas.Translate((float) screenX, (float) screenY);
+        canvas.Translate(transX, transY);
         canvas.Scale(1f / context.Scale);
+
+        var totalRotation = symbol.Rotation;
 
         if (symbol.RotationAlignment == MapAlignment.Map)
         {
-            canvas.RotateDegrees((float)rotation);
+            totalRotation += context.Rotation;
         }
+
+        totalRotation = (totalRotation + 360) % 360;
+
+        canvas.RotateDegrees(totalRotation, 0f, 0f);
 
         var text = (RenderedText)symbol.Native;
 
@@ -39,12 +68,20 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
         textStyle.HaloWidth = symbol.HaloWidth.Invoke(context);
 
-        // Translate to right position respecting the correction (leading space before TextBlocks text starts)
-        //canvas.Translate((float)(symbol.Anchor.X * text.MeasuredWidth) - text.Text.MeasuredPadding.Left, (float)(symbol.Anchor.Y * text.MeasuredHeight - text.Text.MeasuredPadding.Top));
-        canvas.Translate((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY);
+        // Translate to right position respecting
+        canvas.Translate(- anchorX * text.MeasuredWidth + offsetX, 
+            - anchorY * text.MeasuredHeight - text.Text.MeasuredPadding.Top + offsetY);
+        
+        // Correction, because RichTextKit draws with MaxWidth coordinates, but we use only real text size.
+        // So we have to respect the text.LeftRightCorrection 
+        canvas.Translate(-text.LeftRightCorrection, 0);
 
-        // Correction, because RichTextKit draws with MaxWidth coordinates, but we use only real text size
-        canvas.Translate(symbol.Padding - text.LeftRightCorrection, symbol.Padding);
+        if (symbol.KeepUpright && rotation is > 90 and < 270)
+        {
+            canvas.RotateDegrees(180f, 
+                0.5f * text.MeasuredWidth, 
+                0.5f * text.MeasuredHeight);
+        }
 
         // Draw text with RichTextKit
         text.Text.Paint(canvas);
@@ -72,14 +109,45 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         // Save it for later use
         var screenEnvelope = symbol.Envelope.Copy();
         
-        // Move symbol's envelope at the screen position
-        if (rotation != 0.0 && symbol.RotationAlignment == MapAlignment.Map)
+        //if (context.Rotation != 0.0 && symbol.RotationAlignment == MapAlignment.Map)
+        //{
+        //    screenEnvelope.RotateDegrees(context.Rotation);
+        //}
+
+        // Calc the translation
+        if (symbol.Translate != null)
         {
-            screenEnvelope.RotateDegrees(rotation);
+            var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
+            var translateAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
+
+            if (translateAnchor == MapAlignment.Map)
+            {
+                var radRotation = context.Rotation * Math.PI / 180.0;
+                var cos = Math.Cos(radRotation);
+                var sin = Math.Sin(radRotation);
+                var x = translate.X * cos - translate.Y * sin;
+                var y = translate.X * sin + translate.Y * cos;
+                translate = new Point((float) x, (float) y);
+            }
+
+            screenEnvelope.Translate(translate.X, translate.Y);
         }
 
+        // Move symbol's envelope at the screen position
         screenEnvelope.Translate(screenX, screenY);
 
+        // Calc the rotation
+        var totalRotation = symbol.Rotation;
+
+        if (symbol.RotationAlignment == MapAlignment.Map)
+        {
+            totalRotation += context.Rotation;
+        }
+
+        totalRotation = (totalRotation + 360) % 360;
+
+        screenEnvelope.RotateDegreesAroundAnchor(totalRotation, 0, 0);
+        
         // Check, if symbol is visible
         if (screenEnvelope.MaxX < canvas.LocalClipBounds.Left ||
             screenEnvelope.MinY < canvas.LocalClipBounds.Top ||
@@ -135,7 +203,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
     /// <param name="symbol">Symbol to create an envelope for</param>
     /// <param name="context">Context to use for this calculation</param>
     /// <returns>Envelope for a valid symbol, else null</returns>
-    private static Envelope? CreateEnvelope(TextPointSymbol symbol, EvaluationContext context)
+    private static Envelope? CreateEnvelope(TextPointSymbol symbol, EvaluationContext context, bool useCached = true)
     {
         if (symbol.Text == null)
         {
@@ -143,11 +211,12 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         }
 
         // We already calculated for this symbol an envelope, so use this
-        if (symbol.Envelope is not null)
+        if (symbol.Envelope is not null && useCached)
         {
             return symbol.Envelope;
         }
         
+        // Create native text
         symbol.Native ??= new RenderedText(symbol.Text, FontCache.CreateFonts(symbol.StyleName, symbol.FontNames));
         
         var text = (RenderedText)symbol.Native;
@@ -178,35 +247,12 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
         var padding = symbol.Padding;
 
-        // We now could calc the rough envelope of text respecting the overhang e.g. from italic characters)
+        // We now could calc the rough envelope of text respecting the overhang e.g. from italic characters
         var envelope = new Envelope(offset.X - padding - text.Text.MeasuredOverhang.Left, 
             offset.X + padding + text.MeasuredWidth + text.Text.MeasuredOverhang.Right, 
-            offset.Y - padding - text.Text.MeasuredPadding.Top, 
+            offset.Y - padding - text.Text.MeasuredOverhang.Top, 
             offset.Y + padding + text.MeasuredHeight + text.Text.MeasuredOverhang.Bottom);
 
-        if (symbol.Rotation != 0.0)
-        {
-            envelope.RotateDegrees(symbol.Rotation);
-        }
-
-        if (symbol.Translate != null)
-        {
-            var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
-            var translateAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
-
-            if (translateAnchor == MapAlignment.Map)
-            {
-                var rot = context.Rotation * Math.PI / 180.0;
-                var cos = Math.Cos(rot);
-                var sin = Math.Sin(rot);
-                var x = translate.X * cos - translate.Y * sin;
-                var y = translate.X * sin + translate.Y * cos;
-                translate = new Point((float)x, (float)y);
-            }
-
-            envelope.Translate(translate.X, translate.Y);
-        }
-        
         return envelope;
     }
 }

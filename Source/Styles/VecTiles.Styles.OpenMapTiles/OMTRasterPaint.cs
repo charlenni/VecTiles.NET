@@ -18,7 +18,7 @@ public static class OMTRasterPaint
         var brush = new Paint(omtStyle.Name);
 
         // Set a default color, so that opacity is used
-        brush.SetFixColor(Color.White);
+        brush.SetFixColor(Colors.White);
         
         // raster-opacity
         //   Optional number. Defaults to 1.

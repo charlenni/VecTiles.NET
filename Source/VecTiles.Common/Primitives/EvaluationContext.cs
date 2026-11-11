@@ -20,6 +20,11 @@ public class EvaluationContext : IEquatable<EvaluationContext>
         Feature = feature;
     }
 
+    public EvaluationContext WithFeature(IFeature feature)
+    {
+        return new EvaluationContext(Zoom, Scale, Rotation, Attributes, feature);
+    }
+
     /// <summary>
     /// Gets or sets the zoom level for the evaluation context.
     /// </summary>

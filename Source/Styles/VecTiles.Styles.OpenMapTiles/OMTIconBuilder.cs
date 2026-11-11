@@ -73,9 +73,9 @@ namespace VecTiles.Styles.OpenMapTiles
 
         public IconPointSymbol? Build(Tile tile, Point point, IFeature feature)
         {
-            _context.Feature = feature;
+            var context = _context.WithFeature(feature);
 
-            if (!TryGetSprite(_style, _spriteFactory, _context, out var sprite))
+            if (!TryGetSprite(_style, _spriteFactory, context, out var sprite))
             {
                 return null;
             }
@@ -100,7 +100,7 @@ namespace VecTiles.Styles.OpenMapTiles
                 Opacity = _opacity,
                 Translate = _translate,
                 TranslateAnchor = _translateAnchor,
-                SortOrder = _sortOrder(_context, tile),
+                SortOrder = _sortOrder(context, tile),
                 Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
                 Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,
                 Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"]!.ToString() ?? string.Empty) : 0,
@@ -111,9 +111,9 @@ namespace VecTiles.Styles.OpenMapTiles
 
         public IconLineSymbol? Build(Tile tile, Geometry geometry, IFeature feature)
         {
-            _context.Feature = feature;
+            var context = _context.WithFeature(feature);
 
-            if (!TryGetSprite(_style, _spriteFactory, _context, out var sprite))
+            if (!TryGetSprite(_style, _spriteFactory, context, out var sprite))
             {
                 return null;
             }
@@ -138,7 +138,7 @@ namespace VecTiles.Styles.OpenMapTiles
                 Opacity = _opacity,
                 Translate = _translate,
                 TranslateAnchor = _translateAnchor,
-                SortOrder = _sortOrder(_context, tile),
+                SortOrder = _sortOrder(context, tile),
                 Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
                 Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,
                 Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"]!.ToString() ?? string.Empty) : 0,
@@ -155,7 +155,7 @@ namespace VecTiles.Styles.OpenMapTiles
                 return false;
             }
 
-            var spriteName = _spriteMask.ReplaceWithTags(_context);
+            var spriteName = _spriteMask.ReplaceWithTags(context);
 
             sprite = spriteFactory(spriteName);
 

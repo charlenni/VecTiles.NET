@@ -93,9 +93,9 @@ public class OMTTextBuilder
 
     public TextPointSymbol? Build(Tile tile, Point point, IFeature feature)
     {
-        _context.Feature = feature;
+        var context = _context.WithFeature(feature);
 
-        var text = _textMask.ReplaceWithTags(_context)
+        var text = _textMask.ReplaceWithTags(context)
             .ReplaceWithTransforms(_transform);
 
         if (string.IsNullOrEmpty(text))
@@ -129,7 +129,7 @@ public class OMTTextBuilder
             Translate = _translate,
             TranslateAnchor = _translateAnchor,
             MaxWidth = _maxWidth,
-            SortOrder = _sortOrder(_context, tile),
+            SortOrder = _sortOrder(context, tile),
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,
             Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"]!.ToString() ?? string.Empty) : 0,
@@ -140,9 +140,9 @@ public class OMTTextBuilder
 
     public TextLineSymbol? Build(Tile tile, Geometry geometry, IFeature feature)
     {
-        _context.Feature = feature;
+        var context = _context.WithFeature(feature);
 
-        var text = _textMask.ReplaceWithTags(_context)
+        var text = _textMask.ReplaceWithTags(context)
             .ReplaceWithTransforms(_transform);
 
         if (string.IsNullOrEmpty(text))
@@ -177,7 +177,7 @@ public class OMTTextBuilder
             Translate = _translate,
             TranslateAnchor = _translateAnchor,
             MaxWidth = _maxWidth,
-            SortOrder = _sortOrder(_context, tile),
+            SortOrder = _sortOrder(context, tile),
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,
             Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"]!.ToString() ?? string.Empty) : 0,

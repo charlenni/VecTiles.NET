@@ -2,9 +2,9 @@
 
 namespace VecTiles.Common.Primitives;
 
-public class SpriteDicionary : Dictionary<string, ISprite>
+public class SpriteDictionary : Dictionary<string, ISprite>
 {
-    public SpriteDicionary(Dictionary<string, Sprite> sprites)
+    public SpriteDictionary(Dictionary<string, Sprite> sprites)
     {
         Sprites = new(sprites);
     }

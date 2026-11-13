@@ -37,7 +37,7 @@ public class OMTStyleFileLoader
         }
     }
 
-    public static async Task<SpriteDicionary> LoadSprites(string spriteFile)
+    public static async Task<SpriteDictionary> LoadSprites(string spriteFile)
     {
         Dictionary<string, Sprite>? omtSprites;
 
@@ -64,6 +64,6 @@ public class OMTStyleFileLoader
             sprite.Atlas = bitmap;
         }
 
-        return new SpriteDicionary(omtSprites);
+        return new SpriteDictionary(omtSprites);
     }
 }

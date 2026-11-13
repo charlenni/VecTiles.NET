@@ -39,7 +39,7 @@ public class OMTStyleFile
     [JsonProperty("sprite")]
     internal string spriteFile = string.Empty;
 
-    public SpriteDicionary? Sprites { get; set; }
+    public SpriteDictionary? Sprites { get; set; }
 
     [JsonProperty("zoom")]
     public float Zoom { get; set; }

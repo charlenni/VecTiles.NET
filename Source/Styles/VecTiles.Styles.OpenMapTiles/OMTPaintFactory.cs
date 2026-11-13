@@ -8,7 +8,7 @@ public class OMTPaintFactory : IPaintFactory
 {
     Func<string, Sprite> _spriteFactory;
 
-    public OMTPaintFactory(SpriteDicionary? spriteDictionary) 
+    public OMTPaintFactory(SpriteDictionary? spriteDictionary) 
     {
         if (spriteDictionary == null)
             throw new ArgumentNullException(nameof(spriteDictionary));

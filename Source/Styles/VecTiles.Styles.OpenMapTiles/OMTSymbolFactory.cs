@@ -10,7 +10,7 @@ public class OMTSymbolFactory : ISymbolFactory
 {
     Func<string, ISprite?> _spriteFactory;
 
-    public OMTSymbolFactory(SpriteDicionary? spriteFile)
+    public OMTSymbolFactory(SpriteDictionary? spriteFile)
     {
         if (spriteFile == null)
             throw new ArgumentNullException(nameof(spriteFile));

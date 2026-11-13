@@ -41,8 +41,8 @@ public class OMTStyleFileLoader
     {
         Dictionary<string, Sprite>? omtSprites;
 
-        var bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".png");
-        var jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".json");
+        var bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x" + ".png");
+        var jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x" + ".json");
         var serializer = new JsonSerializer();
 
         using (var stream = new MemoryStream(jsonBytes))

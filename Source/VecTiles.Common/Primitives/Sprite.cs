@@ -7,13 +7,14 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class Sprite : ISprite
 {
-    public Sprite(IBitmap atlas, int x, int y, int width, int height)
+    public Sprite(IBitmap atlas, int x, int y, int width, int height, float pixelRatio = 1.0f)
     {
         Atlas = atlas;
         X = x;
         Y = y;
         Width = width;
         Height = height;
+        PixelRatio = pixelRatio;
     }
 
     public IBitmap Atlas { get; set; }
@@ -28,7 +29,7 @@ public class Sprite : ISprite
 
     public object? Native { get; set; }
 
-    public float PixelRatio { get; set; } = 1.0f;
+    public float PixelRatio { get; set; }
 
     public IList<float> Content { get; set; } = [];
 

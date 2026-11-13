@@ -55,7 +55,7 @@ public static class IconLineSymbolRenderer
 
         canvas.Translate((float)screenX, (float)screenY);
         canvas.Translate(transX, transY);
-        canvas.Scale(1f / context.Scale * symbol.Scale);
+        canvas.Scale(1f / context.Scale * symbol.Scale / symbol.Icon.PixelRatio);
 
         var rotation = iconRotation;
 

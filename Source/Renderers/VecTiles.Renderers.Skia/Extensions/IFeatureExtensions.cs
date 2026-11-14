@@ -1,118 +1,184 @@
 ﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
-using SkiaSharp;
+using VecTiles.Common.Enums;
+using VecTiles.Renderers.Skia.Primitives.Vertices;
 
 namespace VecTiles.Renderers.Skia.Extensions;
 
 public static class IFeatureExtensions
 {
-    public static List<SKPath> ToSKPath(this IFeature feature)
+    public static VertexBuilder ToVertices(this IFeature feature,
+        VertexBuilder builder,
+        float maxWidth, 
+        StrokeCap startCap,
+        StrokeCap endCap,
+        StrokeJoin join)
     {
-        return GeometryToSKPath(feature.Geometry);
+        return LineGeometryToVertices(builder, feature.Geometry, maxWidth, startCap, endCap, join); 
     }
 
-    private static List<SKPath> GeometryToSKPath(Geometry geometry)
+    public static VertexBuilder ToVertices(this IFeature feature,
+        VertexBuilder builder,
+        StrokeJoin join)
     {
-        SKPath path;
-        var paths = new List<SKPath>();
+        return FilledPolygonGeometryToVertices(builder, feature.Geometry, join); 
+    }
 
+    public static VertexBuilder ToVertices(this IFeature feature, 
+        VertexBuilder builder,
+        float maxWidth, 
+        StrokeJoin join)
+    {
+        return OutlinedPolygonGeometryToVertices(builder, feature.Geometry, maxWidth, join); 
+    }
+    
+    private static VertexBuilder LineGeometryToVertices(VertexBuilder builder, Geometry geometry,
+            float maxWidth, 
+            StrokeCap startCap,
+            StrokeCap endCap,
+            StrokeJoin join)
+    {
         switch (geometry)
         {
-            case Point point:
-                path = new SKPath();
-                path.AddCircle((float)point.X, (float)point.Y, 3); // kleiner Kreis als Marker
-                paths.Add(path);
-                break;
-
-            case MultiPoint multiPoint:
-                foreach (Point pt in multiPoint.Geometries)
-                {
-                    path = new SKPath();
-                    path.AddCircle((float)pt.X, (float)pt.Y, 3);
-                    paths.Add(path);
-                }
-                break;
-
             case LineString line:
-                path = new SKPath();
-                AddLineStringToPath(path, line);
-                paths.Add(path);
+                LineStringToVertices(builder, line, maxWidth, startCap, endCap, join);
                 break;
 
             case MultiLineString multiLine:
                 foreach (LineString lineStr in multiLine.Geometries)
                 {
-                    path = new SKPath();
-                    AddLineStringToPath(path, lineStr);
-                    paths.Add(path);
+                    LineStringToVertices(builder, lineStr, maxWidth, startCap, endCap, join);
                 }
                 break;
 
+            // Could happen for line layers
             case Polygon polygon:
-                path = new SKPath();
-                AddPolygonToPath(path, polygon);
-                paths.Add(path);
+                OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join);
+                break;
+
+            // Could happen for line layers
+            case MultiPolygon multiPolygon:
+                foreach (Polygon polygon in multiPolygon.Geometries)
+                {
+                    OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join);
+                }
+                break;
+
+            case Point point: 
+            case MultiPoint multiPoint:
+                break;
+            
+            default:
+                throw new NotSupportedException($"Geometry type '{geometry.GeometryType}' is not supported.");
+        }
+
+        return builder;
+    }
+
+    private static VertexBuilder FilledPolygonGeometryToVertices(VertexBuilder builder, Geometry geometry,
+        StrokeJoin join)
+    {
+        switch (geometry)
+        {
+            case Polygon polygon:
+                FilledPolygonToVertices(builder, polygon);
                 break;
 
             case MultiPolygon multiPolygon:
                 foreach (Polygon poly in multiPolygon.Geometries)
                 {
-                    path = new SKPath();
-                    AddPolygonToPath(path, poly);
-                    paths.Add(path);
+                    if (poly is not null)
+                    {
+                        FilledPolygonToVertices(builder, poly);
+                    }
                 }
                 break;
 
-            case GeometryCollection collection:
-                foreach (Geometry geom in collection.Geometries)
-                {
-                    var subPaths = GeometryToSKPath(geom);
-                    paths.AddRange(subPaths);
-                }
+            case Point point: 
+            case MultiPoint multiPoint:
                 break;
-
+            
             default:
                 throw new NotSupportedException($"Geometry type '{geometry.GeometryType}' is not supported.");
         }
 
-        return paths;
+        return builder;
     }
 
-    private static void AddLineStringToPath(SKPath path, LineString line)
+    private static VertexBuilder OutlinedPolygonGeometryToVertices(VertexBuilder builder, Geometry geometry,
+        float maxWidth, 
+        StrokeJoin join)
     {
-        if (line.NumPoints == 0) return;
-        var coords = line.Coordinates;
-        path.MoveTo((float)coords[0].X, (float)coords[0].Y);
-        for (int i = 1; i < coords.Length; i++)
+        switch (geometry)
         {
-            path.LineTo((float)coords[i].X, (float)coords[i].Y);
+            case Polygon polygon:
+                OutlinedPolygonToVertices(builder, polygon, maxWidth, join);
+                break;
+
+            case MultiPolygon multiPolygon:
+                foreach (Polygon poly in multiPolygon.Geometries)
+                {
+                    OutlinedPolygonToVertices(builder, poly, maxWidth, join);
+                }
+                break;
+
+            case Point point: 
+            case MultiPoint multiPoint:
+                break;
+            
+            default:
+                throw new NotSupportedException($"Geometry type '{geometry.GeometryType}' is not supported.");
         }
+
+        return builder;
     }
 
-    private static void AddPolygonToPath(SKPath path, Polygon polygon)
+    private static VertexBuilder LineStringToVertices(VertexBuilder builder, LineString line, 
+        float maxWidth, 
+        StrokeCap startCap,
+        StrokeCap endCap,
+        StrokeJoin join)
+    {
+        if (line.NumPoints == 0) return null;
+        var coords = line.Coordinates;
+        builder.AddLines([coords], maxWidth, startCap, endCap, join);
+        
+        return builder;
+    }
+
+    private static VertexBuilder FilledPolygonToVertices(VertexBuilder builder, Polygon polygon)
     {
         // Outer ring
-        AddLinearRingToPath(path, polygon.ExteriorRing, true);
-
+        var outer = polygon.ExteriorRing.Coordinates;
+        var holes = new List<Coordinate[]>();
+        
         // Inner ring (holes)
         for (int i = 0; i < polygon.NumInteriorRings; i++)
         {
-            AddLinearRingToPath(path, polygon.GetInteriorRingN(i), true);
+            holes.Add(polygon.GetInteriorRingN(i).Coordinates);
         }
-    }
 
-    private static void AddLinearRingToPath(SKPath path, LineString ring, bool close)
+        builder.AddFill(outer, holes.ToArray());
+        
+        return builder;
+    }
+    
+    private static VertexBuilder OutlinedPolygonToVertices(VertexBuilder builder, Polygon polygon,
+        float maxWidth, 
+        StrokeJoin join)
     {
-        if (ring.NumPoints == 0) return;
-        var coords = ring.Coordinates;
-        path.MoveTo((float)coords[0].X, (float)coords[0].Y);
-        for (int i = 1; i < coords.Length; i++)
+        // Outer ring
+        var outer = polygon.ExteriorRing.Coordinates;
+        var rings = new List<Coordinate[]> { outer };
+        
+        // Inner ring (holes)
+        for (int i = 0; i < polygon.NumInteriorRings; i++)
         {
-            path.LineTo((float)coords[i].X, (float)coords[i].Y);
+            rings.Add(polygon.GetInteriorRingN(i).Coordinates);
         }
-        if (close)
-        {
-            path.Close();
-        }
+        
+        builder.AddOutline(rings, maxWidth, join);
+        
+        return builder;
     }
 }

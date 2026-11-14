@@ -96,16 +96,10 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
     /// </param>
     /// <param name="color">Color for line</param>
     /// <param name="dashArray">Array for dash pattern with on-off-values</param>
-    /// <param name="dashRefHalfWidth">
-    ///   Half width in tile px at the SETTLED integer zoom level
-    ///   (style width at zInt / 2 / scale at zInt). Constant during zoom
-    ///   animations -> dash pattern stays glued to the geometry; changes
-    ///   in discrete steps with the zoom level.
-    /// </param>
     public SKShader Update(float strokeWidth, 
         SKColor color, 
         float[]? dashArray = null,
-        float dashRefHalfWidth = 0f)
+        float strokeWidthForIntZoom = 0f)
     {
         var dashTexelsPerWorldPx = 0f;
 
@@ -140,12 +134,11 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
             foreach (var v in _dashArray) total += MathF.Max(v, 0f);
 
             // uHalfWidth drives the stroke (animated); the dash period uses
-            // dashRefHalfWidth (frozen per zoom level) so the pattern does
+            // strokeWidthForIntZoom (frozen per zoom level) so the pattern does
             // not crawl while zooming.
-            dashTexelsPerWorldPx = _dashTexelWidth
-                                   / (total * dashRefHalfWidth * 2f);
+            dashTexelsPerWorldPx = _dashTexelWidth / (total * strokeWidthForIntZoom);
         }
-        
+
         var uniforms = new SKRuntimeEffectUniforms(_effect)
         {
             ["uMaxHalfWidth"] = _maxHalfWidth,

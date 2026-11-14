@@ -58,15 +58,15 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         // the geometry; at a level change it snaps discretely (dashes grow),
         // which matches the "everything gets bigger, nothing crawls" behavior.
         float scaleXInt = 1f; //ScaleForZoom(zInt);             // your zoom->scale mapping at zInt
-        float dashRefHalfWidth = _paint.GetStrokeWidthFromIntZoom(context) / scaleXInt;
+        float strokeWidthForIntZoom = _paint.GetStrokeWidthFromIntZoom(context) / scaleXInt;
 
         // Draw features that belong to a line style
         foreach (var skPaint in skPaints)
         {
             skPaint.Shader = _shader.Update(skPaint.StrokeWidth, 
                 skPaint.Color, 
-                _paint.DashArray, 
-                dashRefHalfWidth);
+                _paint.DashArray,
+                strokeWidthForIntZoom);
             skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, skPaint);
         }
 

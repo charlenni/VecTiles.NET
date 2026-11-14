@@ -160,7 +160,7 @@ public class Renderer
             return;
         }
 
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorFillLayer(style, features!));
+        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorFillLayer(style, context, features!));
     }
 
     private static void RenderTilePartAsVectorLine(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
@@ -170,7 +170,7 @@ public class Renderer
             return;
         }
 
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorLineLayer(style, features!));
+        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorLineLayer(style, context, features!));
     }
 
     private static void RenderTilePartAsSymbol(IRenderedTile renderedTile, Tile tile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)

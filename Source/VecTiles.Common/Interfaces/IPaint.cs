@@ -31,4 +31,8 @@ public interface IPaint
     float[]? DashArray { get; }
 
     void Update(EvaluationContext context);
+
+    float GetMaxStrokeWidth(EvaluationContext context);
+    
+    float GetStrokeWidthFromIntZoom(EvaluationContext context);
 }

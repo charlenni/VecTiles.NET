@@ -97,20 +97,13 @@ public class Paint : IPaint
             Pattern = funcPattern(context);
         }
 
-        // We have to multiply the dasharray with the linewidth
         if (variableDashArray && funcDashArray != null)
         {
-            var array = funcDashArray(context);
-            for (var i = 0; i < array.Length; i++)
-                array[i] = array[i] * StrokeWidth;
-            DashArray = array;
+            DashArray = funcDashArray(context);
         }
         else if (fixDashArray != null && fixDashArray.Length > 0)
         {
-            var array = new float[fixDashArray.Length];
-            for (var i = 0; i < array.Length; i++)
-                array[i] = fixDashArray[i] * StrokeWidth;
-            DashArray = array;
+            DashArray = fixDashArray;
         }
         else 
         {
@@ -120,6 +113,29 @@ public class Paint : IPaint
         _lastContext = new EvaluationContext(context.Zoom, context.Scale, context.Rotation, context.Attributes);
 
         return;
+    }
+
+    public float GetMaxStrokeWidth(EvaluationContext context)
+    {
+        if (!variableStrokeWidth)
+            return _strokeWidth;
+        
+        // Calc MaxStrokeWidth for variable stroke width
+        return Math.Max(Math.Max(
+            funcStrokeWidth!(context), 
+            funcStrokeWidth!(new EvaluationContext(context.Zoom + 1))),
+            0.1f);
+    }
+
+    public float GetStrokeWidthFromIntZoom(EvaluationContext context)
+    {
+        if (!variableStrokeWidth)
+            return _strokeWidth;
+
+        var intContext = new EvaluationContext((int)context.Zoom);
+        
+        // Calc MaxStrokeWidth for variable stroke width
+        return funcStrokeWidth!(intContext); 
     }
 
     #region Color

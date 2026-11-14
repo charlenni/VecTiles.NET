@@ -70,7 +70,7 @@ namespace VecTiles.Styles.OpenMapTiles.Extensions
                 return text;
 
             // Check, if match starts with name
-            if (val.StartsWith("name"))
+            if (val.StartsWith("name", StringComparison.InvariantCulture))
             {
                 // Try to take the localized name
                 var code = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
@@ -91,8 +91,8 @@ namespace VecTiles.Styles.OpenMapTiles.Extensions
         {
             return textTransform switch
             {
-                TextTransform.Uppercase => text.ToUpper(),
-                TextTransform.Lowercase => text.ToLower(),
+                TextTransform.Uppercase => text.ToUpper(CultureInfo.CurrentCulture),
+                TextTransform.Lowercase => text.ToLower(CultureInfo.CurrentCulture),
                 _ => text
             };
         }

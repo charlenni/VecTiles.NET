@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using System.Globalization;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -95,7 +96,7 @@ public class FilterConverter : JsonConverter
         if (value.Type != JTokenType.String)
             throw new ArgumentException("Value for $type filter must be a string");
 
-        var type = value.ToString().ToLower();
+        var type = value.ToString().ToLower(CultureInfo.InvariantCulture);
 
         switch (type)
         {

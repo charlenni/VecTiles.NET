@@ -30,11 +30,6 @@ public static class IPaintExtension
             skPaint.Shader = ((SKImage)paint.Pattern.Native).ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
         }
         
-        if (paint.DashArray != null)
-        {
-            skPaint.PathEffect = SKPathEffect.CreateDash(paint.DashArray, 0);
-        }
-
         if (skPaint.Style != SKPaintStyle.StrokeAndFill)
         {
             return new List<SKPaint> { skPaint };

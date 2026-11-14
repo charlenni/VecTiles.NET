@@ -155,21 +155,6 @@ public class Renderer
         return hasContent ? renderedTile : null;
     }
 
-    private List<string> ListOfVisibleSources(Tile tile)
-    {
-        var result = new List<string>();
-        
-        foreach (var style in _styles)
-        {
-            if (IsVisible(tile.Zoom, style))
-            {
-                result.Add(style.Source);
-            }
-        }
-
-        return result;
-    }
-
     private static void RenderAsBackground(IRenderedTile renderedTile, EvaluationContext context, ILayerStyle style, IRenderFactory renderFactory)
     {
         renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateBackgroundLayer(style));

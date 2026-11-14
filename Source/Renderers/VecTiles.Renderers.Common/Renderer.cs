@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Globalization;
 using NetTopologySuite.Features;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -53,14 +54,14 @@ public class Renderer
                     var binaryTileData = await source.Value.GetTileAsync(tile);
                     if (binaryTileData != null)
                     {
-                        rawTiles.Add(source.Key.ToLower(), binaryTileData);
+                        rawTiles.Add(source.Key.ToLower(CultureInfo.InvariantCulture), binaryTileData);
                     }
                     break;
                 case SourceType.Vector:
                     var tileData = await ((IVectorTileDataSource)source.Value).GetVectorTileAsync(tile);
                     if (tileData != null)
                     {
-                        rawTiles.Add(source.Key.ToLower(), tileData);
+                        rawTiles.Add(source.Key.ToLower(CultureInfo.InvariantCulture), tileData);
                     }
                     break;
             }
@@ -85,7 +86,7 @@ public class Renderer
                     RenderAsBackground(renderedTile, context, style, _renderFactory);
                     break;
                 case LayerStyleType.Raster:
-                    if (rawTiles.TryGetValue(style.Source.ToLower(), out var rasterData))
+                    if (rawTiles.TryGetValue(style.Source.ToLower(CultureInfo.InvariantCulture), out var rasterData))
                     {
                         if (rasterData is null)
                         {
@@ -96,7 +97,7 @@ public class Renderer
                     }
                     break;
                 case LayerStyleType.Fill:
-                    if (rawTiles.TryGetValue(style.Source.ToLower(), out var fillData))
+                    if (rawTiles.TryGetValue(style.Source.ToLower(CultureInfo.InvariantCulture), out var fillData))
                     {
                         if (fillData is null)
                         {
@@ -107,7 +108,7 @@ public class Renderer
                     }
                     break;
                 case LayerStyleType.Line:
-                    if (rawTiles.TryGetValue(style.Source.ToLower(), out var lineData))
+                    if (rawTiles.TryGetValue(style.Source.ToLower(CultureInfo.InvariantCulture), out var lineData))
                     {
                         if (lineData is null)
                         {

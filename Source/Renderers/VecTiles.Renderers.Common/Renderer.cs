@@ -173,8 +173,6 @@ public class Renderer
 
     private static void RenderTilePartAsVectorFill(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
     {
-        var layer = data.Layers.Where(l => l.Name == style.SourceLayer)?.FirstOrDefault();
-
         if (!ExtractFeatures(data, style, out var features))
         {
             return;
@@ -241,23 +239,36 @@ public class Renderer
         return true;
     }
 
-    private static bool ExtractFeatures(VectorTile data, ILayerStyle style, out IEnumerable<IFeature>? features)
+    private static bool ExtractFeatures(VectorTile data, ILayerStyle style, out IReadOnlyList<IFeature> features)
     {
-        var layer = data.Layers.Where(l => l.Name == style.SourceLayer)?.FirstOrDefault();
+        var layer = data.Layers.FirstOrDefault(l => string.Equals(l.Name, style.SourceLayer, StringComparison.Ordinal));
 
         if (layer == null)
         {
-            features = null;
+            features = Array.Empty<IFeature>();
             return false;
         }
 
-        features = layer.Features.Where((f) => style.Filter.Evaluate(f));
+        var filter = style.Filter;
+        var source = layer.Features;
+        List<IFeature>? result = null;
 
-        if (features == null || !features.Any())
+        for (var i = 0; i < source.Count; i++)
         {
+            var f = source[i];
+            if (filter.Evaluate(f))
+            {
+                (result ??= new List<IFeature>()).Add(f);
+            }
+        }
+
+        if (result == null)
+        {
+            features = Array.Empty<IFeature>();
             return false;
         }
 
+        features = result;
+        
         return true;
-    }
-}
+    }}

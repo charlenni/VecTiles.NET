@@ -1,4 +1,5 @@
-﻿using NetTopologySuite.Features;
+﻿using System.Diagnostics;
+using NetTopologySuite.Features;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
@@ -31,15 +32,20 @@ public class Renderer
 
     public async Task<IRenderedTile?> Render(Tile tile)
     {
-        var rawTiles = new Dictionary<string, object>();
+        var rawTiles = new Dictionary<string, object?>();
+        var visibleStyles = _styles.Where(s => IsVisible(tile.Zoom, s)).ToList();
+        var visibleSources = visibleStyles.Select(s => s.Source)
+            .Where(s => s != "")
+            .Distinct()
+            .ToList();
 
         // Get tiles from all sources
         foreach (var source in _sources)
         {
-            //if (source.MinZoom > tile.Zoom || source.MaxZoom < tile.Zoom)
-            //{
-            //    continue;
-            //}
+            if (!visibleSources.Contains(source.Key))
+            {
+                continue;
+            }
 
             switch (source.Value.SourceType)
             {
@@ -60,7 +66,7 @@ public class Renderer
             }
         }
 
-        if (!rawTiles.Any())
+        if (rawTiles.Count == 0)
         {
             // We have no tile information, so don't render the tile
             return null;
@@ -71,36 +77,43 @@ public class Renderer
         var hasContent = false;
 
         // Create rendered tile style after style
-        foreach (var style in _styles)
+        foreach (var style in visibleStyles)
         {
-            if (!IsVisible(tile.Zoom, style))
-            {
-                continue;
-            }
-
             switch (style.StyleType)
             {
                 case LayerStyleType.Background:
                     RenderAsBackground(renderedTile, context, style, _renderFactory);
                     break;
                 case LayerStyleType.Raster:
-                    if (rawTiles.ContainsKey(style.Source) && rawTiles[style.Source] != null)
+                    if (rawTiles.TryGetValue(style.Source.ToLower(), out var rasterData))
                     {
-                        RenderTileAsRaster(renderedTile, context, (byte[])rawTiles[style.Source], style, _renderFactory);
+                        if (rasterData is null)
+                        {
+                            continue;
+                        }
+                        RenderTileAsRaster(renderedTile, context, (byte[])rasterData, style, _renderFactory);
                         hasContent = true;
                     }
                     break;
                 case LayerStyleType.Fill:
-                    if (rawTiles.ContainsKey(style.Source) && rawTiles[style.Source] != null)
+                    if (rawTiles.TryGetValue(style.Source.ToLower(), out var fillData))
                     {
-                        RenderTilePartAsVectorFill(renderedTile, context, (VectorTile)rawTiles[style.Source], style, _renderFactory);
+                        if (fillData is null)
+                        {
+                            continue;
+                        }
+                        RenderTilePartAsVectorFill(renderedTile, context, (VectorTile)fillData, style, _renderFactory);
                         hasContent = true;
                     }
                     break;
                 case LayerStyleType.Line:
-                    if (rawTiles.ContainsKey(style.Source) && rawTiles[style.Source] != null)
+                    if (rawTiles.TryGetValue(style.Source.ToLower(), out var lineData))
                     {
-                        RenderTilePartAsVectorLine(renderedTile, context, (VectorTile)rawTiles[style.Source], style, _renderFactory);
+                        if (lineData is null)
+                        {
+                            continue;
+                        }
+                        RenderTilePartAsVectorLine(renderedTile, context, (VectorTile)lineData, style, _renderFactory);
                         hasContent = true;
                     }
                     break;
@@ -113,8 +126,10 @@ public class Renderer
         }
 
         // Draw symbols in revers order, because last style layer is the top most layer
-        foreach (var style in _styles.Reverse())
+        for (var i = visibleStyles.Count - 1; i >= 0; i--)
         {
+            var style = visibleStyles[i];
+            
             if (style.StyleType != LayerStyleType.Symbol)
             {
                 continue;
@@ -125,15 +140,34 @@ public class Renderer
                 continue;
             }
 
-            if (rawTiles.ContainsKey(style.Source) && rawTiles[style.Source] != null)
+            if (rawTiles.TryGetValue(style.Source, out var symbolData))
             {
-                RenderTilePartAsSymbol(renderedTile, tile, context, (VectorTile)rawTiles[style.Source], style, _renderFactory);
+                if (symbolData is null)
+                {
+                    continue;
+                }
+                RenderTilePartAsSymbol(renderedTile, tile, context, (VectorTile)symbolData, style, _renderFactory);
                 hasContent = true;
             }
         }
-
+        
         // Only return rendered tile when it contains more than background
         return hasContent ? renderedTile : null;
+    }
+
+    private List<string> ListOfVisibleSources(Tile tile)
+    {
+        var result = new List<string>();
+        
+        foreach (var style in _styles)
+        {
+            if (IsVisible(tile.Zoom, style))
+            {
+                result.Add(style.Source);
+            }
+        }
+
+        return result;
     }
 
     private static void RenderAsBackground(IRenderedTile renderedTile, EvaluationContext context, ILayerStyle style, IRenderFactory renderFactory)

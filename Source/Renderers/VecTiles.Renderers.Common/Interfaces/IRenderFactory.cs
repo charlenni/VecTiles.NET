@@ -29,17 +29,19 @@ public interface IRenderFactory
     /// Creates a vector fill layer for the given layer style and features
     /// </summary>
     /// <param name="style">The layer style to use for rendering</param>
+    /// <param name="context">The context to use for rendering</param>
     /// <param name="features">The features to fill</param>
     /// <returns>A vector fill layer that can be drawn</returns>
-    ILayerRenderer CreateVectorFillLayer(ILayerStyle style, IEnumerable<IFeature> features);
+    ILayerRenderer CreateVectorFillLayer(ILayerStyle style, EvaluationContext context, IEnumerable<IFeature> features);
 
     /// <summary>
     /// Creates a vector line layer for the given layer style and features
     /// </summary>
     /// <param name="style">The layer style to use for rendering</param>
+    /// <param name="context">The context to use for rendering</param>
     /// <param name="features">The features to draw as lines</param>
     /// <returns>A vector line layer that can be drawn</returns>
-    ILayerRenderer CreateVectorLineLayer(ILayerStyle style, IEnumerable<IFeature> features);
+    ILayerRenderer CreateVectorLineLayer(ILayerStyle style, EvaluationContext context, IEnumerable<IFeature> features);
 
     /// <summary>
     /// Creates a symbol for the given tile, layer style and feature

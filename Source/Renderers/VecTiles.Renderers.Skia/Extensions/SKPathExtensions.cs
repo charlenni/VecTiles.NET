@@ -4,7 +4,7 @@ namespace VecTiles.Renderers.Skia.Extensions;
 
 public static class SKPathExtensions
 {
-        /// <summary>
+    /// <summary>
     /// Checks if the text fits on the next linear segment of the path
     /// starting from startDistance along the current SKPathMeasure contour.
     /// Assumes the path consists of straight lines only.

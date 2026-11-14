@@ -49,7 +49,8 @@ public partial class MainView : UserControl
             MapControl.Map.Navigator.RotateTo(value);
         }));
 
-        MapControl.Map.Navigator.CenterOnAndZoomTo(Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769)), 2.ToResolution());
+        MapControl.Map.Navigator.CenterOnAndZoomTo(
+            Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769)), (17.9).ToResolution());
     }
 
     private void ButtonCenter_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)

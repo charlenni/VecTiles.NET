@@ -7,6 +7,6 @@
         mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
         x:Class="SampleApp.Views.MainWindow"
         Icon="/Assets/avalonia-logo.ico"
-        Title="SampleApp">
+        Title="SampleApp" Position = "2560, 0" Width = "1024" Height="768">
         <views:MainView />
 </Window>

@@ -1,9 +1,11 @@
-﻿using NetTopologySuite.Features;
+﻿using System.Diagnostics;
+using NetTopologySuite.Features;
 using SkiaSharp;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
+using VecTiles.Renderers.Skia.Primitives.Vertices;
 
 namespace VecTiles.Renderers.Skia;
 
@@ -50,38 +52,80 @@ public class RenderFactory : IRenderFactory
         return new RasterLayerRenderer(_tileRect, _paints[style.Name], bitmap);
     }
 
-    public ILayerRenderer CreateVectorFillLayer(ILayerStyle style, IEnumerable<IFeature> features)
+    public ILayerRenderer CreateVectorFillLayer(ILayerStyle style, 
+        EvaluationContext context, 
+        IEnumerable<IFeature> features)
     {
-        var paths = new List<SKPath>(features!.Count());
-
-        // Draw features that belong to a fill style (draw path by path)
-        foreach (var feature in features!)
+        // A filled area consits of a polygon, that is filled and a outline around it
+        // Both need different vertices. So we need two types of vertices.
+        
+        if (!_paints.ContainsKey(style.Name))
         {
-            var pathList = feature.ToSKPath();
-
-            paths.AddRange(pathList);
+            return null;
         }
 
-        return new VectorLayerRenderer(paths, true, _paints[style.Name]);
-    }
+        var fillBuilder = new VertexBuilder();
+        var outlineBuilder = new VertexBuilder();
+        var paint = _paints[style.Name];
 
-    public ILayerRenderer CreateVectorLineLayer(ILayerStyle style, IEnumerable<IFeature> features)
-    {
-        var paths = new SKPath();
-
-        // Draw features that belong to a line style (add path by path and draw them at the end together)
+        // Create vertices for features that belong to a fill style (only fill area)
         foreach (var feature in features!)
         {
-            var pathList = feature.ToSKPath();
-            
-            foreach (var path in pathList)
-                paths.AddPath(path);
+            feature.ToVertices(fillBuilder, paint.StrokeJoin);
         }
 
-        return new VectorLayerRenderer([paths], false, _paints[style.Name]);
+        if (paint.IsAntialias && paint.OutlineColor != paint.Color)
+        {
+            // Create vertices for features that belong to a outline style (only stroke around area)
+            foreach (var feature in features!)
+            {
+                feature.ToVertices(outlineBuilder, 1f,
+                    paint.StrokeJoin);
+            }
+
+            return new FillLayerRenderer(fillBuilder.Build(), outlineBuilder.Build(), true, _paints[style.Name]);
+        }
+
+        return new FillLayerRenderer(fillBuilder.Build(), true, _paints[style.Name]);
     }
 
-    public ISymbol? CreateSymbol(Tile tile, ILayerStyle style, EvaluationContext context, IFeature feature)
+    public ILayerRenderer CreateVectorLineLayer(ILayerStyle style, 
+        EvaluationContext context, 
+        IEnumerable<IFeature> features)
+    {
+        if (!_paints.ContainsKey(style.Name))
+        {
+            return null;
+        }
+
+        // Calc number of possible vertices
+        var numOfPoints = 0;
+        
+        foreach (var feature in features!)
+        {
+            numOfPoints += feature.Geometry.NumPoints;
+        }
+
+        var builder = new VertexBuilder(numOfPoints * 3);
+        var paint = _paints[style.Name];
+        var maxStrokeWidth = paint.GetMaxStrokeWidth(context) + 2;  // Small adjustments for AA
+
+        // Create vertices for features that belong to a line style (only the line, no border)
+        foreach (var feature in features!)
+        {
+            feature.ToVertices(builder, maxStrokeWidth ,
+                paint.StrokeCap,
+                paint.StrokeCap, 
+                paint.StrokeJoin);
+        }
+
+        return new LineLayerRenderer(builder.Build(), false, _paints[style.Name], maxStrokeWidth);
+    }
+
+    public ISymbol? CreateSymbol(Tile tile, 
+        ILayerStyle style, 
+        EvaluationContext context, 
+        IFeature feature)
     {
         return _symbolFactory.CreateSymbol(tile, style, context, feature);
     }

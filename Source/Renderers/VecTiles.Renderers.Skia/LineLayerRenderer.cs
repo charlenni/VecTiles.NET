@@ -12,6 +12,7 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
     private readonly VertexBuffer _lineBuffer;
     private readonly bool _clip;
     private readonly IPaint _paint;
+    private readonly SKPaint _skPaint = new() { IsAntialias = true };
     private readonly LineShader? _shader;
 
     public LineLayerRenderer(VertexBuffer lineBuffer, bool clip, IPaint paint, float maxStrokeWidth)
@@ -41,7 +42,7 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         }
 
         // Update values for paint regarding context
-        var skPaints = _paint.ToSKPaint(context);
+        _paint.Update(context);
 
         skCanvas.Save();
 
@@ -52,6 +53,9 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         }
         */
 
+        // TODO
+        // Respect, if a line has a pattern to draw with
+        
         // Dash period follows the SETTLED zoom level: width evaluated at the
         // integer zoom, converted to the tile px of that same level. During a
         // zoom animation this value is constant -> the pattern stays glued to
@@ -61,14 +65,11 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         float strokeWidthForIntZoom = _paint.GetStrokeWidthFromIntZoom(context) / scaleXInt;
 
         // Draw features that belong to a line style
-        foreach (var skPaint in skPaints)
-        {
-            skPaint.Shader = _shader.Update(skPaint.StrokeWidth, 
-                skPaint.Color, 
-                _paint.DashArray,
-                strokeWidthForIntZoom);
-            skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, skPaint);
-        }
+        _skPaint.Shader = _shader.Update(_paint.StrokeWidth, 
+            _paint.Color.ToSKColor(), 
+            _paint.DashArray,
+            strokeWidthForIntZoom);
+        skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
 
         skCanvas.Restore();
     }

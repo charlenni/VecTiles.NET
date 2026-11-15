@@ -13,6 +13,7 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
     private readonly VertexBuffer? _lineBuffer;
     private readonly bool _clip;
     private readonly IPaint _paint;
+    private readonly SKPaint _skPaint = new() { IsAntialias = true };
     private readonly FillShader? _fillShader = FillShader.Create();
     private readonly LineShader? _lineShader = LineShader.Create(1f);
 
@@ -41,7 +42,7 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
         }
 
         // Update values for paint regarding context
-        var skPaints = _paint.ToSKPaint(context);
+        _paint.Update(context);
 
         skCanvas.Save();
 
@@ -52,30 +53,20 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
 
         // Draw features that belong to a fill style
 
-        var i = 0;
-        
-        foreach (var skPaint in skPaints)
+        _skPaint.Shader = _paint.Pattern is not null
+            ? _fillShader.Update(_paint.Pattern, true)
+            : _fillShader.Update(_paint.Color.ToSKColor());
+                
+        _skPaint.Color = SKColors.White; // If we don't do this, we use alpha twice
+                
+        skCanvas.DrawVertices(_fillBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
+
+        if (_paint.OutlineColor != _paint.Color && _lineBuffer is not null)
         {
-            if (i == 0)
-            {
-                skPaint.Shader = _paint.Pattern is not null
-                    ? _fillShader.Update(_paint.Pattern, true)
-                    : _fillShader.Update(skPaint.Color);
-                
-                skPaint.Color = SKColors.White; // If we don't do this, we use alpha twice
-                
-                skCanvas.DrawVertices(_fillBuffer.Vertices, SKBlendMode.SrcOver, skPaint);
-            }
+            _skPaint.Shader = _lineShader?.Update(1f, _paint.OutlineColor.ToSKColor());
+            _skPaint.Color = SKColors.White;
 
-            if (i == 1 && _lineBuffer is not null)
-            {
-                skPaint.Shader = _lineShader?.Update(1f, skPaint.Color);
-                skPaint.Color = SKColors.White;
-
-                skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, skPaint);
-            }
-
-            i++;
+            skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
         }
         
         skCanvas.Restore();

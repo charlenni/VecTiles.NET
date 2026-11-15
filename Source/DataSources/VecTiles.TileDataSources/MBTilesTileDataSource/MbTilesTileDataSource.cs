@@ -152,7 +152,7 @@ public class MbTilesTileDataSource : ITileDataSource
         {
             var cn = new SQLiteAsyncConnection(_connectionString);
             {
-                var sql = "SELECT tile_data FROM \"tiles\" WHERE zoom_level=? AND tile_row=? AND tile_column=?;";
+                var sql = "SELECT tile_data FROM tiles WHERE zoom_level=? AND tile_row=? AND tile_column=?;";
                 result = await cn.ExecuteScalarAsync<byte[]>(sql, tile.Zoom, tile.Y, tile.X).ConfigureAwait(false);
             }
         }
@@ -198,7 +198,7 @@ public class MbTilesTileDataSource : ITileDataSource
 
     private static string ReadString(SQLiteConnection connection, string name)
     {
-        const string sql = "SELECT \"value\" FROM metadata WHERE \"name\"=?;";
+        const string sql = "SELECT value FROM metadata WHERE name=?;";
 
         try
         {
@@ -212,7 +212,7 @@ public class MbTilesTileDataSource : ITileDataSource
 
     private static int? ReadInt(SQLiteConnection connection, string name)
     {
-        const string sql = "SELECT \"value\" FROM metadata WHERE \"name\"=?;";
+        const string sql = "SELECT value FROM metadata WHERE name=?;";
 
         try
         {
@@ -226,7 +226,7 @@ public class MbTilesTileDataSource : ITileDataSource
 
     private static YAxis ReadYAxis(SQLiteConnection connection)
     {
-        const string sql = "SELECT \"value\" FROM metadata WHERE \"name\"=?;";
+        const string sql = "SELECT value FROM metadata WHERE name=?;";
 
         try
         {
@@ -245,7 +245,7 @@ public class MbTilesTileDataSource : ITileDataSource
     
     private static Extent ReadExtent(SQLiteConnection connection)
     {
-        const string sql = "SELECT \"value\" FROM metadata WHERE \"name\"=?;";
+        const string sql = "SELECT value FROM metadata WHERE name=?;";
 
         try
         {
@@ -294,7 +294,7 @@ public class MbTilesTileDataSource : ITileDataSource
 
     private static MbTilesFormat ReadFormat(SQLiteConnection connection)
     {
-        var sql = "SELECT \"value\" FROM metadata WHERE \"name\"=\"format\";";
+        var sql = "SELECT value FROM metadata WHERE name='format';";
         var formatString = connection.ExecuteScalar<string>(sql);
 
         if (Enum.TryParse<MbTilesFormat>(formatString, true, out var format))
@@ -305,7 +305,7 @@ public class MbTilesTileDataSource : ITileDataSource
 
     private static MbTilesType ReadType(SQLiteConnection connection)
     {
-        var sql = "SELECT \"value\" FROM metadata WHERE \"name\"=\"type\";";
+        var sql = "SELECT value FROM metadata WHERE name='type';";
         var typeString = connection.ExecuteScalar<string>(sql);
 
         if (Enum.TryParse<MbTilesType>(typeString, true, out var type))

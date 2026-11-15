@@ -3,6 +3,7 @@
 // See the LICENSE file in the project root for full license information.
 
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Reflection;
 using System.Text;
 using VecTiles.DataSources.Extensions;
@@ -58,7 +59,7 @@ public static class ByteDataSource
 
             foreach (var resource in _embeddedResources)
             {
-                if (resource.Key.EndsWith(sourceName))
+                if (resource.Key.EndsWith(sourceName, StringComparison.CurrentCulture))
                 {
                     assembly = resource.Value;
                     string[] resourceNames = assembly.GetManifestResourceNames();
@@ -105,8 +106,8 @@ public static class ByteDataSource
 
             foreach (var resourceName in resourceNames)
             {
-                if (!resourceName.EndsWith(".resources"))
-                    result.AddOrUpdate(resourceName.ToLower(), (r) => assembly, (r, a) => assembly);
+                if (!resourceName.EndsWith(".resources", StringComparison.InvariantCulture))
+                    result.AddOrUpdate(resourceName.ToLower(CultureInfo.CurrentCulture), (r) => assembly, (r, a) => assembly);
             }
         }
         return result;

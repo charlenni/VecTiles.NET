@@ -12,7 +12,7 @@
     <PackageReference Include="Mapsui.Tiling" Version="5.1.0" />
     <PackageReference Include="NetTopologySuite.IO.VectorTiles" Version="1.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
-    <PackageReference Include="protobuf-net" Version="3.2.56" />
+    <PackageReference Include="protobuf-net" Version="3.4.40" />
   </ItemGroup>
 
   <ItemGroup>

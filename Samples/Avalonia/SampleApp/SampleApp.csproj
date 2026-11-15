@@ -29,7 +29,7 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Mapsui.Avalonia" Version="5.1.0" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
-    <PackageReference Include="protobuf-net" Version="3.2.56" />
+    <PackageReference Include="protobuf-net" Version="3.4.40" />
     <PackageReference Include="sqlite-net-pcl" Version="1.10.196-beta" />
     <PackageReference Include="System.Reactive" Version="6.1.0" />
   </ItemGroup>

@@ -2,27 +2,45 @@
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.DataSources.MbTiles;
+using VecTiles.Renderers.Common;
+using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia;
+using VecTiles.Styles.OpenMapTiles;
 
 namespace VecTiles.Converters.OpenMapTiles.Benchmarks;
 
 [MemoryDiagnoser]
 public class OMTConverterBenchmarks
 {
-    readonly string _path = "files\\zurich.mbtiles";
+    readonly string _path = Path.Combine("Files");
 
+    private ITileDataSource? _dataSource;
     ITileConverter? _tileConverter;
-    List<Tile> _tiles = new List<Tile> { new Tile(1072, 1330, 11), new Tile(8580, 10645, 14), new Tile(8581, 10645, 14), new Tile(8580, 10644, 14) };
-    List<byte[]?> _data = new List<byte[]?>();
+    Renderer? _renderer;
+    
+    List<Tile> _tiles = new List<Tile> { 
+        new Tile(67, 44, 7), 
+        new Tile(536, 358, 10), 
+        new Tile(4290, 2868, 13), 
+        new Tile(8580, 5737, 14), 
+        new Tile(137291, 91799, 18) 
+    };
 
+    private List<byte[]?> _data = [null, null, null, null];
+    
     [GlobalSetup]
     public void Setup()
     {
-        var dataSource = new MbTilesTileDataSource(_path);
+        var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+        var styleFile = OMTStyleFileLoader.Load(stream).Result;
 
+        _dataSource = new MbTilesTileDataSource(Path.Combine(_path, "zurich.mbtiles"));
         _tileConverter = new OMTTileConverter();
-
-        foreach (var tile in _tiles)
-            _data.Add(dataSource.GetTileAsync(tile).ConfigureAwait(false).GetAwaiter().GetResult());
+        
+        for (var i = 0; i < _data.Count; i++)
+        {
+            _data[i] = _dataSource.GetTileAsync(_tiles[i]).GetAwaiter().GetResult();
+        }
     }
 
     [Benchmark]
@@ -30,33 +48,24 @@ public class OMTConverterBenchmarks
     [Arguments(1)]
     [Arguments(2)]
     [Arguments(3)]
-    public void ReadVectorTile(int i)
+    public async Task<byte[]?> ReadVectorTile(int i)
     {
-        var data = _data[i];
-
-        if (data != null)
-        {
-            _tileConverter?.Convert(_tiles[i], _tiles[i], data)
-                .ConfigureAwait(false)
-                .GetAwaiter()
-                .GetResult();
-        }
+        return await _dataSource.GetTileAsync(_tiles[i]);
     }
 
     [Benchmark]
-    public void ReadVectorTiles()
+    [Arguments(0, 0)]
+    [Arguments(1, 1)]
+    [Arguments(2, 2)]
+    [Arguments(3, 3)]
+    [Arguments(3, 4)]
+    public async Task<VectorTile?> ConvertVectorTile(int i, int j)
     {
-        for (var i = 0; i < _tiles.Count(); i++)
-        {
-            var data = _data[i];
+        return await _tileConverter?.Convert(_tiles[j], _tiles[i], _data[i]);
+    }
 
-            if (data != null)
-            {
-                _tileConverter?.Convert(_tiles[i], _tiles[i], data)
-                    .ConfigureAwait(false)
-                    .GetAwaiter()
-                    .GetResult();
-            }
-        }
+    [GlobalCleanup]
+    public void Cleanup()
+    {
     }
 }

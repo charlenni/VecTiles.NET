@@ -1,5 +1,7 @@
 ﻿// Copyright NetTopologySuite Contributors
 
+using System.Runtime.InteropServices;
+
 namespace VecTiles.Common.Primitives;
 
 /// <summary>
@@ -7,6 +9,11 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class VectorTile
 {
+    public VectorTile(int numOfLayers = 0)
+    {
+        Layers = new List<Layer>(numOfLayers);
+    }
+    
     /// <summary>
     /// Gets or sets the tile id.
     /// </summary>
@@ -15,10 +22,10 @@ public class VectorTile
     /// <summary>
     /// Gets or sets the layers.
     /// </summary>
-    public IList<Layer> Layers { get; } = new List<Layer>();
+    public IList<Layer> Layers { get; }
 
     /// <summary>
     /// Gets the is empty flag.
     /// </summary>
-    public bool IsEmpty => this.Layers == null || this.Layers.All(x => x.IsEmpty);
+    public bool IsEmpty => Layers.Count == 0 || Layers.All(x => x.IsEmpty);
 }

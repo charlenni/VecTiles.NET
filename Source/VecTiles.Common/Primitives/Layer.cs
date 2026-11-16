@@ -9,6 +9,11 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class Layer
 {
+    public Layer(int numOfFeatures = 0)
+    {
+        Features = new List<IFeature>(numOfFeatures);
+    }
+    
     /// <summary>
     /// Gets or sets the name of the layer.
     /// </summary>
@@ -17,10 +22,10 @@ public class Layer
     /// <summary>
     /// Gets the is empty flag.
     /// </summary>
-    public virtual bool IsEmpty => this.Features == null || this.Features.Count == 0;
+    public virtual bool IsEmpty => Features.Count == 0;
 
     /// <summary>
     /// Gets the features.
     /// </summary>
-    public IList<IFeature> Features { get; } = new List<IFeature>();
+    public IList<IFeature> Features { get; }
 }

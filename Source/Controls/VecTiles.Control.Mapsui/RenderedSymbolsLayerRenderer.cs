@@ -41,8 +41,8 @@ public static class RenderedSymbolsLayerRenderer
             return;
         }
 
-        // Use rotation modulo 5 to limit the number of cache keys
-        var key = new TilesKey(tiles.ToTile(), (int)(viewport.Rotation % 5));
+        // Use rotation divided by 5 to limit the number of cache keys
+        var key = new TilesKey(tiles.ToTile(), (int)(viewport.Rotation / 5));
 
         var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel());
         var scale = 1f;
@@ -114,11 +114,19 @@ public static class RenderedSymbolsLayerRenderer
     /// <returns>An enumerable of tile information for visible tiles.</returns>
     private static IEnumerable<TileInfo> GetTilesOnScreen(Viewport viewport, ITileSchema schema)
     {
+        // Get all four corners of the screen in world coordinates
         var point1 = viewport.ScreenToWorld(0, 0);
-        var point2 = viewport.ScreenToWorld(viewport.Width, viewport.Height);
+        var point2 = viewport.ScreenToWorld(viewport.Width, 0);
+        var point3 = viewport.ScreenToWorld(0, viewport.Height);
+        var point4 = viewport.ScreenToWorld(viewport.Width, viewport.Height);
 
-        var screenExtent = new Extent(Math.Min(point1.X, point2.X), Math.Min(point1.Y, point2.Y),
-            Math.Max(point1.X, point2.X), Math.Max(point1.Y, point2.Y));
+        // Calculate the bounding box from all four points to handle rotation
+        var minX = Math.Min(Math.Min(point1.X, point2.X), Math.Min(point3.X, point4.X));
+        var minY = Math.Min(Math.Min(point1.Y, point2.Y), Math.Min(point3.Y, point4.Y));
+        var maxX = Math.Max(Math.Max(point1.X, point2.X), Math.Max(point3.X, point4.X));
+        var maxY = Math.Max(Math.Max(point1.Y, point2.Y), Math.Max(point3.Y, point4.Y));
+
+        var screenExtent = new Extent(minX, minY, maxX, maxY);
 
         return schema.GetTileInfos(screenExtent, viewport.Resolution);
     }

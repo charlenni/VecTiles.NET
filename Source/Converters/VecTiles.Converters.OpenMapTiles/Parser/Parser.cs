@@ -20,17 +20,17 @@ public static class Parser
     /// <param name="requestedTile">The tile being requested.</param>
     /// <param name="providedTile">The tile provided in the data stream.</param>
     /// <returns>A VectorTile containing layers and features parsed from the stream.</returns>
-    public static VectorTile Parse(Stream stream, Tile requestedTile, Tile providedTile)
+    public static VectorTile Parse(ReadOnlyMemory<byte> data, Tile requestedTile, Tile providedTile)
     {
-        // Check if the stream is null or empty
-        if (stream == null)
+        // Check if data is null or empty
+        if (data.Length == 0)
         {
             // If the stream is empty, return an empty VectorTile
             return new VectorTile { TileId = requestedTile.Id };
         }
 
         // Get tile information from Pbf format
-        var pbfTile = Serializer.Deserialize<PbfTile>(stream);
+        var pbfTile = Serializer.Deserialize<PbfTile>(data);
 
         // Create a new VectorTile to hold the parsed data
         var vectorTile = new VectorTile
@@ -45,7 +45,9 @@ public static class Parser
         }
 
         // Create overzoom transformation if needed
-        Overzoom overzoom = Overzoom.CreateFromTiles(requestedTile, providedTile);
+        Overzoom overzoom = requestedTile.Zoom == providedTile.Zoom
+            ? Overzoom.None
+            : Overzoom.CreateFromTiles(requestedTile, providedTile);
 
         // Iterate through each layer in the PbfTile
         foreach (var pbfLayer in pbfTile.Layers)
@@ -196,8 +198,8 @@ public static class Parser
         const uint CMD_CLOSE_PATH = 7;
 
         long x = 0, y = 0;
-        var listOfPoints = new List<List<Coordinate>>();
-        List<Coordinate>? points = null;
+        var listOfPoints = new List<List<Coordinate>>(4); // Typische Anzahl
+        List<Coordinate>? points = null; // Typische Punkte pro Geometrie
         int i = 0;
 
         while (i < geometry.Count)
@@ -214,11 +216,11 @@ public static class Parser
                     for (uint j = 0; j < length; j++)
                     {
                         if (i + 1 >= geometry.Count) break; // Safety check
-                        long dx = ZigZag.Decode(geometry[i++]);
-                        long dy = ZigZag.Decode(geometry[i++]);
+                        long dx = (geometry[i] >> 1) ^ (-(geometry[i] & 1)); i++;
+                        long dy = (geometry[i] >> 1) ^ (-(geometry[i] & 1)); i++;
                         x += dx;
                         y += dy;
-                        points = new List<Coordinate>();
+                        points = new List<Coordinate>(16);
                         listOfPoints.Add(points);
                         points.Add(overzoom.Transform(x, y));
                     }
@@ -227,14 +229,14 @@ public static class Parser
                 case CMD_LINE_TO:
                     if (points == null)
                     {
-                        points = new List<Coordinate>();
+                        points = new List<Coordinate>(16);
                         listOfPoints.Add(points);
                     }
                     for (uint j = 0; j < length; j++)
                     {
                         if (i + 1 >= geometry.Count) break; // Safety check
-                        long dx = ZigZag.Decode(geometry[i++]);
-                        long dy = ZigZag.Decode(geometry[i++]);
+                        long dx = (geometry[i] >> 1) ^ (-(geometry[i] & 1)); i++;
+                        long dy = (geometry[i] >> 1) ^ (-(geometry[i] & 1)); i++;
                         x += dx;
                         y += dy;
                         points.Add(overzoom.Transform(x, y));
@@ -261,14 +263,14 @@ public static class Parser
 
     private static Polygon[] CreatePolygons(List<List<Coordinate>> listOfPoints)
     {
-        // Get orientation of first polygon ring
+        if (listOfPoints.Count == 0) return Array.Empty<Polygon>();
         var orientationCW = IsClockwise(listOfPoints[0]); // ShoelaceArea(listOfPoints[0]) > 0;
         // List of polygons
-        var polygons = new List<Polygon>();
+        var polygons = new List<Polygon>(4);
         // Check all polygons in the list
         var shell = new LinearRing(orientationCW ? listOfPoints[0].ToArray() : listOfPoints[0].AsEnumerable().Reverse().ToArray());
         // List of holes
-        var holes = new List<LinearRing>();
+        var holes = new List<LinearRing>(4);
         var i = 1;
         while (i < listOfPoints.Count)
         {

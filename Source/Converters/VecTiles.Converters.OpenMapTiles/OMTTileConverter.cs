@@ -1,4 +1,6 @@
-﻿using System.IO.Compression;
+﻿using System.Buffers;
+using System.Buffers.Binary;
+using System.IO.Compression;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -23,14 +25,56 @@ public class OMTTileConverter : ITileConverter
     /// <returns>Converted data as VectorTile</returns>
     public Task<VectorTile?> Convert(Tile requestedTile, Tile providedTile, byte[] data)
     {
-        Stream stream = new MemoryStream(data);
-
-        if (IsGZipped(data))
+        if (!IsGZipped(data))
         {
-            stream = new GZipStream(stream, CompressionMode.Decompress);
+            return Task.FromResult<VectorTile?>(Parser.Parser.Parse(data, requestedTile, providedTile));
         }
 
-        return Task.FromResult<VectorTile?>(Parser.Parser.Parse(stream, requestedTile, providedTile));
+        // Read uncompressed length from last 4 bytes
+        uint uncompressedSize = BinaryPrimitives.ReadUInt32LittleEndian(
+            data.AsSpan(data.Length - 4));
+        // Safety fallback, if size is not plausible (eg. > 16 MB)
+        int initialCapacity = (uncompressedSize > 0 && uncompressedSize < 16 * 1024 * 1024)
+            ? (int)uncompressedSize
+            : data.Length * 4;
+        // Get buffer from pool leihen (zero heap allocation!)
+        byte[] rentedBuffer = ArrayPool<byte>.Shared.Rent(initialCapacity);
+        try
+        {
+            // Input stream without data copy over byte[]
+            using var inputStream = new MemoryStream(data, writable: false);
+            using var gzipStream = new GZipStream(inputStream, CompressionMode.Decompress);
+
+            int totalBytesRead = 0;
+            while (true)
+            {
+                // If buffer was to small, resize it
+                if (totalBytesRead == rentedBuffer.Length)
+                {
+                    byte[] biggerBuffer = ArrayPool<byte>.Shared.Rent(rentedBuffer.Length * 2);
+                    Buffer.BlockCopy(rentedBuffer, 0, biggerBuffer, 0, totalBytesRead);
+                    ArrayPool<byte>.Shared.Return(rentedBuffer);
+                    rentedBuffer = biggerBuffer;
+                }
+
+                int bytesRead = gzipStream.Read(rentedBuffer.AsSpan(totalBytesRead));
+                if (bytesRead == 0)
+                {
+                    break;
+                }
+
+                totalBytesRead += bytesRead;
+            }
+
+            // 4. Direkt vom Span deserialisieren – kein zweiter MemoryStream nötig!
+            var decompressedSpan = rentedBuffer.AsMemory(0, totalBytesRead);
+            return Task.FromResult<VectorTile?>(Parser.Parser.Parse(decompressedSpan, requestedTile, providedTile));
+        }
+        finally
+        {
+            // Finally return buffer to pool
+            ArrayPool<byte>.Shared.Return(rentedBuffer);
+        }
     }
 
     /// <summary>

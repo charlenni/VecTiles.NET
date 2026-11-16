@@ -73,9 +73,9 @@ public class RenderedSymbolsLayer : BaseLayer
     public IEnumerable<ISymbol> GetOrCreateSymbols(IEnumerable<TileInfo> tileInfos, int zoomLevel)
     {
         var tileInfoArray = tileInfos as TileInfo[] ?? tileInfos.ToArray();
-        var key = new TilesKey(tileInfoArray.ToTile(), zoomLevel);
+        var key = new TilesKey(tileInfoArray.ToTile());
 
-        if (_lastKey == key)
+        if (_lastKey.Equals(key))
         {
             return _lastSymbols;
         }

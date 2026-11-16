@@ -15,11 +15,6 @@ internal record Overzoom(double Scale, long OffsetX, long OffsetY)
 
     internal static Overzoom CreateFromTiles(Tile requestedTile, Tile providedTile)
     {
-        if (requestedTile.Zoom == providedTile.Zoom)
-        {
-            return None;
-        }
-
         var scale = 1 << (requestedTile.Zoom - providedTile.Zoom);
         var offsetX = (requestedTile.X - providedTile.X * scale) * 512;
         var offsetY = (requestedTile.Y - providedTile.Y * scale) * 512;

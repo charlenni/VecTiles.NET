@@ -7,7 +7,7 @@ namespace VecTiles.Converters.OpenMapTiles.Pbf;
 /// Represents a OpenMapTiles PBF feature, containing geometry, tags, and an identifier.
 /// </summary>
 [ProtoContract(Name = "feature")]
-public sealed class PbfFeature : IExtensible
+public sealed class PbfFeature
 {
     /// <summary>
     /// Gets or sets the unique identifier for the feature.
@@ -34,14 +34,4 @@ public sealed class PbfFeature : IExtensible
     /// </summary>
     [ProtoMember(4, Name = "geometry", DataFormat = DataFormat.TwosComplement, Options = MemberSerializationOptions.Packed)]
     public List<uint> Geometry { get; } = new();
-
-    private IExtension? _extensionObject;
-
-    /// <summary>
-    /// Gets the extension object for protobuf extensibility.
-    /// </summary>
-    /// <param name="createIfMissing">Whether to create the extension object if it does not exist.</param>
-    /// <returns>The extension object.</returns>
-    IExtension IExtensible.GetExtensionObject(bool createIfMissing)
-        => Extensible.GetExtensionObject(ref _extensionObject, createIfMissing);
 }

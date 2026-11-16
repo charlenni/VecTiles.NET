@@ -7,7 +7,7 @@ namespace VecTiles.Converters.OpenMapTiles.Pbf;
 /// Represents a OpenMapTiles PBF layer, containing features, keys, and values.
 /// </summary>
 [ProtoContract(Name = "layer")]
-public sealed class PbfLayer : IExtensible
+public sealed class PbfLayer
 {
     /// <summary>
     /// Gets or sets the version of the layer.
@@ -24,7 +24,7 @@ public sealed class PbfLayer : IExtensible
     /// <summary>
     /// Gets the list of features in the layer.
     /// </summary>
-    [ProtoMember(2, Name = "features", DataFormat = DataFormat.Default)]
+    [ProtoMember(2, Name = "features", DataFormat = DataFormat.Default, Options = MemberSerializationOptions.Packed)]
     public List<PbfFeature> Features { get; } = new();
 
     /// <summary>
@@ -45,14 +45,4 @@ public sealed class PbfLayer : IExtensible
     [ProtoMember(5, IsRequired = false, Name = "extent", DataFormat = DataFormat.TwosComplement)]
     [DefaultValue((uint)4096)]
     public uint Extent { get; set; } = 4096;
-
-    private IExtension? _extensionObject;
-
-    /// <summary>
-    /// Gets the extension object for protobuf extensibility.
-    /// </summary>
-    /// <param name="createIfMissing">Whether to create the extension object if it does not exist.</param>
-    /// <returns>The extension object.</returns>
-    IExtension? IExtensible.GetExtensionObject(bool createIfMissing)
-        => Extensible.GetExtensionObject(ref _extensionObject, createIfMissing);
 }

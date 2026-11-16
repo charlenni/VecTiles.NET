@@ -6,8 +6,25 @@ namespace VecTiles.Converters.OpenMapTiles.Pbf;
 /// Represents a value in the OpenMapTiles PBF format, supporting multiple types.
 /// </summary>
 [ProtoContract(Name = @"value")]
-public sealed class PbfValue : IExtensible
+public sealed class PbfValue
 {
+    public PbfValue()
+    {
+        _floatValue = 0;
+        _doubleValue = 0;
+        _intValue = 0;
+        _uintValue = 0;
+        _sintValue = 0;
+        _boolValue = false;
+        HasStringValue = false;
+        HasFloatValue = false;
+        HasDoubleValue = false;
+        HasIntValue = false;
+        HasUIntValue = false;
+        HasSIntValue = false;
+        HasBoolValue = false;
+    }
+
     /// <summary>
     /// Gets or sets the string value.
     /// </summary>
@@ -196,14 +213,4 @@ public sealed class PbfValue : IExtensible
     /// Determines whether the boolean value should be serialized.
     /// </summary>
     public bool ShouldSerializeBoolValue() => HasBoolValue;
-
-    private IExtension? _extensionObject;
-
-    /// <summary>
-    /// Gets the extension object for protobuf extensibility.
-    /// </summary>
-    /// <param name="createIfMissing">Whether to create the extension object if it does not exist.</param>
-    /// <returns>The extension object.</returns>
-    IExtension IExtensible.GetExtensionObject(bool createIfMissing)
-        => Extensible.GetExtensionObject(ref _extensionObject, createIfMissing);
 }

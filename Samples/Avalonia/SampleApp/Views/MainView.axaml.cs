@@ -32,6 +32,7 @@ public partial class MainView : UserControl
         //MapControl.Map.Layers.Add(OpenStreetMap.CreateTileLayer());
         MapControl.Map.Layers.Add(tileLayer);
         MapControl.Map.Layers.Add(_symbolsLayer);
+        MapControl.Map.Layers.Add(new TileGridDebugLayer(tileLayer.TileSource.Schema));
         
         // The PerformanceWidget is created as part of the map.
         var performanceWidget = MapControl.Map.Widgets.OfType<PerformanceWidget>().First();

@@ -33,13 +33,13 @@ public static class Parser
         var pbfTile = Serializer.Deserialize<PbfTile>(data);
 
         // Create a new VectorTile to hold the parsed data
-        var vectorTile = new VectorTile
+        var vectorTile = new VectorTile(pbfTile.Layers.Count)
         {
             TileId = requestedTile.Id,
         };
 
         // If the PbfTile is null or has no layers, return an empty VectorTile
-        if (pbfTile == null || pbfTile.Layers.Count == 0)
+        if (pbfTile?.Layers?.Count == 0)
         {
             return vectorTile;
         }
@@ -50,18 +50,23 @@ public static class Parser
             : Overzoom.CreateFromTiles(requestedTile, providedTile);
 
         // Iterate through each layer in the PbfTile
-        foreach (var pbfLayer in pbfTile.Layers)
+        for (int i = 0; i < pbfTile?.Layers?.Count; i++)
         {
+            var pbfLayer = pbfTile.Layers[i];
+            
             // Create a new Layer for the VectorTile
-            var vectorTileLayer = new Layer
+            var vectorTileLayer = new Layer(pbfLayer.Features.Count)
             {
                 Name = pbfLayer.Name,
             };
 
             // Convert all features
-            foreach (var pbfFeature in pbfLayer.Features)
+            for(var j = 0; j < pbfLayer.Features.Count; j++)
             {
-                var feature = ParseFeature(pbfFeature, pbfLayer.Name, pbfLayer.Keys, pbfLayer.Values, pbfLayer.Extent, overzoom);
+                var pbfFeature = pbfLayer.Features[j];
+                
+                var feature = ParseFeature(pbfFeature, pbfLayer.Name, pbfLayer.Keys, pbfLayer.Values, pbfLayer.Extent,
+                    overzoom);
 
                 if (feature != null)
                 {
@@ -198,7 +203,7 @@ public static class Parser
         const uint CMD_CLOSE_PATH = 7;
 
         long x = 0, y = 0;
-        var listOfPoints = new List<List<Coordinate>>(4); // Typische Anzahl
+        var listOfPoints = new List<List<Coordinate>>(); // Typische Anzahl
         List<Coordinate>? points = null; // Typische Punkte pro Geometrie
         int i = 0;
 
@@ -220,7 +225,7 @@ public static class Parser
                         long dy = (geometry[i] >> 1) ^ (-(geometry[i] & 1)); i++;
                         x += dx;
                         y += dy;
-                        points = new List<Coordinate>(16);
+                        points = new List<Coordinate>();
                         listOfPoints.Add(points);
                         points.Add(overzoom.Transform(x, y));
                     }
@@ -229,7 +234,7 @@ public static class Parser
                 case CMD_LINE_TO:
                     if (points == null)
                     {
-                        points = new List<Coordinate>(16);
+                        points = new List<Coordinate>();
                         listOfPoints.Add(points);
                     }
                     for (uint j = 0; j < length; j++)
@@ -266,11 +271,11 @@ public static class Parser
         if (listOfPoints.Count == 0) return Array.Empty<Polygon>();
         var orientationCW = IsClockwise(listOfPoints[0]); // ShoelaceArea(listOfPoints[0]) > 0;
         // List of polygons
-        var polygons = new List<Polygon>(4);
+        var polygons = new List<Polygon>();
         // Check all polygons in the list
         var shell = new LinearRing(orientationCW ? listOfPoints[0].ToArray() : listOfPoints[0].AsEnumerable().Reverse().ToArray());
         // List of holes
-        var holes = new List<LinearRing>(4);
+        var holes = new List<LinearRing>();
         var i = 1;
         while (i < listOfPoints.Count)
         {

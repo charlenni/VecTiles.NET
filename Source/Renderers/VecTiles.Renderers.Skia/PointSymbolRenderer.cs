@@ -1,4 +1,4 @@
-﻿using NetTopologySuite.Index.Quadtree;
+using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -7,24 +7,40 @@ using VecTiles.Renderers.Common.Interfaces;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Renders point symbols (icons and text) on a Skia canvas.
+/// </summary>
 public class PointSymbolRenderer : ISymbolRenderer
 {
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym, Quadtree<ISymbol> tree, 
+    /// <summary>
+    /// Checks if there is space to draw the point symbol at its world coordinates.
+    /// </summary>
+    /// <param name="canvas">The Skia canvas to check against.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="sym">The symbol to check.</param>
+    /// <param name="tree">The quadtree of existing symbols for collision detection.</param>
+    /// <param name="worldToScreenConverter">Function to convert world coordinates to screen coordinates.</param>
+    /// <param name="rotation">The rotation angle in degrees.</param>
+    /// <param name="showUnvalidBorders">Whether to draw debug borders for collisions.</param>
+    /// <returns>A <see cref="SymbolPlacementStatus"/> indicating if the symbol can be placed.</returns>
+    public static SymbolPlacementStatus CheckForSpace(SKCanvas canvas, EvaluationContext context, ISymbol sym,
+        Quadtree<ISymbol> tree,
         Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showUnvalidBorders = false)
     {
         if (sym is not PointSymbol symbol)
         {
-            return false;
+            return SymbolPlacementStatus.NotInitialized;
         }
 
         var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
 
-        bool spaceForIconAvailable = false;
-        bool spaceForTextAvailable = false;
+        SymbolPlacementStatus spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
+        SymbolPlacementStatus spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
 
         if (symbol.IconSymbol is not null)
         {
-            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol, tree, screenX, screenY, showUnvalidBorders);
+            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol, tree,
+                screenX, screenY, showUnvalidBorders);
         }
 
         if (symbol.TextSymbol is not null)
@@ -33,13 +49,26 @@ public class PointSymbolRenderer : ISymbolRenderer
                 screenX, screenY, rotation, showUnvalidBorders);
         }
 
-        symbol.SetDrawFlags(symbol.HasIcon && spaceForIconAvailable && (spaceForTextAvailable || symbol.DrawIconWithoutText),
-                            symbol.HasText && spaceForTextAvailable && (spaceForIconAvailable || symbol.DrawTextWithoutIcon));
+        symbol.SetDrawFlags(
+            symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
+            (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText),
+            symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
+            (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon));
 
-        return symbol.DrawIcon | symbol.DrawText;
+        return symbol.DrawIcon | symbol.DrawText ? SymbolPlacementStatus.Success : SymbolPlacementStatus.NotInitialized;
     }
 
-    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree, 
+    /// <summary>
+    /// Draws the point symbol (icon and/or text) on the specified canvas.
+    /// </summary>
+    /// <param name="canvas">The Skia canvas to draw on.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="sym">The symbol to draw.</param>
+    /// <param name="tree">The quadtree to track drawn symbols.</param>
+    /// <param name="worldToScreenConverter">Function to convert world coordinates to screen coordinates.</param>
+    /// <param name="rotation">The rotation angle in degrees.</param>
+    /// <param name="showValidBorders">Whether to draw debug borders around drawn symbols.</param>
+    public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree,
         Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false)
     {
         var iconDrawn = false;
@@ -51,38 +80,45 @@ public class PointSymbolRenderer : ISymbolRenderer
         }
 
         var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
-        
-        var spaceForIconAvailable = false;
+
+        var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
         var iconRotation = 0f;
 
         if (symbol.IconSymbol is not null)
         {
-            iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment, rotation, symbol.IconSymbol.KeepUpright);
+            iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment,
+                rotation, symbol.IconSymbol.KeepUpright);
 
-            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol!, tree, screenX, screenY, false);
+            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol!,
+                tree, screenX, screenY, false);
         }
 
-        var spaceForTextAvailable = false;
+        var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
         var textRotation = 0f;
 
         if (symbol.TextSymbol is not null)
         {
-            textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment, rotation, symbol.TextSymbol.KeepUpright);
+            textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment,
+                rotation, symbol.TextSymbol.KeepUpright);
 
-            spaceForTextAvailable = TextPointSymbolRenderer.CheckForSpace(canvas, context, symbol.TextSymbol!, tree, screenX, screenY, textRotation, false);
+            spaceForTextAvailable = TextPointSymbolRenderer.CheckForSpace(canvas, context, symbol.TextSymbol!,
+                tree, screenX, screenY, textRotation, false);
         }
 
-        if (spaceForIconAvailable && symbol.HasIcon && (spaceForTextAvailable || symbol.DrawIconWithoutText))
+        if (spaceForIconAvailable == SymbolPlacementStatus.Success && symbol.HasIcon &&
+            (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText))
         {
             // Draw icon
             IconPointSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, screenX, screenY, showValidBorders);
 
             iconDrawn = true;
         }
-                
-        if (spaceForTextAvailable && symbol.HasText && (spaceForIconAvailable || symbol.DrawTextWithoutIcon))
+
+        if (spaceForTextAvailable == SymbolPlacementStatus.Success && symbol.HasText &&
+            (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
         {
-            TextPointSymbolRenderer.DrawText(canvas, context, symbol.TextSymbol!, screenX, screenY, textRotation, showValidBorders);
+            TextPointSymbolRenderer.DrawText(canvas, context, symbol.TextSymbol!, screenX, screenY,
+                textRotation, showValidBorders);
 
             textDrawn = true;
         }
@@ -98,10 +134,18 @@ public class PointSymbolRenderer : ISymbolRenderer
         }
     }
 
+    /// <summary>
+    /// Calculates the final rotation for a symbol based on its own rotation, alignment, and map rotation.
+    /// </summary>
+    /// <param name="rotation">The symbol's base rotation.</param>
+    /// <param name="alignment">The rotation alignment (Map or Viewport).</param>
+    /// <param name="tangent">The tangent angle of the path or map rotation.</param>
+    /// <param name="keepUpright">Whether to keep the symbol upright.</param>
+    /// <returns>The final rotation in degrees.</returns>
     private static float CalcRotation(float rotation, MapAlignment alignment, double tangent, bool keepUpright)
     {
         var result = -rotation;
-        result -= (float) (alignment is MapAlignment.Map or MapAlignment.Auto ? tangent : 0.0);
+        result -= (float)(alignment is MapAlignment.Map or MapAlignment.Auto ? tangent : 0.0);
         result %= 360;
 
         if (keepUpright && result is > 90 and < 270)
@@ -116,19 +160,4 @@ public class PointSymbolRenderer : ISymbolRenderer
 
         return result;
     }
-
-    /*
-        
-        
-        
-        if (symbol is { DrawIcon: true, IconSymbol: not null })
-        {
-            IconPointSymbolRenderer.Draw(canvas, context, symbol.IconSymbol, ref tree, worldToScreenConverter, showValidBorders);
-        }
-
-        if (symbol is { DrawText: true, TextSymbol: not null })
-        {
-            TextPointSymbolRenderer.DrawText(canvas, context, symbol.TextSymbol, screenX, screenY, 0, showValidBorders);
-        }
-    }*/
 }

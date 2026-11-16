@@ -1,4 +1,4 @@
-﻿using NetTopologySuite.Geometries;
+using NetTopologySuite.Geometries;
 using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using VecTiles.Common.Enums;
@@ -11,12 +11,25 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Renders text point symbols on a Skia canvas.
+/// </summary>
 public class TextPointSymbolRenderer : ISymbolRenderer
 {
     private static readonly SKPaint _paint = new SKPaint();
     private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
-    private static readonly SKPaint DebugPaint = new SKPaint {Color = SKColors.Blue, StrokeWidth = 1, IsStroke = true};
+    private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Blue, StrokeWidth = 1, IsStroke = true };
 
+    /// <summary>
+    /// Draws text on the specified canvas at the given screen coordinates.
+    /// </summary>
+    /// <param name="canvas">The Skia canvas to draw on.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="symbol">The text point symbol to draw.</param>
+    /// <param name="screenX">The X coordinate on the screen.</param>
+    /// <param name="screenY">The Y coordinate on the screen.</param>
+    /// <param name="rotation">The rotation angle in degrees.</param>
+    /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
     public static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
     {
         var anchorX = (float)symbol.Anchor.X;
@@ -28,7 +41,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         var transY = (float)translate.Y;
         var transAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
 
-        // TranslateAnchor could only be Map or Viewport
+        // TranslateAnchor can only be Map or Viewport
         transAnchor = transAnchor == MapAlignment.Auto ? MapAlignment.Map : transAnchor;
 
         if (transAnchor == MapAlignment.Map)
@@ -44,7 +57,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         canvas.Save();
 
-        canvas.Translate((float) screenX, (float) screenY);
+        canvas.Translate((float)screenX, (float)screenY);
         canvas.Translate(transX, transY);
         canvas.Scale(1f / context.Scale);
 
@@ -68,22 +81,22 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
         textStyle.HaloWidth = symbol.HaloWidth.Invoke(context);
 
-        // Translate to right position respecting
-        canvas.Translate(- anchorX * text.MeasuredWidth + offsetX, 
-            - anchorY * text.MeasuredHeight - text.Text.MeasuredPadding.Top + offsetY);
-        
-        // Correction, because RichTextKit draws with MaxWidth coordinates, but we use only real text size.
-        // So we have to respect the text.LeftRightCorrection 
+        // Translate to the correct position, respecting the anchor and offset
+        canvas.Translate(-anchorX * text.MeasuredWidth + offsetX,
+            -anchorY * text.MeasuredHeight - text.Text.MeasuredPadding.Top + offsetY);
+
+        // Correction for RichTextKit drawing with MaxWidth coordinates but using only real text size.
+        // Respect the text's left-right correction.
         canvas.Translate(-text.LeftRightCorrection, 0);
 
         if (symbol.KeepUpright && rotation is > 90 and < 270)
         {
-            canvas.RotateDegrees(180f, 
-                0.5f * text.MeasuredWidth, 
+            canvas.RotateDegrees(180f,
+                0.5f * text.MeasuredWidth,
                 0.5f * text.MeasuredHeight);
         }
 
-        // Draw text with RichTextKit
+        // Draw the text using RichTextKit
         text.Text.Paint(canvas);
 
         canvas.Restore();
@@ -91,30 +104,37 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         if (showValidBorders)
         {
             canvas.DrawRect(
-                new SKRect((float) symbol.ScreenEnvelope!.MinX, (float) symbol.ScreenEnvelope!.MinY, (float) symbol.ScreenEnvelope!.MaxX,
-                    (float) symbol.ScreenEnvelope!.MaxY), DebugPaint);
+                new SKRect((float)symbol.ScreenEnvelope!.MinX, (float)symbol.ScreenEnvelope!.MinY,
+                    (float)symbol.ScreenEnvelope!.MaxX, (float)symbol.ScreenEnvelope!.MaxY), DebugPaint);
         }
     }
 
-    public static bool CheckForSpace(SKCanvas canvas, EvaluationContext context,  
+    /// <summary>
+    /// Checks if there is space to draw the text symbol at the specified screen coordinates.
+    /// </summary>
+    /// <param name="canvas">The Skia canvas to check against.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="symbol">The text point symbol to check.</param>
+    /// <param name="tree">The quadtree of existing symbols for collision detection.</param>
+    /// <param name="screenX">The X coordinate on the screen.</param>
+    /// <param name="screenY">The Y coordinate on the screen.</param>
+    /// <param name="rotation">The rotation angle in degrees.</param>
+    /// <param name="showInvalidBorders">Whether to draw debug borders for collisions.</param>
+    /// <returns>A <see cref="SymbolPlacementStatus"/> indicating if the symbol can be placed.</returns>
+    public static SymbolPlacementStatus CheckForSpace(SKCanvas canvas, EvaluationContext context,
         TextPointSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showInvalidBorders)
     {
         symbol.Envelope ??= CreateEnvelope(symbol, context);
 
         if (symbol.Envelope is null)
         {
-            return false;
+            return SymbolPlacementStatus.NotInitialized;
         }
-        
-        // Save it for later use
-        var screenEnvelope = symbol.Envelope.Copy();
-        
-        //if (context.Rotation != 0.0 && symbol.RotationAlignment == MapAlignment.Map)
-        //{
-        //    screenEnvelope.RotateDegrees(context.Rotation);
-        //}
 
-        // Calc the translation
+        // Save for later use
+        var screenEnvelope = symbol.Envelope.Copy();
+
+        // Calculate the translation
         if (symbol.Translate != null)
         {
             var translate = symbol.Translate?.Invoke(context) ?? new Point(0, 0);
@@ -127,16 +147,16 @@ public class TextPointSymbolRenderer : ISymbolRenderer
                 var sin = Math.Sin(radRotation);
                 var x = translate.X * cos - translate.Y * sin;
                 var y = translate.X * sin + translate.Y * cos;
-                translate = new Point((float) x, (float) y);
+                translate = new Point((float)x, (float)y);
             }
 
             screenEnvelope.Translate(translate.X, translate.Y);
         }
 
-        // Move symbol's envelope at the screen position
+        // Move symbol's envelope to the screen position
         screenEnvelope.Translate(screenX, screenY);
 
-        // Calc the rotation
+        // Calculate the rotation
         var totalRotation = symbol.Rotation;
 
         if (symbol.RotationAlignment == MapAlignment.Map)
@@ -147,16 +167,6 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         totalRotation = (totalRotation + 360) % 360;
 
         screenEnvelope.RotateDegreesAroundAnchor(totalRotation, 0, 0);
-        
-        // Check, if symbol is visible
-        if (screenEnvelope.MaxX < canvas.LocalClipBounds.Left ||
-            screenEnvelope.MinY < canvas.LocalClipBounds.Top ||
-            screenEnvelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
-            screenEnvelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
-        {
-            // Symbol isn't visible
-            return false;
-        }
 
         var symbols = tree.Query(screenEnvelope);
 
@@ -169,7 +179,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
             if (otherSymbol.Envelope == null)
             {
-                // Should not happen
+                // Expected to be non-null; skip if null
                 continue;
             }
 
@@ -185,24 +195,26 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
             if (showInvalidBorders && symbol.Name != otherSymbol.Name)
             {
-                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY, (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
+                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY,
+                    (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
             }
 
-            return false;
+            return SymbolPlacementStatus.Collision;
         }
 
         symbol.ScreenEnvelope = screenEnvelope;
-        
-        return true;
+
+        return SymbolPlacementStatus.Success;
     }
 
     /// <summary>
-    /// Create an envelope around text symbol.
+    /// Creates an envelope around a text symbol.
     /// (0, 0) is the anchor point of this symbol.
     /// </summary>
-    /// <param name="symbol">Symbol to create an envelope for</param>
-    /// <param name="context">Context to use for this calculation</param>
-    /// <returns>Envelope for a valid symbol, else null</returns>
+    /// <param name="symbol">Symbol to create an envelope for.</param>
+    /// <param name="context">Context to use for this calculation.</param>
+    /// <param name="useCached">Whether to use a cached envelope if available.</param>
+    /// <returns>Envelope for a valid symbol, otherwise null.</returns>
     private static Envelope? CreateEnvelope(TextPointSymbol symbol, EvaluationContext context, bool useCached = true)
     {
         if (symbol.Text == null)
@@ -210,30 +222,31 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return null;
         }
 
-        // We already calculated for this symbol an envelope, so use this
+        // Use cached envelope if available
         if (symbol.Envelope is not null && useCached)
         {
             return symbol.Envelope;
         }
-        
+
         // Create native text
         symbol.Native ??= new RenderedText(symbol.Text, FontCache.CreateFonts(symbol.StyleName, symbol.FontNames));
-        
+
         var text = (RenderedText)symbol.Native;
 
-        text.Text.Alignment = symbol.Alignment.ToTextAlignment(); 
-        
+        text.Text.Alignment = symbol.Alignment.ToTextAlignment();
+
         text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
-        
+
         // Set max width to the correct value
         text.Text.MaxWidth = symbol.MaxWidth.Invoke(context, text.TextStyle.FontSize);
         text.Text.ApplyStyle(0, text.Text.Length, text.TextStyle);
 
-        // MeasuredWidth and MeasuredHeight need many CPU cycles, so save them for later use
+        // MeasuredWidth and MeasuredHeight require significant CPU cycles, so cache them for later use
         text.MeasuredWidth = text.Text.MeasuredWidth;
         text.MeasuredHeight = text.Text.MeasuredHeight;
-        
-        // We don't want any padding on the left, so remove it. Costs a second time the layout
+
+        // Remove left/right padding for single-line text to improve alignment.
+        // This requires a second layout pass.
         if ((text.Text.MeasuredPadding.Left > 0 || text.Text.MeasuredPadding.Right > 0) && text.Text.LineCount == 1)
         {
             text.Text.MaxWidth = null;
@@ -242,15 +255,15 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         }
 
         text.LeftRightCorrection = text.Text.MeasuredPadding.Left;
-        
+
         var anchor = new SKPoint((float)(-symbol.Anchor.X * text.MeasuredWidth), (float)(-symbol.Anchor.Y * text.MeasuredHeight));
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
         var padding = symbol.Padding;
 
-        // We now could calc the rough envelope of text respecting the overhang e.g. from italic characters
-        var envelope = new Envelope(offset.X - padding - text.Text.MeasuredOverhang.Left, 
-            offset.X + padding + text.MeasuredWidth + text.Text.MeasuredOverhang.Right, 
-            offset.Y - padding - text.Text.MeasuredOverhang.Top, 
+        // Calculate the rough envelope of text, respecting overhang (e.g., from italic characters)
+        var envelope = new Envelope(offset.X - padding - text.Text.MeasuredOverhang.Left,
+            offset.X + padding + text.MeasuredWidth + text.Text.MeasuredOverhang.Right,
+            offset.Y - padding - text.Text.MeasuredOverhang.Top,
             offset.Y + padding + text.MeasuredHeight + text.Text.MeasuredOverhang.Bottom);
 
         return envelope;

@@ -1,4 +1,4 @@
-﻿using NetTopologySuite.Geometries;
+using NetTopologySuite.Geometries;
 using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using VecTiles.Common.Enums;
@@ -9,12 +9,25 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Renders icon line symbols on a Skia canvas.
+/// </summary>
 public static class IconLineSymbolRenderer
 {
     private static readonly SKPaint _paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
     private static readonly SKSamplingOptions SamplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Aqua, StrokeWidth = 1, IsStroke = true };
 
+    /// <summary>
+    /// Draws an icon on the specified canvas at the given screen coordinates.
+    /// </summary>
+    /// <param name="canvas">The Skia canvas to draw on.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="symbol">The icon line symbol to draw.</param>
+    /// <param name="screenX">The X coordinate on the screen.</param>
+    /// <param name="screenY">The Y coordinate on the screen.</param>
+    /// <param name="iconRotation">The rotation of the icon in degrees.</param>
+    /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
     public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX,
         double screenY, float iconRotation, bool showValidBorders = false)
     {
@@ -37,7 +50,7 @@ public static class IconLineSymbolRenderer
         var transY = (float)translate.Y;
         var transAnchor = symbol.TranslateAnchor?.Invoke(context) ?? MapAlignment.Map;
 
-        // TranslateAnchor could only be Map or Viewport
+        // TranslateAnchor can only be Map or Viewport
         transAnchor = transAnchor == MapAlignment.Auto ? MapAlignment.Map : transAnchor;
 
         if (transAnchor == MapAlignment.Map)
@@ -90,32 +103,45 @@ public static class IconLineSymbolRenderer
         }
     }
 
-    public static bool CheckForSingleSpace(SKCanvas canvas, 
-        EvaluationContext context, 
-        SKPath path, double startPos, 
-        IconLineSymbol symbol, 
-        Quadtree<ISymbol> tree, 
-        double screenX, 
-        double screenY, 
+    /// <summary>
+    /// Checks if there is space to draw a single icon symbol at the specified position on a path.
+    /// </summary>
+    /// <param name="canvas">The Skia canvas to check against.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="path">The path along which the symbol is placed.</param>
+    /// <param name="startPos">The starting position on the path.</param>
+    /// <param name="symbol">The icon line symbol to check.</param>
+    /// <param name="tree">The quadtree of existing symbols for collision detection.</param>
+    /// <param name="screenX">The X coordinate on the screen.</param>
+    /// <param name="screenY">The Y coordinate on the screen.</param>
+    /// <param name="showUnvalidBorders">Whether to draw debug borders for collisions.</param>
+    /// <returns>A <see cref="SymbolPlacementStatus"/> indicating if the symbol can be placed.</returns>
+    public static SymbolPlacementStatus CheckForSingleSpace(SKCanvas canvas,
+        EvaluationContext context,
+        SKPath path, double startPos,
+        IconLineSymbol symbol,
+        Quadtree<ISymbol> tree,
+        double screenX,
+        double screenY,
         bool showUnvalidBorders)
     {
         symbol.Envelope ??= CreateEnvelope(symbol, context);
 
         if (symbol.Envelope is null)
         {
-            return false;
+            return SymbolPlacementStatus.NotInitialized;
         }
-        
-        // Is there enough space to fit text on a segment
+
+        // Check if there is enough space to fit the symbol on the next line segment
         if (!path.CanFitOnNextLineSegment((float)startPos, (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX)))
         {
-            return false;
+            return SymbolPlacementStatus.Collision;
         }
-        
-        // Save it for later use
+
+        // Save for later use
         var screenEnvelope = symbol.Envelope.Copy();
-        
-        // Move symbol's envelope at the screen position
+
+        // Move symbol's envelope to the screen position
         if (context.Rotation != 0.0)
         {
             screenEnvelope.RotateDegrees(context.Rotation);
@@ -123,16 +149,6 @@ public static class IconLineSymbolRenderer
 
         screenEnvelope.Translate(screenX, screenY);
 
-        // Check, if symbol is visible
-        if (screenEnvelope.MaxX < canvas.LocalClipBounds.Left ||
-            screenEnvelope.MinY < canvas.LocalClipBounds.Top ||
-            screenEnvelope.MinX > canvas.LocalClipBounds.Left + canvas.LocalClipBounds.Width ||
-            screenEnvelope.MinY > canvas.LocalClipBounds.Top + canvas.LocalClipBounds.Height)
-        {
-            // Symbol isn't visible
-            return false;
-        }
- 
         var symbols = tree.Query(screenEnvelope);
 
         foreach (var other in symbols)
@@ -144,7 +160,7 @@ public static class IconLineSymbolRenderer
 
             if (otherSymbol.ScreenEnvelope == null)
             {
-                // Should not happen
+                // Expected to be non-null; skip if null
                 continue;
             }
 
@@ -157,20 +173,27 @@ public static class IconLineSymbolRenderer
             {
                 continue;
             }
-            
+
             if (showUnvalidBorders && symbol.Name != otherSymbol.Name)
             {
-                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY, (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
+                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY,
+                    (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
             }
 
-            return false;
+            return SymbolPlacementStatus.Collision;
         }
 
         symbol.ScreenEnvelope = screenEnvelope;
 
-        return true;
+        return SymbolPlacementStatus.Success;
     }
-    
+
+    /// <summary>
+    /// Creates an envelope for the icon line symbol based on its dimensions and transformations.
+    /// </summary>
+    /// <param name="symbol">The icon line symbol.</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <returns>The calculated envelope, or null if the symbol has no icon.</returns>
     private static Envelope? CreateEnvelope(IconLineSymbol symbol, EvaluationContext context)
     {
         if (symbol.Icon == null)
@@ -178,7 +201,7 @@ public static class IconLineSymbolRenderer
             return null;
         }
 
-        // We already calculated for this symbol an envelope, so use this
+        // Use cached envelope if available
         if (symbol.Envelope is not null)
         {
             return symbol.Envelope;
@@ -194,13 +217,13 @@ public static class IconLineSymbolRenderer
             var spriteBitmap = new SKBitmap(width, height,
                 ((SKImage)symbol.Icon.Atlas.Native).ColorType,
                 ((SKImage)symbol.Icon.Atlas.Native).AlphaType);
-            var spriteRect = new SKRect(symbol.Icon.X, symbol.Icon.Y, 
+            var spriteRect = new SKRect(symbol.Icon.X, symbol.Icon.Y,
                 symbol.Icon.X + symbol.Icon.Width,
                 symbol.Icon.Y + symbol.Icon.Height);
 
             using (var canvas = new SKCanvas(spriteBitmap))
             {
-                canvas.DrawImage((SKImage)symbol.Icon.Atlas.Native, spriteRect, 
+                canvas.DrawImage((SKImage)symbol.Icon.Atlas.Native, spriteRect,
                     new SKRect(0, 0, width, height)
                 );
             }
@@ -211,8 +234,9 @@ public static class IconLineSymbolRenderer
         var anchor = new Point(symbol.Anchor.X * width, symbol.Anchor.Y * height);
         var offset = new Point(anchor.X + symbol.Offset.X, anchor.Y + symbol.Offset.Y);
 
-        // We now could calc the rough envelope of icon
-        var envelope = new Envelope(offset.X - symbol.Padding, offset.X + width + symbol.Padding, offset.Y - symbol.Padding, offset.Y + height + symbol.Padding);
+        // Calculate the rough envelope of the icon
+        var envelope = new Envelope(offset.X - symbol.Padding, offset.X + width + symbol.Padding,
+            offset.Y - symbol.Padding, offset.Y + height + symbol.Padding);
 
         if (symbol.Rotation != 0.0)
         {
@@ -226,9 +250,9 @@ public static class IconLineSymbolRenderer
 
             if (translateAnchor == MapAlignment.Map)
             {
-                var rotation = context.Rotation * Math.PI / 180.0;
-                var cos = Math.Cos(rotation);
-                var sin = Math.Sin(rotation);
+                var rotationRad = context.Rotation * Math.PI / 180.0;
+                var cos = Math.Cos(rotationRad);
+                var sin = Math.Sin(rotationRad);
                 var x = translate.X * cos - translate.Y * sin;
                 var y = translate.X * sin + translate.Y * cos;
                 translate = new Point((float)x, (float)y);

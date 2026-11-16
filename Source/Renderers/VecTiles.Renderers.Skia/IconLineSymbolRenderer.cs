@@ -72,11 +72,6 @@ public static class IconLineSymbolRenderer
 
         var rotation = iconRotation;
 
-        if (symbol.RotationAlignment == MapAlignment.Map)
-        {
-            rotation += context.Rotation;
-        }
-
         rotation = (rotation + 360) % 360;
 
         canvas.RotateDegrees(rotation, 0f, 0f);

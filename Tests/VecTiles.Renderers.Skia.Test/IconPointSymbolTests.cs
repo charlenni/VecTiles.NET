@@ -72,6 +72,73 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-OffsetWithScale-{x}x-{y}y-{scale}scale.png"));
     }
 
+    [Fact]
+    public void DrawsPixelRatioTwoSpriteAtCssSize()
+    {
+        // Fuel_11 sprite from the 2x atlas: 30x30 atlas pixels at pixel ratio 2 => 15x15 screen pixels
+        var filename = Path.Combine(Folder, "Sprites", "osm-liberty@2x.png");
+        var file = File.OpenRead(filename);
+        var buffer = new byte[file.Length];
+
+        file.ReadExactly(buffer, 0, (int)file.Length);
+
+        var sprite = new Sprite(new Bitmap(buffer), 710, 94, 30, 30, 2f);
+
+        var symbol = new IconPointSymbol(new Tile(0, 0, 0), 0, new Point(0, 0), sprite)
+        {
+            Scale = 1,
+        };
+
+        var context = new EvaluationContext(0, 1, 0);
+
+        using var bitmap = Utilities.CreateBitmap(31, 31);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.Transparent);
+
+        var tree = new Quadtree<ISymbol>();
+        Assert.Equal(SymbolPlacementStatus.Success,
+            IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, 15, 15, false));
+
+        // The collision envelope must have the CSS pixel size of the icon
+        Assert.Equal(15, symbol.Envelope!.MaxX - symbol.Envelope.MinX);
+        Assert.Equal(15, symbol.Envelope!.MaxY - symbol.Envelope.MinY);
+
+        IconPointSymbolRenderer.DrawIcon(canvas, context, symbol, 15, 15);
+
+        // The drawn icon must be 15x15 CSS pixels; depending on the sub pixel position and
+        // antialiasing, 14 to 16 pixels light up
+        var (minX, minY, maxX, maxY) = MeasureContent(bitmap);
+
+        Assert.InRange(maxX - minX + 1, 14, 16);
+        Assert.InRange(maxY - minY + 1, 14, 16);
+    }
+
+    private static (int MinX, int MinY, int MaxX, int MaxY) MeasureContent(SKBitmap bitmap)
+    {
+        var minX = int.MaxValue;
+        var minY = int.MaxValue;
+        var maxX = int.MinValue;
+        var maxY = int.MinValue;
+
+        for (var y = 0; y < bitmap.Height; y++)
+        {
+            for (var x = 0; x < bitmap.Width; x++)
+            {
+                if (bitmap.GetPixel(x, y).Alpha <= 190)
+                {
+                    continue;
+                }
+
+                minX = Math.Min(minX, x);
+                minY = Math.Min(minY, y);
+                maxX = Math.Max(maxX, x);
+                maxY = Math.Max(maxY, y);
+            }
+        }
+
+        return (minX, minY, maxX, maxY);
+    }
+
     [Theory]
     [InlineData(0.5, 0.5)]
     [InlineData(0, 0.5)]
@@ -82,8 +149,7 @@ public class IconPointSymbolTests
     [InlineData(1, 0)]
     [InlineData(0, 1)]
     [InlineData(1, 1)]
-    public void AnchorTest(double x, double y)
-    {
+    public void AnchorTest(double x, double y)    {
         var symbol = new IconPointSymbol(new Tile(0, 0, 0), 0, new Point(0, 0), _sprite)
         {
             Scale = 1,

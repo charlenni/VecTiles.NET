@@ -30,6 +30,7 @@
 				<RelativePanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 					<StackPanel>
 						<Button x:Name="ButtonCenter" Content="Center" HorizontalAlignment="Stretch" Click="ButtonCenter_Click"/>
+						<CheckBox x:Name="CheckBoxDebugLayer" Content="Debug Layer" HorizontalAlignment="Stretch" Click="CheckBoxDebugLayer_Click" />
 						<CheckBox x:Name="CheckBoxValidBorder" Content="Valid Borders" HorizontalAlignment="Stretch" Click="CheckBoxValid_Click" />
 						<CheckBox x:Name="CheckBoxInvalidBorder" Content="Invalid Borders" HorizontalAlignment="Stretch" Click="CheckBoxInvalid_Click" />
 					</StackPanel>

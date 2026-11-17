@@ -16,6 +16,7 @@ public partial class MainView : UserControl
 {
     private readonly string _path = "Files";
     private readonly RenderedSymbolsLayer _symbolsLayer;
+    private readonly TileGridDebugLayer _debugLayer;
 
     public MainView()
     {
@@ -28,11 +29,15 @@ public partial class MainView : UserControl
         var tileSource = new OMTRenderedTileSource(stream);
         var tileLayer = new RenderedTileLayer(tileSource);
         _symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        _debugLayer = new TileGridDebugLayer(tileLayer.TileSource.Schema)
+        {
+            Enabled = CheckBoxDebugLayer.IsChecked ?? false
+        };
 
         //MapControl.Map.Layers.Add(OpenStreetMap.CreateTileLayer());
         MapControl.Map.Layers.Add(tileLayer);
         MapControl.Map.Layers.Add(_symbolsLayer);
-        MapControl.Map.Layers.Add(new TileGridDebugLayer(tileLayer.TileSource.Schema));
+        MapControl.Map.Layers.Add(_debugLayer);
         
         // The PerformanceWidget is created as part of the map.
         var performanceWidget = MapControl.Map.Widgets.OfType<PerformanceWidget>().First();
@@ -58,6 +63,14 @@ public partial class MainView : UserControl
     {
         MapControl.Map.Navigator.CenterOnAndZoomTo(Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769)), 14.ToResolution());
     }
+
+    private void CheckBoxDebugLayer_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _debugLayer.Enabled = CheckBoxDebugLayer.IsChecked ?? false;
+
+        MapControl.Map.RefreshGraphics();
+    }
+
 
     private void CheckBoxValid_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {

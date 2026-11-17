@@ -41,8 +41,22 @@ public class OMTStyleFileLoader
     {
         Dictionary<string, Sprite>? omtSprites;
 
-        var bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x" + ".png");
-        var jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x" + ".json");
+        byte[] bitmapBytes;
+        byte[] jsonBytes;
+
+        try
+        {
+            bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x.png");
+            jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x.json");
+        }
+        catch (Exception)
+        {
+            // Fall back to the unsuffixed versions. Both are reloaded so that
+            // json and png always match each other.
+            bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".png");
+            jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".json");
+        }
+
         var serializer = new JsonSerializer();
 
         using (var stream = new MemoryStream(jsonBytes))

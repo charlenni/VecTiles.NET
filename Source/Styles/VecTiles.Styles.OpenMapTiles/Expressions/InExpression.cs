@@ -90,9 +90,9 @@ public class InExpression : Expression
         }
 
         // For small lists, linear search is faster (cache locality)
-        foreach (var value in haystackArray)
+        for (var i = 0; i < haystackArray.Length; i++)
         {
-            if (ExpressionValueHelper.AreEqual(value, needle))
+            if (ExpressionValueHelper.AreEqual(haystackArray[i], needle))
                 return true;
         }
 

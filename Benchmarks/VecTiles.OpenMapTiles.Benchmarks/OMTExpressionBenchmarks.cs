@@ -4,7 +4,6 @@ using BenchmarkDotNet.Order;
 using Newtonsoft.Json.Linq;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
-using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Filter;
 
@@ -189,9 +188,9 @@ public class OMTExpressionBenchmarks
         ]);
     }
 
-    private static IExpression? Parse(string json)
+    private static IExpression Parse(string json)
     {
-        return ExpressionParser.ParseExpression(JToken.Parse(json));
+        return ExpressionParser.ParseExpression(JToken.Parse(json))!;
     }
 
     private static string InArray(int size) => $$"""

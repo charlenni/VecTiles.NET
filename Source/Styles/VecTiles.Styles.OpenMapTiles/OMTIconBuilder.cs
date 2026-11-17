@@ -5,6 +5,7 @@ using VecTiles.Common.Extensions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Enums;
+using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles
@@ -14,7 +15,7 @@ namespace VecTiles.Styles.OpenMapTiles
         private readonly OMTLayerStyle _style;
         private readonly Func<string, ISprite?> _spriteFactory;
         private readonly EvaluationContext _context;
-        private readonly string _spriteMask;
+        private readonly StoppedString _iconImage;
         private readonly bool _allowOverlap;
         private readonly bool _optional;
         private readonly bool _allowOthers;
@@ -38,7 +39,7 @@ namespace VecTiles.Styles.OpenMapTiles
             _spriteFactory = spriteFactory;
             _context = context;
 
-            _spriteMask = style.Layout.IconImage.Evaluate(context);
+            _iconImage = style.Layout.IconImage;
 
             _optional = style.Layout.IconOptional;
             _allowOverlap = style.Layout.IconAllowOverlap;
@@ -149,13 +150,17 @@ namespace VecTiles.Styles.OpenMapTiles
 
         private bool TryGetSprite(OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context, out ISprite? sprite)
         {
-            if (_spriteMask == string.Empty)
+            // The icon image can depend on the feature (expressions, stopped values, field
+            // replacement), so it has to be evaluated per feature
+            var spriteMask = _iconImage.Evaluate(context);
+
+            if (spriteMask == string.Empty)
             {
                 sprite = null;
                 return false;
             }
 
-            var spriteName = _spriteMask.ReplaceWithTags(context);
+            var spriteName = spriteMask.ReplaceWithTags(context);
 
             sprite = spriteFactory(spriteName);
 

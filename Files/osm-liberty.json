@@ -1395,7 +1395,18 @@
       "minzoom": 16,
       "filter": ["all", ["==", "$type", "Point"], [">=", "rank", 20]],
       "layout": {
-        "icon-image": "{class}_11",
+        "icon-image": [
+          "match",
+          ["get", "subclass"],
+          [
+            "florist",
+            "furniture",
+            "soccer",
+            "tennis"
+          ],
+          ["get", "subclass"],
+          ["get", "class"]
+        ],
         "icon-rotate": 0,
         "text-rotate": 0,
         "text-anchor": "top",

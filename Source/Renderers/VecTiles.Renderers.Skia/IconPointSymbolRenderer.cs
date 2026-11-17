@@ -89,8 +89,8 @@ public class IconPointSymbolRenderer : ISymbolRenderer
         }
 
         canvas.DrawBitmap(image,
-            -anchorX * imgWidth + offsetX,
-            -anchorY * imgHeight + offsetY,
+            -anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
+            -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio,
             Paint);
 
         canvas.Restore();
@@ -193,14 +193,19 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             return symbol.Envelope;
         }
 
-        var width = (int)Math.Ceiling(symbol.Icon.Width * symbol.Scale);
-        var height = (int)Math.Ceiling(symbol.Icon.Height * symbol.Scale);
+        // The icon is drawn at CSS pixel dimensions (atlas pixels divided by the pixel ratio),
+        // scaled by the icon size
+        var width = (int)Math.Ceiling(symbol.Icon.Width / symbol.Icon.PixelRatio * symbol.Scale);
+        var height = (int)Math.Ceiling(symbol.Icon.Height / symbol.Icon.PixelRatio * symbol.Scale);
 
         if (symbol.Icon.Native is null)
         {
             symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
 
-            var spriteBitmap = new SKBitmap(width, height,
+            // Cut out the sprite 1:1 in atlas pixels. Never bake the scale into the cached
+            // bitmap: the sprite is shared between symbols with different icon sizes, and
+            // DrawIcon applies pixel ratio and scale when drawing.
+            var spriteBitmap = new SKBitmap(symbol.Icon.Width, symbol.Icon.Height,
                 ((SKImage)symbol.Icon.Atlas.Native).ColorType,
                 ((SKImage)symbol.Icon.Atlas.Native).AlphaType);
             var spriteRect = new SKRect(symbol.Icon.X, symbol.Icon.Y,
@@ -210,7 +215,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             using (var canvas = new SKCanvas(spriteBitmap))
             {
                 canvas.DrawImage((SKImage)symbol.Icon.Atlas.Native, spriteRect,
-                    new SKRect(0, 0, width, height),
+                    new SKRect(0, 0, symbol.Icon.Width, symbol.Icon.Height),
                     SamplingOptions
                 );
             }

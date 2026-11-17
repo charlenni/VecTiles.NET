@@ -73,6 +73,11 @@ public static class RenderedTextCache
     {
         var result = new RenderedText(text, FontCache.CreateFonts(styleName, fontNames));
 
+        // Use the caching font mapper, so typefaces are resolved once per font
+        // signature. The global default mapper is left untouched for other
+        // users of RichTextKit (e.g. Mapsui).
+        result.Text.FontMapper = CachedFontMapper.Instance;
+
         result.TextStyle.FontSize = fontSize;
 
         result.Text.Alignment = alignment;

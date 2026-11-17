@@ -1,4 +1,5 @@
-﻿using VecTiles.Styles.OpenMapTiles;
+﻿using VecTiles.DataSources;
+using VecTiles.Styles.OpenMapTiles;
 
 namespace VecTiles.Styles.MapboxTests
 {
@@ -161,6 +162,41 @@ namespace VecTiles.Styles.MapboxTests
 
             var sourceNames = mapboxStyleFile.Sources.Keys.ToList();
             Assert.Equal(sourceNames.Count, sourceNames.Distinct().Count());
+        }
+
+        [Fact]
+        public async Task LoadSpritesUses2xPairWhenAvailableTest()
+        {
+            var sprites = await OMTStyleFileLoader.LoadSprites("embedded://Sprites/osm-liberty");
+
+            Assert.Equal(244, sprites.Sprites.Count);
+            // The @2x json holds double sized coordinates, so this width proves the @2x pair was loaded
+            Assert.Equal(30, sprites.Sprites["airport_11"].Width);
+        }
+
+        [Fact]
+        public async Task LoadSpritesFallsBackToUnsuffixedPairTest()
+        {
+            var bitmapBytes = await ByteDataSource.GetBytesAsync("embedded://Sprites/osm-liberty.png");
+            var jsonBytes = await ByteDataSource.GetBytesAsync("embedded://Sprites/osm-liberty.json");
+
+            var tempDir = Path.Combine(Path.GetTempPath(), "VecTilesSpriteLoaderTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                File.WriteAllBytes(Path.Combine(tempDir, "osm-liberty.png"), bitmapBytes);
+                File.WriteAllBytes(Path.Combine(tempDir, "osm-liberty.json"), jsonBytes);
+
+                var sprites = await OMTStyleFileLoader.LoadSprites(new Uri(Path.Combine(tempDir, "osm-liberty")).AbsoluteUri);
+
+                Assert.Equal(244, sprites.Sprites.Count);
+                // The unsuffixed json holds base sized coordinates, so this width proves the unsuffixed pair was loaded
+                Assert.Equal(15, sprites.Sprites["airport_11"].Width);
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
         }
     }
 }

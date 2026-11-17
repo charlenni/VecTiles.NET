@@ -8,6 +8,11 @@ namespace VecTiles.Common.Interfaces;
 public interface ISymbol
 {
     /// <summary>
+    /// Unique id of the feature this symbol belongs to
+    /// </summary>
+    ulong Id { get; }
+
+    /// <summary>
     /// Tile to which this symbol belongs
     /// </summary>
     Tile Tile { get; }

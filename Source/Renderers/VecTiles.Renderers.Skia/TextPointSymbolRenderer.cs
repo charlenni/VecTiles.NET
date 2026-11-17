@@ -228,33 +228,15 @@ public class TextPointSymbolRenderer : ISymbolRenderer
             return symbol.Envelope;
         }
 
-        // Create native text
-        symbol.Native ??= new RenderedText(symbol.Text, FontCache.CreateFonts(symbol.StyleName, symbol.FontNames));
+        var fontSize = symbol.FontSize.Invoke(context);
+        var maxWidth = symbol.MaxWidth.Invoke(context, fontSize);
+
+        // Layout is expensive; identical texts with identical layout parameters
+        // share one measured RenderedText
+        symbol.Native = RenderedTextCache.GetOrCreate(symbol.Text, symbol.StyleName, symbol.FontNames,
+            fontSize, maxWidth, symbol.Alignment.ToTextAlignment(), (int)symbol.Direction);
 
         var text = (RenderedText)symbol.Native;
-
-        text.Text.Alignment = symbol.Alignment.ToTextAlignment();
-
-        text.TextStyle.FontSize = symbol.FontSize.Invoke(context);
-
-        // Set max width to the correct value
-        text.Text.MaxWidth = symbol.MaxWidth.Invoke(context, text.TextStyle.FontSize);
-        text.Text.ApplyStyle(0, text.Text.Length, text.TextStyle);
-
-        // MeasuredWidth and MeasuredHeight require significant CPU cycles, so cache them for later use
-        text.MeasuredWidth = text.Text.MeasuredWidth;
-        text.MeasuredHeight = text.Text.MeasuredHeight;
-
-        // Remove left/right padding for single-line text to improve alignment.
-        // This requires a second layout pass.
-        if ((text.Text.MeasuredPadding.Left > 0 || text.Text.MeasuredPadding.Right > 0) && text.Text.LineCount == 1)
-        {
-            text.Text.MaxWidth = null;
-            text.MeasuredWidth = text.Text.MeasuredWidth;
-            text.MeasuredHeight = text.Text.MeasuredHeight;
-        }
-
-        text.LeftRightCorrection = text.Text.MeasuredPadding.Left;
 
         var anchor = new SKPoint((float)(-symbol.Anchor.X * text.MeasuredWidth), (float)(-symbol.Anchor.Y * text.MeasuredHeight));
         var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));

@@ -134,6 +134,20 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         // Save for later use
         var screenEnvelope = symbol.Envelope.Copy();
 
+        // Calculate the rotation
+        var totalRotation = symbol.Rotation;
+
+        if (symbol.RotationAlignment == MapAlignment.Map)
+        {
+            totalRotation += context.Rotation;
+        }
+
+        totalRotation = (totalRotation + 360) % 360;
+
+        // Rotate around the symbol's anchor point at (0, 0), matching the canvas
+        // rotation in DrawText, before translating to the screen position
+        screenEnvelope.RotateDegreesAroundPoint(totalRotation, 0, 0);
+
         // Calculate the translation
         if (symbol.Translate != null)
         {
@@ -155,18 +169,6 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         // Move symbol's envelope to the screen position
         screenEnvelope.Translate(screenX, screenY);
-
-        // Calculate the rotation
-        var totalRotation = symbol.Rotation;
-
-        if (symbol.RotationAlignment == MapAlignment.Map)
-        {
-            totalRotation += context.Rotation;
-        }
-
-        totalRotation = (totalRotation + 360) % 360;
-
-        screenEnvelope.RotateDegreesAroundAnchor(totalRotation, 0, 0);
 
         var symbols = tree.Query(screenEnvelope);
 

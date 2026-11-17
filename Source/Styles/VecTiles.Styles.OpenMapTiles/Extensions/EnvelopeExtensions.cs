@@ -47,6 +47,19 @@ public static class EnvelopeExtensions
         envelope.Init(minX, maxX, minY, maxY);*/
     }
 
+    public static void RotateDegreesAroundPoint(this Envelope envelope, double angleDegrees, double pointX, double pointY)
+    {
+        // Convert angle from degrees to radians
+        var angleRadians = angleDegrees * Math.PI / 180.0;
+
+        envelope.RotateRadiantAroundPoint(angleRadians, pointX, pointY);
+    }
+
+    public static void RotateRadiantAroundPoint(this Envelope envelope, double angleRadians, double pointX, double pointY)
+    {
+        RotateRadiantAroundCenter(envelope, angleRadians, pointX, pointY);
+    }
+
     public static void RotateDegreesAroundAnchor(this Envelope envelope, double angleDegrees, double anchorX, double anchorY)
     {
         // Convert angle from degrees to radians
@@ -57,10 +70,15 @@ public static class EnvelopeExtensions
 
     public static void RotateRadiantAroundAnchor(this Envelope envelope, double angleRadians, double anchorX, double anchorY)
     {
-        // Calculate the center of rotation in world coordinates
-        var centerX = envelope.MinX + anchorX * envelope.Width;
-        var centerY = envelope.MinY + anchorY * envelope.Height;
+        // Calculate the center of rotation in world coordinates:
+        // The anchor is given as a fraction of the envelope's width/height
+        RotateRadiantAroundCenter(envelope, angleRadians,
+            envelope.MinX + anchorX * envelope.Width,
+            envelope.MinY + anchorY * envelope.Height);
+    }
 
+    private static void RotateRadiantAroundCenter(this Envelope envelope, double angleRadians, double centerX, double centerY)
+    {
         // Translate the envelope so that the center of rotation is at the origin
         var translatedMinX = envelope.MinX - centerX;
         var translatedMinY = envelope.MinY - centerY;

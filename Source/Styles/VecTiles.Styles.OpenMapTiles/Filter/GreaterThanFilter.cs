@@ -2,23 +2,35 @@
 
 namespace VecTiles.Styles.OpenMapTiles.Filter;
 
+/// <summary>
+/// Filter that checks if a feature's numeric attribute is greater than the specified value.
+/// Supports all numeric types (float, double, int, long, decimal, etc.).
+/// </summary>
 public class GreaterThanFilter : BinaryFilter
 {
+    /// <summary>
+    /// Initializes a new greater than filter.
+    /// </summary>
+    /// <param name="key">The attribute key to compare.</param>
+    /// <param name="value">The value to compare against.</param>
+    /// <exception cref="ArgumentNullException">Thrown if key is null or empty.</exception>
     public GreaterThanFilter(string key, object value) : base(key, value)
     {
     }
 
+    /// <summary>
+    /// Evaluates whether the feature's attribute is greater than the specified value.
+    /// </summary>
+    /// <param name="feature">The feature to evaluate.</param>
+    /// <returns>True if the feature's attribute is greater than the specified value; otherwise, false.</returns>
     public override bool Evaluate(IFeature feature)
     {
-        if (feature == null || !feature.Attributes.Exists(Key))
+        var attrValue = GetNumericValue(feature);
+        var compareValue = GetNumericCompareValue();
+
+        if (attrValue == null || compareValue == null)
             return false;
 
-        if (feature.Attributes[Key] is float)
-            return (float)feature.Attributes[Key] > (float)Value;
-
-        if (feature.Attributes[Key] is long)
-            return (long)feature.Attributes[Key] > (long)Value;
-
-        return false;
+        return attrValue.Value > compareValue.Value;
     }
 }

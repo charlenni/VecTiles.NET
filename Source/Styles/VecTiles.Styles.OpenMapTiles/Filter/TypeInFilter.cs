@@ -1,29 +1,68 @@
-﻿using NetTopologySuite.Features;
+﻿using System.Collections.Generic;
+using NetTopologySuite.Features;
 using VecTiles.Common.Enums;
 
 namespace VecTiles.Styles.OpenMapTiles.Filter;
 
+/// <summary>
+/// Filter that checks if a feature's geometry type is in the specified list of types.
+/// Uses case-insensitive comparison and handles Multi* types.
+/// </summary>
 public class TypeInFilter : Filter
 {
+    /// <summary>
+    /// The list of geometry types to match (all lower-case for case-insensitive comparison).
+    /// </summary>
     public IList<string> Types { get; }
 
+    /// <summary>
+    /// Save Count for later use.
+    /// </summary>
+    private int _typesCount = 0;
+    
+    /// <summary>
+    /// Initializes a new type in filter.
+    /// </summary>
+    /// <param name="types">The collection of geometry types to match.</param>
     public TypeInFilter(IEnumerable<GeometryType> types)
     {
         Types = new List<string>();
 
-        foreach (var type in types)
-            Types.Add(type.ToString());
+        if (types != null)
+        {
+            foreach (var type in types)
+            {
+                var typeString = type.ToString()?.ToLowerInvariant();
+                if (!string.IsNullOrEmpty(typeString))
+                    Types.Add(typeString);
+            }
+
+            _typesCount = Types.Count;
+        }
     }
 
+    /// <summary>
+    /// Evaluates whether the feature's geometry type is in the list.
+    /// </summary>
+    /// <param name="feature">The feature to evaluate.</param>
+    /// <returns>True if the feature's geometry type contains any of the specified types (case-insensitive); otherwise, false.</returns>
     public override bool Evaluate(IFeature feature)
     {
-        if (feature == null)
+        if (feature == null || feature.Geometry == null)
             return false;
 
-        foreach (var type in Types)
-            // Use Contains instead of Equals because of e.g. LineString and MultiLineString
-            if (feature.Geometry.GeometryType.Contains(type))
+        var geometryType = feature.Geometry.GeometryType;
+        if (string.IsNullOrEmpty(geometryType))
+            return false;
+
+        var lowerGeometryType = geometryType.ToLowerInvariant();
+
+        for (var i = 0; i < _typesCount; i++)
+        {
+            // Use case-insensitive contains check
+            if (lowerGeometryType.Contains(Types[i]))
                 return true;
+        }
 
         return false;
     }

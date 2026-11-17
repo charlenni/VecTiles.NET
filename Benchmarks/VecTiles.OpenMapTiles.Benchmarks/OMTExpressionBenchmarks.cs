@@ -4,6 +4,7 @@ using BenchmarkDotNet.Order;
 using Newtonsoft.Json.Linq;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
+using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Filter;
 
@@ -545,7 +546,7 @@ public class OMTExpressionBenchmarks
         bool result = false;
 
         for (int i = 0; i < _contexts.Length; i++)
-            result ^= (bool)((string)_matchExpression.Evaluate(_contexts[i])!).Length > 0;
+            result ^= ((string)_matchExpression.Evaluate(_contexts[i])!).Length > 0;
 
         return result;
     }
@@ -556,7 +557,7 @@ public class OMTExpressionBenchmarks
         bool result = false;
 
         for (int i = 0; i < _contexts.Length; i++)
-            result ^= (bool)((string)_caseExpression.Evaluate(_contexts[i])!).Length > 0;
+            result ^= ((string)_caseExpression.Evaluate(_contexts[i])!).Length > 0;
 
         return result;
     }

@@ -17,6 +17,14 @@ public class StoppedStringConverter : JsonConverter
     {
         JToken token = JToken.Load(reader);
 
+        if (token.Type == JTokenType.Array)
+        {
+            // We have an array, so we assume, that it is an expression
+            var expression = ExpressionParser.ParseExpression(token);
+
+            return new StoppedString { Expression = expression };
+        }
+
         if (token.Type == JTokenType.Object)
         {
             var stoppedString = new StoppedString { Stops = new List<KeyValuePair<float, string>>() };

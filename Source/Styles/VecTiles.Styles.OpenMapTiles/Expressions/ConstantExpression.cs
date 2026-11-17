@@ -20,5 +20,14 @@ namespace VecTiles.Styles.OpenMapTiles.Expressions
         {
             return (T)new object();
         }
+
+        public bool Equals(ConstantExpression<T>? other)
+        {
+            return other is not null && (ReferenceEquals(value, other.value) || Equals(value, other.value));
+        }
+
+        public override bool Equals(object? obj) => obj is ConstantExpression<T> other && Equals(other);
+
+        public override int GetHashCode() => value?.GetHashCode() ?? 0;
     }
 }

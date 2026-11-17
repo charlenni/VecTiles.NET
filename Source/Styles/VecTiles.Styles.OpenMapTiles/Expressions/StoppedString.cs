@@ -26,12 +26,18 @@ public class StoppedString : IStopped<string>
     /// <summary>
     /// Is this a stopped value that only contains the default
     /// </summary>
-    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops);
+    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops) && Expression == null;
 
     /// <summary>
     /// True, if value doesn't change with context
     /// </summary>
-    public bool IsConstant => !_hasStops;
+    public bool IsConstant => !_hasStops && Expression == null;
+
+    /// <summary>
+    /// Expression to evaluate, e.g. ["match", ["get", "class"], ...].
+    /// If set, it takes precedence over stops, single value and default.
+    /// </summary>
+    public IExpression? Expression { get; set; }
 
     bool _hasSingleVal = false;
     string _singleVal = string.Empty;
@@ -72,6 +78,19 @@ public class StoppedString : IStopped<string>
     /// <returns>Value for this stopp respecting resolution factor</returns>
     public string Evaluate(EvaluationContext ctx)
     {
+        if (Expression != null)
+        {
+            var value = Expression.Evaluate(ctx);
+
+            if (value == null)
+                return string.Empty;
+
+            if (value is string text)
+                return text;
+
+            return Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture) ?? string.Empty;
+        }
+
         if (_hasStops)
         {
             float zoom = ctx.Zoom ?? 0f;
@@ -122,6 +141,11 @@ public class StoppedString : IStopped<string>
 
     public override string ToString()
     {
+        if (Expression != null)
+        {
+            return "StoppedString [Expression]";
+        }
+
         if (_hasStops && _stops.Count > 0)
         {
             return "StoppedString [Stops= " + string.Join(",", _stops.Select(kvp => $"[{kvp.Key}, {kvp.Value}]"));

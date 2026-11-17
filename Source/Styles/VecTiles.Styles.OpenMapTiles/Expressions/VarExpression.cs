@@ -33,8 +33,11 @@ public class VarExpression : Expression
 
     public VarExpression(string name, IExpression result)
     {
+        Name = name;
         Result = result;
     }
+
+    public string Name { get; }
 
     IExpression Result;
 
@@ -47,4 +50,13 @@ public class VarExpression : Expression
     {
         return Result.PossibleOutputs(); ;
     }
+
+    public bool Equals(VarExpression? other)
+    {
+        return other is not null && Name == other.Name;
+    }
+
+    public override bool Equals(object? obj) => obj is VarExpression other && Equals(other);
+
+    public override int GetHashCode() => Name.GetHashCode();
 }

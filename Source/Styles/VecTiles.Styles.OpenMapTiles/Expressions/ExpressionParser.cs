@@ -9,45 +9,59 @@ public class ExpressionParser
 {
     Dictionary<string, Func<JArray, ExpressionParser, IExpression>> expressionRegistry = new Dictionary<string, Func<JArray, ExpressionParser, IExpression>>
     {
-        //new KeyValuePair<string, Func<JArray, ExpressionParser, IExpression>>("==", parseComparison),
-        //new KeyValuePair<string, Func<string, Expression>>("!=", parseComparison),
-        //new KeyValuePair<string, Func<string, Expression>>(">", parseComparison),
-        //new KeyValuePair<string, Func<string, Expression>>("<", parseComparison),
-        //new KeyValuePair<string, Func<string, Expression>>(">=", parseComparison),
-        //new KeyValuePair<string, Func<string, Expression>>("<=", parseComparison),
-        //new KeyValuePair<string, Func<string, Expression>>("all", All::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("any", Any::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("array", Assertion::parse),
+        // Operators with their own Expression classes; operators without an
+        // entry fall through to the compound expression registry
         { "at", AtExpression.Parse },
-        //new KeyValuePair<string, Func<string, Expression>>("in", In::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("boolean", Assertion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("case", Case::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("coalesce", Coalesce::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("collator", CollatorExpression::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("format", FormatExpression::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("image", ImageExpression::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("interpolate", parseInterpolate),
+        { "array", AssertionExpression.Parse },
+        { "boolean", AssertionExpression.Parse },
+        { "case", CaseExpression.Parse },
+        { "coalesce", CoalesceExpression.Parse },
+        { "collator", CollatorExpression.Parse },
+        { "distance", DistanceExpression.Parse },
+        { "get", GetExpression.Parse },
+        { "in", InExpression.Parse },
+        { "interpolate", InterpolateExpression.Parse },
         { "length", LengthExpression.Parse },
         { "let", LetExpression.Parse },
-        //new KeyValuePair<string, Func<string, Expression>>("literal", Literal::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("match", parseMatch),
-        //new KeyValuePair<string, Func<string, Expression>>("number", Assertion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("number-format", NumberFormat::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("object", Assertion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("step", Step::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("string", Assertion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("to-boolean", Coercion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("to-color", Coercion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("to-number", Coercion::parse),
-        //new KeyValuePair<string, Func<string, Expression>>("to-string", Coercion::parse),
+        { "literal", LiteralExpression.Parse },
+        { "match", MatchExpression.Parse },
+        { "number", AssertionExpression.Parse },
+        { "number-format", NumberFormatExpression.Parse },
+        { "object", AssertionExpression.Parse },
+        { "semiliteral", SemiLiteralExpression.Parse },
+        { "step", StepExpression.Parse },
+        { "string", AssertionExpression.Parse },
+        { "to-boolean", CoercionExpression.Parse },
+        { "to-color", CoercionExpression.Parse },
+        { "to-number", CoercionExpression.Parse },
+        { "to-string", CoercionExpression.Parse },
         { "var", VarExpression.Parse },
-        //new KeyValuePair<string, Func<string, Expression>>("within", Within::parse),
+        { "within", WithinExpression.Parse },
     };
 
     public string Key { get; }
     public Type Expected { get; }
     public Dictionary<string, string> Errors { get; }
     public Scope Scope { get; }
+
+    public static IExpression? ParseExpression(JToken token, Type? expected = null)
+    {
+        var errors = new Dictionary<string, string>();
+        var parser = new ExpressionParser("", errors, expected, new Scope(new Dictionary<string, IExpression>()));
+        var result = parser.Parse(token, expected);
+
+        if (result == null)
+        {
+            var combinedErrors = parser.CombinedErrors();
+
+            if (!string.IsNullOrEmpty(combinedErrors))
+                System.Diagnostics.Debug.WriteLine("Couldn't parse expression: " + combinedErrors);
+
+            return null;
+        }
+
+        return result;
+    }
 
     public static IExpression ParseExpression(string str, Type expected)
     {
@@ -58,29 +72,6 @@ public class ExpressionParser
             var parser = new ExpressionParser("", new Dictionary<string, string>(), expected, new Scope(new Dictionary<string, IExpression>()));
             return parser.Parse(array, expected);
         }
-
-        // Could be any literal, so check
-        //else if (expression == null)
-        //{
-        //    result = new ConstantExpression<MGLNullType>(new MGLNullType());
-        //}
-        //else if (expression is string && expected == typeof(MGLColorType))
-        //{
-        //    result = new ConstantExpression<MGLColorType>(new MGLColorType((string)expression));
-        //}
-        //else if (expression is string)
-        //{
-        //    result = new ConstantExpression<MGLStringType>(new MGLStringType((string)expression));
-        //}
-        //else if (expression is long || expression is int || expression is double || expression is float)
-        //{
-        //    result = new ConstantExpression<MGLNumberType>(new MGLNumberType(expression));
-        //}
-        //else if (expression is bool)
-        //{
-        //    result = new ConstantExpression<bool>((bool)expression);
-        //}
-
 
         return null;
     }
@@ -115,14 +106,20 @@ public class ExpressionParser
 
             var op = array[0].ToString();
 
-            if (expressionRegistry.ContainsKey(op))
+            if (expressionRegistry.TryGetValue(op, out var parse))
             {
-                result = expressionRegistry[op](array, this);
+                result = parse(array, this);
             }
             else
             {
-                //result = parseCompoundExpression(op, array, this);
+                // Compound operators like "+", "==", "all", "upcase", "rgb"...
+                result = CompoundExpression.Parse(array, this);
             }
+        }
+        else if (token is JValue)
+        {
+            // A simple literal value
+            result = new LiteralExpression(MatchExpression.ToValue(token));
         }
 
         if (result != null)

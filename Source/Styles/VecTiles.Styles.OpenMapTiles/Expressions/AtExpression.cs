@@ -19,8 +19,8 @@ public class AtExpression : Expression
             return null;
         }
 
-        var index = parser.Parse(array[1], 1, typeof(MGLNumberType));
-        var inputType = parser.Expected != null ? parser.Expected : typeof(MGLValueType);
+        var index = parser.Parse(array[1], 1, typeof(double));
+        var inputType = parser.Expected != null ? parser.Expected : typeof(object);
         var input = parser.Parse(array[2], 2, inputType);
 
         if (index == null || input == null) 
@@ -38,13 +38,29 @@ public class AtExpression : Expression
     IExpression Index;
     IExpression Input;
 
-    public override object Evaluate(EvaluationContext ctx)
+    public override object? Evaluate(EvaluationContext ctx)
     {
-        throw new System.NotImplementedException();
+        var index = CompoundOperators.EvaluateNumber(ctx, Index);
+
+        if (index == null)
+            return null;
+
+        return Input.Evaluate(ctx) switch
+        {
+            object?[] array => (index.Value >= 0 && index.Value < array.Length) ? array[(int)index.Value] : null,
+            _ => null
+        };
     }
 
-    public override object PossibleOutputs()
+    public override object? PossibleOutputs()
     {
-        throw new System.NotImplementedException();
+        return null;
     }
+
+    public bool Equals(AtExpression? other)
+        => other is not null && (ReferenceEquals(this, other) || (Index.Equals(other.Index) && Input.Equals(other.Input)));
+
+    public override bool Equals(object? obj) => obj is AtExpression other && Equals(other);
+
+    public override int GetHashCode() => (Index.GetHashCode() * 397) ^ Input.GetHashCode();
 }

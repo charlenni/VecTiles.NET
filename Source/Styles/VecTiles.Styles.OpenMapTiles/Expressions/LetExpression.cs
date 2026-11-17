@@ -75,4 +75,31 @@ public class LetExpression : Expression
     {
         return Result.PossibleOutputs(); ;
     }
+
+    public bool Equals(LetExpression? other)
+    {
+        if (other is null)
+            return false;
+
+        if (ReferenceEquals(this, other))
+            return true;
+
+        if (Bindings.Count != other.Bindings.Count || !Result.Equals(other.Result))
+            return false;
+
+        foreach (var (name, expression) in Bindings)
+        {
+            if (!other.Bindings.TryGetValue(name, out var otherExpression) || !expression.Equals(otherExpression))
+                return false;
+        }
+
+        return true;
+    }
+
+    public override bool Equals(object? obj) => obj is LetExpression other && Equals(other);
+
+    public override int GetHashCode()
+    {
+        return Result?.GetHashCode() ?? 0;
+    }
 }

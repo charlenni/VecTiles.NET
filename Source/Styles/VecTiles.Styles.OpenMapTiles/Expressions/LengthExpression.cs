@@ -19,15 +19,9 @@ public class LengthExpression : Expression
         }
 
         var input = parser.Parse(array[1], 1);
-        
-        if (input == null) 
-            return null;
 
-        if (!(input is MGLArrayType) && !(input is MGLStringType) && !(input is MGLValueType))
-        {
-            parser.Error("Expected argument of type string or array, but found " + input.GetType().ToString() + " instead.");
+        if (input == null)
             return null;
-        }
 
         return new LengthExpression(input);
     }
@@ -36,13 +30,18 @@ public class LengthExpression : Expression
 
     IExpression Input;
 
-    public override object Evaluate(EvaluationContext ctx)
+    public override object? Evaluate(EvaluationContext ctx)
     {
-        throw new System.NotImplementedException();
+        return Input.Evaluate(ctx) switch
+        {
+            string s => (double)s.Length,
+            object?[] array => (double)array.Length,
+            _ => null
+        };
     }
 
-    public override object PossibleOutputs()
+    public override object? PossibleOutputs()
     {
-        throw new System.NotImplementedException();
+        return null;
     }
 }

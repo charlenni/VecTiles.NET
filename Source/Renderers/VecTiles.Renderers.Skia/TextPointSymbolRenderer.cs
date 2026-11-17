@@ -79,7 +79,10 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         textStyle.TextColor = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f));
         textStyle.HaloBlur = symbol.HaloBlur.Invoke(context);
         textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
-        textStyle.HaloWidth = symbol.HaloWidth.Invoke(context);
+        // RichTextKit strokes the halo centered on the glyph outline (half inwards,
+        // half outwards). The OMT spec interprets halo-width as the distance to the
+        // outline outwards, so double the width to compensate.
+        textStyle.HaloWidth = 2f * symbol.HaloWidth.Invoke(context);
 
         // Translate to the correct position, respecting the anchor and offset
         canvas.Translate(-anchorX * text.MeasuredWidth + offsetX,

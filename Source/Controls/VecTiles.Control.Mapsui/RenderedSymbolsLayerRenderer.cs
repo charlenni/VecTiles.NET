@@ -50,14 +50,27 @@ public static class RenderedSymbolsLayerRenderer
 
         var context = new EvaluationContext((float)viewport.Resolution.ToZoomLevel(), 1f / scale, (float)viewport.Rotation);
 
-        var symbols = renderedLayer.GetOrCreateSymbols(tiles, zoomLevel);
+        var symbols = renderedLayer.GetOrCreateSymbols(tiles, zoomLevel).ToArray();
         var tree = new Quadtree<ISymbol>();
+
+        // Only the first occurrence of a symbol can be drawn, so track all
+        // examined ids of this frame and discard following occurrences
+        // before doing any work for them
+        var examinedIds = new HashSet<ulong>();
 
         Func<double, double, (double, double)> worldToScreenConverter =
             (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
 
-        foreach (var symbol in symbols)
+        for (var i = 0; i < symbols.Count(); i++)
         {
+            var symbol = symbols[i];
+            
+            // Skip symbols with an id that was already examined in this frame
+            if (!examinedIds.Add(symbol.Id))
+            {
+                continue;
+            }
+
             canvas.Save();
 
             // Check if the symbol has a flag indicating it shouldn't be drawn for this tile range

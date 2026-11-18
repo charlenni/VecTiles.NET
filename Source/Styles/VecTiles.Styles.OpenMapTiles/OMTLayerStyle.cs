@@ -4,7 +4,6 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
-using VecTiles.Styles.OpenMapTiles.Filter;
 using VecTiles.Styles.OpenMapTiles.Json.Converter;
 
 namespace VecTiles.Styles.OpenMapTiles;

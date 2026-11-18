@@ -7,7 +7,6 @@ using NetTopologySuite.Geometries;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
-using VecTiles.Styles.OpenMapTiles.Filter;
 
 namespace VecTiles.OpenMapTiles.Benchmarks;
 
@@ -75,15 +74,6 @@ public class OMTExpressionBenchmarks
     private IExpression _sqrtExpression;
 
     private IExpression _collatorEquals;
-
-    // Equivalent filters for comparison
-    private EqualsFilter _equalsStringFilter;
-    private EqualsFilter _equalsIntFilter;
-    private LessThanFilter _lessThanFilter;
-    private InFilter _inSmallFilter;
-    private InFilter _inLargeFilter;
-    private HasFilter _hasFilter;
-    private AllFilter _allFilter;
 
     [GlobalSetup]
     public void Setup()
@@ -174,20 +164,6 @@ public class OMTExpressionBenchmarks
             """
             ["==", ["get", "name"], "TestFeature", ["collator", { "case-sensitive": true }]]
             """);
-
-        // Equivalent filters for direct comparison
-        _equalsStringFilter = new EqualsFilter("name", "TestFeature");
-        _equalsIntFilter = new EqualsFilter("level", 5);
-        _lessThanFilter = new LessThanFilter("elevation", 200.0f);
-        _inSmallFilter = new InFilter("type", Enumerable.Range(0, SmallListSize).Select(i => $"value_{i}").ToList());
-        _inLargeFilter = new InFilter("type", Enumerable.Range(0, LargeListSize).Select(i => $"value_{i}").ToList());
-        _hasFilter = new HasFilter("name");
-        _allFilter = new AllFilter(
-        [
-            new EqualsFilter("name", "TestFeature"),
-            new HasFilter("level"),
-            new GreaterThanFilter("elevation", 50.0f)
-        ]);
     }
 
     private static IExpression Parse(string json)
@@ -310,34 +286,12 @@ public class OMTExpressionBenchmarks
     }
 
     [Benchmark]
-    public bool Filter_Equals_String()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _equalsStringFilter.Evaluate(_features[i]);
-
-        return result;
-    }
-
-    [Benchmark]
     public bool Equals_Int()
     {
         bool result = false;
 
         for (int i = 0; i < _contexts.Length; i++)
             result ^= (bool)_equalsInt.Evaluate(_contexts[i])!;
-
-        return result;
-    }
-
-    [Benchmark]
-    public bool Filter_Equals_Int()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _equalsIntFilter.Evaluate(_features[i]);
 
         return result;
     }
@@ -360,17 +314,6 @@ public class OMTExpressionBenchmarks
 
         for (int i = 0; i < _contexts.Length; i++)
             result ^= (bool)_lessThanFloat.Evaluate(_contexts[i])!;
-
-        return result;
-    }
-
-    [Benchmark]
-    public bool Filter_LessThan_Float()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _lessThanFilter.Evaluate(_features[i]);
 
         return result;
     }
@@ -424,28 +367,6 @@ public class OMTExpressionBenchmarks
     }
 
     [Benchmark]
-    public bool Filter_In_SmallList()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _inSmallFilter.Evaluate(_features[i]);
-
-        return result;
-    }
-
-    [Benchmark]
-    public bool Filter_In_LargeList()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _inLargeFilter.Evaluate(_features[i]);
-
-        return result;
-    }
-
-    [Benchmark]
     public bool In_NumberList()
     {
         bool result = false;
@@ -478,17 +399,6 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
-    [Benchmark]
-    public bool Filter_Has_Existing()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _hasFilter.Evaluate(_features[i]);
-
-        return result;
-    }
-
     // =========================================================================
     // LOGIC (short-circuit like the AllFilter/AnyFilter family)
     // =========================================================================
@@ -500,17 +410,6 @@ public class OMTExpressionBenchmarks
 
         for (int i = 0; i < _contexts.Length; i++)
             result ^= (bool)_allExpression.Evaluate(_contexts[i])!;
-
-        return result;
-    }
-
-    [Benchmark]
-    public bool Filter_All()
-    {
-        bool result = false;
-
-        for (int i = 0; i < _features.Length; i++)
-            result ^= _allFilter.Evaluate(_features[i]);
 
         return result;
     }

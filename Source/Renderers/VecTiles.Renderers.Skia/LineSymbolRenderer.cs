@@ -1,3 +1,4 @@
+using NetTopologySuite.Geometries;
 using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
 using VecTiles.Common.Enums;
@@ -232,17 +233,34 @@ public class LineSymbolRenderer : ISymbolRenderer
     {
         var path = new SKPath();
 
-        var (nextPointX, nextPointY) = worldToScreenConverter(symbol.Geometry.Coordinates[0].X,
-            symbol.Geometry.Coordinates[0].Y);
-
-        path.MoveTo((float)nextPointX, (float)nextPointY);
-
-        for (var i = 1; i < symbol.Geometry.Coordinates.Length; i++)
+        // A merged symbol can carry a MultiLineString when segments of the
+        // same feature are not directly connected
+        IEnumerable<LineString> parts = symbol.Geometry switch
         {
-            (nextPointX, nextPointY) = worldToScreenConverter(symbol.Geometry.Coordinates[i].X,
-                symbol.Geometry.Coordinates[i].Y);
+            MultiLineString multi => multi.Geometries.OfType<LineString>(),
+            LineString single => [single],
+            _ => Enumerable.Empty<LineString>(),
+        };
 
-            path.LineTo((float)nextPointX, (float)nextPointY);
+        foreach (var part in parts)
+        {
+            if (part.Coordinates.Length < 2)
+            {
+                continue;
+            }
+
+            var (nextPointX, nextPointY) = worldToScreenConverter(part.Coordinates[0].X,
+                part.Coordinates[0].Y);
+
+            path.MoveTo((float)nextPointX, (float)nextPointY);
+
+            for (var i = 1; i < part.Coordinates.Length; i++)
+            {
+                (nextPointX, nextPointY) = worldToScreenConverter(part.Coordinates[i].X,
+                    part.Coordinates[i].Y);
+
+                path.LineTo((float)nextPointX, (float)nextPointY);
+            }
         }
 
         return path;

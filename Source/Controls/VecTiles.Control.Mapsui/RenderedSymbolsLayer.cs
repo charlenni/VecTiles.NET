@@ -150,6 +150,8 @@ public class RenderedSymbolsLayer : BaseLayer
     /// <summary>
     /// Retrieves and sorts symbols from the specified symbol layers.
     /// Symbols are ordered by SortOrder first, then by Rank.
+    /// LineSymbols of the same feature split across multiple tiles are merged
+    /// into one continuous symbol, so they can be treated uniformly.
     /// </summary>
     /// <param name="symbolLayers">The symbol layers to process.</param>
     /// <returns>An enumerable of sorted symbols.</returns>
@@ -159,7 +161,9 @@ public class RenderedSymbolsLayer : BaseLayer
 
         foreach (var symbolLayer in symbolLayers)
         {
-            symbols.AddRange(symbolLayer.Value.Symbols.OrderBy(s => s.SortOrder).ThenBy(s => s.Rank));
+            symbols.AddRange(
+                LineSymbolMerger.MergeById(
+                    symbolLayer.Value.Symbols.OrderBy(s => s.SortOrder).ThenBy(s => s.Rank)));
         }
 
         return symbols;

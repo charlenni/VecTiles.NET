@@ -9,6 +9,7 @@ using Mapsui.Styles;
 using Mapsui.Widgets.InfoWidgets;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
+using SampleApp.Widgets;
 
 namespace SampleApp.Views;
 
@@ -46,6 +47,13 @@ public partial class MainView : UserControl
         performanceWidget.Opacity = 1;
 
         MapControl.Map.Widgets.Add(new MouseCoordinatesWidget());
+
+        MapControl.Map.Widgets.Add(new ZoomWidget(MapControl.Map)
+        {
+            // Change ZoomPosition to place the widget: TopLeft, TopCenter, TopRight,
+            // MiddleLeft, Center, MiddleRight, BottomLeft, BottomCenter, BottomRight
+            ZoomPosition = ZoomWidgetPosition.TopRight
+        });
 
         MapControl.Map.Navigator.RotationLock = false;
 

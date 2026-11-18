@@ -12,6 +12,9 @@ switch (suite)
     case "expressions":
         BenchmarkRunner.Run<OMTExpressionBenchmarks>(args: benchmarkArgs);
         break;
+    case "drawtile":
+        BenchmarkRunner.Run<OMTDrawTileBenchmarks>(args: benchmarkArgs);
+        break;
     case "converter":
         BenchmarkRunner.Run<OMTConverterBenchmarks>(args: benchmarkArgs);
         break;

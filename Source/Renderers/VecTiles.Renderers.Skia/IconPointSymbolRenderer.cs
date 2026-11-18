@@ -16,6 +16,11 @@ public class IconPointSymbolRenderer : ISymbolRenderer
 {
     private static readonly SKPaint Paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
     private static readonly SKSamplingOptions SamplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
+
+    // Linear sampling for drawing the icon to screen: at fractional scales and sub pixel
+    // positions nearest-neighbor sampling stretches the sprite edge pixels, so baked
+    // sprite borders (e.g. route shields) render thicker on some sides than on others.
+    private static readonly SKSamplingOptions ScreenSampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Green, StrokeWidth = 1, IsStroke = true };
 
     /// <summary>
@@ -36,7 +41,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             Paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
         }
 
-        var image = (SKBitmap)symbol.Icon.Native!;
+        var image = (SKImage)symbol.Icon.Native!;
         var imgWidth = image.Width;
         var imgHeight = image.Height;
         var anchorX = (float)symbol.Anchor.X;
@@ -88,9 +93,10 @@ public class IconPointSymbolRenderer : ISymbolRenderer
                 (0.5f - anchorY) * imgHeight);
         }
 
-        canvas.DrawBitmap(image,
+        canvas.DrawImage(image,
             -anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
             -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio,
+            ScreenSampling,
             Paint);
 
         canvas.Restore();
@@ -204,29 +210,28 @@ public class IconPointSymbolRenderer : ISymbolRenderer
 
         if (symbol.Icon.Native is null)
         {
-            symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary);
+            var atlasImage = (SKImage)(symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary));
 
             // Cut out the sprite 1:1 in atlas pixels. Never bake the scale into the cached
-            // bitmap: the sprite is shared between symbols with different icon sizes, and
+            // image: the sprite is shared between symbols with different icon sizes, and
             // DrawIcon applies pixel ratio and scale when drawing.
-            var spriteBitmap = new SKBitmap(symbol.Icon.Width, symbol.Icon.Height,
-                ((SKImage)symbol.Icon.Atlas.Native).ColorType,
-                ((SKImage)symbol.Icon.Atlas.Native).AlphaType);
             var spriteRect = new SKRect(symbol.Icon.X, symbol.Icon.Y,
                 symbol.Icon.X + symbol.Icon.Width,
                 symbol.Icon.Y + symbol.Icon.Height);
 
-            using (var canvas = new SKCanvas(spriteBitmap))
+            using (var spriteBitmap = new SKBitmap(symbol.Icon.Width, symbol.Icon.Height,
+                       atlasImage.ColorType, atlasImage.AlphaType))
+            using (var spriteCanvas = new SKCanvas(spriteBitmap))
             {
-                canvas.DrawImage((SKImage)symbol.Icon.Atlas.Native, spriteRect,
+                spriteCanvas.DrawImage(atlasImage, spriteRect,
                     new SKRect(0, 0, symbol.Icon.Width, symbol.Icon.Height),
                     SamplingOptions
                 );
+
+                spriteBitmap.SetImmutable();
+
+                symbol.Icon.Native = SKImage.FromBitmap(spriteBitmap);
             }
-
-            spriteBitmap.SetImmutable();
-
-            symbol.Icon.Native = spriteBitmap;
         }
 
         var anchor = new Point(symbol.Anchor.X * width, symbol.Anchor.Y * height);

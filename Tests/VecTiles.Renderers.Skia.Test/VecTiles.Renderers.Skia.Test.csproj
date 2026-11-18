@@ -231,6 +231,7 @@
     <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
     <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />
     <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\Source\Controls\VecTiles.Control.Mapsui\VecTiles.Controls.Mapsui.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -391,6 +392,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Files\Originals\Text-Padding.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Files\Originals\RenderedTile-Z19-X274582-Y183615.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

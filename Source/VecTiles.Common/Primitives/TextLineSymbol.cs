@@ -93,6 +93,11 @@ public class TextLineSymbol : Symbol
     public string[] FontNames { get; init; }
 
     /// <summary>
+    /// Line height as multiple of the font size, used when text is wrapped to multiple lines
+    /// </summary>
+    public float LineHeight { get; init; } = 1.2f;
+
+    /// <summary>
     /// Function to calculate font size of symbol text from EvaluationContext
     /// </summary>
     public Func<EvaluationContext, float>? FontSize { get; init; }
@@ -159,6 +164,7 @@ public class TextLineSymbol : Symbol
             Translate = Translate,
             TranslateAnchor = TranslateAnchor,
             MaxWidth = MaxWidth,
+            LineHeight = LineHeight,
         };
 
         return result;

@@ -258,7 +258,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         // Layout is expensive; identical texts with identical layout parameters
         // share one measured RenderedText
         symbol.Native = RenderedTextCache.GetOrCreate(symbol.Text, symbol.StyleName, symbol.FontNames,
-            fontSize, maxWidth, symbol.Alignment.ToTextAlignment(), (int)symbol.Direction);
+            fontSize, symbol.LineHeight, maxWidth, symbol.Alignment.ToTextAlignment(), (int)symbol.Direction);
 
         var text = (RenderedText)symbol.Native;
 

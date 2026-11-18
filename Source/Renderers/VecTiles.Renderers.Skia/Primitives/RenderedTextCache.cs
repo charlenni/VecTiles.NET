@@ -27,6 +27,7 @@ public static class RenderedTextCache
         string StyleName,
         string FontNames,
         float FontSize,
+        float LineHeight,
         float? MaxWidth,
         TextAlignment Alignment,
         int Direction);
@@ -41,14 +42,15 @@ public static class RenderedTextCache
     /// <param name="styleName">Name of the style to resolve fonts for.</param>
     /// <param name="fontNames">Candidate font names.</param>
     /// <param name="fontSize">Font size in pixels.</param>
+    /// <param name="lineHeight">Line height as multiple of the font size.</param>
     /// <param name="maxWidth">Maximum width of the text block, or null.</param>
     /// <param name="alignment">Alignment of the text block.</param>
     /// <param name="direction">Text direction of the symbol.</param>
     /// <returns>A measured <see cref="RenderedText"/>.</returns>
     public static RenderedText GetOrCreate(string text, string styleName, string[] fontNames, float fontSize,
-        float? maxWidth, TextAlignment alignment, int direction)
+        float lineHeight, float? maxWidth, TextAlignment alignment, int direction)
     {
-        var key = new TextLayoutKey(text, styleName, string.Join('\0', fontNames), fontSize, maxWidth,
+        var key = new TextLayoutKey(text, styleName, string.Join('\0', fontNames), fontSize, lineHeight, maxWidth,
             alignment, direction);
 
         if (Cache.TryGetValue(key, out var renderedText))
@@ -56,7 +58,7 @@ public static class RenderedTextCache
             return renderedText;
         }
 
-        renderedText = LayoutRenderedText(text, styleName, fontNames, fontSize, maxWidth, alignment);
+        renderedText = LayoutRenderedText(text, styleName, fontNames, fontSize, lineHeight, maxWidth, alignment);
 
         Cache[key] = renderedText;
 
@@ -69,7 +71,7 @@ public static class RenderedTextCache
     }
 
     private static RenderedText LayoutRenderedText(string text, string styleName, string[] fontNames,
-        float fontSize, float? maxWidth, TextAlignment alignment)
+        float fontSize, float lineHeight, float? maxWidth, TextAlignment alignment)
     {
         var result = new RenderedText(text, FontCache.CreateFonts(styleName, fontNames));
 
@@ -88,6 +90,16 @@ public static class RenderedTextCache
         // CPU cycles, so cache them for later use
         result.MeasuredWidth = result.Text.MeasuredWidth;
         result.MeasuredHeight = result.Text.MeasuredHeight;
+
+        // Line height only changes the spacing between wrapped lines, so single-line
+        // texts keep the compact default layout
+        if (result.Text.LineCount > 1)
+        {
+            result.TextStyle.LineHeight = lineHeight;
+            result.Text.ApplyStyle(0, result.Text.Length, result.TextStyle);
+            result.MeasuredWidth = result.Text.MeasuredWidth;
+            result.MeasuredHeight = result.Text.MeasuredHeight;
+        }
 
         // Keep MeasuredPadding.Left as drawing correction. RichTextKit positions lines
         // including the left padding caused by the maximum width; Paint then draws at

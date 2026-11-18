@@ -51,7 +51,7 @@ public class OMTSource
 
     [JsonConverter(typeof(ExpressionConverter))]
     [JsonProperty("filter")]
-    public IExpression Filter { get; set; }
+    public IExpression Filter { get; set; } = Expression.Empty;
 
     [JsonProperty("generateId")]
     public bool GenerateId { get; set; } = false;

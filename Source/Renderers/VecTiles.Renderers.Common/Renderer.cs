@@ -173,7 +173,7 @@ public class Renderer
 
     private static void RenderTilePartAsVectorFill(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
     {
-        if (!ExtractFeatures(data, style, out var features))
+        if (!ExtractFeatures(data, style, context, out var features))
         {
             return;
         }
@@ -183,7 +183,7 @@ public class Renderer
 
     private static void RenderTilePartAsVectorLine(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
     {
-        if (!ExtractFeatures(data, style, out var features))
+        if (!ExtractFeatures(data, style, context, out var features))
         {
             return;
         }
@@ -195,7 +195,7 @@ public class Renderer
     {
         var symbols = new List<ISymbol>();
 
-        if (!ExtractFeatures(data, style, out var features))
+        if (!ExtractFeatures(data, style, context, out var features))
         {
             // Add SymbolLayer, even if it contains no symbols
             renderedTile.RenderedSymbols.Add(style.Name, new SymbolLayer(symbols));
@@ -239,7 +239,7 @@ public class Renderer
         return true;
     }
 
-    private static bool ExtractFeatures(VectorTile data, ILayerStyle style, out IReadOnlyList<IFeature> features)
+    private static bool ExtractFeatures(VectorTile data, ILayerStyle style, EvaluationContext context, out IReadOnlyList<IFeature> features)
     {
         var layer = data.Layers.FirstOrDefault(l => string.Equals(l.Name, style.SourceLayer, StringComparison.Ordinal));
 
@@ -256,7 +256,7 @@ public class Renderer
         for (var i = 0; i < source.Count; i++)
         {
             var f = source[i];
-            if (filter.Evaluate(f))
+            if (filter.Evaluate(context.WithFeature(f)) is true)
             {
                 (result ??= new List<IFeature>()).Add(f);
             }

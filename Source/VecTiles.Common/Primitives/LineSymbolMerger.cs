@@ -88,7 +88,14 @@ public static class LineSymbolMerger
             }
         }
 
+        // Chain in a deterministic order: the chained geometry (and with it the
+        // anchor positions of the labels) must not depend on the order in which
+        // the tiles were enumerated
+        segments.Sort(CompareSegments);
+
         var chains = Chain(segments, tolerance);
+
+        chains.Sort(CompareSegments);
 
         Geometry geometry = chains.Count == 1
             ? new LineString(chains[0].ToArray())
@@ -201,6 +208,24 @@ public static class LineSymbolMerger
     }
 
     private static bool Touch(Coordinate a, Coordinate b, double tolerance) => a.Distance(b) <= tolerance;
+
+    /// <summary>
+    /// Compares two polylines by their first coordinate (and the last one on
+    /// equality), so that chaining and geometry order are deterministic.
+    /// </summary>
+    private static int CompareSegments(List<Coordinate> a, List<Coordinate> b)
+    {
+        var compare = FirstCompare(a[0], b[0]);
+
+        return compare != 0 ? compare : FirstCompare(a[^1], b[^1]);
+    }
+
+    private static int FirstCompare(Coordinate a, Coordinate b)
+    {
+        var compare = a.X.CompareTo(b.X);
+
+        return compare != 0 ? compare : a.Y.CompareTo(b.Y);
+    }
 
     /// <summary>
     /// Adds a segment to the end of a chain, skipping the duplicated joint point.

@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Index.Quadtree;
 using SkiaSharp;
@@ -12,66 +13,31 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 namespace VecTiles.Renderers.Skia;
 
 /// <summary>
-/// Renders text line symbols on a Skia canvas.
+/// Placement of a text label along a path.
+/// </summary>
+/// <param name="Reversed">Text is drawn against the direction of the path (keep upright).</param>
+/// <param name="DrawStart">Distance along the drawing path where the first glyph starts
+/// (on the reversed path for reversed labels).</param>
+/// <param name="PathLength">Length of the contour the label is placed on.</param>
+/// <param name="Boxes">Collision boxes of the label in screen coordinates, one per
+/// step along the path, rotated to the local tangent.</param>
+public sealed record PathTextPlacement(bool Reversed, float DrawStart, float PathLength,
+    IReadOnlyList<Envelope> Boxes);
+
+/// <summary>
+/// Renders text line symbols on a Skia canvas. Text of line symbols is drawn
+/// along the line with every character rotated to the local tangent of the path
+/// (like MapLibre renders labels with symbol-placement: line).
 /// </summary>
 public static class TextLineSymbolRenderer
 {
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 1, IsStroke = true };
 
     /// <summary>
-    /// Draws text on the specified canvas at the given screen coordinates.
+    /// Cache of resolved typefaces, so that font matching is not repeated for
+    /// every drawn label.
     /// </summary>
-    /// <param name="canvas">The Skia canvas to draw on.</param>
-    /// <param name="context">The evaluation context for styling.</param>
-    /// <param name="symbol">The text line symbol to draw.</param>
-    /// <param name="screenX">The X coordinate on the screen.</param>
-    /// <param name="screenY">The Y coordinate on the screen.</param>
-    /// <param name="rotation">The rotation angle in degrees.</param>
-    /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
-    public static void DrawText(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
-    {
-        SKPaint paint = new SKPaint();
-
-        canvas.Save();
-
-        canvas.Translate((float)screenX, (float)screenY);
-        canvas.Scale(1f / context.Scale);
-
-        if (symbol.RotationAlignment == MapAlignment.Map)
-        {
-            canvas.RotateDegrees((float)rotation);
-        }
-
-        var text = (RenderedText)symbol.Native;
-
-        var textStyle = text.TextStyle;
-
-        textStyle.TextColor = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f));
-        textStyle.HaloBlur = symbol.HaloBlur.Invoke(context);
-        textStyle.HaloColor = symbol.HaloColor.Invoke(context).ToSKColor();
-        // RichTextKit strokes the halo centered on the glyph outline (half inwards,
-        // half outwards). The OMT spec interprets halo-width as the distance to the
-        // outline outwards, so double the width to compensate.
-        textStyle.HaloWidth = 2f * symbol.HaloWidth.Invoke(context);
-
-        // Translate to the correct position, respecting the correction (leading space before TextBlocks text starts)
-        canvas.Translate((float)symbol.Envelope.MinX, (float)symbol.Envelope.MinY);
-
-        // Correction for RichTextKit drawing with MaxWidth coordinates but using only real text size
-        canvas.Translate(symbol.Padding - text.LeftRightCorrection, symbol.Padding);
-
-        // Draw the text using RichTextKit
-        text.Text.Paint(canvas);
-
-        canvas.Restore();
-
-        if (showValidBorders)
-        {
-            canvas.DrawRect(
-                new SKRect((float)symbol.ScreenEnvelope!.MinX, (float)symbol.ScreenEnvelope!.MinY,
-                    (float)symbol.ScreenEnvelope!.MaxX, (float)symbol.ScreenEnvelope!.MaxY), DebugPaint);
-        }
-    }
+    private static readonly ConcurrentDictionary<(string Family, int Weight, int Width, bool Italic), SKTypeface> TypefaceCache = new();
 
     /// <summary>
     /// Draws text along a path on the specified canvas.
@@ -80,40 +46,88 @@ public static class TextLineSymbolRenderer
     /// <param name="context">The evaluation context for styling.</param>
     /// <param name="symbol">The text line symbol to draw.</param>
     /// <param name="path">The path along which to draw the text.</param>
-    /// <param name="screenX">The X coordinate on the screen.</param>
-    /// <param name="screenY">The Y coordinate on the screen.</param>
+    /// <param name="placement">Placement of the label on the path, as returned by CheckForSingleSpace.</param>
     /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
-    public static void DrawTextOnPath(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol, SKPath path, double screenX, double screenY, bool showValidBorders)
+    public static void DrawTextOnPath(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol,
+        SKPath path, PathTextPlacement placement, bool showValidBorders = false)
     {
-        SKPaint paint = new SKPaint();
+        var text = (RenderedText)symbol.Native!;
 
-        var text = (RenderedText)symbol.Native;
-        text.Text.Alignment = symbol.Alignment.ToTextAlignment();
+        var fontSize = symbol.FontSize.Invoke(context);
 
-        var textStyle = (Style)text.Text.GetStyleAtOffset(0);
-        var font = new SKFont();
+        var haloWidth = 2f * symbol.HaloWidth.Invoke(context);
 
-        canvas.DrawTextOnPath(symbol.Text, path, new SKPoint((float)screenX, (float)screenY), font, paint);
+        // Color of the halo and the text, halo is drawn first (stroked around the
+        // glyphs, see the doubled width in the RichTextKit renderer), then the fill
+        using var haloPaint = new SKPaint
+        {
+            Typeface = ResolveTypeface(text),
+            TextSize = fontSize,
+            IsAntialias = true,
+            Style = SKPaintStyle.Stroke,
+            StrokeWidth = haloWidth,
+            StrokeJoin = SKStrokeJoin.Round,
+            Color = symbol.HaloColor.Invoke(context).ToSKColor(),
+        };
+
+        using var fillPaint = new SKPaint
+        {
+            Typeface = haloPaint.Typeface,
+            TextSize = fontSize,
+            IsAntialias = true,
+            Color = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f)),
+        };
+
+        // Vertical centering: FontMetrics.Ascent is negative, so this shifts the
+        // baseline below the path by half the line height and the character
+        // centers sit on the path
+        var offsetFromPath = (fillPaint.FontMetrics.Descent - fillPaint.FontMetrics.Ascent) / 2f;
+
+        // The glyphs are drawn exactly over the collision boxes: the draw start
+        // was computed in the check from the anchor and the padded envelope
+        var drawPath = path;
+        var start = placement.DrawStart;
+
+        if (placement.Reversed)
+        {
+            // Draw against the path direction, so the text keeps upright; the
+            // draw start was already mirrored to the reversed path
+            drawPath = path.Reverse();
+        }
+
+        canvas.DrawTextOnPath(symbol.Text, drawPath, start, offsetFromPath, haloPaint, fillPaint);
+
+        if (showValidBorders)
+        {
+            foreach (var box in placement.Boxes)
+            {
+                canvas.DrawRect(
+                    new SKRect((float)box.MinX, (float)box.MinY, (float)box.MaxX, (float)box.MaxY), DebugPaint);
+            }
+        }
     }
 
     /// <summary>
-    /// Checks if a symbol fits on the path, respecting visible clipped bounds,
-    /// enough space on the path, and no other symbol occupying the space.
+    /// Checks if a text label fits on the path starting from the given position:
+    /// the whole label must fit on the current contour (measured along the path,
+    /// not along straight segments) and none of its per-step collision boxes may
+    /// intersect a symbol that was already placed.
     /// </summary>
     /// <param name="canvas">Canvas with clipping bounds.</param>
     /// <param name="context">Context for creating the envelope.</param>
-    /// <param name="path">Path on which this symbol should be placed.</param>
-    /// <param name="startPos">Start position on the path where the first symbol should be placed.</param>
+    /// <param name="path">Single contour of the path on which this symbol should be placed.</param>
+    /// <param name="startPos">Anchor position on the path where the label starts.</param>
     /// <param name="symbol">Symbol that should be placed on the path.</param>
     /// <param name="tree">Tree with all other already placed symbols.</param>
-    /// <param name="screenX">X position for creating the screen envelope of the symbol.</param>
-    /// <param name="screenY">Y position for creating the screen envelope of the symbol.</param>
-    /// <param name="rotation">Rotation of the screen for creating the screen envelope of the symbol.</param>
     /// <param name="showInvalidBorders">Flag indicating if invalid borders should be drawn.</param>
+    /// <param name="placement">Receives the placement of the label if it fits.</param>
     /// <returns>A <see cref="SymbolPlacementStatus"/> indicating if the symbol can be placed.</returns>
-    public static SymbolPlacementStatus CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, SKPath path, double startPos,
-        TextLineSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showInvalidBorders)
+    public static SymbolPlacementStatus CheckForSingleSpace(SKCanvas canvas, EvaluationContext context, SKPath path,
+        double startPos, TextLineSymbol symbol, Quadtree<ISymbol> tree, bool showInvalidBorders,
+        out PathTextPlacement? placement)
     {
+        placement = null;
+
         symbol.Envelope ??= CreateEnvelope(symbol, context);
 
         if (symbol.Envelope is null)
@@ -121,24 +135,108 @@ public static class TextLineSymbolRenderer
             return SymbolPlacementStatus.NotInitialized;
         }
 
-        // Check if there is enough space to fit text on the segment
-        if (!path.CanFitOnNextLineSegment((float)startPos, (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX)))
+        var width = (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX);
+        var height = (float)(symbol.Envelope.MaxY - symbol.Envelope.MinY);
+
+        if (width <= 0 || height <= 0)
+        {
+            return SymbolPlacementStatus.NotInitialized;
+        }
+
+        using var pathMeasure = new SKPathMeasure(path);
+        var length = pathMeasure.Length;
+
+        pathMeasure.GetPositionAndTangent((float)startPos, out _, out var anchorTangent);
+
+        // With KeepUpright, draw against the path direction when the tangent
+        // points leftwards, so the characters do not stand on their head
+        var reversed = symbol.KeepUpright && Math.Sign(anchorTangent.X) < 0;
+
+        // The glyph run relative to the anchor starts at the anchor position
+        // (anchor 0.5 centers the label) plus the horizontal text offset
+        var text = (RenderedText)symbol.Native!;
+        var measuredWidth = text.MeasuredWidth;
+        var glyphLead = (float)(-symbol.Anchor.X * measuredWidth + symbol.Offset.X);
+
+        // The padded envelope runs along the path symmetric to the reading
+        // direction: forward from the anchor shifted by the envelope's left
+        // edge, or mirrored for flipped labels. Collision boxes and drawn
+        // glyphs must cover exactly this run.
+        var runStart = reversed
+            ? (float)(startPos - symbol.Envelope.MaxX)
+            : (float)(startPos + symbol.Envelope.MinX);
+
+        var drawStart = reversed
+            ? (float)(length - startPos + glyphLead)
+            : (float)(startPos + glyphLead);
+
+        if (runStart < 0 || runStart + width > length)
         {
             return SymbolPlacementStatus.Collision;
         }
 
-        // Save for later use
-        var screenEnvelope = symbol.Envelope.Copy();
+        // One collision box per step along the path, rotated to the local tangent
+        // (MapLibre checks one box per glyph; with even in path direction even
+        // sized boxes, curved labels do not block more space than they occupy)
+        var step = Math.Min(width, Math.Max(8f, height));
+        var count = Math.Max(1, (int)Math.Ceiling(width / step));
+        var boxWidth = width / count;
 
-        // Move symbol's envelope to the screen position
-        if (rotation != 0.0)
+        var boxes = new List<Envelope>(count);
+
+        var maxAngle = symbol.MaxAngle?.Invoke(context) ?? 45f;
+        var lastAngle = double.NaN;
+
+        // Fine sampling of the tangents, so that sharp bends between the box
+        // centers are not averaged away
+        var angleStep = Math.Min(4f, boxWidth);
+
+        for (var i = 0; i < count; i++)
         {
-            screenEnvelope.RotateDegrees(rotation);
+            var center = (float)(runStart + (i + 0.5) * boxWidth);
+
+            if (!pathMeasure.GetPositionAndTangent(center, out var position, out var tangentVec))
+            {
+                return SymbolPlacementStatus.Collision;
+            }
+
+            // Drop labels on lines that bend sharper than the maximum angle
+            // change per step (MapLibre's text-max-angle)
+            for (var sample = i == 0 ? runStart + angleStep / 2 : center - boxWidth / 2;
+                sample <= center + boxWidth / 2 + 0.5;
+                sample += angleStep)
+            {
+                pathMeasure.GetPositionAndTangent((float)sample, out _, out var sampleTangent);
+
+                var sampleAngle = Math.Atan2(sampleTangent.Y, sampleTangent.X) * 180 / Math.PI;
+
+                if (!double.IsNaN(lastAngle) && Math.Abs(NormalizeAngle(sampleAngle - lastAngle)) >= maxAngle)
+                {
+                    return SymbolPlacementStatus.Collision;
+                }
+
+                lastAngle = sampleAngle;
+            }
+
+            var angle = Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
+
+            var box = new Envelope(position.X - boxWidth / 2, position.X + boxWidth / 2,
+                position.Y - height / 2, position.Y + height / 2);
+
+            box.RotateDegreesAroundPoint(angle, position.X, position.Y);
+
+            boxes.Add(box);
         }
 
-        screenEnvelope.Translate(screenX, screenY);
+        // Union of all boxes for the query, the exact check runs per box
+        var union = boxes[0].Copy();
 
-        var symbols = tree.Query(screenEnvelope);
+        foreach (var box in boxes.Skip(1))
+        {
+            union.ExpandToInclude(box);
+        }
+
+        var symbols = tree.Query(union);
 
         foreach (var other in symbols)
         {
@@ -153,7 +251,14 @@ public static class TextLineSymbolRenderer
                 continue;
             }
 
-            if (!screenEnvelope.Intersects(otherSymbol.ScreenEnvelope))
+            if (!union.Intersects(otherSymbol.ScreenEnvelope))
+            {
+                continue;
+            }
+
+            var intersectsLabel = boxes.Any(box => box.Intersects(otherSymbol.ScreenEnvelope!));
+
+            if (!intersectsLabel)
             {
                 continue;
             }
@@ -165,16 +270,59 @@ public static class TextLineSymbolRenderer
 
             if (showInvalidBorders && symbol.Name != otherSymbol.Name)
             {
-                canvas.DrawRect(new SKRect((float)screenEnvelope.MinX, (float)screenEnvelope.MinY,
-                    (float)screenEnvelope.MaxX, (float)screenEnvelope.MaxY), DebugPaint);
+                canvas.DrawRect(new SKRect((float)union.MinX, (float)union.MinY,
+                    (float)union.MaxX, (float)union.MaxY), DebugPaint);
             }
 
             return SymbolPlacementStatus.Collision;
         }
 
-        symbol.ScreenEnvelope = screenEnvelope;
+        // Union envelope as screen envelope of the symbol, the per-box envelopes
+        // are inserted into the quadtree by the caller after drawing
+        symbol.ScreenEnvelope = union;
+
+        placement = new PathTextPlacement(reversed, drawStart, length, boxes);
 
         return SymbolPlacementStatus.Success;
+    }
+
+    /// <summary>
+    /// Normalizes an angle to [-180, 180].
+    /// </summary>
+    private static double NormalizeAngle(double angle)
+    {
+        angle %= 360;
+
+        if (angle > 180)
+        {
+            angle -= 360;
+        }
+
+        if (angle < -180)
+        {
+            angle += 360;
+        }
+
+        return angle;
+    }
+
+    /// <summary>
+    /// Resolves the Skia typeface for the cached text once per font signature.
+    /// </summary>
+    private static SKTypeface ResolveTypeface(RenderedText text)
+    {
+        var style = text.TextStyle;
+
+        var key = (style.FontFamily, (int)style.FontWeight, (int)style.FontWidth, style.FontItalic);
+
+        return TypefaceCache.GetOrAdd(key, static key =>
+        {
+            var fontStyle = new SKFontStyle((SKFontStyleWeight)key.Weight,
+                (SKFontStyleWidth)key.Width,
+                key.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright);
+
+            return SKFontManager.Default.MatchFamily(key.Family, fontStyle);
+        });
     }
 
     /// <summary>

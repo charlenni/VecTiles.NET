@@ -16,6 +16,8 @@ public class LineSymbolRenderer : ISymbolRenderer
 {
     /// <summary>
     /// Checks if there is space to draw the line symbol along its path.
+    /// All contours of the (possibly merged) geometry are checked, so that a
+    /// symbol with space on any contour can be placed.
     /// </summary>
     /// <param name="canvas">The Skia canvas to check against.</param>
     /// <param name="context">The evaluation context for styling.</param>
@@ -34,59 +36,53 @@ public class LineSymbolRenderer : ISymbolRenderer
             return SymbolPlacementStatus.NotInitialized;
         }
 
-        var path = CreateScreenPath(symbol, worldToScreenConverter);
-
-        // Check if at least one symbol has space on the map
-
-        using var pathMeasure = new SKPathMeasure(path);
-
-        for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+        foreach (var contour in CreateContourPaths(symbol, worldToScreenConverter))
         {
-            if (pathMeasure.Length < symbol.Spacing)
+            using (contour)
+            using (var pathMeasure = new SKPathMeasure(contour))
             {
-                // We can only place one symbol in this part, so set it in the middle
-                pos = pathMeasure.Length / 2;
-            }
+                for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+                {
+                    if (pathMeasure.Length < symbol.Spacing)
+                    {
+                        // We can only place one symbol in this part, so set it in the middle
+                        pos = pathMeasure.Length / 2;
+                    }
 
-            pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
+                    pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
 
-            var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
+                    var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
 
-            var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
+                    var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
 
-            if (symbol.IconSymbol is not null)
-            {
-                var iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment,
-                    tangent, symbol.IconSymbol.KeepUpright);
+                    if (symbol.IconSymbol is not null)
+                    {
+                        spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                            contour, pos,
+                            symbol.IconSymbol!,
+                            tree, nextPosition.X,
+                            nextPosition.Y, showUnvalidBorders);
+                    }
 
-                spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
-                    path, pos,
-                    symbol.IconSymbol!,
-                    tree, nextPosition.X,
-                    nextPosition.Y, showUnvalidBorders);
-            }
+                    var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
 
-            var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
+                    if (symbol.TextSymbol is not null)
+                    {
+                        spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                            contour, pos,
+                            symbol.TextSymbol!,
+                            tree, showUnvalidBorders, out _);
+                    }
 
-            if (symbol.TextSymbol is not null)
-            {
-                var textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment,
-                    tangent, symbol.TextSymbol.KeepUpright);
-
-                spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
-                    path, pos,
-                    symbol.TextSymbol!,
-                    tree, nextPosition.X,
-                    nextPosition.Y, textRotation, showUnvalidBorders);
-            }
-
-            if ((symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
-                (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText)) ||
-                symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
-                (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
-            {
-                // There is space for at least one of icon or text at any position of the path
-                return SymbolPlacementStatus.Success;
+                    if ((symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
+                        (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText)) ||
+                        symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
+                        (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
+                    {
+                        // There is space for at least one of icon or text at any position of the path
+                        return SymbolPlacementStatus.Success;
+                    }
+                }
             }
         }
 
@@ -95,6 +91,7 @@ public class LineSymbolRenderer : ISymbolRenderer
 
     /// <summary>
     /// Draws the line symbol (icons and/or text) along its path on the specified canvas.
+    /// All contours of the (possibly merged) geometry are drawn.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>
     /// <param name="context">The evaluation context for styling.</param>
@@ -111,86 +108,93 @@ public class LineSymbolRenderer : ISymbolRenderer
             return;
         }
 
-        var path = CreateScreenPath(symbol, worldToScreenConverter);
-
-        using var pathMeasure = new SKPathMeasure(path);
-
-        for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+        foreach (var contour in CreateContourPaths(symbol, worldToScreenConverter))
         {
-            var iconDrawn = false;
-            var textDrawn = false;
-
-            if (pathMeasure.Length < symbol.Spacing)
+            using (contour)
+            using (var pathMeasure = new SKPathMeasure(contour))
             {
-                // We can only place one symbol in this part, so set it in the middle
-                pos = pathMeasure.Length / 2;
-            }
-
-            pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
-
-            var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
-
-            var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
-            var iconRotation = 0f;
-
-            if (symbol.IconSymbol is not null)
-            {
-                iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment,
-                    tangent, symbol.IconSymbol.KeepUpright);
-
-                spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
-                    path, pos,
-                    symbol.IconSymbol!,
-                    tree, nextPosition.X,
-                    nextPosition.Y, false);
-            }
-
-            var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
-            var textRotation = 0f;
-
-            if (symbol.TextSymbol is not null)
-            {
-                textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment,
-                    tangent, symbol.TextSymbol.KeepUpright);
-
-                spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
-                    path, pos,
-                    symbol.TextSymbol!, tree, nextPosition.X,
-                    nextPosition.Y, textRotation, false);
-            }
-
-            if (symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
-                (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText))
-            {
-                // Draw icon
-                IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X,
-                    nextPosition.Y, iconRotation, showValidBorders);
-
-                iconDrawn = true;
-            }
-
-            if (symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
-                (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
-            {
-                TextLineSymbolRenderer.DrawText(canvas, context, symbol.TextSymbol!, nextPosition.X,
-                    nextPosition.Y, textRotation, showValidBorders);
-
-                if (!symbol.HasIcon)
+                for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
                 {
-                    pos += ((RenderedText)symbol.TextSymbol.Native).MeasuredWidth;
+                    var iconDrawn = false;
+                    var textDrawn = false;
+
+                    if (pathMeasure.Length < symbol.Spacing)
+                    {
+                        // We can only place one symbol in this part, so set it in the middle
+                        pos = pathMeasure.Length / 2;
+                    }
+
+                    pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
+
+                    var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
+
+                    var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
+                    var iconRotation = 0f;
+
+                    if (symbol.IconSymbol is not null)
+                    {
+                        iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment,
+                            tangent, symbol.IconSymbol.KeepUpright);
+
+                        spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                            contour, pos,
+                            symbol.IconSymbol!,
+                            tree, nextPosition.X,
+                            nextPosition.Y, false);
+                    }
+
+                    var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
+                    PathTextPlacement? textPlacement = null;
+
+                    if (symbol.TextSymbol is not null)
+                    {
+                        spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                            contour, pos,
+                            symbol.TextSymbol!, tree, false, out textPlacement);
+                    }
+
+                    if (symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
+                        (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText))
+                    {
+                        // Draw icon
+                        IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X,
+                            nextPosition.Y, iconRotation, showValidBorders);
+
+                        iconDrawn = true;
+                    }
+
+                    if (symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
+                        (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
+                    {
+                        TextLineSymbolRenderer.DrawTextOnPath(canvas, context, symbol.TextSymbol!, contour,
+                            textPlacement!, showValidBorders);
+
+                        if (!symbol.HasIcon)
+                        {
+                            pos += ((RenderedText)symbol.TextSymbol.Native).MeasuredWidth;
+                        }
+
+                        textDrawn = true;
+                    }
+
+                    if (iconDrawn)
+                    {
+                        tree.Insert(symbol.IconSymbol!.ScreenEnvelope, symbol.IconSymbol.Copy());
+                    }
+
+                    if (textDrawn)
+                    {
+                        // Insert one copy per collision box of the label, so other
+                        // symbols collide with the label along the whole path
+                        foreach (var box in textPlacement!.Boxes)
+                        {
+                            var copy = symbol.TextSymbol!.Copy();
+                            copy.ScreenEnvelope = box;
+
+                            tree.Insert(box, copy);
+                        }
+                    }
                 }
-
-                textDrawn = true;
-            }
-
-            if (iconDrawn)
-            {
-                tree.Insert(symbol.IconSymbol!.ScreenEnvelope, symbol.IconSymbol.Copy());
-            }
-
-            if (textDrawn)
-            {
-                tree.Insert(symbol.TextSymbol!.ScreenEnvelope, symbol.TextSymbol.Copy());
             }
         }
     }
@@ -223,15 +227,18 @@ public class LineSymbolRenderer : ISymbolRenderer
     }
 
     /// <summary>
-    /// Converts the world coordinates of a geometry to screen coordinates.
+    /// Converts the world coordinates of a geometry to screen coordinates and
+    /// creates one path per contour of the geometry. Checking and drawing run
+    /// per contour, so that labels of other contours do not influence the
+    /// measured length of the current one.
     /// </summary>
     /// <param name="symbol">Symbol with geometry to convert.</param>
     /// <param name="worldToScreenConverter">Converter from world to screen coordinates.</param>
-    /// <returns>Path with screen coordinates.</returns>
-    private static SKPath CreateScreenPath(LineSymbol symbol,
+    /// <returns>Paths with screen coordinates, one per contour.</returns>
+    private static List<SKPath> CreateContourPaths(LineSymbol symbol,
         Func<double, double, (double, double)> worldToScreenConverter)
     {
-        var path = new SKPath();
+        var paths = new List<SKPath>();
 
         // A merged symbol can carry a MultiLineString when segments of the
         // same feature are not directly connected
@@ -249,6 +256,8 @@ public class LineSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
+            var path = new SKPath();
+
             var (nextPointX, nextPointY) = worldToScreenConverter(part.Coordinates[0].X,
                 part.Coordinates[0].Y);
 
@@ -261,8 +270,10 @@ public class LineSymbolRenderer : ISymbolRenderer
 
                 path.LineTo((float)nextPointX, (float)nextPointY);
             }
+
+            paths.Add(path);
         }
 
-        return path;
+        return paths;
     }
 }

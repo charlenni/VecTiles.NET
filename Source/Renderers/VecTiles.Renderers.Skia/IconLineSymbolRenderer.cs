@@ -126,8 +126,8 @@ public static class IconLineSymbolRenderer
             return SymbolPlacementStatus.NotInitialized;
         }
 
-        // Check if there is enough space to fit the symbol on the next line segment
-        if (!path.CanFitOnNextLineSegment((float)startPos, (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX)))
+        // Check if there is enough space to fit the symbol on the remaining path
+        if (!path.CanFitFrom((float)startPos, (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX)))
         {
             return SymbolPlacementStatus.Collision;
         }

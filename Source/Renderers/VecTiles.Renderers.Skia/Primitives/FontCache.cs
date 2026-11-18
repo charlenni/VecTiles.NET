@@ -7,6 +7,7 @@ namespace VecTiles.Renderers.Skia.Primitives;
 public static class FontCache
 {
     private static readonly Dictionary<(string, string), Topten.RichTextKit.Style> TextStyles = new();
+    private static readonly object TextStylesLock = new();
 
     public static Style? CreateFonts(string styleName, string[] names)
     {
@@ -35,34 +36,39 @@ public static class FontCache
             return null;
         }
 
-        if (TextStyles.TryGetValue((styleName, fontName), out var textStyle))
+        var key = (styleName, fontName);
+
+        lock (TextStylesLock)
         {
+            if (TextStyles.TryGetValue(key, out var textStyle))
+            {
+                return textStyle;
+            }
+
+            textStyle = new Topten.RichTextKit.Style();
+
+            // TODO: Create correct family name
+            var fontFamilyName = fontName.CreateFontWidth(ref textStyle)
+                .CreateFontWeight(ref textStyle)
+                .CreateFontItalic(ref textStyle);
+
+            var fontManager = SKFontManager.Default;
+            var typeface = fontManager.MatchFamily(fontFamilyName);
+
+            // Check, if result is the font family asked for
+            bool fontExists = typeface != null && typeface.FamilyName.Equals(fontFamilyName, StringComparison.OrdinalIgnoreCase);
+
+            if (!fontExists)
+            {
+                return null;
+            }
+
+            textStyle.FontFamily = fontFamilyName;
+
+            TextStyles.Add(key, textStyle);
+
             return textStyle;
         }
-
-        textStyle = new Topten.RichTextKit.Style();
-
-        // TODO: Create correct family name
-        var fontFamilyName = fontName.CreateFontWidth(ref textStyle)
-            .CreateFontWeight(ref textStyle)
-            .CreateFontItalic(ref textStyle);
-
-        var fontManager = SKFontManager.Default;
-        var typeface = fontManager.MatchFamily(fontFamilyName);
-
-        // Check, if result is the font family asked for
-        bool fontExists = typeface != null && typeface.FamilyName.Equals(fontFamilyName, StringComparison.OrdinalIgnoreCase);
-
-        if (!fontExists)
-        {
-            return null;
-        }
-
-        textStyle.FontFamily = fontFamilyName;
-
-        TextStyles.Add((styleName, fontName), textStyle);
-
-        return textStyle;
     }
 
     private static string CreateFontWidth(this string fontName, ref Style textStyle)

@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using VecTiles.Common.Interfaces;
 using VecTiles.Styles.OpenMapTiles.Enums;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;

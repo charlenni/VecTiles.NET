@@ -1,3 +1,4 @@
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;

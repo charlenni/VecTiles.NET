@@ -1,6 +1,7 @@
 using System.Text;
 using Newtonsoft.Json.Linq;
 using NetTopologySuite.Geometries;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;

@@ -1,4 +1,6 @@
-﻿namespace VecTiles.Styles.OpenMapTiles.Expressions;
+﻿using VecTiles.Common.Interfaces;
+
+namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
 public class Scope
 {

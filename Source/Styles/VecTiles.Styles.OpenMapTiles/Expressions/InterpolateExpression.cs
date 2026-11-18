@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;
@@ -94,7 +95,7 @@ public class InterpolateExpression : Expression
             if (output == null)
                 return null;
 
-            stops.Add((stop, output));
+            stops.Add((stop, output as IExpression));
         }
 
         return new InterpolateExpression(exponentialBase, input, [.. stops]);

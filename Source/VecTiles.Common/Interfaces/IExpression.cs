@@ -1,6 +1,6 @@
 ﻿using VecTiles.Common.Primitives;
 
-namespace VecTiles.Styles.OpenMapTiles.Expressions;
+namespace VecTiles.Common.Interfaces;
 
 public interface IExpression
 {

@@ -38,7 +38,7 @@ public interface ILayerStyle
     /// <summary>
     /// Filter to get all features for which this style is valid
     /// </summary>
-    IFilter Filter { get; }
+    IExpression Filter { get; }
 
     /// <summary>
     /// Name of source this style belongs to 

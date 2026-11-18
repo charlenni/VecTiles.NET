@@ -4,6 +4,7 @@ using BenchmarkDotNet.Order;
 using Newtonsoft.Json.Linq;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Filter;

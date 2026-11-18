@@ -17,7 +17,6 @@ namespace VecTiles.Renderers.Skia;
 public class TextPointSymbolRenderer : ISymbolRenderer
 {
     private static readonly SKPaint _paint = new SKPaint();
-    private static readonly Dictionary<string, Topten.RichTextKit.Style> TextStyles = new();
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Blue, StrokeWidth = 1, IsStroke = true };
 
     /// <summary>

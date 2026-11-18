@@ -208,7 +208,11 @@ public static class TextLineSymbolRenderer
         var text = (RenderedText)symbol.Native;
 
         var anchor = new SKPoint((float)(-symbol.Anchor.X * text.MeasuredWidth), (float)(-symbol.Anchor.Y * text.MeasuredHeight));
-        var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y + symbol.Offset.Y));
+        // OMT defines text-offset for line-placed symbols in the rotated frame of
+        // the text, where y grows upwards (no y-flip like for point placement).
+        // Screen coordinates grow downwards, so a positive offset moves the label
+        // up, matching the reference implementations (maplibre-gl-js / Maputnik).
+        var offset = new SKPoint((float)(anchor.X + symbol.Offset.X), (float)(anchor.Y - symbol.Offset.Y));
         var padding = symbol.Padding;
 
         // Calculate the rough envelope of text, respecting overhang (e.g., from italic characters)

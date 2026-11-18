@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
+using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Filter;
 using VecTiles.Styles.OpenMapTiles.Json.Converter;
 
@@ -19,7 +20,7 @@ public class OMTLayerStyle : ILayerStyle
 
     [JsonConverter(typeof(FilterConverter))]
     [JsonProperty("filter")]
-    public IFilter Filter { get; set; } = new EmptyFilter();
+    public IExpression Filter { get; set; } = Expression.Empty;
 
     [JsonProperty("layout")]
     public OMTLayerStyleLayout Layout { get; set; } = new OMTLayerStyleLayout();

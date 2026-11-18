@@ -62,15 +62,21 @@ public class PointSymbolRenderer : ISymbolRenderer
     /// Draws the point symbol (icon and/or text) on the specified canvas.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>
-    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="context">The evaluation context for placement checks.</param>
     /// <param name="sym">The symbol to draw.</param>
     /// <param name="tree">The quadtree to track drawn symbols.</param>
-    /// <param name="worldToScreenConverter">Function to convert world coordinates to screen coordinates.</param>
+    /// <param name="worldToScreenConverter">Function to convert world coordinates to the screen space of the checks.</param>
     /// <param name="rotation">The rotation angle in degrees.</param>
     /// <param name="showValidBorders">Whether to draw debug borders around drawn symbols.</param>
+    /// <param name="drawContext">Optional evaluation context for drawing (style sizes); falls back to <paramref name="context"/>.</param>
+    /// <param name="drawWorldToScreenConverter">Optional converter into the screen space used for drawing; falls back to <paramref name="worldToScreenConverter"/>.</param>
     public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree,
-        Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false)
+        Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false,
+        EvaluationContext? drawContext = null, Func<double, double, (double, double)>? drawWorldToScreenConverter = null)
     {
+        var drawCtx = drawContext ?? context;
+        var toDraw = drawWorldToScreenConverter ?? worldToScreenConverter;
+
         var iconDrawn = false;
         var textDrawn = false;
 
@@ -80,6 +86,7 @@ public class PointSymbolRenderer : ISymbolRenderer
         }
 
         var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
+        var (drawX, drawY) = toDraw(symbol.Point.X, symbol.Point.Y);
 
         var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
         var iconRotation = 0f;
@@ -109,7 +116,7 @@ public class PointSymbolRenderer : ISymbolRenderer
             (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText))
         {
             // Draw icon
-            IconPointSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, screenX, screenY, showValidBorders);
+            IconPointSymbolRenderer.DrawIcon(canvas, drawCtx, symbol.IconSymbol!, drawX, drawY, showValidBorders);
 
             iconDrawn = true;
         }
@@ -117,7 +124,7 @@ public class PointSymbolRenderer : ISymbolRenderer
         if (spaceForTextAvailable == SymbolPlacementStatus.Success && symbol.HasText &&
             (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
         {
-            TextPointSymbolRenderer.DrawText(canvas, context, symbol.TextSymbol!, screenX, screenY,
+            TextPointSymbolRenderer.DrawText(canvas, drawCtx, symbol.TextSymbol!, drawX, drawY,
                 textRotation, showValidBorders);
 
             textDrawn = true;

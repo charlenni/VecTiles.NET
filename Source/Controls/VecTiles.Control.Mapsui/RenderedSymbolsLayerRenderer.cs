@@ -55,11 +55,14 @@ public static class RenderedSymbolsLayerRenderer
 
         // Placement is a function of the integer zoom only: all measurements,
         // candidate positions and collision boxes are computed in the canonical
-        // screen space of the integer zoom level (context zoom and converter
-        // scaled accordingly). When drawing, the canvas is scaled by the zoom
-        // ratio, so labels keep their anchors while zooming and only scale
-        // slightly instead of running along their lines.
+        // screen space of the integer zoom level, so labels keep their anchors
+        // while zooming instead of running along their lines.
         var placementScale = (float)(zoomLevel.ToResolution() / viewport.Resolution);
+
+        // Style sizes (text-size, spacing, ...) follow the fractional zoom of
+        // the viewport, so icons and text keep the size the style gives them
+        // at the current zoom like before; only the placement is frozen.
+        var drawContext = new EvaluationContext((float)viewport.Resolution.ToZoomLevel(), 1f / scale, (float)viewport.Rotation);
 
         var context = new EvaluationContext(zoomLevel, 1f / scale, (float)viewport.Rotation);
 
@@ -71,11 +74,20 @@ public static class RenderedSymbolsLayerRenderer
         // before doing any work for them
         var examinedIds = new HashSet<ulong>();
 
-        Func<double, double, (double, double)> worldToScreenConverter =
+        // Converts world coordinates into the canonical placement space
+        Func<double, double, (double, double)> placementWorldToScreen =
             (x, y) =>
             {
                 var p = viewport.WorldToScreen(x, y);
                 return (p.X / placementScale, p.Y / placementScale);
+            };
+
+        // Converts world coordinates into the real screen space used for drawing
+        Func<double, double, (double, double)> drawWorldToScreen =
+            (x, y) =>
+            {
+                var p = viewport.WorldToScreen(x, y);
+                return (p.X, p.Y);
             };
 
         for (var i = 0; i < symbols.Count(); i++)
@@ -93,21 +105,19 @@ public static class RenderedSymbolsLayerRenderer
             // Check if the symbol has a flag indicating it shouldn't be drawn for this tile range
             if (!symbol.DrawNotForTiles(key))
             {
-                // Transform placement space to the current screen space
-                canvas.Scale(placementScale, placementScale);
-
                 if (symbol is PointSymbol pointSymbol)
                 {
                     var status = PointSymbolRenderer.CheckForSpace(canvas,
                         context, symbol, tree,
-                        worldToScreenConverter,
+                        placementWorldToScreen,
                         rotation, renderedLayer.ShowInvalidBorders);
 
                     if (status == SymbolPlacementStatus.Success)
                     {
                         PointSymbolRenderer.Draw(canvas, context, pointSymbol,
-                            ref tree, worldToScreenConverter, rotation,
-                            renderedLayer.ShowValidBorders);
+                            ref tree, placementWorldToScreen, rotation,
+                            renderedLayer.ShowValidBorders,
+                            drawContext, drawWorldToScreen);
                     }
                     else if (status == SymbolPlacementStatus.Collision)
                     {
@@ -119,14 +129,15 @@ public static class RenderedSymbolsLayerRenderer
                 {
                     var status = LineSymbolRenderer.CheckForSpace(canvas,
                         context, symbol, tree,
-                        worldToScreenConverter,
+                        placementWorldToScreen,
                         rotation, renderedLayer.ShowInvalidBorders);
 
                     if (status == SymbolPlacementStatus.Success)
                     {
                         LineSymbolRenderer.Draw(canvas, context, lineSymbol,
-                            ref tree, worldToScreenConverter, rotation,
-                            renderedLayer.ShowValidBorders);
+                            ref tree, placementWorldToScreen, rotation,
+                            renderedLayer.ShowValidBorders,
+                            drawContext, drawWorldToScreen);
                     }
                     else if (status == SymbolPlacementStatus.Collision)
                     {

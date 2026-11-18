@@ -94,25 +94,50 @@ public class LineSymbolRenderer : ISymbolRenderer
     /// All contours of the (possibly merged) geometry are drawn.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>
-    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="context">The evaluation context for the placement checks.</param>
     /// <param name="sym">The symbol to draw.</param>
     /// <param name="tree">The quadtree to track drawn symbols.</param>
-    /// <param name="worldToScreenConverter">Function to convert world coordinates to screen coordinates.</param>
+    /// <param name="worldToScreenConverter">Function to convert world coordinates to the screen space of the checks.</param>
     /// <param name="rotation">The rotation angle in degrees.</param>
     /// <param name="showValidBorders">Whether to draw debug borders around drawn symbols.</param>
+    /// <param name="drawContext">Optional evaluation context for drawing (style sizes); falls back to <paramref name="context"/>.</param>
+    /// <param name="drawWorldToScreenConverter">Optional converter into the screen space used for drawing; falls back to <paramref name="worldToScreenConverter"/>.</param>
     public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree,
-        Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false)
+        Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false,
+        EvaluationContext? drawContext = null, Func<double, double, (double, double)>? drawWorldToScreenConverter = null)
     {
+        var drawCtx = drawContext ?? context;
+        var toDraw = drawWorldToScreenConverter ?? worldToScreenConverter;
+
         if (sym is not LineSymbol symbol)
         {
             return;
         }
 
-        foreach (var contour in CreateContourPaths(symbol, worldToScreenConverter))
+        // Placement runs in the screen space of the checks, drawing in the
+        // (differently scaled) real screen space; along-path parameters scale
+        // linearly between both spaces
+        var contours = CreateContourPaths(symbol, worldToScreenConverter);
+        var drawContours = ReferenceEquals(toDraw, worldToScreenConverter)
+            ? contours
+            : CreateContourPaths(symbol, toDraw);
+
+        for (var contourIndex = 0; contourIndex < contours.Count; contourIndex++)
         {
+            var contour = contours[contourIndex];
+            var drawContour = drawContours[contourIndex];
+
             using (contour)
+            using (drawContour)
             using (var pathMeasure = new SKPathMeasure(contour))
+            using (var drawPathMeasure = new SKPathMeasure(drawContour))
             {
+                // Scale factor from the placement space to the draw space
+                // (equal vectors of the same polyline, so the ratio is uniform)
+                var drawScale = pathMeasure.Length > 0 && drawPathMeasure.Length > 0
+                    ? (float)(drawPathMeasure.Length / pathMeasure.Length)
+                    : 1f;
+
                 for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
                 {
                     var iconDrawn = false;
@@ -156,9 +181,10 @@ public class LineSymbolRenderer : ISymbolRenderer
                     if (symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
                         (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText))
                     {
-                        // Draw icon
-                        IconLineSymbolRenderer.DrawIcon(canvas, context, symbol.IconSymbol!, nextPosition.X,
-                            nextPosition.Y, iconRotation, showValidBorders);
+                        // Draw icon; the placement position is converted from
+                        // the placement space to the draw space
+                        IconLineSymbolRenderer.DrawIcon(canvas, drawCtx, symbol.IconSymbol!, nextPosition.X * drawScale,
+                            nextPosition.Y * drawScale, iconRotation, showValidBorders);
 
                         iconDrawn = true;
                     }
@@ -166,12 +192,36 @@ public class LineSymbolRenderer : ISymbolRenderer
                     if (symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
                         (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
                     {
-                        TextLineSymbolRenderer.DrawTextOnPath(canvas, context, symbol.TextSymbol!, contour,
-                            textPlacement!, showValidBorders);
+                        // The glyphs are drawn at the style size of the current
+                        // fractional zoom, so the run of the label around the
+                        // anchor has the width of the drawn text, not the width
+                        // of the canonical placement envelope. The draw start is
+                        // shifted accordingly, so the label stays centered on
+                        // its anchor while zooming.
+                        var textSymbol = symbol.TextSymbol!;
+                        var fontSizePlacement = textSymbol.FontSize.Invoke(context);
+                        var fontSizeDraw = textSymbol.FontSize.Invoke(drawCtx);
+                        var fontSizeRatio = fontSizePlacement > 0 ? fontSizeDraw / fontSizePlacement : 1f;
+                        var measuredWidth = ((RenderedText)textSymbol.Native).MeasuredWidth;
+                        var leadPlacement = -textSymbol.Anchor.X * measuredWidth + textSymbol.Offset.X;
+                        var leadDraw = (float)(-textSymbol.Anchor.X * measuredWidth * fontSizeRatio + textSymbol.Offset.X);
+
+                        // The placement (draw start and path length) is scaled
+                        // from the placement space to the draw space, plus the
+                        // lead correction of the drawn text size
+                        var drawPlacement = textPlacement == null
+                            ? null
+                            : new PathTextPlacement(textPlacement.Reversed,
+                                (float)(textPlacement.DrawStart * drawScale) + leadDraw - (float)(leadPlacement * drawScale),
+                                (float)(textPlacement.PathLength * drawScale),
+                                textPlacement.Boxes);
+
+                        TextLineSymbolRenderer.DrawTextOnPath(canvas, drawCtx, textSymbol, drawContour,
+                            drawPlacement!, showValidBorders);
 
                         if (!symbol.HasIcon)
                         {
-                            pos += ((RenderedText)symbol.TextSymbol.Native).MeasuredWidth;
+                            pos += (float)(measuredWidth * fontSizeRatio);
                         }
 
                         textDrawn = true;

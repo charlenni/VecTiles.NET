@@ -44,26 +44,34 @@ public class StrehlgasseFrameRenderTests
         var viewport = new Mapsui.Viewport(centerX, centerY, resolution, 0,
             (int)(widthTiles * 512), (int)(heightTiles * 512));
 
-        var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel());
+        var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel() + 1e-6);
         var context = new EvaluationContext(zoomLevel, 1f, 0f);
 
-        // Placement in the canonical screen space of the integer zoom, like
-        // RenderedSymbolsLayerRenderer does (production parity)
+        // Placement in the canonical screen space of the integer zoom, style
+        // sizes evaluated at the fractional zoom, like RenderedSymbolsLayerRenderer
+        // does (production parity)
         var placementScale = (float)(zoomLevel.ToResolution() / resolution);
+        var drawContext = new EvaluationContext((float)viewport.Resolution.ToZoomLevel(), 1f, 0f);
 
         using var bitmap = new SKBitmap((int)(widthTiles * 512), (int)(heightTiles * 512));
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
-        // Placement space is scaled back to screen space when drawing
-        canvas.Scale(placementScale, placementScale);
 
         var tree = new NetTopologySuite.Index.Quadtree.Quadtree<ISymbol>();
         var examined = new HashSet<ulong>();
 
+        // Placement converter (canonical placement space of the integer zoom)
         Func<double, double, (double, double)> toScreen = (x, y) =>
         {
             var p = viewport.WorldToScreen(x, y);
             return (p.X / placementScale, p.Y / placementScale);
+        };
+
+        // Draw converter (real screen space)
+        Func<double, double, (double, double)> toDraw = (x, y) =>
+        {
+            var p = viewport.WorldToScreen(x, y);
+            return (p.X, p.Y);
         };
 
         var symbols = symbolsLayer.GetOrCreateSymbols(
@@ -92,7 +100,8 @@ public class StrehlgasseFrameRenderTests
 
                 if (status == SymbolPlacementStatus.Success)
                 {
-                    PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false);
+                    PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false,
+                        drawContext, toDraw);
                 }
             }
             else if (symbol is LineSymbol lineSymbol)
@@ -113,7 +122,8 @@ public class StrehlgasseFrameRenderTests
 
                 if (status == SymbolPlacementStatus.Success)
                 {
-                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, true);
+                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, true,
+                        drawContext, toDraw);
                 }
             }
 

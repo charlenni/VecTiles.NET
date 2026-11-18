@@ -97,9 +97,13 @@ public class IconPointSymbolRenderer : ISymbolRenderer
 
         if (showValidBorders)
         {
+            // The icon is drawn 1:1 in real screen space at the given position,
+            // so its envelope frames the drawn icon exactly
             canvas.DrawRect(
-                new SKRect((float)symbol.ScreenEnvelope!.MinX, (float)symbol.ScreenEnvelope!.MinY,
-                (float)symbol.ScreenEnvelope!.MaxX, (float)symbol.ScreenEnvelope!.MaxY), DebugPaint);
+                new SKRect((float)(symbol.Envelope!.MinX + screenX),
+                    (float)(symbol.Envelope!.MinY + screenY),
+                    (float)(symbol.Envelope!.MaxX + screenX),
+                    (float)(symbol.Envelope!.MaxY + screenY)), DebugPaint);
         }
     }
 

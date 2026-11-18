@@ -91,9 +91,11 @@ public static class IconLineSymbolRenderer
 
         if (showValidBorders)
         {
+            // The icon is drawn 1:1 in real screen space at the given position,
+            // so its envelope frames the drawn icon exactly
             canvas.DrawRect(
-                new SKRect((float)symbol.ScreenEnvelope!.MinX, (float)symbol.ScreenEnvelope!.MinY,
-                (float)symbol.ScreenEnvelope!.MaxX, (float)symbol.ScreenEnvelope!.MaxY), DebugPaint);
+                new SKRect((float)(symbol.Envelope!.MinX + screenX), (float)(symbol.Envelope!.MinY + screenY),
+                (float)(symbol.Envelope!.MaxX + screenX), (float)(symbol.Envelope!.MaxY + screenY)), DebugPaint);
         }
     }
 
@@ -126,14 +128,14 @@ public static class IconLineSymbolRenderer
             return SymbolPlacementStatus.NotInitialized;
         }
 
+        // Save for later use
+        var screenEnvelope = symbol.Envelope.Copy();
+
         // Check if there is enough space to fit the symbol on the remaining path
-        if (!path.CanFitFrom((float)startPos, (float)(symbol.Envelope.MaxX - symbol.Envelope.MinX)))
+        if (!path.CanFitFrom((float)startPos, (float)(screenEnvelope.MaxX - screenEnvelope.MinX)))
         {
             return SymbolPlacementStatus.Collision;
         }
-
-        // Save for later use
-        var screenEnvelope = symbol.Envelope.Copy();
 
         // Move symbol's envelope to the screen position
         if (context.Rotation != 0.0)

@@ -107,10 +107,18 @@ public static class RenderedSymbolsLayerRenderer
             {
                 if (symbol is PointSymbol pointSymbol)
                 {
+                    // The checks run in the canonical placement space; the
+                    // canvas scale maps drawn invalid borders back to the
+                    // real screen space
+                    canvas.Save();
+                    canvas.Scale(placementScale, placementScale);
+
                     var status = PointSymbolRenderer.CheckForSpace(canvas,
                         context, symbol, tree,
                         placementWorldToScreen,
                         rotation, renderedLayer.ShowInvalidBorders);
+
+                    canvas.Restore();
 
                     if (status == SymbolPlacementStatus.Success)
                     {
@@ -127,10 +135,15 @@ public static class RenderedSymbolsLayerRenderer
 
                 if (symbol is LineSymbol lineSymbol)
                 {
+                    canvas.Save();
+                    canvas.Scale(placementScale, placementScale);
+
                     var status = LineSymbolRenderer.CheckForSpace(canvas,
                         context, symbol, tree,
                         placementWorldToScreen,
                         rotation, renderedLayer.ShowInvalidBorders);
+
+                    canvas.Restore();
 
                     if (status == SymbolPlacementStatus.Success)
                     {

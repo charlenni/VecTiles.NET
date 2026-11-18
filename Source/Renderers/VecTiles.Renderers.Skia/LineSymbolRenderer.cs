@@ -217,7 +217,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                                 textPlacement.Boxes);
 
                         TextLineSymbolRenderer.DrawTextOnPath(canvas, drawCtx, textSymbol, drawContour,
-                            drawPlacement!, showValidBorders);
+                            drawPlacement!, showValidBorders, fontSizeRatio);
 
                         if (!symbol.HasIcon)
                         {

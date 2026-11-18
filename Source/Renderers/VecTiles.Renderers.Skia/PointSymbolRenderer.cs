@@ -102,11 +102,19 @@ public class PointSymbolRenderer : ISymbolRenderer
 
         var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
         var textRotation = 0f;
+        var fontSizeRatio = 1f;
 
         if (symbol.TextSymbol is not null)
         {
             textRotation = CalcRotation(symbol.TextSymbol!.Rotation, symbol.TextSymbol!.RotationAlignment,
                 rotation, symbol.TextSymbol.KeepUpright);
+
+            // The glyphs are drawn at the style size of the current fractional
+            // zoom; the layout of the symbol is measured at the tile zoom, so
+            // the drawing scales by the font size ratio
+            var fontSizePlacement = symbol.TextSymbol!.FontSize.Invoke(context);
+            var fontSizeDraw = symbol.TextSymbol!.FontSize.Invoke(drawCtx);
+            fontSizeRatio = fontSizePlacement > 0 ? fontSizeDraw / fontSizePlacement : 1f;
 
             spaceForTextAvailable = TextPointSymbolRenderer.CheckForSpace(canvas, context, symbol.TextSymbol!,
                 tree, screenX, screenY, textRotation, false);
@@ -125,7 +133,7 @@ public class PointSymbolRenderer : ISymbolRenderer
             (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon))
         {
             TextPointSymbolRenderer.DrawText(canvas, drawCtx, symbol.TextSymbol!, drawX, drawY,
-                textRotation, showValidBorders);
+                textRotation, showValidBorders, fontSizeRatio);
 
             textDrawn = true;
         }

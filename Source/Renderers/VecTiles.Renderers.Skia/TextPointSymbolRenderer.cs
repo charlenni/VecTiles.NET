@@ -29,7 +29,8 @@ public class TextPointSymbolRenderer : ISymbolRenderer
     /// <param name="screenY">The Y coordinate on the screen.</param>
     /// <param name="rotation">The rotation angle in degrees.</param>
     /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
-    public static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false)
+    /// <param name="fontSizeRatio">Ratio of the drawn font size at the fractional zoom to the layout font size of the tile zoom.</param>
+    public static void DrawText(SKCanvas canvas, EvaluationContext context, TextPointSymbol symbol, double screenX, double screenY, double rotation, bool showValidBorders = false, float fontSizeRatio = 1f)
     {
         var anchorX = (float)symbol.Anchor.X;
         var anchorY = (float)symbol.Anchor.Y;
@@ -58,7 +59,11 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         canvas.Translate((float)screenX, (float)screenY);
         canvas.Translate(transX, transY);
-        canvas.Scale(1f / context.Scale);
+
+        // The layout is measured at the tile zoom; the glyphs are drawn at the
+        // style size of the current fractional zoom, so scale the whole frame
+        // (anchor lead, offsets, halo) by the font size ratio
+        canvas.Scale(1f / context.Scale * fontSizeRatio);
 
         var totalRotation = symbol.Rotation;
 
@@ -105,9 +110,24 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
         if (showValidBorders)
         {
+            // The glyphs are drawn at the style size of the current fractional
+            // zoom; scale the tile-zoom envelope by the font size ratio and
+            // shift it to the drawn position, so the border frames the drawn
+            // text like the checked collision box frames the real box
+            var border = symbol.Envelope!.Copy();
+
+            border.RotateDegreesAroundPoint(totalRotation, 0, 0);
+
+            if (transX != 0 || transY != 0)
+            {
+                border.Translate(transX, transY);
+            }
+
             canvas.DrawRect(
-                new SKRect((float)symbol.ScreenEnvelope!.MinX, (float)symbol.ScreenEnvelope!.MinY,
-                    (float)symbol.ScreenEnvelope!.MaxX, (float)symbol.ScreenEnvelope!.MaxY), DebugPaint);
+                new SKRect((float)(border.MinX * fontSizeRatio + screenX),
+                    (float)(border.MinY * fontSizeRatio + screenY),
+                    (float)(border.MaxX * fontSizeRatio + screenX),
+                    (float)(border.MaxY * fontSizeRatio + screenY)), DebugPaint);
         }
     }
 

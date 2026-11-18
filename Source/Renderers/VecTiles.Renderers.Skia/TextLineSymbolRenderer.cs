@@ -48,8 +48,9 @@ public static class TextLineSymbolRenderer
     /// <param name="path">The path along which to draw the text.</param>
     /// <param name="placement">Placement of the label on the path, as returned by CheckForSingleSpace.</param>
     /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
+    /// <param name="fontSizeRatio">Ratio of the drawn font size at the fractional zoom to the layout font size of the tile zoom.</param>
     public static void DrawTextOnPath(SKCanvas canvas, EvaluationContext context, TextLineSymbol symbol,
-        SKPath path, PathTextPlacement placement, bool showValidBorders = false)
+        SKPath path, PathTextPlacement placement, bool showValidBorders = false, float fontSizeRatio = 1f)
     {
         var text = (RenderedText)symbol.Native!;
 
@@ -99,10 +100,39 @@ public static class TextLineSymbolRenderer
 
         if (showValidBorders)
         {
-            foreach (var box in placement.Boxes)
+            // The borders wrap the drawn glyphs: the drawn label runs from the
+            // draw start over the width of the drawn text (layout width scaled
+            // by the font size ratio) on the drawn path. The per-step boxes of
+            // the check are redistributed over this run, so the borders frame
+            // the glyphs however the label is mirrored, scaled or reshaped.
+            using var borderMeasure = new SKPathMeasure(drawPath, false);
+            var labelWidth = text.MeasuredWidth * fontSizeRatio;
+            var step = (float)(labelWidth / placement.Boxes.Count);
+
+            for (var i = 0; i < placement.Boxes.Count; i++)
             {
+                var center = placement.DrawStart + (i + 0.5f) * step;
+
+                if (!borderMeasure.GetPositionAndTangent(center, out var position, out var tangentVec))
+                {
+                    continue;
+                }
+
+                var box = placement.Boxes[i];
+
+                var width = (float)((box.MaxX - box.MinX) / 2 * fontSizeRatio);
+                var height = (float)((box.MaxY - box.MinY) / 2 * fontSizeRatio);
+
+                var border = new Envelope(position.X - width, position.X + width,
+                    position.Y - height, position.Y + height);
+
+                var angle = (float)(Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI);
+
+                border.RotateDegreesAroundPoint(angle, position.X, position.Y);
+
                 canvas.DrawRect(
-                    new SKRect((float)box.MinX, (float)box.MinY, (float)box.MaxX, (float)box.MaxY), DebugPaint);
+                    new SKRect((float)border.MinX, (float)border.MinY,
+                        (float)border.MaxX, (float)border.MaxY), DebugPaint);
             }
         }
     }

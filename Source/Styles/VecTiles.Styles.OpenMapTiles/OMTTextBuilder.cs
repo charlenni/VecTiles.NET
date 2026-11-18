@@ -40,6 +40,7 @@ public class OMTTextBuilder
     private Func<EvaluationContext, MapAlignment> _translateAnchor;
     private Func<EvaluationContext, Tile, double> _sortOrder;
     private Func<EvaluationContext, float, float> _maxWidth;
+    private Func<EvaluationContext, float> _maxAngle;
 
     public OMTTextBuilder(OMTLayerStyle style, EvaluationContext context)
     {
@@ -81,6 +82,7 @@ public class OMTTextBuilder
         _translate = style.Paint.TextTranslate.HasOnlyDefault ? null : (ctx) => style.Paint.TextTranslate.Evaluate(ctx).ToPoint();
         _translateAnchor = (ctx) => style.Paint.TextTranslateAnchor.Evaluate(ctx);
         _maxWidth = (ctx, fontsize) => style.Layout.TextMaxWidth.Evaluate(ctx) * fontsize;
+        _maxAngle = (ctx) => style.Layout.TextMaxAngle.Evaluate(ctx);
 
         _sortOrder = (ctx, tile) => _style.Layout.SymbolZOrder switch
         {
@@ -162,6 +164,7 @@ public class OMTTextBuilder
             Rotation = _rotation,
             RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Map : _rotationAlignment,
             KeepUpright = _keepUpright,
+            MaxAngle = _maxAngle,
             Padding = _padding,
             Anchor = _anchor,
             Offset = _offset,

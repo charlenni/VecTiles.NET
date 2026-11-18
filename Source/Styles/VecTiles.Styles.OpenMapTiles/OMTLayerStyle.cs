@@ -18,7 +18,7 @@ public class OMTLayerStyle : ILayerStyle
     [JsonProperty("type")]
     public LayerStyleType StyleType { get; set; }
 
-    [JsonConverter(typeof(FilterConverter))]
+    [JsonConverter(typeof(ExpressionConverter))]
     [JsonProperty("filter")]
     public IExpression Filter { get; set; } = Expression.Empty;
 

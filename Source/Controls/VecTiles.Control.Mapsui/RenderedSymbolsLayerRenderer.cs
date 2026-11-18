@@ -44,11 +44,24 @@ public static class RenderedSymbolsLayerRenderer
         // Use rotation divided by 5 to limit the number of cache keys
         var key = new TilesKey(tiles.ToTile(), (int)(viewport.Rotation / 5));
 
-        var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel());
+        // Snap the zoom level to the canonical integer level: computing the
+        // zoom from the resolution is subject to rounding (a canonical
+        // resolution can evaluate to 19 - 1e-14), which would push the whole
+        // placement onto the next lower level. The snap epsilon is far below
+        // any perceivable zoom difference (one zoom unit = resolution / 2).
+        var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel() + 1e-6);
         var scale = 1f;
         var rotation = -viewport.Rotation;
 
-        var context = new EvaluationContext((float)viewport.Resolution.ToZoomLevel(), 1f / scale, (float)viewport.Rotation);
+        // Placement is a function of the integer zoom only: all measurements,
+        // candidate positions and collision boxes are computed in the canonical
+        // screen space of the integer zoom level (context zoom and converter
+        // scaled accordingly). When drawing, the canvas is scaled by the zoom
+        // ratio, so labels keep their anchors while zooming and only scale
+        // slightly instead of running along their lines.
+        var placementScale = (float)(zoomLevel.ToResolution() / viewport.Resolution);
+
+        var context = new EvaluationContext(zoomLevel, 1f / scale, (float)viewport.Rotation);
 
         var symbols = renderedLayer.GetOrCreateSymbols(tiles, zoomLevel).ToArray();
         var tree = new Quadtree<ISymbol>();
@@ -59,7 +72,11 @@ public static class RenderedSymbolsLayerRenderer
         var examinedIds = new HashSet<ulong>();
 
         Func<double, double, (double, double)> worldToScreenConverter =
-            (x, y) => { var p = viewport.WorldToScreen(x, y); return (p.X, p.Y); };
+            (x, y) =>
+            {
+                var p = viewport.WorldToScreen(x, y);
+                return (p.X / placementScale, p.Y / placementScale);
+            };
 
         for (var i = 0; i < symbols.Count(); i++)
         {
@@ -76,6 +93,9 @@ public static class RenderedSymbolsLayerRenderer
             // Check if the symbol has a flag indicating it shouldn't be drawn for this tile range
             if (!symbol.DrawNotForTiles(key))
             {
+                // Transform placement space to the current screen space
+                canvas.Scale(placementScale, placementScale);
+
                 if (symbol is PointSymbol pointSymbol)
                 {
                     var status = PointSymbolRenderer.CheckForSpace(canvas,

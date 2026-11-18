@@ -22,7 +22,7 @@ public class LineAndFillTests
         var converter = new OMTTileConverter();
         var vectorDataSource = new VectorTileDataSource(dataSource, converter);
 
-        var omtStyleStream = File.Open(_styleFile, FileMode.Open, FileAccess.Read);
+        var omtStyleStream = File.OpenRead(_styleFile);
         var omtStyleFile = OMTStyleFileLoader.Load(omtStyleStream).Result;
 
         var spriteDictionary = omtStyleFile.Sprites;

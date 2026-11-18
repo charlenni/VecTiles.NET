@@ -335,6 +335,27 @@ internal static class CompoundOperators
         Register("heatmap-density", args => args == 0, (ctx, args) => 0d);
         Register("line-progress", args => args == 0, (ctx, args) => 0d);
         Register("accumulated", args => args == 0, (ctx, args) => 0d);
+
+        // Global properties used by legacy filters converted to expressions:
+        // $id becomes ["id"], $type becomes ["geometry-type"]
+
+        // Feature id; unlike MapLibre the id comes from the feature attributes,
+        // as the vector tile parsing stores it there
+        Register("id", args => args == 0, (ctx, args) =>
+            ExpressionValueHelper.GetAttribute(ctx, "id"));
+
+        // Base geometry type of the feature: Point, LineString or Polygon.
+        // Multi geometries are handled like their base type.
+        Register("geometry-type", args => args == 0, (ctx, args) =>
+        {
+            var type = ctx.Feature?.Geometry?.GeometryType;
+
+            if (string.IsNullOrEmpty(type))
+                return null;
+
+            return type.StartsWith("Multi", StringComparison.Ordinal) ? type[5..] : type;
+        });
+
         Register("global-state", args => args >= 1, (ctx, args) => null);
         Register("elevation", args => args == 0, (ctx, args) => 0d);
     }

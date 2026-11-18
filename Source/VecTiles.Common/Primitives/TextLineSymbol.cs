@@ -52,6 +52,12 @@ public class TextLineSymbol : Symbol
     public bool KeepUpright { get; init; } = true;
 
     /// <summary>
+    /// Maximum angle change between consecutive characters in degrees. Labels on
+    /// lines with sharper bends are not placed (like MapLibre's text-max-angle).
+    /// </summary>
+    public Func<EvaluationContext, float>? MaxAngle { get; init; }
+
+    /// <summary>
     /// Anchor of symbol given as relative position with [0..1, 0..1]
     /// </summary>
     public Point Anchor { get; init; } = new(0, 0);
@@ -141,6 +147,7 @@ public class TextLineSymbol : Symbol
             RotationAlignment = RotationAlignment,
             Padding = Padding,
             KeepUpright = KeepUpright,
+            MaxAngle = MaxAngle,
             Anchor = Anchor,
             Offset = Offset,
             Direction = Direction,

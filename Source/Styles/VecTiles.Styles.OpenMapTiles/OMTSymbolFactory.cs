@@ -30,13 +30,39 @@ public class OMTSymbolFactory : ISymbolFactory
     {
         var omtLayerStyle = (OMTLayerStyle)style;
 
-        return omtLayerStyle.Layout.SymbolPlacement.Evaluate(context) switch
+        var placement = omtLayerStyle.Layout.SymbolPlacement.Evaluate(context);
+
+        if (placement == SymbolPlacement.Line && UsesViewportAlignment(omtLayerStyle))
+        {
+            // Per MapLibre spec, line placement with a viewport rotation
+            // alignment behaves like point placement (e.g. road shields that
+            // follow roads at low zooms but stay horizontal at high zooms)
+            placement = SymbolPlacement.Point;
+        }
+
+        return placement switch
         {
             SymbolPlacement.Point => CreatePointSymbol(tile, omtLayerStyle, _spriteFactory, context, feature),
             SymbolPlacement.Line => CreateLineSymbol(tile, omtLayerStyle, _spriteFactory, context, feature),
             SymbolPlacement.LineCenter => CreateLineCenterSymbol(tile, omtLayerStyle, _spriteFactory, context, feature),
             _ => throw new InvalidDataException()
         };
+    }
+
+    /// <summary>
+    /// Checks if the symbol would be rotated against the viewport, which makes
+    /// line placement behave like point placement. Only parts that actually
+    /// exist (icon image, text field) are considered; if any of them wants
+    /// map alignment, line placement is kept.
+    /// </summary>
+    private static bool UsesViewportAlignment(OMTLayerStyle style)
+    {
+        var hasIcon = !style.Layout.IconImage.HasOnlyDefault;
+        var hasText = !string.IsNullOrEmpty(style.Layout.TextField);
+        var iconAlongLine = !hasIcon || style.Layout.IconRotationAlignment != MapAlignment.Viewport;
+        var textAlongLine = !hasText || style.Layout.TextRotationAlignment != MapAlignment.Viewport;
+
+        return !iconAlongLine || !textAlongLine;
     }
 
     Dictionary<(string, int), OMTIconBuilder> _iconBuilders = new();

@@ -1,76 +1,78 @@
-﻿using SkiaSharp;
+using SkiaSharp;
 
 namespace VecTiles.Renderers.Skia.Extensions;
 
 public static class SKPathExtensions
 {
     /// <summary>
-    /// Checks if the text fits on the next linear segment of the path
-    /// starting from startDistance along the current SKPathMeasure contour.
-    /// Assumes the path consists of straight lines only.
+    /// Checks if the given length fits on the path after the start distance,
+    /// measured along the path (not along straight segments).
     /// </summary>
-    public static bool CanFitOnNextLineSegment(
-        this SKPath path,
-        float startDistance,
-        float requiredLength,
-        float step = 1f) // step for distance sampling
+    public static bool CanFitFrom(this SKPath path, float startDistance, float requiredLength)
     {
         if (requiredLength <= 0)
-            return false;
-
-        float accumulated = 0f;
-        SKPoint lastPoint = new SKPoint();
-
-        bool firstMove = true;
-
-        using (var iter = path.CreateRawIterator())
         {
-            SKPathVerb verb;
-            SKPoint[] points = new SKPoint[4];
+            return false;
+        }
 
-            while ((verb = iter.Next(points)) != SKPathVerb.Done)
+        using var measure = new SKPathMeasure(path);
+
+        return measure.Length - startDistance >= requiredLength;
+    }
+
+    /// <summary>
+    /// Creates a copy of the path with reversed direction. Only supports paths
+    /// consisting of MoveTo / LineTo verbs, which is what the line symbol
+    /// renderers build from the geometries.
+    /// </summary>
+    public static SKPath Reverse(this SKPath path)
+    {
+        var result = new SKPath();
+        var points = new List<SKPoint>();
+
+        using var iter = path.CreateRawIterator();
+        SKPoint[] pointsBuffer = new SKPoint[4];
+
+        SKPathVerb verb;
+
+        while ((verb = iter.Next(pointsBuffer)) != SKPathVerb.Done)
+        {
+            switch (verb)
             {
-                switch (verb)
-                {
-                    case SKPathVerb.Move:
-                        lastPoint = points[0];
-                        if (firstMove)
-                            firstMove = false;
-                        break;
+                case SKPathVerb.Move:
+                    AddReversedPolygon(result, points);
+                    points.Clear();
+                    points.Add(pointsBuffer[0]);
+                    break;
 
-                    case SKPathVerb.Line:
-                        SKPoint start = lastPoint;
-                        SKPoint end = points[1];
-                        float segmentLength = Distance(start, end);
-
-                        if (accumulated + segmentLength > startDistance)
-                        {
-                            // startDistance falls on this segment
-                            float segmentOffset = startDistance - accumulated;
-                            float remaining = segmentLength - segmentOffset;
-                            return remaining >= requiredLength;
-                        }
-
-                        accumulated += segmentLength;
-                        lastPoint = end;
-                        break;
-
-                    case SKPathVerb.Quad:
-                    case SKPathVerb.Cubic:
-                    case SKPathVerb.Close:
-                        // ignore, only lines are supported
-                        break;
-                }
+                case SKPathVerb.Line:
+                    points.Add(pointsBuffer[1]);
+                    break;
             }
         }
 
-        return false; // startDistance beyond path
+        AddReversedPolygon(result, points);
+
+        return result;
     }
 
-    private static float Distance(SKPoint a, SKPoint b)
+    private static void AddReversedPolygon(SKPath result, List<SKPoint> points)
     {
-        float dx = b.X - a.X;
-        float dy = b.Y - a.Y;
-        return (float)Math.Sqrt(dx * dx + dy * dy);
+        if (points.Count < 2)
+        {
+            return;
+        }
+
+        for (var i = points.Count - 1; i >= 0; i--)
+        {
+            if (i == points.Count - 1)
+            {
+                result.MoveTo(points[i]);
+            }
+            else
+            {
+                result.LineTo(points[i]);
+            }
+        }
     }
 }

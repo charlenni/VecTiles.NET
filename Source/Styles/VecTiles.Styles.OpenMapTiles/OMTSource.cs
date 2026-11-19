@@ -100,7 +100,7 @@ public class OMTSource
 
     public ITileDataSource? DataSource { get; internal set; }
 
-    public void Create()
+    public async Task CreateAsync()
     {
         string sourceUrl = string.Empty;
 
@@ -109,7 +109,14 @@ public class OMTSource
         else if (Tiles != null && Tiles.Count > 0)
             sourceUrl = Tiles[0];
 
-        var dataSource = DefaultTileDataSourceFactory.CreateTileDataSource([sourceUrl]);
+        // If the source points to a TileJSON instead of a tile template,
+        // resolve the actual tile urls, zoom range and attribution from it.
+        if (sourceUrl.EndsWith(".json", StringComparison.InvariantCultureIgnoreCase))
+        {
+            sourceUrl = await ResolveTileJson(sourceUrl).ConfigureAwait(false);
+        }
+
+        var dataSource = DefaultTileDataSourceFactory.CreateTileDataSource([sourceUrl], MinZoom, MaxZoom);
 
         if (dataSource == null)
             return;
@@ -121,5 +128,47 @@ public class OMTSource
             dataSource = new VectorTileDataSource(dataSource, new OMTTileConverter());
         
         DataSource = dataSource;
+    }
+
+    /// <summary>
+    /// Load a TileJSON and update this source with tile urls, zoom range and attribution.
+    /// Returns the first tile url of that TileJSON.
+    /// </summary>
+    private async Task<string> ResolveTileJson(string tileJsonUrl)
+    {
+        var bytes = await ByteDataSource.GetBytesAsync(tileJsonUrl).ConfigureAwait(false)
+            ?? throw new ArgumentException($"Could not load TileJSON '{tileJsonUrl}'");
+
+        var tileJson = JsonConvert.DeserializeObject<TileJson>(System.Text.Encoding.UTF8.GetString(bytes))
+            ?? throw new ArgumentException($"TileJSON '{tileJsonUrl}' isn't valid");
+
+        if (tileJson.Tiles is { Count: > 0 })
+            Tiles = tileJson.Tiles;
+
+        if (tileJson.Minzoom > 0)
+            MinZoom = tileJson.Minzoom;
+
+        if (tileJson.Maxzoom > 0)
+            MaxZoom = tileJson.Maxzoom;
+
+        if (!string.IsNullOrEmpty(tileJson.Attribution) && string.IsNullOrEmpty(Attribution))
+            Attribution = tileJson.Attribution;
+
+        return Tiles![0];
+    }
+
+    private class TileJson
+    {
+        [JsonProperty("attribution")]
+        public string Attribution { get; set; } = string.Empty;
+
+        [JsonProperty("minzoom")]
+        public int Minzoom { get; set; } = 0;
+
+        [JsonProperty("maxzoom")]
+        public int Maxzoom { get; set; } = 0;
+
+        [JsonProperty("tiles")]
+        public IList<string>? Tiles { get; set; }
     }
 }

@@ -6,7 +6,10 @@ using VecTiles.Common.Interfaces;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Skia;
+using VecTiles.Renderers.Skia.Primitives;
 using VecTiles.Styles.OpenMapTiles;
+
+using MapsuiLogger = Mapsui.Logging.Logger;
 
 namespace VecTiles.Controls.Mapsui;
 
@@ -26,6 +29,8 @@ public class OMTRenderedTileSource : IRenderedTileSource
 
         _renderer = new Renderer(omtStyleFile.Sources.Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, (ITileDataSource)s.Value.DataSource)), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new OMTPaintFactory(omtStyleFile.Sprites), new OMTSymbolFactory(omtStyleFile.Sprites)));
         _cache = new MemoryCache<RenderedTileFeature>(200, 300);
+
+        ReportMissingFonts(omtStyleFile);
 
         Schema = new GlobalSphericalMercator512(YAxis.OSM, minZoom, maxZoom);  // Default format in VecTiles.NET
         Name = omtStyleFile.Name;
@@ -90,6 +95,46 @@ public class OMTRenderedTileSource : IRenderedTileSource
         return feature;
     }
     
+    private static void ReportMissingFonts(OMTStyleFile styleFile)
+    {
+        var textFonts = styleFile.Layers
+            .Where(l => l.Layout?.TextFont is { Length: > 0 })
+            .Select(l => l.Layout.TextFont)
+            .ToList();
+
+        var fontNames = textFonts.SelectMany(f => f).ToList();
+
+        // Styles that render text without a text-font use the fallback fonts
+        // of OMTTextBuilder, so they must be checked as well
+        var textStyleLayers = styleFile.Layers
+            .Where(l => l.Layout != null && !l.Layout.TextField.HasOnlyDefault)
+            .ToList();
+
+        if (textStyleLayers.Any(l => l.Layout.TextFont is not { Length: > 0 }))
+        {
+            fontNames.AddRange(OMTTextBuilder.DefaultFontNames);
+        }
+
+        if (fontNames.Count == 0)
+        {
+            return;
+        }
+
+        var missing = FontCache.GetMissingFonts(fontNames);
+
+        if (missing.Count == 0)
+        {
+            return;
+        }
+
+        FontCache.ReportMissingFonts(styleFile.Name ?? string.Empty, missing);
+
+        MapsuiLogger.Log(global::Mapsui.Logging.LogLevel.Warning,
+            $"Style '{styleFile.Name}': font(s) not found, missing: {string.Join(", ", missing)}. " +
+            "Labels are drawn with the system default font instead. " +
+            "Install the fonts or register font files via FontCache.AddFontSearchPath/RegisterFontFile/RegisterFontDirectory.");
+    }
+
     private static string RemoveHtmlTags(string input)
     {
         // Entferne alle HTML-Tags mit einem regulären Ausdruck

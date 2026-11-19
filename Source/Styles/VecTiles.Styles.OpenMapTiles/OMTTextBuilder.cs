@@ -43,6 +43,11 @@ public class OMTTextBuilder
     private Func<EvaluationContext, float, float> _maxWidth;
     private Func<EvaluationContext, float> _maxAngle;
 
+    /// <summary>
+    /// Fonts used for styles that do not specify a text-font.
+    /// </summary>
+    public static readonly string[] DefaultFontNames = ["Open Sans Regular", "Arial Unicode MS Regular"];
+
     public OMTTextBuilder(OMTLayerStyle style, EvaluationContext context)
     {
         _style = style;
@@ -50,10 +55,12 @@ public class OMTTextBuilder
 
         if (style.Layout.TextFont == null || style.Layout.TextFont.Length == 0)
         {
-            throw new FontNotFoundException($"Font missing for style '{style.Name}'");
+            _fontNames = DefaultFontNames;
         }
-
-        _fontNames = style.Layout.TextFont;
+        else
+        {
+            _fontNames = style.Layout.TextFont;
+        }
         _fontSize = (ctx) => style.Layout.TextSize.Evaluate(ctx);
 
         _lineHeight = style.Layout.TextLineHeight.Evaluate(context);

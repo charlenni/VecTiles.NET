@@ -115,7 +115,9 @@ public class OMTLayerStyleLayout
     public StoppedString TextField { get; set; } = new StoppedString() { Default =  string.Empty };
 
     [JsonProperty("text-font")]
-    public string[] TextFont { get; set; } = ["Open Sans Regular", "Arial Unicode MS Regular"];
+    // Empty = the style does not specify a font; OMTTextBuilder falls back to
+    // DefaultFontNames on its own, so that only really used fonts are reported
+    public string[] TextFont { get; set; } = [];
 
     [JsonConverter(typeof(StoppedBooleanConverter))]
     [JsonProperty("text-ignore-placement")]

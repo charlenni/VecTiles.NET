@@ -44,6 +44,18 @@ public class CachedFontMapper : FontMapper
         var key = new FontKey(style.FontFamily, style.FontWeight, style.FontWidth, style.FontItalic,
             style.FontVariant, ignoreFontVariants);
 
-        return _cache.GetOrAdd(key, _ => base.TypefaceFromStyle(style, ignoreFontVariants));
+        return _cache.GetOrAdd(key, _ => ResolveTypeface(style, ignoreFontVariants));
+    }
+
+    private SKTypeface ResolveTypeface(IStyle style, bool ignoreFontVariants)
+    {
+        // Font files registered via FontCache take precedence over the system
+        // fonts, so users can supply fonts that are not installed
+        if (FontCache.TryGetCustomTypeface(style.FontFamily, style.FontWeight, style.FontItalic, out var typeface))
+        {
+            return typeface;
+        }
+
+        return base.TypefaceFromStyle(style, ignoreFontVariants);
     }
 }

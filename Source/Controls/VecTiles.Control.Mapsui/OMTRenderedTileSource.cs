@@ -14,11 +14,13 @@ public class OMTRenderedTileSource : IRenderedTileSource
 {
     private readonly Renderer _renderer;
     private readonly MemoryCache<RenderedTileFeature> _cache;
+    private readonly OMTStyleFile _styleFile;
 
     public OMTRenderedTileSource(Stream stream)
     {
-        var omtStyleFile = OMTStyleFileLoader.Load(stream).Result;
+        _styleFile = OMTStyleFileLoader.Load(stream).Result;
 
+        var omtStyleFile = _styleFile;
         var minZoom = 0;
         var maxZoom = 24;
 
@@ -46,6 +48,19 @@ public class OMTRenderedTileSource : IRenderedTileSource
     public string Name { get; private set; }
 
     public Attribution Attribution { get; private set; }
+
+    /// <summary>
+    /// Styles of the loaded style file
+    /// </summary>
+    public OMTLayerStyle[] Styles => _styleFile.Layers;
+
+    /// <summary>
+    /// Clear the cache of rendered tiles, so they are rendered again on next access
+    /// </summary>
+    public void ClearCache()
+    {
+        _cache.Clear();
+    }
 
     public async Task<IFeature?> GetTileAsync(TileInfo tileInfo)
     {

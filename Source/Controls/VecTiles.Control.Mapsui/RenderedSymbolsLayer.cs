@@ -64,6 +64,15 @@ public class RenderedSymbolsLayer : BaseLayer
     public bool ShowInvalidBorders { get; set; }
 
     /// <summary>
+    /// Clears the cached symbols, so they are recreated on next access.
+    /// </summary>
+    public void ClearCache()
+    {
+        _lastKey = default;
+        _lastSymbols = Array.Empty<ISymbol>();
+    }
+
+    /// <summary>
     /// Gets or creates symbols for the specified tile information and zoom level.
     /// Uses caching to avoid recreating symbols for the same tile set and zoom level.
     /// </summary>

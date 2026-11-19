@@ -9,6 +9,7 @@ using Mapsui.Styles;
 using Mapsui.Widgets.InfoWidgets;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
+using VecTiles.Styles.OpenMapTiles;
 using SampleApp.Widgets;
 
 namespace SampleApp.Views;
@@ -18,6 +19,8 @@ public partial class MainView : UserControl
     private readonly string _path = "Files";
     private readonly RenderedSymbolsLayer _symbolsLayer;
     private readonly TileGridDebugLayer _debugLayer;
+    private readonly OMTRenderedTileSource _tileSource;
+    private readonly RenderedTileLayer _tileLayer;
 
     public MainView()
     {
@@ -27,19 +30,19 @@ public partial class MainView : UserControl
 
         var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
 
-        var tileSource = new OMTRenderedTileSource(stream);
-        var tileLayer = new RenderedTileLayer(tileSource);
-        _symbolsLayer = new RenderedSymbolsLayer(tileSource);
-        _debugLayer = new TileGridDebugLayer(tileLayer.TileSource.Schema)
+        _tileSource = new OMTRenderedTileSource(stream);
+        _tileLayer = new RenderedTileLayer(_tileSource);
+        _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
+        _debugLayer = new TileGridDebugLayer(_tileLayer.TileSource.Schema)
         {
             Enabled = CheckBoxDebugLayer.IsChecked ?? false
         };
 
         //MapControl.Map.Layers.Add(OpenStreetMap.CreateTileLayer());
-        MapControl.Map.Layers.Add(tileLayer);
+        MapControl.Map.Layers.Add(_tileLayer);
         MapControl.Map.Layers.Add(_symbolsLayer);
         MapControl.Map.Layers.Add(_debugLayer);
-        
+
         // The PerformanceWidget is created as part of the map.
         var performanceWidget = MapControl.Map.Widgets.OfType<PerformanceWidget>().First();
         performanceWidget.Performance.IsActive = Mapsui.Widgets.ActiveMode.Yes; // The default in ActiveMode.OnlyInDebugMode which is usually the best option. This is just to show how to change it.
@@ -56,6 +59,19 @@ public partial class MainView : UserControl
         });
 
         MapControl.Map.Navigator.RotationLock = false;
+
+        // Create a checkbox for each style of the style file. Initial state is the visibility from the style file.
+        foreach (var style in _tileSource.Styles)
+        {
+            var checkBox = new CheckBox
+            {
+                Content = style.Name,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                IsChecked = style.Visible
+            };
+            checkBox.Click += (_, _) => StyleCheckBox_Click(style, checkBox);
+            StylesPanel.Children.Add(checkBox);
+        }
 
         var rotationSliderObservable = RotationSlider.GetObservable(Slider.ValueProperty);
         rotationSliderObservable.Subscribe(new AnonymousObserver<double>(value => 
@@ -92,5 +108,17 @@ public partial class MainView : UserControl
         _symbolsLayer.ShowInvalidBorders = CheckBoxInvalidBorder.IsChecked ?? false;
 
         MapControl.Map.RefreshGraphics();
+    }
+
+    private void StyleCheckBox_Click(OMTLayerStyle style, CheckBox checkBox)
+    {
+        style.Layout.Visibility = checkBox.IsChecked == true ? "visible" : "none";
+
+        // Styles are baked into the rendered tiles, so all caches have to be cleared, before redrawing the map
+        _tileSource.ClearCache();
+        _tileLayer.ClearCache();
+        _symbolsLayer.ClearCache();
+
+        MapControl.Map.RefreshData(Mapsui.ChangeType.Discrete);
     }
 }

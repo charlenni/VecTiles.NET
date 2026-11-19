@@ -1,6 +1,7 @@
 ﻿using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
+using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
@@ -114,6 +115,42 @@ public static class OMTLinePaint
         else
         {
             brush.SetVariableDashArray((context) => paint.LineDashArray.Evaluate(context));
+        }
+
+        // line-pattern
+        //   Optional string. Interval.
+        //   Name of image in sprite to use for drawing image lines. For seamless patterns, image
+        //   width must be a factor of two (2, 4, 8, …, 512). A pattern disables line-dasharray
+        //   and line-color.
+        if (paint.LinePattern.IsConstant)
+        {
+            var sprite = paint.LinePattern.Evaluate(EvaluationContext.Empty);
+
+            if (!string.IsNullOrEmpty(sprite))
+            {
+                if (sprite.Contains("{"))
+                {
+                    brush.SetVariablePattern((context) =>
+                    {
+                        var name = omtStyle.Paint.LinePattern.Evaluate(context).ReplaceFields(context.Attributes);
+
+                        return spriteFactory(name);
+                    });
+                }
+                else if (!paint.LinePattern.HasOnlyDefault)
+                {
+                    brush.SetFixPattern(spriteFactory(sprite));
+                }
+            }
+        }
+        else
+        {
+            brush.SetVariablePattern((context) =>
+            {
+                var name = omtStyle.Paint.LinePattern!.Evaluate(context).ReplaceFields(context.Attributes);
+
+                return spriteFactory(name);
+            });
         }
 
         // line-miter-limit

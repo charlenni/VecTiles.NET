@@ -21,11 +21,6 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         _clip = clip;
         _paint = paint;
 
-        if (_paint.Pattern is not null)
-        {
-            return;
-        }
-        
         _shader = LineShader.Create(maxStrokeWidth);
     }
 
@@ -53,9 +48,6 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         }
         */
 
-        // TODO
-        // Respect, if a line has a pattern to draw with
-        
         // Dash period follows the SETTLED zoom level: width evaluated at the
         // integer zoom, converted to the tile px of that same level. During a
         // zoom animation this value is constant -> the pattern stays glued to
@@ -64,11 +56,13 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         float scaleXInt = 1f; //ScaleForZoom(zInt);             // your zoom->scale mapping at zInt
         float strokeWidthForIntZoom = _paint.GetStrokeWidthFromIntZoom(context) / scaleXInt;
 
-        // Draw features that belong to a line style
-        _skPaint.Shader = _shader.Update(_paint.StrokeWidth, 
-            _paint.Color.ToSKColor(), 
+        // Draw features that belong to a line style.
+        // A pattern overrides dash array and color (Mapbox spec).
+        _skPaint.Shader = _shader.Update(_paint.StrokeWidth,
+            _paint.Color.ToSKColor(),
             _paint.DashArray,
-            strokeWidthForIntZoom);
+            strokeWidthForIntZoom,
+            _paint.Pattern);
         skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
 
         skCanvas.Restore();

@@ -1,4 +1,5 @@
 using SkiaSharp;
+using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 
@@ -16,12 +17,22 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
     private float _dashTexelWidth;
     private SKShader? _dashShader;
 
+    // Pattern child shader cached per sprite: ToShader() allocates a new GPU
+    // object on every call -- do not create it per frame. The subset image is
+    // owned by the sprite (see FillShader), so only the shader wrapper is ours.
+    private ISprite? _lastPattern;
+    private SKShader? _patternShader;
+
     private const string SkSl = """
                                 uniform shader uDashPattern;  // 1D dash coverage texture (R channel)
+                                uniform shader uPattern;      // 2D sprite pattern (pattern mode)
                                 uniform float uMaxHalfWidth;
                                 uniform float uHalfWidth;
                                 uniform float4 uColor;
                                 uniform float uDashTexelsPerWorldPx;
+                                uniform float2 uSprite;       // sprite size in atlas px
+                                uniform float2 uPatternScale; // atlas px per world px (u: along, v: across)
+                                uniform float uUsePattern;
 
                                 half4 main(float2 p) {
                                     // Sample the dash pattern at the arc length. Linear filtering
@@ -33,8 +44,21 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
                                     // tile px by the caller via uDashPeriodTexels. Anchored in tile
                                     // space: zooming scales geometry and pattern together, nothing crawls.
                                     float dist = abs(p.x) * uMaxHalfWidth;
-                                    float dashCoverage = uDashPattern.eval(float2(p.y * uDashTexelsPerWorldPx, 0.5)).r;
                                     float coverage = 1.0 - smoothstep(uHalfWidth - 0.5, uHalfWidth + 0.5, dist);
+                                    if (coverage <= 0.0) return half4(0.0);
+
+                                    if (uUsePattern > 0.5) {
+                                        // Pattern anchored in TILE space: along the line one repeat
+                                        // covers uPatternScale-reciprocal world px, across the line the
+                                        // sprite tiles at its native atlas size with its vertical
+                                        // center on the stroke centerline. Zooming scales the pattern
+                                        // with the geometry -- nothing crawls.
+                                        float2 uv = float2(p.y, p.x * uMaxHalfWidth + uSprite.y * 0.5)
+                                                  * uPatternScale;
+                                        return uPattern.eval(uv) * coverage;   // premultiplied
+                                    }
+
+                                    float dashCoverage = uDashPattern.eval(float2(p.y * uDashTexelsPerWorldPx, 0.5)).r;
                                     coverage *= dashCoverage;
                                     if (coverage <= 0.0) return half4(0.0);
                                     return half4(uColor.rgb * uColor.a, uColor.a) * coverage;
@@ -68,6 +92,7 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
         if (_dashShader is not null && !ReferenceEquals(_dashShader, WhiteShader))
             _dashShader.Dispose();
         _dashImage?.Dispose();   // only if this instance created it (see below)
+        _patternShader?.Dispose();
         _effect.Dispose();
     }
 
@@ -96,47 +121,94 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
     /// </param>
     /// <param name="color">Color for line</param>
     /// <param name="dashArray">Array for dash pattern with on-off-values</param>
-    public SKShader Update(float strokeWidth, 
-        SKColor color, 
+    /// <param name="pattern">
+    ///     Sprite from the atlas for a patterned line. A pattern disables the
+    ///     dash array (Mapbox spec: dasharray is disabled by line-pattern) and
+    ///     the line color; the sprite is drawn at its native sprite size
+    ///     (Width/PixelRatio world px per repeat along the line), tiled along
+    ///     the line and clamped across it.
+    /// </param>
+    public SKShader Update(float strokeWidth,
+        SKColor color,
         float[]? dashArray = null,
-        float strokeWidthForIntZoom = 0f)
+        float strokeWidthForIntZoom = 0f,
+        ISprite? pattern = null)
     {
         var dashTexelsPerWorldPx = 0f;
+        var spriteW = 1f;
+        var spriteH = 1f;
+        var patternScaleX = 0f;
+        var patternScaleY = 0f;
 
-        if (dashArray is null || dashArray.Length < 2)
+        if (pattern is not null)
         {
-            // Solid: no pattern. WhiteShader returns 1 everywhere, so the
-            // sampling coordinate is irrelevant -- set it to 0.
-            _dashImage = null;
+            // Pattern mode: the dash child stays bound but must not cut
+            // (WhiteShader returns 1 everywhere -> set the dash scale to 0).
             _dashShader = null;
-            _dashTexelWidth = 1f;
             _dashArray = [];
             dashTexelsPerWorldPx = 0f;
-        }
-        else if (!dashArray.AsSpan().SequenceEqual(_dashArray))
-        {
-            // Create new dash pattern
-            _dashShader?.Dispose();
-            _dashImage?.Dispose();
-            _dashArray = (float[])dashArray.Clone();  // caller may mutate it
-            (_dashImage, _dashTexelWidth) = CreateDashPatternImage(dashArray);
-            if (_dashImage is not null)
+
+            var periodW = MathF.Max(pattern.Width / MathF.Max(pattern.PixelRatio, 1e-6f), 1f);
+            var periodH = MathF.Max(pattern.Height / MathF.Max(pattern.PixelRatio, 1e-6f), 1f);
+            spriteW = pattern.Width;
+            spriteH = pattern.Height;
+            // World px -> atlas px along (tile Repeat wraps) and across.
+            patternScaleX = spriteW / periodW;
+            patternScaleY = spriteH / periodH;
+
+            if (!ReferenceEquals(pattern, _lastPattern))
             {
-                _dashShader = _dashImage.ToShader(SKShaderTileMode.Repeat,
-                    SKShaderTileMode.Clamp,
+                pattern.Atlas.Native ??= SKImage.FromEncodedData(pattern.Atlas.Binary);
+                pattern.Native ??= ((SKImage)pattern.Atlas.Native).Subset(new SKRectI(
+                    pattern.X,
+                    pattern.Y,
+                    pattern.X + pattern.Width,
+                    pattern.Y + pattern.Height));
+
+                _patternShader?.Dispose();
+                _patternShader = ((SKImage)pattern.Native).ToShader(
+                    SKShaderTileMode.Repeat, SKShaderTileMode.Clamp,
                     new SKSamplingOptions(SKFilterMode.Linear));
+                _lastPattern = pattern;
             }
         }
-
-        if (_dashShader is not null)
+        else
         {
-            float total = 0f;
-            foreach (var v in _dashArray) total += MathF.Max(v, 0f);
+            if (dashArray is null || dashArray.Length < 2)
+            {
+                // Solid: no pattern. WhiteShader returns 1 everywhere, so the
+                // sampling coordinate is irrelevant -- set it to 0.
+                _dashImage = null;
+                _dashShader = null;
+                _dashTexelWidth = 1f;
+                _dashArray = [];
+                dashTexelsPerWorldPx = 0f;
+            }
+            else if (!dashArray.AsSpan().SequenceEqual(_dashArray))
+            {
+                // Create new dash pattern
+                _dashShader?.Dispose();
+                _dashImage?.Dispose();
+                _dashArray = (float[])dashArray.Clone();  // caller may mutate it
+                (_dashImage, _dashTexelWidth) = CreateDashPatternImage(dashArray);
+                if (_dashImage is not null)
+                {
+                    _dashShader = _dashImage.ToShader(SKShaderTileMode.Repeat,
+                        SKShaderTileMode.Clamp,
+                        new SKSamplingOptions(SKFilterMode.Linear));
+                }
+            }
 
-            // uHalfWidth drives the stroke (animated); the dash period uses
-            // strokeWidthForIntZoom (frozen per zoom level) so the pattern does
-            // not crawl while zooming.
-            dashTexelsPerWorldPx = _dashTexelWidth / (total * strokeWidthForIntZoom);
+            if (_dashShader is not null)
+            {
+                float total = 0f;
+                foreach (var v in _dashArray) total += MathF.Max(v, 0f);
+
+                // uHalfWidth drives the stroke (animated); the dash period uses
+                // strokeWidthForIntZoom (frozen per zoom level) so the pattern does
+                // not crawl while zooming.
+                dashTexelsPerWorldPx = _dashTexelWidth / (total * strokeWidthForIntZoom);
+            }
         }
 
         var uniforms = new SKRuntimeEffectUniforms(_effect)
@@ -145,11 +217,15 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
             ["uHalfWidth"]    = strokeWidth / 2f,
             ["uColor"]        = new[] { color.Red / 255f, color.Green / 255f, color.Blue / 255f, color.Alpha / 255f },
             ["uDashTexelsPerWorldPx"] = dashTexelsPerWorldPx,
+            ["uSprite"]       = new[] { spriteW, spriteH },
+            ["uPatternScale"] = new[] { patternScaleX, patternScaleY },
+            ["uUsePattern"]   = pattern is not null ? 1f : 0f,
         };
 
-        var children = new SKRuntimeEffectChildren(effect)
+        var children = new SKRuntimeEffectChildren(_effect)
         {
             ["uDashPattern"] = _dashShader ?? WhiteShader,
+            ["uPattern"]     = _patternShader ?? WhiteShader,
         };
 
         return _effect.ToShader(uniforms, children);

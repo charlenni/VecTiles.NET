@@ -21,19 +21,19 @@ public class OMTStyleFileLoader
         if (omtStyleFile == null)
             throw new ArgumentException("Style file isn't valid");
 
-        CreateSources(omtStyleFile.Sources);
+        await CreateSources(omtStyleFile.Sources).ConfigureAwait(false);
 
-        omtStyleFile.Sprites = await LoadSprites(omtStyleFile.spriteFile);
+        omtStyleFile.Sprites = await LoadSprites(omtStyleFile.spriteFile).ConfigureAwait(false);
 
         return omtStyleFile;
     }
 
-    public static void CreateSources(Dictionary<string, OMTSource> sources)
+    public static async Task CreateSources(Dictionary<string, OMTSource> sources)
     {
         foreach (var source in sources)
         {
             source.Value.Name = source.Key;
-            source.Value.Create();
+            await source.Value.CreateAsync().ConfigureAwait(false);
         }
     }
 
@@ -46,15 +46,15 @@ public class OMTStyleFileLoader
 
         try
         {
-            bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x.png");
-            jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x.json");
+            bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x.png").ConfigureAwait(false);
+            jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + "@2x.json").ConfigureAwait(false);
         }
         catch (Exception)
         {
             // Fall back to the unsuffixed versions. Both are reloaded so that
             // json and png always match each other.
-            bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".png");
-            jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".json");
+            bitmapBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".png").ConfigureAwait(false);
+            jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".json").ConfigureAwait(false);
         }
 
         var serializer = new JsonSerializer();

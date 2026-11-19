@@ -20,9 +20,11 @@ public static class DefaultTileDataSourceFactory
     /// Create a ITileDataSource from provided source list
     /// </summary>
     /// <param name="sources">List of possible sources</param>
+    /// <param name="minZoom">Minimum zoom of the source, 0 when unknown</param>
+    /// <param name="maxZoom">Maximum zoom of the source, 22 when unknown</param>
     /// <returns>A ITileDataSource when one could created. If not, returns null.</returns>
     /// <exception cref="ArgumentException">Thrown, when source has unknown scheme</exception>
-    public static ITileDataSource? CreateTileDataSource(string[] sources)
+    public static ITileDataSource? CreateTileDataSource(string[] sources, int minZoom = 0, int maxZoom = 22)
     {
         if (sources == null || sources.Length == 0)
             return null;
@@ -36,7 +38,7 @@ public static class DefaultTileDataSourceFactory
         return scheme switch
         {
             MbTilesScheme => CreateMbTilesSource(source.Substring(MbTilesScheme.Length + 3)),
-            HttpScheme or HttpsScheme => CreateHttpSource(sources),
+            HttpScheme or HttpsScheme => CreateHttpSource(sources, minZoom, maxZoom),
             _ => throw new ArgumentException($"Scheme '{scheme}' of '{source}' is not supported"),
         };
     }
@@ -46,8 +48,8 @@ public static class DefaultTileDataSourceFactory
         return new MbTilesTileDataSource(source);
     }
 
-    private static ITileDataSource CreateHttpSource(string[] sources)
+    private static ITileDataSource CreateHttpSource(string[] sources, int minZoom, int maxZoom)
     {
-        return new HttpTileDataSource.HttpTileDataSource(sources, 0, 6);
+        return new HttpTileDataSource.HttpTileDataSource(sources, minZoom, maxZoom);
     }
 }

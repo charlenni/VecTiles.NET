@@ -1,4 +1,5 @@
-﻿using BruTile.Predefined;
+﻿using System.Net;
+using BruTile.Predefined;
 using BruTile.Web;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -44,8 +45,17 @@ public class HttpTileDataSource : ITileDataSource
     }
 
     /// <inheritdoc/>
-    public Task<byte[]?> GetTileAsync(Tile tile)
+    public async Task<byte[]?> GetTileAsync(Tile tile)
     {
-        return _httpTileSource.GetTileAsync(_httpClient, new BruTile.TileInfo { Index = new BruTile.TileIndex(tile.X, tile.Y, tile.Zoom) });
+        try
+        {
+            return await _httpTileSource.GetTileAsync(_httpClient,
+                new BruTile.TileInfo { Index = new BruTile.TileIndex(tile.X, tile.Y, tile.Zoom) }).ConfigureAwait(false);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            // Tile doesn't exist on the server, e.g. zoom level above the server's maxzoom
+            return null;
+        }
     }
 }

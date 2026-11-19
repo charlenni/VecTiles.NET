@@ -382,6 +382,10 @@ public static class TextLineSymbolRenderer
         // share one measured RenderedText
         symbol.Native = RenderedTextCache.GetOrCreate(symbol.Text, symbol.StyleName, symbol.FontNames,
             fontSize, symbol.LineHeight, maxWidth, symbol.Alignment.ToTextAlignment(), (int)symbol.Direction);
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //symbol.Native = RenderedTextCache.GetOrCreate(symbol.Text, symbol.StyleName, symbol.FontNames,
+        //    fontSize, symbol.LineHeight, symbol.LetterSpacing, maxWidth, symbol.Alignment.ToTextAlignment(), (int)symbol.Direction);
 
         var text = (RenderedText)symbol.Native;
 

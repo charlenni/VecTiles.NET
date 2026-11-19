@@ -126,6 +126,9 @@ public class OMTTextBuilder
             FontNames = _fontNames,
             FontSize = _fontSize,
             LineHeight = _lineHeight,
+            // TODO: Activate text letter spacing
+            // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+            //LetterSpacing = _letterSpacing,
             HaloBlur = _haloBlur,
             HaloColor = _haloColor,
             HaloWidth = _haloWidth,
@@ -176,6 +179,9 @@ public class OMTTextBuilder
             FontNames = _fontNames,
             FontSize = _fontSize,
             LineHeight = _lineHeight,
+            // TODO: Activate text letter spacing
+            // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+            //LetterSpacing = _letterSpacing,
             HaloBlur = _haloBlur,
             HaloColor = _haloColor,
             HaloWidth = _haloWidth,

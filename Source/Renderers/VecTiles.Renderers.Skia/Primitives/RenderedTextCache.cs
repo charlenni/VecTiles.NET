@@ -28,6 +28,9 @@ public static class RenderedTextCache
         string FontNames,
         float FontSize,
         float LineHeight,
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //float LetterSpacing,
         float? MaxWidth,
         TextAlignment Alignment,
         int Direction);
@@ -48,10 +51,18 @@ public static class RenderedTextCache
     /// <param name="direction">Text direction of the symbol.</param>
     /// <returns>A measured <see cref="RenderedText"/>.</returns>
     public static RenderedText GetOrCreate(string text, string styleName, string[] fontNames, float fontSize,
-        float lineHeight, float? maxWidth, TextAlignment alignment, int direction)
+        float lineHeight,
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //float letterSpacing,
+        float? maxWidth, TextAlignment alignment, int direction)
     {
         var key = new TextLayoutKey(text, styleName, string.Join('\0', fontNames), fontSize, lineHeight, maxWidth,
             alignment, direction);
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //var key = new TextLayoutKey(text, styleName, string.Join('\0', fontNames), fontSize, lineHeight,
+        //    letterSpacing, maxWidth, alignment, direction);
 
         if (Cache.TryGetValue(key, out var renderedText))
         {
@@ -59,6 +70,9 @@ public static class RenderedTextCache
         }
 
         renderedText = LayoutRenderedText(text, styleName, fontNames, fontSize, lineHeight, maxWidth, alignment);
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //renderedText = LayoutRenderedText(text, styleName, fontNames, fontSize, lineHeight, letterSpacing, maxWidth, alignment);
 
         Cache[key] = renderedText;
 
@@ -71,7 +85,11 @@ public static class RenderedTextCache
     }
 
     private static RenderedText LayoutRenderedText(string text, string styleName, string[] fontNames,
-        float fontSize, float lineHeight, float? maxWidth, TextAlignment alignment)
+        float fontSize, float lineHeight,
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //float letterSpacing,
+        float? maxWidth, TextAlignment alignment)
     {
         var result = new RenderedText(text, FontCache.CreateFonts(styleName, fontNames));
 
@@ -81,6 +99,9 @@ public static class RenderedTextCache
         result.Text.FontMapper = CachedFontMapper.Instance;
 
         result.TextStyle.FontSize = fontSize;
+        // TODO: Activate text letter spacing
+        // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+        //result.TextStyle.LetterSpacing = letterSpacing;
 
         result.Text.Alignment = alignment;
         result.Text.MaxWidth = maxWidth;

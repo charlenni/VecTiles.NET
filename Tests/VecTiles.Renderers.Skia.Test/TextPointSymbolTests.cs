@@ -481,4 +481,25 @@ public class TextPointSymbolTests
 
         return Utilities.CompareBitmaps(Path.Combine(ResultsFolder, filename), Path.Combine(OriginalsFolder, filename));
     }
+
+    // TODO: Activate text letter spacing
+    // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
+    //public class TextLetterSpacingTests
+    //{
+    //    [Fact]
+    //    public void SpacingWidensText()
+    //    {
+    //        const float fontSize = 14.4f;
+
+    //        var withSpacing = RenderedTextCache.GetOrCreate("Hermetschwil", "test", new[] { "Roboto" },
+    //            fontSize, 1.2f, 0.1f, fontSize * 8, TextAlignment.Left, 0);
+    //        var withoutSpacing = RenderedTextCache.GetOrCreate("Hermetschwil", "test", new[] { "Roboto" },
+    //            fontSize, 1.2f, 0f, fontSize * 8, TextAlignment.Left, 0);
+
+    //        Assert.Equal(1, withSpacing.Text.LineCount);
+    //        Assert.Equal(1, withoutSpacing.Text.LineCount);
+    //        Assert.True(withSpacing.MeasuredWidth > withoutSpacing.MeasuredWidth,
+    //            $"spaced width {withSpacing.MeasuredWidth} should exceed unspaced width {withoutSpacing.MeasuredWidth}");
+    //    }
+    //}
 }

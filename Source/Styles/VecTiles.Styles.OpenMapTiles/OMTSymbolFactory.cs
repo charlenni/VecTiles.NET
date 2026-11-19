@@ -32,7 +32,7 @@ public class OMTSymbolFactory : ISymbolFactory
 
         var placement = omtLayerStyle.Layout.SymbolPlacement.Evaluate(context);
 
-        if (placement == SymbolPlacement.Line && UsesViewportAlignment(omtLayerStyle))
+        if (placement == SymbolPlacement.Line && UsesViewportAlignment(omtLayerStyle, context))
         {
             // Per MapLibre spec, line placement with a viewport rotation
             // alignment behaves like point placement (e.g. road shields that
@@ -55,10 +55,10 @@ public class OMTSymbolFactory : ISymbolFactory
     /// exist (icon image, text field) are considered; if any of them wants
     /// map alignment, line placement is kept.
     /// </summary>
-    private static bool UsesViewportAlignment(OMTLayerStyle style)
+    private static bool UsesViewportAlignment(OMTLayerStyle style, EvaluationContext context)
     {
         var hasIcon = !style.Layout.IconImage.HasOnlyDefault;
-        var hasText = !string.IsNullOrEmpty(style.Layout.TextField);
+        var hasText = !string.IsNullOrEmpty(style.Layout.TextField.Evaluate(context));
         var iconAlongLine = !hasIcon || style.Layout.IconRotationAlignment != MapAlignment.Viewport;
         var textAlongLine = !hasText || style.Layout.TextRotationAlignment != MapAlignment.Viewport;
 
@@ -104,7 +104,7 @@ public class OMTSymbolFactory : ISymbolFactory
         }
 
         var text = _textBuilders[builderKey].Build(tile, point, feature);
-        var id = (ulong)feature.Attributes["id"];
+        var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
 
         var symbol = new PointSymbol(tile, id, point, icon, text)
         {
@@ -147,7 +147,7 @@ public class OMTSymbolFactory : ISymbolFactory
             icon = _iconBuilders[builderKey].Build(tile, geometry, feature);
         }
 
-        if (!string.IsNullOrEmpty(style.Layout.TextField))
+        if (!string.IsNullOrEmpty(style.Layout.TextField.Evaluate(context)))
         {
             if (!_textBuilders.ContainsKey(builderKey))
             {
@@ -157,7 +157,7 @@ public class OMTSymbolFactory : ISymbolFactory
             text = _textBuilders[builderKey].Build(tile, geometry, feature);
         }
 
-        var id = (ulong)feature.Attributes["id"];
+        var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
 
         var symbol = new LineSymbol(tile, id, geometry, icon, text)
         {

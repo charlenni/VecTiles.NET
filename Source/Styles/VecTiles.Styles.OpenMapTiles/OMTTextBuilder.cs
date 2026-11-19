@@ -1,5 +1,6 @@
 ﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
+using ProtoBuf.Serializers;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Exceptions;
 using VecTiles.Common.Extensions;
@@ -58,11 +59,11 @@ public class OMTTextBuilder
         _lineHeight = style.Layout.TextLineHeight.Evaluate(context);
         _letterSpacing = style.Layout.TextLetterSpacing.Evaluate(context);
 
-        _textMask = style.Layout.TextField;
+        _textMask = style.Layout.TextField.Evaluate(context);
 
         _optional = style.Layout.TextOptional;
-        _allowOverlap = style.Layout.TextAllowOverlap;
-        _allowOthers = style.Layout.TextIgnorePlacement;
+        _allowOverlap = style.Layout.TextAllowOverlap.Evaluate(context);
+        _allowOthers = style.Layout.TextIgnorePlacement.Evaluate(context);
 
         _rotation = style.Layout.TextRotate.Evaluate(context);
         _rotationAlignment = style.Layout.TextRotationAlignment;
@@ -71,7 +72,7 @@ public class OMTTextBuilder
         _anchor = style.Layout.TextAnchor.ToPoint();
         _offset = style.Layout.TextOffset.Evaluate(context).ToPoint(_fontSize.Invoke(context));
 
-        _transform = style.Layout.TextTransform;
+        _transform = style.Layout.TextTransform.Evaluate(context);
         _alignment = CreateAlignment(style.Layout.TextJustify, style.Layout.TextAnchor);
 
         _color = (ctx) => style.Paint.TextColor.Evaluate(ctx);
@@ -105,7 +106,7 @@ public class OMTTextBuilder
             return null;
         }
 
-        var id = (ulong)feature.Attributes["id"];
+        var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
         
         var symbol = new TextPointSymbol(tile, id, point, text)
         {
@@ -156,7 +157,7 @@ public class OMTTextBuilder
             return null;
         }
 
-        var id = (ulong)feature.Attributes["id"];
+        var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
 
         var symbol = new TextLineSymbol(tile, id, geometry, text)
         {

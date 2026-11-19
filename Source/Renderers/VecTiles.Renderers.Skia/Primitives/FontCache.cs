@@ -58,9 +58,14 @@ public static class FontCache
             // Check, if result is the font family asked for
             bool fontExists = typeface != null && typeface.FamilyName.Equals(fontFamilyName, StringComparison.OrdinalIgnoreCase);
 
+            // The style font is not installed (e.g. Noto Sans/Roboto on
+            // Windows). Fall back to the system default family instead of
+            // failing: a FontNotFoundException here would suppress every
+            // label of the style. Weights/widths/italics of the parsed style
+            // are kept and resolved against the fallback family.
             if (!fontExists)
             {
-                return null;
+                fontFamilyName = SKTypeface.Default.FamilyName;
             }
 
             textStyle.FontFamily = fontFamilyName;

@@ -1,4 +1,5 @@
-﻿using NetTopologySuite.Features;
+﻿using System.Collections.Concurrent;
+using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -65,8 +66,10 @@ public class OMTSymbolFactory : ISymbolFactory
         return !iconAlongLine || !textAlongLine;
     }
 
-    Dictionary<(string, int), OMTIconBuilder> _iconBuilders = new();
-    Dictionary<(string, int), OMTTextBuilder> _textBuilders = new();
+    // RenderedTiles are created in parallel (see RenderedSymbolsLayer/GetTileAsync),
+    // so access to the cached builders must be thread-safe
+    ConcurrentDictionary<(string, int), OMTIconBuilder> _iconBuilders = new();
+    ConcurrentDictionary<(string, int), OMTTextBuilder> _textBuilders = new();
 
     private PointSymbol? CreatePointSymbol(Tile tile, OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context, IFeature feature)
     {
@@ -91,19 +94,11 @@ public class OMTSymbolFactory : ISymbolFactory
         var point = ConvertFrom(tile, geometryPoint);
         var builderKey = (style.Name, (int)context.Zoom);
 
-        if (!_iconBuilders.ContainsKey(builderKey))
-        {
-            _iconBuilders[builderKey] = new OMTIconBuilder(style, spriteFactory, context);
-        }
+        var icon = _iconBuilders.GetOrAdd(builderKey,
+            _ => new OMTIconBuilder(style, spriteFactory, context)).Build(tile, point, feature);
 
-        var icon = _iconBuilders[builderKey].Build(tile, point, feature);
-
-        if (!_textBuilders.ContainsKey(builderKey))
-        {
-            _textBuilders[builderKey] = new OMTTextBuilder(style, context);
-        }
-
-        var text = _textBuilders[builderKey].Build(tile, point, feature);
+        var text = _textBuilders.GetOrAdd(builderKey,
+            _ => new OMTTextBuilder(style, context)).Build(tile, point, feature);
         var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
 
         var symbol = new PointSymbol(tile, id, point, icon, text)
@@ -139,22 +134,14 @@ public class OMTSymbolFactory : ISymbolFactory
 
         if (!style.Layout.IconImage.HasOnlyDefault)
         {
-            if (!_iconBuilders.ContainsKey(builderKey))
-            {
-                _iconBuilders[builderKey] = new OMTIconBuilder(style, spriteFactory, context);
-            }
-            
-            icon = _iconBuilders[builderKey].Build(tile, geometry, feature);
+            icon = _iconBuilders.GetOrAdd(builderKey,
+                _ => new OMTIconBuilder(style, spriteFactory, context)).Build(tile, geometry, feature);
         }
 
         if (!string.IsNullOrEmpty(style.Layout.TextField.Evaluate(context)))
         {
-            if (!_textBuilders.ContainsKey(builderKey))
-            {
-                _textBuilders[builderKey] = new OMTTextBuilder(style, context);
-            }
-
-            text = _textBuilders[builderKey].Build(tile, geometry, feature);
+            text = _textBuilders.GetOrAdd(builderKey,
+                _ => new OMTTextBuilder(style, context)).Build(tile, geometry, feature);
         }
 
         var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;

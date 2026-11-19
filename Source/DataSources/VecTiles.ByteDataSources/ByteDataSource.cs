@@ -24,6 +24,13 @@ public static class ByteDataSource
 
     private static ConcurrentDictionary<string, Assembly>? _embeddedResources;
 
+    // Shared client: a new HttpClient per call exhausts sockets under load.
+    // Timeout guards against hanging requests to unresponsive servers.
+    private static readonly HttpClient _httpClient = new(new HttpClientHandler { AllowAutoRedirect = true })
+    {
+        Timeout = TimeSpan.FromSeconds(30),
+    };
+
     /// <summary>
     /// Get binary data asynchron from a source in URL notation
     /// </summary>
@@ -39,7 +46,7 @@ public static class ByteDataSource
         {
             EmbeddedScheme => LoadEmbeddedResourceFromPath(new Uri(source)),
             FileScheme => LoadFromFileSystem(new Uri(source)),
-            HttpScheme or HttpsScheme => await LoadFromUrlAsync(new Uri(source)),
+            HttpScheme or HttpsScheme => await LoadFromUrlAsync(new Uri(source)).ConfigureAwait(false),
             SvgContentScheme => LoadFromSvg(source.Substring(SvgContentScheme.Length + 3)),
             Base64ContentScheme => LoadFromBase64(source.Substring(Base64ContentScheme.Length + 3)),
             _ => throw new ArgumentException($"Scheme '{scheme}' of '{source}' is not supported"),
@@ -117,12 +124,9 @@ public static class ByteDataSource
     {
         try
         {
-            using HttpClientHandler handler = new HttpClientHandler { AllowAutoRedirect = true };
-            using var httpClient = new HttpClient(handler);
-            using HttpResponseMessage response = await httpClient.GetAsync(imageSource, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+            using HttpResponseMessage response = await _httpClient.GetAsync(imageSource, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
             response.EnsureSuccessStatusCode(); // Throws an exception if the HTTP response status is unsuccessful
-            using var tempStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-            return tempStream.ToBytes();
+            return await response.Content.ReadAsByteArrayAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {

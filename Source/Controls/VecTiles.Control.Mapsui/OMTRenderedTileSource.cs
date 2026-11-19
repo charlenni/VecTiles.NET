@@ -55,6 +55,16 @@ public class OMTRenderedTileSource : IRenderedTileSource
     public OMTLayerStyle[] Styles => _styleFile.Layers;
 
     /// <summary>
+    /// Center of the loaded style file as longitude/latitude, empty if not set
+    /// </summary>
+    public float[] Center => _styleFile.Center;
+
+    /// <summary>
+    /// Zoom level of the loaded style file, null if not set
+    /// </summary>
+    public float? Zoom => _styleFile.Zoom;
+
+    /// <summary>
     /// Clear the cache of rendered tiles, so they are rendered again on next access
     /// </summary>
     public void ClearCache()

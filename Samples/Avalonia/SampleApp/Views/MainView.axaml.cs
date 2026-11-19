@@ -28,7 +28,7 @@ public partial class MainView : UserControl
 
         MapRenderer.RegisterStyleRenderer(typeof(RenderedTileStyle), new RenderedTileStyleRenderer());
 
-        var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+        var stream = File.Open(Path.Combine(_path, "bm_web_col.json"), FileMode.Open, FileAccess.Read);
 
         _tileSource = new OMTRenderedTileSource(stream);
         _tileLayer = new RenderedTileLayer(_tileSource);
@@ -79,8 +79,14 @@ public partial class MainView : UserControl
             MapControl.Map.Navigator.RotateTo(value);
         }));
 
-        MapControl.Map.Navigator.CenterOnAndZoomTo(
-            Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769)), (17.9).ToResolution());
+        // Center and zoom the map on the center/zoom of the style file, if they are set
+        var center = _tileSource.Center;
+        var centerPoint = center.Length >= 2
+            ? Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(center[0], center[1]))
+            : Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769));
+        var zoom = _tileSource.Zoom ?? 17.9f;
+
+        MapControl.Map.Navigator.CenterOnAndZoomTo(centerPoint, zoom.ToResolution());
     }
 
     private void ButtonCenter_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)

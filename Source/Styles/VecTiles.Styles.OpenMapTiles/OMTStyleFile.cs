@@ -42,5 +42,5 @@ public class OMTStyleFile
     public SpriteDictionary? Sprites { get; set; }
 
     [JsonProperty("zoom")]
-    public float Zoom { get; set; }
+    public float? Zoom { get; set; }
 }

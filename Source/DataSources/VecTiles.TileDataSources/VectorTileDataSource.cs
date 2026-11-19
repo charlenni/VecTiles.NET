@@ -47,7 +47,9 @@ public class VectorTileDataSource : IVectorTileDataSource
     public async Task<VectorTile?> GetVectorTileAsync(Tile requestedTile)
     {
         if (!requestedTile.IsValid)
+        {
             return null;
+        }
 
         var providedTile = requestedTile;
         var data = await _dataSource.GetTileAsync(requestedTile);
@@ -58,6 +60,11 @@ public class VectorTileDataSource : IVectorTileDataSource
             data = await _dataSource.GetTileAsync(providedTile);
         }
 
-        return data == null ? null : await _converter.Convert(requestedTile, providedTile, data);
+        if (data == null)
+        {
+            return null;
+        }
+
+        return await _converter.Convert(requestedTile, providedTile, data);
     }
 }

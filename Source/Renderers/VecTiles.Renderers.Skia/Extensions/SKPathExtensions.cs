@@ -5,22 +5,6 @@ namespace VecTiles.Renderers.Skia.Extensions;
 public static class SKPathExtensions
 {
     /// <summary>
-    /// Checks if the given length fits on the path after the start distance,
-    /// measured along the path (not along straight segments).
-    /// </summary>
-    public static bool CanFitFrom(this SKPath path, float startDistance, float requiredLength)
-    {
-        if (requiredLength <= 0)
-        {
-            return false;
-        }
-
-        using var measure = new SKPathMeasure(path);
-
-        return measure.Length - startDistance >= requiredLength;
-    }
-
-    /// <summary>
     /// Creates a copy of the path with reversed direction. Only supports paths
     /// consisting of MoveTo / LineTo verbs, which is what the line symbol
     /// renderers build from the geometries.

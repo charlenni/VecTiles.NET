@@ -23,6 +23,18 @@ public static class IconLineSymbolRenderer
     private static readonly SKSamplingOptions ScreenSampling = new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.None);
 
     /// <summary>
+    /// Returns the width of the icon in the placement screen space (atlas pixels
+    /// divided by the pixel ratio, scaled by icon-size), without creating the
+    /// sprite image. Used to distribute the anchors like MapLibre does.
+    /// </summary>
+    public static float GetLabelLength(IconLineSymbol symbol)
+    {
+        return symbol.Icon == null
+            ? 0f
+            : symbol.Icon.Width / symbol.Icon.PixelRatio * symbol.Scale;
+    }
+
+    /// <summary>
     /// Draws an icon on the specified canvas at the given screen coordinates.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>
@@ -137,10 +149,16 @@ public static class IconLineSymbolRenderer
         // Save for later use
         var screenEnvelope = symbol.Envelope.Copy();
 
-        // Check if there is enough space to fit the symbol on the remaining path
-        if (!path.CanFitFrom((float)startPos, (float)(screenEnvelope.MaxX - screenEnvelope.MinX)))
+        // The icon is centered on the anchor: the whole icon envelope must fit
+        // on the path around it (MapLibre requires the label to fit before the
+        // beginning and after the end of the line)
+        using (var pathMeasure = new SKPathMeasure(path))
         {
-            return SymbolPlacementStatus.Collision;
+            if (startPos + (float)symbol.Envelope.MinX < 0 ||
+                startPos + (float)symbol.Envelope.MaxX > pathMeasure.Length)
+            {
+                return SymbolPlacementStatus.Collision;
+            }
         }
 
         // Move symbol's envelope to the screen position

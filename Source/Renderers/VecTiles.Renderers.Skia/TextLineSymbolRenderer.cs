@@ -40,6 +40,18 @@ public static class TextLineSymbolRenderer
     private static readonly ConcurrentDictionary<(string Family, int Weight, int Width, bool Italic), SKTypeface> TypefaceCache = new();
 
     /// <summary>
+    /// Returns the measured width of the label in the placement screen space,
+    /// creating the cached layout if necessary. Used to distribute the anchors
+    /// like MapLibre does.
+    /// </summary>
+    public static float GetLabelLength(TextLineSymbol symbol, EvaluationContext context)
+    {
+        symbol.Envelope ??= CreateEnvelope(symbol, context);
+
+        return symbol.Native is RenderedText text ? text.MeasuredWidth : 0f;
+    }
+
+    /// <summary>
     /// Draws text along a path on the specified canvas.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>

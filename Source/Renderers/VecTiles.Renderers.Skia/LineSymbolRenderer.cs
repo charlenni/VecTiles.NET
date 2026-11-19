@@ -38,27 +38,19 @@ public class LineSymbolRenderer : ISymbolRenderer
 
         foreach (var contour in CreateContourPaths(symbol, worldToScreenConverter))
         {
-            using (contour)
-            using (var pathMeasure = new SKPathMeasure(contour))
+            using (contour.Path)
+            using (var pathMeasure = new SKPathMeasure(contour.Path))
             {
-                for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+                foreach (var pos in GetAnchorPositions(symbol, pathMeasure.Length, context, contour.Part))
                 {
-                    if (pathMeasure.Length < symbol.Spacing)
-                    {
-                        // We can only place one symbol in this part, so set it in the middle
-                        pos = pathMeasure.Length / 2;
-                    }
-
                     pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
-
-                    var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
 
                     var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
 
                     if (symbol.IconSymbol is not null)
                     {
                         spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
-                            contour, pos,
+                            contour.Path, pos,
                             symbol.IconSymbol!,
                             tree, nextPosition.X,
                             nextPosition.Y, showUnvalidBorders);
@@ -69,7 +61,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                     if (symbol.TextSymbol is not null)
                     {
                         spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
-                            contour, pos,
+                            contour.Path, pos,
                             symbol.TextSymbol!,
                             tree, showUnvalidBorders, out _);
                     }
@@ -124,8 +116,8 @@ public class LineSymbolRenderer : ISymbolRenderer
 
         for (var contourIndex = 0; contourIndex < contours.Count; contourIndex++)
         {
-            var contour = contours[contourIndex];
-            var drawContour = drawContours[contourIndex];
+            var contour = contours[contourIndex].Path;
+            var drawContour = drawContours[contourIndex].Path;
 
             using (contour)
             using (drawContour)
@@ -138,16 +130,10 @@ public class LineSymbolRenderer : ISymbolRenderer
                     ? (float)(drawPathMeasure.Length / pathMeasure.Length)
                     : 1f;
 
-                for (var pos = symbol.Spacing / 4f; pos < pathMeasure.Length; pos = pos + symbol.Spacing)
+                foreach (var pos in GetAnchorPositions(symbol, pathMeasure.Length, context, contours[contourIndex].Part))
                 {
                     var iconDrawn = false;
                     var textDrawn = false;
-
-                    if (pathMeasure.Length < symbol.Spacing)
-                    {
-                        // We can only place one symbol in this part, so set it in the middle
-                        pos = pathMeasure.Length / 2;
-                    }
 
                     pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out var tangentVec);
 
@@ -219,11 +205,6 @@ public class LineSymbolRenderer : ISymbolRenderer
                         TextLineSymbolRenderer.DrawTextOnPath(canvas, drawCtx, textSymbol, drawContour,
                             drawPlacement!, showValidBorders, fontSizeRatio);
 
-                        if (!symbol.HasIcon)
-                        {
-                            pos += (float)(measuredWidth * fontSizeRatio);
-                        }
-
                         textDrawn = true;
                     }
 
@@ -277,6 +258,158 @@ public class LineSymbolRenderer : ISymbolRenderer
     }
 
     /// <summary>
+    /// Computes the anchor positions of the labels on one contour following the
+    /// placement algorithm of MapLibre (get_anchors.ts): the first anchor sits
+    /// half a label length plus a fixed extra offset (two em, to avoid
+    /// collisions at T intersections) behind the start of the line, so
+    /// consecutive labels keep a minimum gap of spacing / 4 between their
+    /// edges, and an anchor is only valid when the whole label fits on the
+    /// path. Lines continued outside the tile align to the spacing, so labels
+    /// of neighboring tiles match. When no anchor is valid, a single label is
+    /// centered on the line. Anchors inside the tile rectangle are returned
+    /// first, anchors reaching into the tile buffer last.
+    /// </summary>
+    /// <param name="symbol">Symbol with spacing and label to place.</param>
+    /// <param name="pathLength">Length of the contour in the placement space.</param>
+    /// <param name="context">Evaluation context for the label size.</param>
+    /// <param name="part">Contour geometry in world coordinates.</param>
+    /// <returns>Anchor positions along the contour in the placement space.</returns>
+    private static List<float> GetAnchorPositions(LineSymbol symbol, float pathLength,
+        EvaluationContext context, LineString part)
+    {
+        var spacing = symbol.Spacing;
+
+        if (spacing <= 0f)
+        {
+            return [pathLength / 2f];
+        }
+
+        var tile = symbol.Tile;
+        var isLineContinued = IsLineContinued(part, tile);
+        var labelLength = GetLabelLength(symbol, context);
+
+        // Guarantee a minimum gap of spacing / 4 between the edges of adjacent
+        // labels (MapLibre widens the spacing for long labels)
+        if (spacing - labelLength < spacing / 4f)
+        {
+            spacing = labelLength + spacing / 4f;
+        }
+
+        // MapLibre uses two em of the (max) text size as the fixed extra
+        // offset; icon-only symbols fall back to the default text size of the
+        // style spec (16 px)
+        var fontSize = symbol.TextSymbol?.FontSize.Invoke(context) ?? 16f;
+
+        var offset = (isLineContinued ? spacing / 2f : labelLength / 2f + fontSize * 2f) % spacing;
+
+        var halfLabelLength = labelLength / 2f;
+
+        // Candidate anchors in path order, flagged by whether the anchor point
+        // lies inside the tile rectangle. Labels of continued lines can reach
+        // into the tile buffer; those anchors are placed last (they would be
+        // cut at the tile edge in standalone tile rendering), while MapLibre
+        // strictly drops them because its cross-tile index lets the tile the
+        // anchor belongs to place the label.
+        var candidates = new List<(float Pos, bool InsideTile)>();
+
+        for (var pos = offset; pos < pathLength; pos += spacing)
+        {
+            // The whole label must fit on the path around the anchor
+            if (pos - halfLabelLength >= 0f && pos + halfLabelLength <= pathLength)
+            {
+                candidates.Add((pos, AnchorInsideTile(part, tile, pathLength, pos)));
+            }
+        }
+
+        var anchors = candidates.Where(c => c.InsideTile).Select(c => c.Pos)
+            .Concat(candidates.Where(c => !c.InsideTile).Select(c => c.Pos)).ToList();
+
+        if (anchors.Count == 0 && !isLineContinued)
+        {
+            // No distributed position fits: fall back to one centered label
+            // (MapLibre's placeAtMiddle retry)
+            var center = pathLength / 2f;
+
+            if (center - halfLabelLength >= 0f && center + halfLabelLength <= pathLength)
+            {
+                anchors.Add(center);
+            }
+        }
+
+        return anchors;
+    }
+
+    /// <summary>
+    /// Checks whether the position on the contour lies inside the tile
+    /// rectangle. The path arclength fraction is preserved by the affine
+    /// conversion, so the world position is interpolated along the world
+    /// contour at the same fraction.
+    /// </summary>
+    private static bool AnchorInsideTile(LineString part, Tile tile, float pathLength, float pos)
+    {
+        var coordinates = part.Coordinates;
+
+        var worldLength = 0.0;
+        for (var i = 0; i < coordinates.Length - 1; i++)
+        {
+            worldLength += coordinates[i].Distance(coordinates[i + 1]);
+        }
+
+        var target = pathLength > 0 ? worldLength * (pos / pathLength) : 0.0;
+        var distance = 0.0;
+
+        for (var i = 0; i < coordinates.Length - 1; i++)
+        {
+            var segment = coordinates[i].Distance(coordinates[i + 1]);
+
+            if (distance + segment >= target)
+            {
+                var t = segment > 0 ? (target - distance) / segment : 0.0;
+                var x = coordinates[i].X + (coordinates[i + 1].X - coordinates[i].X) * t;
+                var y = coordinates[i].Y + (coordinates[i + 1].Y - coordinates[i].Y) * t;
+
+                return x >= tile.Left && x <= tile.Right && y >= tile.Bottom && y <= tile.Top;
+            }
+
+            distance += segment;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns the label length of the symbol in the placement screen space:
+    /// the longer of the icon width and the measured text width (MapLibre takes
+    /// the maximum of both shaped lengths).
+    /// </summary>
+    private static float GetLabelLength(LineSymbol symbol, EvaluationContext context)
+    {
+        var iconLength = symbol.IconSymbol != null
+            ? IconLineSymbolRenderer.GetLabelLength(symbol.IconSymbol!)
+            : 0f;
+
+        var textLength = symbol.TextSymbol != null
+            ? TextLineSymbolRenderer.GetLabelLength(symbol.TextSymbol!, context)
+            : 0f;
+
+        return Math.Max(iconLength, textLength);
+    }
+
+    /// <summary>
+    /// A line is continued when its start lies outside the tile rectangle (on
+    /// the border or in the tile buffer), like the boundary check of MapLibre's
+    /// get_anchors.
+    /// </summary>
+    private static bool IsLineContinued(LineString part, Tile tile)
+    {
+        var first = part.Coordinates[0];
+        var epsilon = (tile.Right - tile.Left) * 1e-6;
+
+        return first.X < tile.Left - epsilon || first.X > tile.Right + epsilon ||
+               first.Y < tile.Bottom - epsilon || first.Y > tile.Top + epsilon;
+    }
+
+    /// <summary>
     /// Converts the world coordinates of a geometry to screen coordinates and
     /// creates one path per contour of the geometry. Checking and drawing run
     /// per contour, so that labels of other contours do not influence the
@@ -284,11 +417,11 @@ public class LineSymbolRenderer : ISymbolRenderer
     /// </summary>
     /// <param name="symbol">Symbol with geometry to convert.</param>
     /// <param name="worldToScreenConverter">Converter from world to screen coordinates.</param>
-    /// <returns>Paths with screen coordinates, one per contour.</returns>
-    private static List<SKPath> CreateContourPaths(LineSymbol symbol,
+    /// <returns>Paths with screen coordinates and the world contour, one entry per contour.</returns>
+    private static List<(SKPath Path, LineString Part)> CreateContourPaths(LineSymbol symbol,
         Func<double, double, (double, double)> worldToScreenConverter)
     {
-        var paths = new List<SKPath>();
+        var paths = new List<(SKPath, LineString)>();
 
         // A merged symbol can carry a MultiLineString when segments of the
         // same feature are not directly connected
@@ -321,7 +454,7 @@ public class LineSymbolRenderer : ISymbolRenderer
                 path.LineTo((float)nextPointX, (float)nextPointY);
             }
 
-            paths.Add(path);
+            paths.Add((path, part));
         }
 
         return paths;

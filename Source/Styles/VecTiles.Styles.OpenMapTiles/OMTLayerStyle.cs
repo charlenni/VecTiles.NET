@@ -25,13 +25,13 @@ public class OMTLayerStyle : ILayerStyle
     public OMTLayerStyleLayout Layout { get; set; } = new OMTLayerStyleLayout();
 
     [JsonProperty("maxzoom")]
-    public int MaxZoom { get; set; } = -1;
+    public float MaxZoom { get; set; } = -1;
 
     [JsonProperty("metadata")]
     public JObject? Metadata { get; set; }
 
     [JsonProperty("minzoom")]
-    public int MinZoom { get; set; } = -1;
+    public float MinZoom { get; set; } = -1;
 
     [JsonProperty("paint")]
     public OMTLayerStylePaint Paint { get; set; } = new OMTLayerStylePaint();

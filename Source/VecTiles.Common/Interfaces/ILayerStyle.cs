@@ -23,12 +23,12 @@ public interface ILayerStyle
     /// <summary>
     /// Minimal zoom from which this style layer is used
     /// </summary>
-    int MinZoom { get; }
+    float MinZoom { get; }
 
     /// <summary>
     /// Maximal zoom up to which this style layer is used
     /// </summary>
-    int MaxZoom { get; }
+    float MaxZoom { get; }
 
     /// <summary>
     /// Is style layer visible

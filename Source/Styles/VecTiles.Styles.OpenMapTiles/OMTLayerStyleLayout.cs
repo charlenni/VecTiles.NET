@@ -12,17 +12,13 @@ namespace VecTiles.Styles.OpenMapTiles;
 /// </summary>
 public class OMTLayerStyleLayout
 {
-    [JsonProperty("visibility")]
-    public string Visibility { get; set; } = "visible";
+    [JsonProperty("visibility")] public string Visibility { get; set; } = "visible";
 
-    [JsonProperty("fill-sort-key")]
-    public float? FillSortKey { get; set; }
+    [JsonProperty("fill-sort-key")] public float? FillSortKey { get; set; }
 
-    [JsonProperty("line-cap")]
-    public string LineCap { get; set; } = "butt";
+    [JsonProperty("line-cap")] public string LineCap { get; set; } = "butt";
 
-    [JsonProperty("line-join")]
-    public string LineJoin { get; set; } = "miter";
+    [JsonProperty("line-join")] public string LineJoin { get; set; } = "miter";
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("line-miter-limit")]
@@ -32,11 +28,9 @@ public class OMTLayerStyleLayout
     [JsonProperty("line-round-limit")]
     public StoppedFloat LineRoundLimit { get; set; } = new StoppedFloat { Default = 1.05f };
 
-    [JsonProperty("line-sort-key")]
-    public float? LineSortKey { get; set; }
+    [JsonProperty("line-sort-key")] public float? LineSortKey { get; set; }
 
-    [JsonProperty("icon-allow-overlap")]
-    public bool IconAllowOverlap { get; set; } = false;
+    [JsonProperty("icon-allow-overlap")] public bool IconAllowOverlap { get; set; } = false;
 
     [JsonConverter(typeof(EnumConverter<Anchor>))]
     [JsonProperty("icon-anchor")]
@@ -53,15 +47,13 @@ public class OMTLayerStyleLayout
     [JsonProperty("icon-image")]
     public StoppedString IconImage { get; set; } = new StoppedString() { Default = string.Empty };
 
-    [JsonProperty("icon-keep-upright")]
-    public bool IconKeepUpright { get; set; } = false;
+    [JsonProperty("icon-keep-upright")] public bool IconKeepUpright { get; set; } = false;
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
     [JsonProperty("icon-offset")]
     public StoppedFloatArray IconOffset { get; set; } = new StoppedFloatArray { Default = [0, 0] };
 
-    [JsonProperty("icon-optional")]
-    public bool IconOptional { get; set; } = false;
+    [JsonProperty("icon-optional")] public bool IconOptional { get; set; } = false;
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("icon-padding")]
@@ -83,19 +75,18 @@ public class OMTLayerStyleLayout
     [JsonProperty("icon-size")]
     public StoppedFloat IconSize { get; set; } = new StoppedFloat { Default = 1.0f };
 
-    [JsonProperty("icon-text-fit")]
-    public string IconTextFit { get; set; } = "none";
+    [JsonProperty("icon-text-fit")] public string IconTextFit { get; set; } = "none";
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
     [JsonProperty("icon-text-fit-padding")]
     public StoppedFloatArray IconTextFitPadding { get; set; } = new StoppedFloatArray { Default = [0, 0, 0, 0] };
 
-    [JsonProperty("symbol-avoid-edges")]
-    public bool SymbolAvoidEdges { get; set; } = false;
+    [JsonProperty("symbol-avoid-edges")] public bool SymbolAvoidEdges { get; set; } = false;
 
     [JsonConverter(typeof(StoppedEnumConverter<SymbolPlacement>))]
     [JsonProperty("symbol-placement")]
-    public StoppedEnum<SymbolPlacement> SymbolPlacement { get; set; } = new StoppedEnum<SymbolPlacement> { Default = Common.Enums.SymbolPlacement.Point };
+    public StoppedEnum<SymbolPlacement> SymbolPlacement { get; set; } = new StoppedEnum<SymbolPlacement>
+        { Default = Common.Enums.SymbolPlacement.Point };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
     [JsonProperty("symbol-sort-key")]
@@ -105,28 +96,30 @@ public class OMTLayerStyleLayout
     [JsonProperty("symbol-spacing")]
     public StoppedFloat SymbolSpacing { get; set; } = new StoppedFloat { Default = 250.0f };
 
-    [JsonProperty("symbol-z-elevate")]
-    public bool SymbolZElevate { get; set; } = false;
+    [JsonProperty("symbol-z-elevate")] public bool SymbolZElevate { get; set; } = false;
 
     [JsonConverter(typeof(EnumConverter<SymbolZOrder>))]
     [JsonProperty("symbol-z-order")]
     public SymbolZOrder SymbolZOrder { get; set; } = SymbolZOrder.Auto;
 
+    [JsonConverter(typeof(StoppedBooleanConverter))]
     [JsonProperty("text-allow-overlap")]
-    public bool TextAllowOverlap { get; set; } = false;
+    public StoppedBoolean TextAllowOverlap { get; set; } = new StoppedBoolean() { Default = false };
 
     [JsonConverter(typeof(EnumConverter<Anchor>))]
     [JsonProperty("text-anchor")]
     public Anchor TextAnchor { get; set; } = Anchor.Center;
 
+    [JsonConverter(typeof(StoppedStringConverter))]
     [JsonProperty("text-field")]
-    public string TextField { get; set; } = string.Empty;
+    public StoppedString TextField { get; set; } = new StoppedString() { Default =  string.Empty };
 
     [JsonProperty("text-font")]
     public string[] TextFont { get; set; } = ["Open Sans Regular", "Arial Unicode MS Regular"];
 
+    [JsonConverter(typeof(StoppedBooleanConverter))]
     [JsonProperty("text-ignore-placement")]
-    public bool TextIgnorePlacement { get; set; } = false;
+    public StoppedBoolean TextIgnorePlacement { get; set; } = new StoppedBoolean() { Default = false };
 
     [JsonConverter(typeof(EnumConverter<TextJustify>))]
     [JsonProperty("text-justify")]
@@ -181,9 +174,9 @@ public class OMTLayerStyleLayout
     [JsonProperty("text-size")]
     public StoppedFloat TextSize { get; set; } = new StoppedFloat { Default = 16.0f };
 
-    [JsonConverter(typeof(EnumConverter<TextTransform>))]
+    [JsonConverter(typeof(StoppedEnumConverter<TextTransform>))]
     [JsonProperty("text-transform")]
-    public TextTransform TextTransform { get; set; } = TextTransform.None;
+    public StoppedEnum<TextTransform> TextTransform { get; set; } = new StoppedEnum<TextTransform>() { Default = Common.Enums.TextTransform.None };
 
     [JsonProperty("text-variable-anchor")]
     public string[] TextVariableAnchor { get; set; } = [];

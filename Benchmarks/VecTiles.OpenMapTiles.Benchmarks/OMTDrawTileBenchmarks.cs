@@ -1,5 +1,6 @@
 using BenchmarkDotNet.Attributes;
 using BruTile;
+using Mapsui.Providers.Wfs.Utilities;
 using SkiaSharp;
 using VecTiles.Controls.Mapsui;
 using MapRenderer = Mapsui.Rendering.Skia.MapRenderer;
@@ -17,6 +18,7 @@ namespace VecTiles.OpenMapTiles.Benchmarks;
 [MemoryDiagnoser]
 public class OMTDrawTileBenchmarks
 {
+    private const string _path = "Files";
     private const int Zoom = 19;
     private const int CenterX = 274582;
     private const int CenterY = 183615;
@@ -38,8 +40,8 @@ public class OMTDrawTileBenchmarks
     [GlobalSetup]
     public async Task Setup()
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        _tileSource = new OMTRenderedTileSource(styleStream);
+        var styleSource = $"file://{_path}osm-liberty.json";
+        _tileSource = new OMTRenderedTileSource(styleSource);
         _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
         _renderService = new Mapsui.Rendering.RenderService();
 

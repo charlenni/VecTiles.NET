@@ -10,9 +10,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckStyleFileMetadataTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+            var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.NotNull(mapboxStyleFile.Metadata);
             Assert.True(mapboxStyleFile.Metadata.ContainsKey("maputnik:license"));
@@ -21,9 +21,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckStyleFileVersionAndCenterTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+            var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.True(mapboxStyleFile.Version >= 8);
             Assert.NotNull(mapboxStyleFile.Center);
@@ -33,9 +33,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckStyleFileGlyphsTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+            var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.False(string.IsNullOrEmpty(mapboxStyleFile.Glyphs));
             Assert.Contains("{fontstack}", mapboxStyleFile.Glyphs);
@@ -44,9 +44,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckStyleFileLayerOrderTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+            var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             // Ensure layers are in the expected order
             Assert.Equal("background", mapboxStyleFile.Layers[0].Name);
@@ -57,9 +57,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckStyleFileLayerPropertiesTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+            var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             var layer = mapboxStyleFile.Layers.FirstOrDefault(l => l.Name == "water");
             Assert.NotNull(layer);
@@ -71,9 +71,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckLoadingSpriteFileTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
+            var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.True(mapboxStyleFile != null);
             Assert.True(mapboxStyleFile.Sprites != null);
@@ -82,8 +82,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckSpritePropertiesTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var styleSource = $"file://{_path}/osm-liberty.json";
+
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.NotNull(mapboxStyleFile.Sprites);
             Assert.NotNull(mapboxStyleFile.Sprites.Sprites);
@@ -103,8 +104,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckStyleFileSourcesExistTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var styleSource = $"file://{_path}/osm-liberty.json";
+
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.NotNull(mapboxStyleFile.Sources);
             Assert.True(mapboxStyleFile.Sources.Count > 0);
@@ -116,8 +118,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckSourcePropertiesTilesTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var styleSource = $"file://{_path}/osm-liberty.json";
+
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.NotNull(mapboxStyleFile.Sources);
 
@@ -141,8 +144,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckSourcePropertiesUrlTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var styleSource = $"file://{_path}/osm-liberty.json";
+
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             Assert.NotNull(mapboxStyleFile.Sources);
 
@@ -157,8 +161,9 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public async Task CheckAllSourcesHaveUniqueNamesTest()
         {
-            var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(stream);
+            var styleSource = $"file://{_path}/osm-liberty.json";
+
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
 
             var sourceNames = mapboxStyleFile.Sources.Keys.ToList();
             Assert.Equal(sourceNames.Count, sourceNames.Distinct().Count());

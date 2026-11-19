@@ -24,6 +24,8 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class LindenhofSingleFrameTests
 {
+    private const string _path = "Files";
+
     private readonly ITestOutputHelper _output;
 
     public LindenhofSingleFrameTests(ITestOutputHelper output) => _output = output;
@@ -38,8 +40,8 @@ public class LindenhofSingleFrameTests
     [InlineData(false)]  // tile 91802 gone
     public void LindenhofLabelsArePlacedInBothCases(bool withTileAbove)
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var tileSource = new OMTRenderedTileSource(styleStream);
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var tileSource = new OMTRenderedTileSource(styleSource);
         var symbolsLayer = new RenderedSymbolsLayer(tileSource);
 
         double resolution = (17.9).ToResolution(); // like the app: map starts at zoom 17.9

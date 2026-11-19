@@ -11,9 +11,9 @@ namespace VecTiles.Renderers.Skia.Test;
 
 public class LineAndFillTests
 {
-    private const string Folder = "Files";
-    private readonly string _dataFile = Path.Combine(Folder, "zurich.mbtiles");
-    private readonly string _styleFile = Path.Combine(Folder, "osm-liberty.json");
+    private const string _path = "Files";
+    private readonly string _dataFile = Path.Combine(_path, "zurich.mbtiles");
+    private readonly string _styleFile = Path.Combine(_path, "osm-liberty.json");
     private readonly Renderer _renderer;
 
     public LineAndFillTests()
@@ -22,15 +22,15 @@ public class LineAndFillTests
         var converter = new OMTTileConverter();
         var vectorDataSource = new VectorTileDataSource(dataSource, converter);
 
-        var omtStyleStream = File.OpenRead(_styleFile);
-        var omtStyleFile = OMTStyleFileLoader.Load(omtStyleStream).Result;
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
 
-        var spriteDictionary = omtStyleFile.Sprites;
+        var spriteDictionary = styleFile.Sprites;
         var paintFactory = new OMTPaintFactory(spriteDictionary);
         var symbolFactory = new OMTSymbolFactory(spriteDictionary);
-        var renderFactory = new RenderFactory(omtStyleFile.Layers, paintFactory, symbolFactory);
+        var renderFactory = new RenderFactory(styleFile.Layers, paintFactory, symbolFactory);
 
-        _renderer = new Renderer([new KeyValuePair<string, ITileDataSource>(vectorDataSource.Name, vectorDataSource)],  omtStyleFile.Layers, renderFactory);
+        _renderer = new Renderer([new KeyValuePair<string, ITileDataSource>(vectorDataSource.Name, vectorDataSource)],  styleFile.Layers, renderFactory);
     }
 
     [Theory]
@@ -70,7 +70,7 @@ public class LineAndFillTests
                 renderedTile?.Draw(canvas, renderContext);
             }
 
-            Utilities.SaveAndDestroyBitmap(bitmap, Path.Combine(Folder, $"Tile-{x}x-{y}y-{zoom}z.png"));
+            Utilities.SaveAndDestroyBitmap(bitmap, Path.Combine(_path, $"Tile-{x}x-{y}y-{zoom}z.png"));
         }
         catch (Exception e)
         {

@@ -10,7 +10,8 @@ namespace VecTiles.Renderers.Skia.Test;
 
 public class TextPointSymbolTests
 {
-    private readonly string Folder = Path.Combine("Files");
+    private const string _path = "Files";
+    
     private readonly string OriginalsFolder = Path.Combine("Files", "Originals");
     private readonly string ResultsFolder = Path.Combine("Files", "Results");
     private SKBitmap _bitmap;

@@ -17,8 +17,10 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </remarks>
 public class RenderedTileTests
 {
-    private readonly string OriginalsFolder = Path.Combine("Files", "Originals");
-    private readonly string ResultsFolder = Path.Combine("Files", "Results");
+    private const string _path = "Files";
+
+    private readonly string OriginalsFolder = Path.Combine(_path, "Originals");
+    private readonly string ResultsFolder = Path.Combine(_path, "Results");
 
     private const int Zoom = 19;
     private const int CenterX = 274582;
@@ -86,8 +88,8 @@ public class RenderedTileTests
         double centerYWorld = WorldHalf - (centerY + 0.5) * tileSpan;
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, size, size);
 
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var tileSource = new OMTRenderedTileSource(styleStream);
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var tileSource = new OMTRenderedTileSource(styleSource);
         var symbolsLayer = new RenderedSymbolsLayer(tileSource);
         var renderService = new Mapsui.Rendering.RenderService();
 

@@ -14,14 +14,16 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class RoadShieldPlacementTests
 {
+    private const string _path = "Files";
+
     private readonly ITestOutputHelper _output;
 
     public RoadShieldPlacementTests(ITestOutputHelper output) => _output = output;
 
     private static (OMTSymbolFactory Factory, OMTLayerStyle Layer) CreateRoadShield()
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var styleFile = OMTStyleFileLoader.Load(styleStream).Result;
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
         var layer = styleFile.Layers.First(l => l.Name == "road_shield");
 
         return (new OMTSymbolFactory(styleFile.Sprites!), layer);
@@ -66,8 +68,8 @@ public class RoadShieldPlacementTests
     [Fact]
     public void RoadLabelsStayLineSymbols()
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var styleFile = OMTStyleFileLoader.Load(styleStream).Result;
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
         var layer = styleFile.Layers.First(l => l.Name == "road_label");
         var factory = new OMTSymbolFactory(styleFile.Sprites!);
 

@@ -13,7 +13,7 @@ namespace VecTiles.OpenMapTiles.Benchmarks;
 [MemoryDiagnoser]
 public class OMTRenderBenchmarks
 {
-    readonly string _path = Path.Combine("Files");
+    private const string _path = "Files";
 
     private ITileDataSource? _dataSource;
     ITileConverter? _tileConverter;
@@ -32,8 +32,8 @@ public class OMTRenderBenchmarks
     [GlobalSetup]
     public void Setup()
     {
-        var stream = File.Open(Path.Combine(_path, "osm-liberty.json"), FileMode.Open, FileAccess.Read);
-        var styleFile = OMTStyleFileLoader.Load(stream).Result;
+        var styleSource = $"file://{_path}osm-liberty.json";
+        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
 
         _dataSource = new MbTilesTileDataSource(Path.Combine(_path, "zurich.mbtiles"));
         _tileConverter = new OMTTileConverter();

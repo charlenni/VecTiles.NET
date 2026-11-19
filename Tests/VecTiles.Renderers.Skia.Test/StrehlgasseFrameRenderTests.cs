@@ -6,9 +6,7 @@ using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
-using VecTiles.Renderers.Skia;
 using VecTiles.Renderers.Skia.Primitives;
-using VecTiles.Styles.OpenMapTiles.Extensions;
 using Xunit.Abstractions;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -19,6 +17,8 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class StrehlgasseFrameRenderTests
 {
+    private const string _path = "Files";
+    
     private readonly ITestOutputHelper _output;
 
     public StrehlgasseFrameRenderTests(ITestOutputHelper output) => _output = output;
@@ -31,8 +31,8 @@ public class StrehlgasseFrameRenderTests
     [Fact]
     public void RenderStrehlgasseFrame()
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var tileSource = new OMTRenderedTileSource(styleStream);
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var tileSource = new OMTRenderedTileSource(styleSource);
         var symbolsLayer = new RenderedSymbolsLayer(tileSource);
 
         double resolution = (17.9).ToResolution();
@@ -148,7 +148,7 @@ public class StrehlgasseFrameRenderTests
             _output.WriteLine($"BOX screenEnv={s.ScreenEnvelope}");
         }
 
-        var path = Path.Combine("Files", "Results", "strehlgasse-frame.png");
+        var path = Path.Combine(_path, "Results", "strehlgasse-frame.png");
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = File.OpenWrite(path);
@@ -187,8 +187,8 @@ public class StrehlgasseFrameRenderTests
     private (double? x, double? y, TileInfo[] TileInfos) PlaceStrehlgasseAnchor(double fractionalZoom,
         TileInfo[]? tileInfos = null)
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var tileSource = new OMTRenderedTileSource(styleStream);
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var tileSource = new OMTRenderedTileSource(styleSource);
         var symbolsLayer = new RenderedSymbolsLayer(tileSource);
 
         double resolution = fractionalZoom.ToResolution();

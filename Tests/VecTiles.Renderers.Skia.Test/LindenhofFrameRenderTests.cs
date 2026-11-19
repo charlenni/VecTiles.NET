@@ -18,6 +18,8 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class LindenhofFrameRenderTests
 {
+    private const string _path = "Files";
+
     private readonly ITestOutputHelper _output;
 
     public LindenhofFrameRenderTests(ITestOutputHelper output) => _output = output;
@@ -32,8 +34,8 @@ public class LindenhofFrameRenderTests
     [InlineData(false, "lindenhof-without-91802.png")]
     public void RenderFrame(bool withTileAbove, string fileName)
     {
-        using var styleStream = File.OpenRead(Path.Combine("Files", "osm-liberty.json"));
-        var tileSource = new OMTRenderedTileSource(styleStream);
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        var tileSource = new OMTRenderedTileSource(styleSource);
         var symbolsLayer = new RenderedSymbolsLayer(tileSource);
 
         double resolution = (17.9).ToResolution();
@@ -97,7 +99,7 @@ public class LindenhofFrameRenderTests
 
         canvas.Flush();
 
-        var path = Path.Combine("Files", "Results", fileName);
+        var path = Path.Combine(_path, "Results", fileName);
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = File.OpenWrite(path);

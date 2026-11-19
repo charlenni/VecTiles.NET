@@ -4,6 +4,7 @@ using SkiaSharp;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
+using Color = VecTiles.Common.Primitives.Color;
 
 namespace VecTiles.Renderers.Skia.Test;
 

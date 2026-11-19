@@ -28,5 +28,13 @@ public enum LayerStyleType
     /// <summary>
     /// Style is for drawing buildings in 3D.
     /// </summary>
-    FillExtrusion
+    FillExtrusion,
+    /// <summary>
+    /// Style is for drawing circles. Not supported by a renderer yet.
+    /// </summary>
+    Circle,
+    /// <summary>
+    /// Style type is not supported by this library version.
+    /// </summary>
+    Unknown
 }

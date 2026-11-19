@@ -120,6 +120,8 @@ public class Renderer
                     break;
                 case LayerStyleType.Symbol:
                 case LayerStyleType.FillExtrusion:
+                case LayerStyleType.Circle:
+                case LayerStyleType.Unknown:
                     break;
                 default:
                     throw new NotImplementedException($"Style with type '{style.StyleType}' is unknown");

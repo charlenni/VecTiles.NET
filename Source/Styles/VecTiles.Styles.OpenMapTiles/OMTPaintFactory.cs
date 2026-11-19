@@ -31,6 +31,8 @@ public class OMTPaintFactory : IPaintFactory
             LayerStyleType.Line => OMTLinePaint.CreatePaint(style, _spriteFactory),
             LayerStyleType.Symbol => null,
             LayerStyleType.FillExtrusion => null,
+            LayerStyleType.Circle => null,
+            LayerStyleType.Unknown => null,
             _ => throw new NotImplementedException($"Layer style with type '{style.StyleType}' is unknown")
         };
     }

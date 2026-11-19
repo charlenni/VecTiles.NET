@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using VecTiles.Common.Enums;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
@@ -16,6 +17,11 @@ public class EnumConverter<T> : JsonConverter where T : struct, Enum
             value = value.Replace("-", "");
             if (Enum.TryParse<T>(value, ignoreCase: true, out var result))
                 return result;
+
+            // Unsupported layer types must not fall back to the first enum
+            // member (Background), which would paint the whole tile.
+            if (typeof(T) == typeof(LayerStyleType))
+                return (T)(object)LayerStyleType.Unknown;
         }
 
         return default(T); // oder throw new JsonSerializationException(...)

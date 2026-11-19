@@ -46,7 +46,7 @@ namespace VecTiles.Styles.OpenMapTiles.Extensions
             return result;
         }
 
-        static Regex _regExAttributes = new Regex(@".*\{(.*)\}.*", RegexOptions.Compiled);
+        static Regex _regExAttributes = new Regex(@"\{(.*?)\}", RegexOptions.Compiled);
 
         public static string ReplaceWithTags(this string text, EvaluationContext? context = null)
         {
@@ -55,36 +55,41 @@ namespace VecTiles.Styles.OpenMapTiles.Extensions
             if (!match.Success)
                 return text;
 
-            var val = match.Groups[1].Value;
+            var result = text;
 
-            if (string.IsNullOrEmpty(val))
-                return text.Replace("{{}}", "");
-
-            if (context?.Feature?.Attributes?.Exists(val) ?? false)
-                return text.Replace($"{{{val}}}", context.Feature.Attributes[val].ToString());
-
-            if (context?.Attributes?.Exists(val) ?? false)
-                return text.Replace($"{{{val}}}", context.Attributes[val].ToString());
-
-            if (context?.Feature?.Attributes == null)
-                return text;
-
-            // Check, if match starts with name
-            if (val.StartsWith("name", StringComparison.InvariantCulture))
+            while (match.Success)
             {
-                // Try to take the localized name
-                var code = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+                var val = match.Groups[1].Value;
 
-                if (context.Feature.Attributes.Exists("name:" + code))
-                    return text.Replace($"{{{val}}}", context.Feature.Attributes["name:" + code].ToString());
-                if (context.Feature.Attributes.Exists("name_" + code))
-                    return text.Replace($"{{{val}}}", context.Feature.Attributes["name_" + code].ToString());
+                string? replacement = null;
 
-                // We didn't find a name in the tags, so remove this part
-                return text.Replace($"{{{val}}}", "");
+                if (string.IsNullOrEmpty(val))
+                    replacement = string.Empty;
+                else if (context?.Feature?.Attributes?.Exists(val) ?? false)
+                    replacement = context.Feature.Attributes[val].ToString();
+                else if (context?.Attributes?.Exists(val) ?? false)
+                    replacement = context.Attributes[val].ToString();
+                else if (val.StartsWith("name", StringComparison.InvariantCulture) && context?.Feature?.Attributes != null)
+                {
+                    // Try to take the localized name
+                    var code = CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+
+                    if (context.Feature.Attributes.Exists("name:" + code))
+                        replacement = context.Feature.Attributes["name:" + code].ToString();
+                    else if (context.Feature.Attributes.Exists("name_" + code))
+                        replacement = context.Feature.Attributes["name_" + code].ToString();
+                    else
+                        // We didn't find a name in the tags, so remove this part
+                        replacement = string.Empty;
+                }
+
+                if (replacement != null)
+                    result = result.Replace(match.Groups[0].Captures[0].Value, replacement);
+
+                match = match.NextMatch();
             }
 
-            return text;
+            return result;
         }
 
         public static string ReplaceWithTransforms(this string text, TextTransform textTransform)

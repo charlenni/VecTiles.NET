@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using System.Linq;
 using System.Reactive;
 using Avalonia;
@@ -28,19 +29,22 @@ public partial class MainView : UserControl
 
         MapRenderer.RegisterStyleRenderer(typeof(RenderedTileStyle), new RenderedTileStyleRenderer());
 
-        var stream = File.Open(Path.Combine(_path, "bm_web_col.json"), FileMode.Open, FileAccess.Read);
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
-        _tileSource = new OMTRenderedTileSource(stream);
+        _tileSource = new OMTRenderedTileSource(styleSource);
+
         _tileLayer = new RenderedTileLayer(_tileSource);
+        MapControl.Map.Layers.Add(_tileLayer);
+        
         _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
+        MapControl.Map.Layers.Add(_symbolsLayer);
+        
         _debugLayer = new TileGridDebugLayer(_tileLayer.TileSource.Schema)
         {
             Enabled = CheckBoxDebugLayer.IsChecked ?? false
         };
 
-        //MapControl.Map.Layers.Add(OpenStreetMap.CreateTileLayer());
-        MapControl.Map.Layers.Add(_tileLayer);
-        MapControl.Map.Layers.Add(_symbolsLayer);
         MapControl.Map.Layers.Add(_debugLayer);
 
         // The PerformanceWidget is created as part of the map.

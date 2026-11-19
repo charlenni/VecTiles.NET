@@ -6,17 +6,16 @@ namespace VecTiles.Styles.OpenMapTiles;
 
 public class OMTStyleFileLoader
 {
-    public static async Task<OMTStyleFile> Load(Stream jsonStream)
+    public static async Task<OMTStyleFile> Load(string source)
     {
         OMTStyleFile? omtStyleFile;
 
+        var jsonArray = await ByteDataSource.GetBytesAsync(source).ConfigureAwait(false);
+        using var jsonStream = new MemoryStream(jsonArray, writable: false);
+        using var jsonReader = new JsonTextReader(new StreamReader(jsonStream));
         var serializer = new JsonSerializer();
 
-        using (var sr = new StreamReader(jsonStream))
-        using (var jsonTextReader = new JsonTextReader(sr))
-        {
-            omtStyleFile = serializer.Deserialize<OMTStyleFile>(jsonTextReader);
-        }
+        omtStyleFile = serializer.Deserialize<OMTStyleFile>(jsonReader);
 
         if (omtStyleFile == null)
             throw new ArgumentException("Style file isn't valid");

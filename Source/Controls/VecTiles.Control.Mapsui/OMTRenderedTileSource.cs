@@ -19,9 +19,9 @@ public class OMTRenderedTileSource : IRenderedTileSource
     private readonly MemoryCache<RenderedTileFeature> _cache;
     private readonly OMTStyleFile _styleFile;
 
-    public OMTRenderedTileSource(Stream stream)
+    public OMTRenderedTileSource(string source)
     {
-        _styleFile = OMTStyleFileLoader.Load(stream).Result;
+        _styleFile = OMTStyleFileLoader.Load(source).Result;
 
         var omtStyleFile = _styleFile;
         var minZoom = 0;

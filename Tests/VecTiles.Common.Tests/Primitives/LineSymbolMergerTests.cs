@@ -63,6 +63,27 @@ public class LineSymbolMergerTests
     }
 
     [Fact]
+    public void MergeById_DataWithoutIdsIsNeverMerged()
+    {
+        var (tileA, tileB, y) = AdjacentTiles();
+
+        // Data sources without feature ids produce symbols with id 0.
+        // They must be passed through unchanged, not merged into one
+        // symbol carrying the text of the first one.
+        var symbols = new List<ISymbol>
+        {
+            CreateLineSymbol(tileA, 0, (tileA.Left, y), (tileA.Right, y)),
+            CreateLineSymbol(tileB, 0, (tileB.Left, y), (tileB.Right, y)),
+        };
+
+        var result = LineSymbolMerger.MergeById(symbols);
+
+        Assert.Equal(2, result.Count);
+        Assert.Same(symbols[0], result[0]);
+        Assert.Same(symbols[1], result[1]);
+    }
+
+    [Fact]
     public void Merge_UnconnectedSegmentsBecomeMultiLineString()
     {
         var (tileA, tileB, y) = AdjacentTiles();

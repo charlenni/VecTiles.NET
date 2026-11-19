@@ -94,8 +94,12 @@ public static class RenderedSymbolsLayerRenderer
         {
             var symbol = symbols[i];
             
-            // Skip symbols with an id that was already examined in this frame
-            if (!examinedIds.Add(symbol.Id))
+            // Skip symbols with an id that was already examined in this frame.
+            // Id 0 means "no id" (data sources without feature ids): such
+            // symbols must always be examined, otherwise every symbol after
+            // the first one would be discarded from the frame. Duplicate
+            // placement is prevented by the collision detection instead.
+            if (symbol.Id != 0 && !examinedIds.Add(symbol.Id))
             {
                 continue;
             }

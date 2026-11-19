@@ -28,8 +28,12 @@ public static class LineSymbolMerger
 
         foreach (var symbol in symbols)
         {
-            if (symbol is not LineSymbol line)
+            if (symbol is not LineSymbol line || line.Id == 0)
             {
+                // Id 0 means "no id" (data sources without feature ids, e.g.
+                // basemap.de). Grouping everything without an id together
+                // would merge unrelated features carrying the text of the
+                // first one, so pass them through unchanged.
                 result.Add(symbol);
                 continue;
             }
@@ -48,8 +52,9 @@ public static class LineSymbolMerger
         for (var i = 0; i < result.Count; i++)
         {
             if (result[i] is LineSymbol line &&
-                groups[line.Id].Count > 1 &&
-                Merge(groups[line.Id]) is { } merged)
+                groups.TryGetValue(line.Id, out var group) &&
+                group.Count > 1 &&
+                Merge(group) is { } merged)
             {
                 result[i] = merged;
             }

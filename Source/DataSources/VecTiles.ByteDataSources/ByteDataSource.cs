@@ -45,7 +45,7 @@ public static class ByteDataSource
         return scheme switch
         {
             EmbeddedScheme => LoadEmbeddedResourceFromPath(new Uri(source)),
-            FileScheme => LoadFromFileSystem(new Uri(source)),
+            FileScheme => LoadFromFileSystem(source),
             HttpScheme or HttpsScheme => await LoadFromUrlAsync(new Uri(source)).ConfigureAwait(false),
             SvgContentScheme => LoadFromSvg(source.Substring(SvgContentScheme.Length + 3)),
             Base64ContentScheme => LoadFromBase64(source.Substring(Base64ContentScheme.Length + 3)),
@@ -134,11 +134,16 @@ public static class ByteDataSource
         }
     }
 
-    private static byte[] LoadFromFileSystem(Uri imageSource)
+    private static byte[] LoadFromFileSystem(string imageSource)
     {
+        if (!imageSource.StartsWith("file://", StringComparison.InvariantCulture))
+        {
+            throw new ArgumentException($"Invalid image path '{imageSource}'", nameof(imageSource));    
+        }
+        
         try
         {
-            return File.ReadAllBytes(imageSource.LocalPath);
+            return File.ReadAllBytes(imageSource.Substring(7));
         }
         catch (Exception ex)
         {

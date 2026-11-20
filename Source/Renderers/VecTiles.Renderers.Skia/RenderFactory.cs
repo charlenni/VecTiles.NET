@@ -6,6 +6,8 @@ using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Renderers.Skia.Primitives.Vertices;
+using VecTiles.Styles.OpenMapTiles;
+using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Renderers.Skia;
 
@@ -52,17 +54,19 @@ public class RenderFactory : IRenderFactory
         return new RasterLayerRenderer(_tileRect, _paints[style.Name], bitmap);
     }
 
-    public ILayerRenderer CreateVectorFillLayer(ILayerStyle style, 
-        EvaluationContext context, 
+    public ILayerRenderer CreateVectorFillLayer(ILayerStyle style,
+        EvaluationContext context,
         IEnumerable<IFeature> features)
     {
         // A filled area consits of a polygon, that is filled and a outline around it
         // Both need different vertices. So we need two types of vertices.
-        
+
         if (!_paints.ContainsKey(style.Name))
         {
             return null;
         }
+
+        features = SortBySortKey(style, context, features, s => s.Layout.FillSortKey);
 
         var fillBuilder = new VertexBuilder();
         var outlineBuilder = new VertexBuilder();
@@ -98,9 +102,11 @@ public class RenderFactory : IRenderFactory
             return null;
         }
 
+        features = SortBySortKey(style, context, features, s => s.Layout.LineSortKey);
+
         // Calc number of possible vertices
         var numOfPoints = 0;
-        
+
         foreach (var feature in features!)
         {
             numOfPoints += feature.Geometry.NumPoints;
@@ -134,7 +140,7 @@ public class RenderFactory : IRenderFactory
         // Per Mapbox spec a circle is drawn at every vertex of the geometry
         var points = new List<SKPoint>();
 
-        foreach (var feature in features!)
+        foreach (var feature in SortBySortKey(style, context, features, s => s.Layout.CircleSortKey))
         {
             foreach (var coordinate in feature.Geometry.Coordinates)
             {
@@ -143,6 +149,27 @@ public class RenderFactory : IRenderFactory
         }
 
         return new CircleLayerRenderer([.. points], _paints[style.Name]);
+    }
+
+    /// <summary>
+    /// Sorts features in ascending order by the evaluated sort-key layout
+    /// property. Features with a higher key are drawn later and appear on top
+    /// (Mapbox spec). Equal keys keep their source order (stable sort). A
+    /// constant key (no stops) gives every feature the same key, so the
+    /// source order is kept without evaluating the key per feature.
+    /// </summary>
+    private static List<IFeature> SortBySortKey(ILayerStyle style, EvaluationContext context,
+        IEnumerable<IFeature> features, Func<OMTLayerStyle, StoppedFloat> sortKey)
+    {
+        if (style is not OMTLayerStyle omtStyle || sortKey(omtStyle).IsConstant)
+        {
+            return [.. features];
+        }
+
+        return [.. features
+            .Select(f => (Feature: f, Key: sortKey(omtStyle).Evaluate(context.WithFeature(f))))
+            .OrderBy(t => t.Key)
+            .Select(t => t.Feature)];
     }
 
     public ISymbol? CreateSymbol(Tile tile,

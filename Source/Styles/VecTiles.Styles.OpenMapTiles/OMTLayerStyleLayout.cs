@@ -14,9 +14,13 @@ public class OMTLayerStyleLayout
 {
     [JsonProperty("visibility")] public string Visibility { get; set; } = "visible";
 
-    [JsonProperty("circle-sort-key")] public float? CircleSortKey { get; set; }
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-sort-key")]
+    public StoppedFloat CircleSortKey { get; set; } = new StoppedFloat() { Default = 0f };
 
-    [JsonProperty("fill-sort-key")] public float? FillSortKey { get; set; }
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("fill-sort-key")]
+    public StoppedFloat FillSortKey { get; set; } = new StoppedFloat() { Default = 0f };
 
     [JsonProperty("line-cap")] public string LineCap { get; set; } = "butt";
 
@@ -30,7 +34,9 @@ public class OMTLayerStyleLayout
     [JsonProperty("line-round-limit")]
     public StoppedFloat LineRoundLimit { get; set; } = new StoppedFloat { Default = 1.05f };
 
-    [JsonProperty("line-sort-key")] public float? LineSortKey { get; set; }
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("line-sort-key")]
+    public StoppedFloat LineSortKey { get; set; } = new StoppedFloat() { Default = 0f };
 
     [JsonProperty("icon-allow-overlap")] public bool IconAllowOverlap { get; set; } = false;
 

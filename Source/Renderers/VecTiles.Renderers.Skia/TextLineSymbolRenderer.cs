@@ -72,10 +72,16 @@ public static class TextLineSymbolRenderer
 
         // Color of the halo and the text, halo is drawn first (stroked around the
         // glyphs, see the doubled width in the RichTextKit renderer), then the fill
-        using var haloPaint = new SKPaint
+        // Font properties live in SKFont since SkiaSharp 4; the paints only carry
+        // stroke and fill attributes
+        using var font = new SKFont
         {
             Typeface = ResolveTypeface(text),
-            TextSize = fontSize,
+            Size = fontSize,
+        };
+
+        using var haloPaint = new SKPaint
+        {
             IsAntialias = true,
             Style = SKPaintStyle.Stroke,
             StrokeWidth = haloWidth,
@@ -85,16 +91,14 @@ public static class TextLineSymbolRenderer
 
         using var fillPaint = new SKPaint
         {
-            Typeface = haloPaint.Typeface,
-            TextSize = fontSize,
             IsAntialias = true,
             Color = symbol.Color.Invoke(context).ToSKColor().WithAlpha((byte)(symbol.Opacity.Invoke(context) * 255f)),
         };
 
-        // Vertical centering: FontMetrics.Ascent is negative, so this shifts the
+        // Vertical centering: Metrics.Ascent is negative, so this shifts the
         // baseline below the path by half the line height and the character
         // centers sit on the path
-        var offsetFromPath = (fillPaint.FontMetrics.Descent - fillPaint.FontMetrics.Ascent) / 2f;
+        var offsetFromPath = (font.Metrics.Descent - font.Metrics.Ascent) / 2f;
 
         // The glyphs are drawn exactly over the collision boxes: the draw start
         // was computed in the check from the anchor and the padded envelope
@@ -108,7 +112,7 @@ public static class TextLineSymbolRenderer
             drawPath = path.Reverse();
         }
 
-        canvas.DrawTextOnPath(symbol.Text, drawPath, start, offsetFromPath, haloPaint, fillPaint);
+        canvas.DrawTextOnPath(symbol.Text, drawPath, start, offsetFromPath, font, haloPaint, fillPaint);
 
         if (showValidBorders)
         {

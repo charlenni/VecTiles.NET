@@ -9,10 +9,10 @@
   <ItemGroup>
     <PackageReference Include="Earcut.NET" Version="1.2.0" />
     <PackageReference Include="protobuf-net" Version="3.4.40" />
-    <PackageReference Include="SkiaSharp" Version="3.119.4" />
-    <PackageReference Include="SkiaSharp.HarfBuzz" Version="3.119.4" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.4" />
-    <PackageReference Include="Topten.RichTextKit" Version="0.4.167" />
+    <PackageReference Include="SkiaSharp" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.157.0" />
+    <PackageReference Include="Topten.RichTextKit" Version="0.6.174" />
   </ItemGroup>
 
   <ItemGroup>

@@ -15,6 +15,7 @@ public static class SkiaTextPathExtensions
     /// <param name="path">Path to draw the text on.</param>
     /// <param name="startOffset">Distance along the path where the text starts.</param>
     /// <param name="offsetFromPath">Distance between the path and the top of the characters.</param>
+    /// <param name="font">Font used to measure and shape the characters.</param>
     /// <param name="paints">Paints used to draw each character, in drawing order
     /// (e.g. halo paint first, fill paint last).</param>
     public static void DrawTextOnPath(
@@ -23,6 +24,7 @@ public static class SkiaTextPathExtensions
             SKPath path,
             float startOffset,
             float offsetFromPath,
+            SKFont font,
             params SKPaint[] paints)
     {
         if (string.IsNullOrEmpty(text) || paints.Length == 0)
@@ -38,7 +40,7 @@ public static class SkiaTextPathExtensions
         foreach (char c in text)
         {
             string s = c.ToString();
-            float charWidth = paints[0].MeasureText(s);
+            float charWidth = font.MeasureText(s);
 
             float charCenter = distance + charWidth / 2f;
 
@@ -64,7 +66,7 @@ public static class SkiaTextPathExtensions
 
                 foreach (var paint in paints)
                 {
-                    canvas.DrawText(s, -charWidth / 2f, -paint.FontMetrics.Ascent, paint);
+                    canvas.DrawText(s, -charWidth / 2f, -font.Metrics.Ascent, font, paint);
                 }
 
                 canvas.Restore();

@@ -392,7 +392,7 @@ public static class TextLineSymbolRenderer
         }
 
         var fontSize = symbol.FontSize.Invoke(context);
-        var maxWidth = symbol.MaxWidth.Invoke(context, fontSize);
+        var maxWidth = symbol.MaxWidth?.Invoke(context, fontSize);
 
         // Layout is expensive; identical texts with identical layout parameters
         // share one measured RenderedText

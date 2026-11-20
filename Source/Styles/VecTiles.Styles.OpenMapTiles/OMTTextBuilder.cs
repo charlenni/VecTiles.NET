@@ -211,7 +211,9 @@ public class OMTTextBuilder
             HaloWidth = _haloWidth,
             Translate = _translate,
             TranslateAnchor = _translateAnchor,
-            MaxWidth = _maxWidth,
+            // The style spec applies text-max-width to point-placed text only;
+            // line-placed labels are never wrapped (MapLibre behavior), so the
+            // drawn single-line label matches the measured collision boxes
             SortOrder = _sortOrder(context, tile),
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,

@@ -5,6 +5,7 @@ VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8EC462FD-D22E-90A8-E5CE-7E832BA40C5D}"
 	ProjectSection(SolutionItems) = preProject
+		AGENTS.md = AGENTS.md
 		LICENSE.md = LICENSE.md
 		README.md = README.md
 	EndProjectSection
@@ -66,6 +67,16 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.SdfFont", "Source\Converters\VecTiles.Converters.SdfFont\VecTiles.Converters.SdfFont.csproj", "{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.OpenMapTiles.Benchmarks", "Benchmarks\VecTiles.OpenMapTiles.Benchmarks\VecTiles.OpenMapTiles.Benchmarks.csproj", "{49CF2375-BE54-4D77-A8BF-5963297B1FB2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packages", "Packages", "{7D9862DE-0950-4FC6-BFB0-940FBEC36D82}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Common.Package", "Source\Packages\VecTiles.Common.Package\VecTiles.Common.Package.csproj", "{B66BBC6A-CA57-403D-B981-C40DBE393E99}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.OpenMapTiles.Package", "Source\Packages\VecTiles.OpenMapTiles.Package\VecTiles.OpenMapTiles.Package.csproj", "{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Skia.Package", "Source\Packages\VecTiles.Skia.Package\VecTiles.Skia.Package.csproj", "{896DAC03-E2DF-439F-97B9-41F078F4799F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Mapsui.Package", "Source\Packages\VecTiles.Mapsui.Package\VecTiles.Mapsui.Package.csproj", "{3042D385-1FFC-40FB-903E-1CDEF58700D5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -145,6 +156,22 @@ Global
 		{49CF2375-BE54-4D77-A8BF-5963297B1FB2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49CF2375-BE54-4D77-A8BF-5963297B1FB2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49CF2375-BE54-4D77-A8BF-5963297B1FB2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B66BBC6A-CA57-403D-B981-C40DBE393E99}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B66BBC6A-CA57-403D-B981-C40DBE393E99}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B66BBC6A-CA57-403D-B981-C40DBE393E99}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B66BBC6A-CA57-403D-B981-C40DBE393E99}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}.Release|Any CPU.Build.0 = Release|Any CPU
+		{896DAC03-E2DF-439F-97B9-41F078F4799F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{896DAC03-E2DF-439F-97B9-41F078F4799F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{896DAC03-E2DF-439F-97B9-41F078F4799F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{896DAC03-E2DF-439F-97B9-41F078F4799F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -170,6 +197,10 @@ Global
 		{875D2599-9DCD-4FB8-997B-71C37F4B2CC9} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 		{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC} = {B12671CC-7A17-4A76-BF16-42FBF260E973}
 		{49CF2375-BE54-4D77-A8BF-5963297B1FB2} = {20D41C3B-D288-4A0E-9B2B-9681C5AA91AE}
+		{B66BBC6A-CA57-403D-B981-C40DBE393E99} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
+		{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
+		{896DAC03-E2DF-439F-97B9-41F078F4799F} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
+		{3042D385-1FFC-40FB-903E-1CDEF58700D5} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45A2AA7-DCD5-4D17-81AC-3622204FAFAE}

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reactive;
 using Avalonia;
 using Avalonia.Controls;
+using Mapsui;
 using Mapsui.Extensions;
 using Mapsui.Rendering.Skia;
 using Mapsui.Styles;
@@ -29,24 +30,23 @@ public partial class MainView : UserControl
 
         MapRenderer.RegisterStyleRenderer(typeof(RenderedTileStyle), new RenderedTileStyleRenderer());
 
-        var styleSource = $"file://{_path}/osm-liberty.json";
-        //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
+        //var styleSource = $"file://{_path}/osm-liberty.json";
+        var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
         _tileSource = new OMTRenderedTileSource(styleSource);
 
         _tileLayer = new RenderedTileLayer(_tileSource);
         MapControl.Map.Layers.Add(_tileLayer);
         
-        _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
-        MapControl.Map.Layers.Add(_symbolsLayer);
-        
         _debugLayer = new TileGridDebugLayer(_tileLayer.TileSource.Schema)
         {
             Enabled = CheckBoxDebugLayer.IsChecked ?? false
         };
-
         MapControl.Map.Layers.Add(_debugLayer);
 
+        _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
+        MapControl.Map.Layers.Add(_symbolsLayer);
+        
         // The PerformanceWidget is created as part of the map.
         var performanceWidget = MapControl.Map.Widgets.OfType<PerformanceWidget>().First();
         performanceWidget.Performance.IsActive = Mapsui.Widgets.ActiveMode.Yes; // The default in ActiveMode.OnlyInDebugMode which is usually the best option. This is just to show how to change it.
@@ -83,19 +83,16 @@ public partial class MainView : UserControl
             MapControl.Map.Navigator.RotateTo(value);
         }));
 
-        // Center and zoom the map on the center/zoom of the style file, if they are set
-        var center = _tileSource.Center;
-        var centerPoint = center.Length >= 2
-            ? Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(center[0], center[1]))
-            : Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769));
-        var zoom = _tileSource.Zoom ?? 17.9f;
+        var (centerPoint, zoom) = GetCenterPoint();
 
         MapControl.Map.Navigator.CenterOnAndZoomTo(centerPoint, zoom.ToResolution());
     }
 
     private void ButtonCenter_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        MapControl.Map.Navigator.CenterOnAndZoomTo(Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769)), 14.ToResolution());
+        var (centerPoint, zoom) = GetCenterPoint();
+
+        MapControl.Map.Navigator.CenterOnAndZoomTo(centerPoint, zoom.ToResolution());
     }
 
     private void CheckBoxDebugLayer_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
@@ -130,5 +127,16 @@ public partial class MainView : UserControl
         _symbolsLayer.ClearCache();
 
         MapControl.Map.RefreshData(Mapsui.ChangeType.Discrete);
+    }
+    
+    private (MPoint centerPoint, float zoom) GetCenterPoint()
+    {
+        // Center and zoom the map on the center/zoom of the style file, if they are set
+        var center = _tileSource.Center;
+        var mPoint = center.Length >= 2
+            ? Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(center[0], center[1]))
+            : Mapsui.Projections.SphericalMercator.FromLonLat(new Mapsui.MPoint(8.5417, 47.3769));
+        var f = _tileSource.Zoom ?? 17.9f;
+        return (mPoint, f);
     }
 }

@@ -27,21 +27,30 @@
 			<avalonia:MapControl Grid.Column="1" x:Name="MapControl" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
 			<Border Grid.Column="0" BorderBrush="White" Opacity="0.65" BorderThickness="6" MinWidth="140"
                     MinHeight="30" HorizontalAlignment="Stretch">
-				<RelativePanel VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
-					<StackPanel x:Name="ButtonsPanel">
-						<Button x:Name="ButtonCenter" Content="Center" HorizontalAlignment="Stretch" Click="ButtonCenter_Click"/>
+				<Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
+					<Grid.RowDefinitions>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="*"/>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="Auto"/>
+						<RowDefinition Height="Auto"/>
+					</Grid.RowDefinitions>
+					<StackPanel x:Name="ButtonsPanel" Grid.Row="0">
+						<TextBlock Text="Debug" FontWeight="Bold" Padding="0, 0, 0, 5" TextAlignment="Center" Grid.Row="3" HorizontalAlignment="Stretch" />
+						<Button x:Name="ButtonCenter" Content="Goto Center" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch" Click="ButtonCenter_Click"/>
 						<CheckBox x:Name="CheckBoxDebugLayer" Content="Debug Layer" HorizontalAlignment="Stretch" Click="CheckBoxDebugLayer_Click" />
 						<CheckBox x:Name="CheckBoxValidBorder" Content="Valid Borders" HorizontalAlignment="Stretch" Click="CheckBoxValid_Click" />
 						<CheckBox x:Name="CheckBoxInvalidBorder" Content="Invalid Borders" HorizontalAlignment="Stretch" Click="CheckBoxInvalid_Click" />
 					</StackPanel>
-					<TextBlock x:Name="StylesHeader" Text="Styles" RelativePanel.Below="ButtonsPanel" HorizontalAlignment="Stretch" TextAlignment="Center" />
-					<ScrollViewer x:Name="StylesScroll" RelativePanel.Below="StylesHeader" RelativePanel.Above="RotationSlider"
-                                  RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True">
+					<TextBlock x:Name="StylesHeader" Text="Styles" FontWeight="Bold" Padding="0,10,0,0" Grid.Row="1" HorizontalAlignment="Stretch" TextAlignment="Center" />
+					<ScrollViewer x:Name="StylesScroll" Grid.Row="2">
 						<StackPanel x:Name="StylesPanel" />
 					</ScrollViewer>
-					<TextBlock Text="{Binding Rotation}" TextAlignment="Center" Width="{Binding #RotationSlider.Width}" RelativePanel.AlignBottomWithPanel="True" />
-					<Slider x:Name="RotationSlider" Value="{Binding Rotation, Mode=TwoWay}" MinWidth="180" Minimum="0" Maximum="360" Padding="10,0" RelativePanel.AlignBottomWithPanel="True" />
-				</RelativePanel>
+					<TextBlock Text="Rotation" FontWeight="Bold" Padding="0,10,0,0" TextAlignment="Center" Grid.Row="3" HorizontalAlignment="Stretch" />
+					<Slider x:Name="RotationSlider" Value="{Binding Rotation, Mode=TwoWay}" Width="180" Minimum="0" Maximum="360" Padding="10,0" HorizontalAlignment="Center" Grid.Row="4" />
+					<TextBlock x:Name="RotationSliderText" Text="{Binding Rotation}" TextAlignment="Center" Grid.Row="5" HorizontalAlignment="Stretch" />
+				</Grid>
 			</Border>
 		</Grid>
 	</Grid>

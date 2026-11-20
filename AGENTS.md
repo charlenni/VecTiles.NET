@@ -32,7 +32,7 @@ dotnet build VecTiles.NET.sln
 dotnet test VecTiles.NET.sln
 ```
 
-All projects target `net9.0`.
+All projects target `net10.0`.
 
 ## Architecture and data flow
 
@@ -72,7 +72,7 @@ Key interfaces in `Source/VecTiles.Common/Interfaces/`: `ITileDataSource`, `ITil
 
 ## Conventions
 
-- C# / .NET 9; follow the existing code style (file-scoped conventions, folder-per-concern:
+- C# / .NET 10; follow the existing code style (file-scoped conventions, folder-per-concern:
   `Enums/`, `Interfaces/`, `Primitives/`, `Extensions/`, `Exceptions/` inside `VecTiles.Common`).
 - Tests are xUnit; every new feature should come with tests in the matching `Tests/*.Tests`
   project.

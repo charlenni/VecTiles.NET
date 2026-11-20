@@ -1,4 +1,5 @@
-﻿using VecTiles.Common.Primitives;
+﻿using VecTiles.Common.Interfaces;
+using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
@@ -26,12 +27,19 @@ public class StoppedFloatArray : IStopped<float[]>
     /// <summary>
     /// Is this a stopped value that only contains the default
     /// </summary>
-    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops);
+    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops) && Expression == null;
 
     /// <summary>
     /// True, if value doesn't change with context
     /// </summary>
-    public bool IsConstant => !_hasStops;
+    public bool IsConstant => !_hasStops && Expression == null;
+
+    /// <summary>
+    /// Expression to evaluate, e.g. ["literal", [0, 0]] or ["get", "property"].
+    /// Data-driven form per Mapbox Style Spec. If set, it takes precedence
+    /// over stops, single value and default.
+    /// </summary>
+    public IExpression? Expression { get; set; }
 
     bool _hasSingleVal = false;
     float[] _singleVal = [];
@@ -84,6 +92,12 @@ public class StoppedFloatArray : IStopped<float[]>
     /// <returns>Value for this stopp respecting zoom factor and type</returns>
     public float[] Evaluate(EvaluationContext ctx, StopsType stoppsType)
     {
+        if (Expression != null)
+        {
+            var result = Expression.Evaluate(ctx);
+            return StoppedExpression.ToFloatArray(result);
+        }
+
         if (_hasStops)
         {
             float zoom = ctx.Zoom ?? 0f;
@@ -142,6 +156,11 @@ public class StoppedFloatArray : IStopped<float[]>
 
     public override string ToString()
     {
+        if (Expression != null)
+        {
+            return $"StoppedFloatArray [Expression={Expression}]";
+        }
+
         if (_hasStops && _stops.Count > 0)
         {
             return "StoppedFloatArray [Stops= " + string.Join(",", _stops.Select(kvp => $"[{kvp.Key}, {kvp.Value}]"));

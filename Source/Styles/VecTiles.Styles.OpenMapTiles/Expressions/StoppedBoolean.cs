@@ -1,4 +1,5 @@
-﻿using VecTiles.Common.Primitives;
+﻿using VecTiles.Common.Interfaces;
+using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
@@ -26,12 +27,19 @@ public class StoppedBoolean : IStopped<bool>
     /// <summary>
     /// Is this a stopped value that only contains the default
     /// </summary>
-    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops);
+    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops) && Expression == null;
 
     /// <summary>
     /// True, if value doesn't change with context
     /// </summary>
-    public bool IsConstant => !_hasStops;
+    public bool IsConstant => !_hasStops && Expression == null;
+
+    /// <summary>
+    /// Expression to evaluate, e.g. ["get", "property"]. Data-driven form per
+    /// Mapbox Style Spec. If set, it takes precedence over stops, single value
+    /// and default.
+    /// </summary>
+    public IExpression? Expression { get; set; }
 
     bool _hasSingleVal = false;
     bool _singleVal;
@@ -72,6 +80,11 @@ public class StoppedBoolean : IStopped<bool>
     /// <returns>Value for this stopp respecting resolution factor and type</returns>
     public bool Evaluate(EvaluationContext ctx)
     {
+        if (Expression != null)
+        {
+            return StoppedExpression.ToBoolean(Expression.Evaluate(ctx));
+        }
+
         if (_hasStops)
         {
             float zoom = ctx.Zoom ?? 0f;
@@ -122,6 +135,11 @@ public class StoppedBoolean : IStopped<bool>
 
     public override string ToString()
     {
+        if (Expression != null)
+        {
+            return "StoppedBoolean [Expression]";
+        }
+
         if (_hasStops && _stops.Count > 0)
         {
             return "StoppedBoolean [Stops= " + string.Join(",", _stops.Select(kvp => $"[{kvp.Key}, {kvp.Value}]"));

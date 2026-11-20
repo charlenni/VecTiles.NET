@@ -16,6 +16,10 @@ namespace VecTiles.Styles.OpenMapTiles
         private readonly Func<string, ISprite?> _spriteFactory;
         private readonly EvaluationContext _context;
         private readonly StoppedString _iconImage;
+        private readonly StoppedFloat _iconSize;
+        private readonly StoppedFloat _iconRotate;
+        private readonly StoppedFloatArray _iconOffset;
+        private readonly StoppedFloat _iconPadding;
         private readonly bool _allowOverlap;
         private readonly bool _optional;
         private readonly bool _allowOthers;
@@ -40,6 +44,10 @@ namespace VecTiles.Styles.OpenMapTiles
             _context = context;
 
             _iconImage = style.Layout.IconImage;
+            _iconSize = style.Layout.IconSize;
+            _iconRotate = style.Layout.IconRotate;
+            _iconOffset = style.Layout.IconOffset;
+            _iconPadding = style.Layout.IconPadding;
 
             _optional = style.Layout.IconOptional;
             _allowOverlap = style.Layout.IconAllowOverlap;
@@ -90,13 +98,13 @@ namespace VecTiles.Styles.OpenMapTiles
                 Optional = _optional,
                 AllowOverlap = _allowOverlap,
                 AllowOthers = _allowOthers,
-                Scale = _scale,
-                Rotation = _rotation,
+                Scale = GetScale(context),
+                Rotation = GetRotation(context),
                 RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Viewport : _rotationAlignment,
-                Padding = _padding,
+                Padding = GetPadding(context),
                 KeepUpright = _keepUpright,
                 Anchor = _anchor,
-                Offset = _offset,
+                Offset = GetOffset(context),
                 ColorFilter = _colorFilter,
                 Opacity = _opacity,
                 Translate = _translate,
@@ -128,13 +136,13 @@ namespace VecTiles.Styles.OpenMapTiles
                 Optional = _optional,
                 AllowOverlap = _allowOverlap,
                 AllowOthers = _allowOthers,
-                Scale = _scale,
-                Rotation = _rotation,
+                Scale = GetScale(context),
+                Rotation = GetRotation(context),
                 RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Map : _rotationAlignment,
-                Padding = _padding,
+                Padding = GetPadding(context),
                 KeepUpright = _keepUpright,
                 Anchor = _anchor,
-                Offset = _offset,
+                Offset = GetOffset(context),
                 ColorFilter = _colorFilter,
                 Opacity = _opacity,
                 Translate = _translate,
@@ -146,6 +154,30 @@ namespace VecTiles.Styles.OpenMapTiles
             };
 
             return symbol;
+        }
+
+        // The layout properties below can be data-driven (expressions per
+        // Mapbox Style Spec), so they are evaluated per feature if needed and
+        // only fall back to the value frozen in the constructor otherwise.
+
+        private float GetScale(EvaluationContext context)
+        {
+            return _iconSize.Expression != null ? _iconSize.Evaluate(context) : _scale;
+        }
+
+        private float GetRotation(EvaluationContext context)
+        {
+            return _iconRotate.Expression != null ? _iconRotate.Evaluate(context) : _rotation;
+        }
+
+        private int GetPadding(EvaluationContext context)
+        {
+            return _iconPadding.Expression != null ? (int)_iconPadding.Evaluate(context) : _padding;
+        }
+
+        private Point GetOffset(EvaluationContext context)
+        {
+            return _iconOffset.Expression != null ? _iconOffset.Evaluate(context).ToPoint() : _offset;
         }
 
         private bool TryGetSprite(OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context, out ISprite? sprite)

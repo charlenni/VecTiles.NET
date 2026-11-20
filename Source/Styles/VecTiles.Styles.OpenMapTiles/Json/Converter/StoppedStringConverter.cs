@@ -22,6 +22,9 @@ public class StoppedStringConverter : JsonConverter
             // We have an array, so we assume, that it is an expression
             var expression = ExpressionParser.ParseExpression(token);
 
+            if (expression == null)
+                throw new ArgumentException("Couldn't parse expression: " + token.ToString(Formatting.None));
+
             return new StoppedString { Expression = expression };
         }
 

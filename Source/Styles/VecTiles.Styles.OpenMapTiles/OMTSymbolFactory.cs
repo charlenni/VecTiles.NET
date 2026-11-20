@@ -33,7 +33,7 @@ public class OMTSymbolFactory : ISymbolFactory
 
         var placement = omtLayerStyle.Layout.SymbolPlacement.Evaluate(context);
 
-        if (placement == SymbolPlacement.Line && UsesViewportAlignment(omtLayerStyle, context))
+        if (placement == SymbolPlacement.Line && UsesViewportAlignment(omtLayerStyle, context.WithFeature(feature)))
         {
             // Per MapLibre spec, line placement with a viewport rotation
             // alignment behaves like point placement (e.g. road shields that

@@ -140,8 +140,14 @@ public class InterpolateExpression : Expression
         if (lowerNumber != null && upperNumber != null)
             return lowerNumber.Value + (upperNumber.Value - lowerNumber.Value) * fraction;
 
-        if (lower is Color lowerColor && upper is Color upperColor)
+        // Color outputs of an 'interpolate' expression are given as strings
+        // (e.g. "#f00" or "rgba(...)"), so they have to be coerced before
+        // interpolating channel by channel like MapLibre does.
+        if (lower is string or Color && upper is string or Color)
         {
+            var lowerColor = StoppedExpression.ToColor(lower);
+            var upperColor = StoppedExpression.ToColor(upper);
+
             byte Lerp(byte l, byte u) => (byte)Math.Round(l + (u - l) * fraction);
 
             return new Color(

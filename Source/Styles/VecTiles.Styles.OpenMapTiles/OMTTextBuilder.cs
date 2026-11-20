@@ -6,6 +6,7 @@ using VecTiles.Common.Exceptions;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Enums;
+using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles;
@@ -42,6 +43,15 @@ public class OMTTextBuilder
     private Func<EvaluationContext, Tile, double> _sortOrder;
     private Func<EvaluationContext, float, float> _maxWidth;
     private Func<EvaluationContext, float> _maxAngle;
+    private readonly StoppedString _textField;
+    private readonly StoppedFloat _textLineHeight;
+    private readonly StoppedFloat _textLetterSpacing;
+    private readonly StoppedFloat _textRotate;
+    private readonly StoppedFloatArray _textOffset;
+    private readonly StoppedFloat _textPadding;
+    private readonly StoppedEnum<TextTransform> _textTransform;
+    private readonly StoppedBoolean _textAllowOverlap;
+    private readonly StoppedBoolean _textIgnorePlacement;
 
     /// <summary>
     /// Fonts used for styles that do not specify a text-font.
@@ -62,6 +72,16 @@ public class OMTTextBuilder
             _fontNames = style.Layout.TextFont;
         }
         _fontSize = (ctx) => style.Layout.TextSize.Evaluate(ctx);
+
+        _textField = style.Layout.TextField;
+        _textLineHeight = style.Layout.TextLineHeight;
+        _textLetterSpacing = style.Layout.TextLetterSpacing;
+        _textRotate = style.Layout.TextRotate;
+        _textOffset = style.Layout.TextOffset;
+        _textPadding = style.Layout.TextPadding;
+        _textTransform = style.Layout.TextTransform;
+        _textAllowOverlap = style.Layout.TextAllowOverlap;
+        _textIgnorePlacement = style.Layout.TextIgnorePlacement;
 
         _lineHeight = style.Layout.TextLineHeight.Evaluate(context);
         _letterSpacing = style.Layout.TextLetterSpacing.Evaluate(context);
@@ -105,8 +125,8 @@ public class OMTTextBuilder
     {
         var context = _context.WithFeature(feature);
 
-        var text = _textMask.ReplaceWithTags(context)
-            .ReplaceWithTransforms(_transform);
+        var text = GetTextMask(context).ReplaceWithTags(context)
+            .ReplaceWithTransforms(GetTransform(context));
 
         if (string.IsNullOrEmpty(text))
         {
@@ -120,20 +140,20 @@ public class OMTTextBuilder
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
             StyleName = _style.Name,
             Optional = _optional,
-            AllowOverlap = _allowOverlap,
-            AllowOthers = _allowOthers,
-            Rotation = _rotation,
+            AllowOverlap = GetAllowOverlap(context),
+            AllowOthers = GetAllowOthers(context),
+            Rotation = GetRotation(context),
             RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Viewport : _rotationAlignment,
-            Padding = _padding,
+            Padding = GetPadding(context),
             Anchor = _anchor,
-            Offset = _offset,
+            Offset = GetOffset(context),
             Color = _color,
             Alignment = _alignment,
             Direction = TextDirection.Auto,
             Opacity = _opacity,
             FontNames = _fontNames,
             FontSize = _fontSize,
-            LineHeight = _lineHeight,
+            LineHeight = GetLineHeight(context),
             // TODO: Activate text letter spacing
             // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
             //LetterSpacing = _letterSpacing,
@@ -156,8 +176,8 @@ public class OMTTextBuilder
     {
         var context = _context.WithFeature(feature);
 
-        var text = _textMask.ReplaceWithTags(context)
-            .ReplaceWithTransforms(_transform);
+        var text = GetTextMask(context).ReplaceWithTags(context)
+            .ReplaceWithTransforms(GetTransform(context));
 
         if (string.IsNullOrEmpty(text))
         {
@@ -171,22 +191,22 @@ public class OMTTextBuilder
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
             StyleName = _style.Name,
             Optional = _optional,
-            AllowOverlap = _allowOverlap,
-            AllowOthers = _allowOthers,
-            Rotation = _rotation,
+            AllowOverlap = GetAllowOverlap(context),
+            AllowOthers = GetAllowOthers(context),
+            Rotation = GetRotation(context),
             RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Map : _rotationAlignment,
             KeepUpright = _keepUpright,
             MaxAngle = _maxAngle,
-            Padding = _padding,
+            Padding = GetPadding(context),
             Anchor = _anchor,
-            Offset = _offset,
+            Offset = GetOffset(context),
             Color = _color,
             Alignment = _alignment,
             Direction = TextDirection.Auto,
             Opacity = _opacity,
             FontNames = _fontNames,
             FontSize = _fontSize,
-            LineHeight = _lineHeight,
+            LineHeight = GetLineHeight(context),
             // TODO: Activate text letter spacing
             // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
             //LetterSpacing = _letterSpacing,
@@ -203,6 +223,51 @@ public class OMTTextBuilder
         };
 
         return symbol;
+    }
+
+    // The layout properties below can be data-driven (expressions per
+    // Mapbox Style Spec), so they are evaluated per feature if needed and
+    // only fall back to the value frozen in the constructor otherwise.
+
+    private string GetTextMask(EvaluationContext context)
+    {
+        return _textField.Expression != null ? _textField.Evaluate(context) : _textMask;
+    }
+
+    private TextTransform GetTransform(EvaluationContext context)
+    {
+        return _textTransform.Expression != null ? _textTransform.Evaluate(context) : _transform;
+    }
+
+    private float GetLineHeight(EvaluationContext context)
+    {
+        return _textLineHeight.Expression != null ? _textLineHeight.Evaluate(context) : _lineHeight;
+    }
+
+    private float GetRotation(EvaluationContext context)
+    {
+        return _textRotate.Expression != null ? _textRotate.Evaluate(context) : _rotation;
+    }
+
+    private int GetPadding(EvaluationContext context)
+    {
+        return _textPadding.Expression != null ? (int)_textPadding.Evaluate(context) : _padding;
+    }
+
+    private Point GetOffset(EvaluationContext context)
+    {
+        return _textOffset.Expression != null ?
+            _textOffset.Evaluate(context).ToPoint(_fontSize.Invoke(context)) : _offset;
+    }
+
+    private bool GetAllowOverlap(EvaluationContext context)
+    {
+        return _textAllowOverlap.Expression != null ? _textAllowOverlap.Evaluate(context) : _allowOverlap;
+    }
+
+    private bool GetAllowOthers(EvaluationContext context)
+    {
+        return _textIgnorePlacement.Expression != null ? _textIgnorePlacement.Evaluate(context) : _allowOthers;
     }
 
     private static TextJustify CreateAlignment(TextJustify justify, Anchor anchor)

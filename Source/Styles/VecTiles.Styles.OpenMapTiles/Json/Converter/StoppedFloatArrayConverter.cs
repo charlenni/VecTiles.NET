@@ -16,6 +16,20 @@ public class StoppedFloatArrayConverter : JsonConverter
     public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         JToken token = JToken.Load(reader);
+
+        if (token.Type == JTokenType.Array)
+        {
+            // An array is either an expression or a plain float array
+            // (e.g. line-dasharray or text-offset), so we try an expression
+            // first and fall back to a literal array
+            var expression = ExpressionParser.ParseExpression(token, typeof(float[]));
+
+            if (expression != null)
+            {
+                return new StoppedFloatArray { Expression = expression };
+            }
+        }
+
         if (token.Type == JTokenType.Object)
         {
             var stoppedFloat = new StoppedFloatArray { Stops = new List<KeyValuePair<float, float[]>>() };

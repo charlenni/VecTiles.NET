@@ -1,4 +1,5 @@
-﻿using VecTiles.Common.Primitives;
+﻿using VecTiles.Common.Interfaces;
+using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
@@ -26,12 +27,19 @@ public class StoppedFloat : IStopped<float>
     /// <summary>
     /// Is this a stopped value that only contains the default
     /// </summary>
-    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops);
+    public bool HasOnlyDefault => _hasDefault & !(_hasSingleVal | _hasStops) && Expression == null;
 
     /// <summary>
     /// True, if value doesn't change with context
     /// </summary>
-    public bool IsConstant => !_hasStops;
+    public bool IsConstant => !_hasStops && Expression == null;
+
+    /// <summary>
+    /// Expression to evaluate, e.g. ["interpolate", ["linear"], ["zoom"], ...]
+    /// or ["get", "property"]. Data-driven form per Mapbox Style Spec. If set,
+    /// it takes precedence over stops, single value and default.
+    /// </summary>
+    public IExpression? Expression { get; set; }
 
     bool _hasSingleVal = false;
     float _singleVal;
@@ -72,6 +80,11 @@ public class StoppedFloat : IStopped<float>
     /// <returns>Value for this stopp respecting zoom factor</returns>
     public float Evaluate(EvaluationContext ctx)
     {
+        if (Expression != null)
+        {
+            return StoppedExpression.ToFloat(Expression.Evaluate(ctx));
+        }
+
         return Evaluate(ctx, StopsType.Exponential);
     }
 
@@ -159,6 +172,11 @@ public class StoppedFloat : IStopped<float>
 
     public override string ToString()
     {
+        if (Expression != null)
+        {
+            return "StoppedFloat [Expression]";
+        }
+
         if (_hasStops && _stops.Count > 0)
         {
             return "StoppedFloat [Stops= " + string.Join(",", _stops.Select(kvp => $"[{kvp.Key}, {kvp.Value}]"));

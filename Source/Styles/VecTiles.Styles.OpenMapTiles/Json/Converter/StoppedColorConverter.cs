@@ -18,6 +18,18 @@ public class StoppedColorConverter : JsonConverter
     public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
     {
         JToken token = JToken.Load(reader);
+
+        if (token.Type == JTokenType.Array)
+        {
+            // We have an array, so we assume, that it is an expression
+            var expression = ExpressionParser.ParseExpression(token);
+
+            if (expression == null)
+                throw new ArgumentException("Couldn't parse expression: " + token.ToString(Formatting.None));
+
+            return new StoppedColor { Expression = expression };
+        }
+
         if (token.Type == JTokenType.Object)
         {
             var stoppedColor = new StoppedColor { Stops = new List<KeyValuePair<float, Color>>() };

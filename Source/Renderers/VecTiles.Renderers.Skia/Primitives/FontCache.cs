@@ -1,6 +1,7 @@
 using SkiaSharp;
 using Topten.RichTextKit;
 using VecTiles.Common.Exceptions;
+using VecTiles.DataSources;
 
 namespace VecTiles.Renderers.Skia.Primitives;
 
@@ -12,8 +13,10 @@ namespace VecTiles.Renderers.Skia.Primitives;
 ///    <see cref="RegisterFontDirectory"/>,
 /// 2. font files found in the directories added via <see cref="AddFontSearchPath"/>
 ///    (each directory is scanned once, lazily on first need),
-/// 3. fonts installed on the system,
-/// 4. the system default family as last resort.
+/// 3. font files loaded for a missing font via the source resolver set by
+///    <see cref="SetFontSourceResolver"/> (each font name is attempted once),
+/// 4. fonts installed on the system,
+/// 5. the system default family as last resort.
 ///
 /// <see cref="GetMissingFonts"/> reports the font names of a style file that
 /// resolve to the fallback (3), so the user can install them or register
@@ -33,6 +36,37 @@ public static class FontCache
     private static readonly List<(string Path, bool Recursive)> FontSearchPaths = new();
     private static readonly HashSet<string> ScannedFontSearchPaths = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object FontSearchPathsLock = new();
+
+    // Optional resolver that maps a font name to a source (URL notation of
+    // ByteDataSource) from which the font file is loaded on first need
+    private static Func<string, string?>? FontSourceResolver;
+    private static readonly HashSet<string> AttemptedResolverFonts = new(StringComparer.OrdinalIgnoreCase);
+    private static readonly object FontSourceResolverLock = new();
+
+    /// <summary>
+    /// Sets an optional resolver that maps a font name to a source in URL
+    /// notation (see <see cref="ByteDataSource.GetBytesAsync"/>), from which
+    /// the font file is loaded when the font is neither registered nor
+    /// installed on the system. Returning null or an empty string, or having
+    /// no resolver set, leaves the font to the usual resolution order
+    /// (registered files, search paths, system fonts, system default).
+    /// Call with null to remove the resolver again.
+    /// </summary>
+    public static void SetFontSourceResolver(Func<string, string?>? fontSourceResolver)
+    {
+        lock (FontSourceResolverLock)
+        {
+            FontSourceResolver = fontSourceResolver;
+            AttemptedResolverFonts.Clear();
+        }
+
+        // Styles already resolved to the system default must be recalculated,
+        // so fonts loaded through the resolver are taken into account
+        lock (TextStylesLock)
+        {
+            TextStyles.Clear();
+        }
+    }
 
     public static Style? CreateFonts(string styleName, string[] names)
     {
@@ -55,7 +89,8 @@ public static class FontCache
     }
 
     /// <summary>
-    /// Clears all cached styles, registered font files and font search paths,
+    /// Clears all cached styles, registered font files, font search paths,
+    /// attempted font source resolutions and the font source resolver itself,
     /// so that fonts registered after a style was loaded are taken into
     /// account on the next style creation.
     /// </summary>
@@ -76,6 +111,12 @@ public static class FontCache
             FontSearchPaths.Clear();
             ScannedFontSearchPaths.Clear();
         }
+
+        lock (FontSourceResolverLock)
+        {
+            FontSourceResolver = null;
+            AttemptedResolverFonts.Clear();
+        }
     }
 
     /// <summary>
@@ -86,6 +127,18 @@ public static class FontCache
     {
         var typeface = SKTypeface.FromFile(path)
             ?? throw new FontNotFoundException($"Font file '{path}' could not be loaded");
+
+        AddCustomTypeface(typeface);
+    }
+
+    /// <summary>
+    /// Registers a font from its file content (*.ttf, *.otf, *.ttc), so that
+    /// its family can be resolved even if it is not installed on the system.
+    /// </summary>
+    public static void RegisterFontData(byte[] data)
+    {
+        var typeface = SKTypeface.FromStream(new MemoryStream(data))
+            ?? throw new FontNotFoundException($"Font data ({data.Length} bytes) could not be loaded");
 
         AddCustomTypeface(typeface);
     }
@@ -350,6 +403,18 @@ public static class FontCache
             {
                 return textStyle;
             }
+        }
+
+        // A font that is neither registered nor installed may be loadable via
+        // the font source resolver before it is resolved to the system default
+        TryLoadFontFromResolver(fontName);
+
+        lock (TextStylesLock)
+        {
+            if (TextStyles.TryGetValue(key, out var textStyle))
+            {
+                return textStyle;
+            }
 
             textStyle = new Topten.RichTextKit.Style();
 
@@ -371,6 +436,81 @@ public static class FontCache
             TextStyles.Add(key, textStyle);
 
             return textStyle;
+        }
+    }
+
+    /// <summary>
+    /// Loads a font file via the font source resolver, if a resolver is set,
+    /// the font was not attempted before and it is still missing after the
+    /// usual resolution. A failure of the resolver or of the download is
+    /// reported to the console and leaves the font to the system default, so
+    /// labels stay visible even if the font cannot be loaded.
+    /// </summary>
+    private static void TryLoadFontFromResolver(string fontName)
+    {
+        Func<string, string?>? resolver;
+
+        lock (FontSourceResolverLock)
+        {
+            resolver = FontSourceResolver;
+        }
+
+        if (resolver is null || string.IsNullOrWhiteSpace(fontName))
+        {
+            return;
+        }
+
+        // Font search paths are scanned on first need, so font files of added
+        // directories are found before consulting the resolver
+        EnsureFontSearchPathsScanned();
+
+        // The resolver receives the font name as in the style file (e.g.
+        // "Noto Sans Bold"); the family without style attributes decides
+        // whether the font is really missing
+        var probeStyle = new Topten.RichTextKit.Style();
+        var family = fontName.CreateFontWidth(ref probeStyle)
+            .CreateFontWeight(ref probeStyle)
+            .CreateFontItalic(ref probeStyle);
+
+        if (IsAvailable(family))
+        {
+            return;
+        }
+
+        lock (FontSourceResolverLock)
+        {
+            // Only one attempt per font name, even if it stays unsuccessful
+            if (!AttemptedResolverFonts.Add(fontName))
+            {
+                return;
+            }
+        }
+
+        string? source;
+
+        try
+        {
+            source = resolver(fontName);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not resolve a source for font '{fontName}': {ex.Message}");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(source))
+        {
+            return;
+        }
+
+        try
+        {
+            var bytes = ByteDataSource.GetBytesAsync(source).GetAwaiter().GetResult();
+            RegisterFontData(bytes);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not load font '{fontName}' from '{source}': {ex.Message}");
         }
     }
 

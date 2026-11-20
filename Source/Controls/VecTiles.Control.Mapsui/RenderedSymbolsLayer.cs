@@ -9,6 +9,7 @@ using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia.Primitives;
 
 namespace VecTiles.Controls.Mapsui;
 
@@ -32,12 +33,28 @@ public class RenderedSymbolsLayer : BaseLayer
     /// Initializes a new instance of the <see cref="RenderedSymbolsLayer"/> class.
     /// </summary>
     /// <param name="tileSource">The rendered tile source providing the symbols.</param>
-    public RenderedSymbolsLayer(IRenderedTileSource tileSource)
+    /// <param name="fontSourceResolver">
+    /// Optional resolver that maps a font name (as in the style file, e.g.
+    /// "Noto Sans Bold") to a source in URL notation (file://, https://,
+    /// embedded://, ...), from which the font file is loaded via
+    /// <see cref="VecTiles.DataSources.ByteDataSource.GetBytesAsync"/> when
+    /// the font is neither registered nor installed on the system. Returning
+    /// null or an empty string leaves the font to the usual resolution order.
+    /// The resolver is held globally by <see cref="FontCache"/>; the resolver
+    /// of the last created layer wins.
+    /// </param>
+    public RenderedSymbolsLayer(IRenderedTileSource tileSource, Func<string, string?>? fontSourceResolver = null)
     {
         MapRenderer.RegisterLayerRenderer(_customLayerRendererName, RenderedSymbolsLayerRenderer.Draw);
 
         TileSource = tileSource;
         CustomLayerRendererName = _customLayerRendererName;
+
+        FontSourceResolver = fontSourceResolver;
+        if (fontSourceResolver != null)
+        {
+            FontCache.SetFontSourceResolver(fontSourceResolver);
+        }
 
         _extent = TileSource.Schema.Extent.ToMRect();
     }
@@ -46,6 +63,13 @@ public class RenderedSymbolsLayer : BaseLayer
     /// Gets the tile source for this layer.
     /// </summary>
     public IRenderedTileSource TileSource { get; private set; }
+
+    /// <summary>
+    /// Gets the optional resolver that maps a font name to a source from
+    /// which the font file is loaded when the font is missing. Null if no
+    /// resolver was passed to the constructor.
+    /// </summary>
+    public Func<string, string?>? FontSourceResolver { get; }
 
     /// <inheritdoc />
     public override IReadOnlyList<double> Resolutions => TileSource.Schema.Resolutions.Select(r => r.Value.UnitsPerPixel).ToList();

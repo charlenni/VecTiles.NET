@@ -118,9 +118,19 @@ public class Renderer
                         hasContent = true;
                     }
                     break;
+                case LayerStyleType.Circle:
+                    if (rawTiles.TryGetValue(style.Source.ToLower(CultureInfo.InvariantCulture), out var circleData))
+                    {
+                        if (circleData is null)
+                        {
+                            continue;
+                        }
+                        RenderTilePartAsVectorCircle(renderedTile, context, (VectorTile)circleData, style, _renderFactory);
+                        hasContent = true;
+                    }
+                    break;
                 case LayerStyleType.Symbol:
                 case LayerStyleType.FillExtrusion:
-                case LayerStyleType.Circle:
                 case LayerStyleType.Unknown:
                     break;
                 default:
@@ -191,6 +201,16 @@ public class Renderer
         }
 
         renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorLineLayer(style, context, features!));
+    }
+
+    private static void RenderTilePartAsVectorCircle(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
+    {
+        if (!ExtractFeatures(data, style, context, out var features))
+        {
+            return;
+        }
+
+        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorCircleLayer(style, context, features!));
     }
 
     private static void RenderTilePartAsSymbol(IRenderedTile renderedTile, Tile tile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)

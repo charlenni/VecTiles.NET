@@ -122,7 +122,30 @@ public class RenderFactory : IRenderFactory
         return new LineLayerRenderer(builder.Build(), false, _paints[style.Name], maxStrokeWidth);
     }
 
-    public ISymbol? CreateSymbol(Tile tile, 
+    public ILayerRenderer CreateVectorCircleLayer(ILayerStyle style,
+        EvaluationContext context,
+        IEnumerable<IFeature> features)
+    {
+        if (!_paints.ContainsKey(style.Name))
+        {
+            return null;
+        }
+
+        // Per Mapbox spec a circle is drawn at every vertex of the geometry
+        var points = new List<SKPoint>();
+
+        foreach (var feature in features!)
+        {
+            foreach (var coordinate in feature.Geometry.Coordinates)
+            {
+                points.Add(new SKPoint((float)coordinate.X, (float)coordinate.Y));
+            }
+        }
+
+        return new CircleLayerRenderer([.. points], _paints[style.Name]);
+    }
+
+    public ISymbol? CreateSymbol(Tile tile,
         ILayerStyle style, 
         EvaluationContext context, 
         IFeature feature)

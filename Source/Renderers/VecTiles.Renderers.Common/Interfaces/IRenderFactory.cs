@@ -44,6 +44,15 @@ public interface IRenderFactory
     ILayerRenderer CreateVectorLineLayer(ILayerStyle style, EvaluationContext context, IEnumerable<IFeature> features);
 
     /// <summary>
+    /// Creates a vector circle layer for the given layer style and features
+    /// </summary>
+    /// <param name="style">The layer style to use for rendering</param>
+    /// <param name="context">The context to use for rendering</param>
+    /// <param name="features">The features to draw circles at</param>
+    /// <returns>A vector circle layer that can be drawn</returns>
+    ILayerRenderer CreateVectorCircleLayer(ILayerStyle style, EvaluationContext context, IEnumerable<IFeature> features);
+
+    /// <summary>
     /// Creates a symbol for the given tile, layer style and feature
     /// </summary>
     /// <param name="tile">The tile to which this symbol belongs</param>

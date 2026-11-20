@@ -26,6 +26,7 @@ public class LayerStyleTypeConverter : JsonConverter
             "raster" => LayerStyleType.Raster,
             "symbol" => LayerStyleType.Symbol,
             "fill-extrusion" => LayerStyleType.FillExtrusion,
+            "circle" => LayerStyleType.Circle,
             _ => throw new NotImplementedException($"LayerStyle with type '{value}' is unknown")
         };
     }

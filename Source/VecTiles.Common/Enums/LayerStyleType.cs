@@ -30,7 +30,7 @@ public enum LayerStyleType
     /// </summary>
     FillExtrusion,
     /// <summary>
-    /// Style is for drawing circles. Not supported by a renderer yet.
+    /// Style is for drawing circles.
     /// </summary>
     Circle,
     /// <summary>

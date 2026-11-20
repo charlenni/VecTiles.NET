@@ -24,6 +24,51 @@ public class OMTLayerStylePaint
     [JsonProperty("background-pattern")]
     public StoppedString BackgroundPattern { get; set; } = new StoppedString() { Default = string.Empty };
 
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-blur")]
+    public StoppedFloat CircleBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
+
+    [JsonConverter(typeof(StoppedColorConverter))]
+    [JsonProperty("circle-color")]
+    public StoppedColor CircleColor { get; set; } = new StoppedColor { Default = Colors.Black };
+
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-emissive-strength")]
+    public StoppedFloat CircleEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
+
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-opacity")]
+    public StoppedFloat CircleOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+
+    [JsonProperty("circle-pitch-alignment")]
+    public string CirclePitchAlignment { get; set; } = "viewport";
+
+    [JsonProperty("circle-pitch-scale")]
+    public string CirclePitchScale { get; set; } = "map";
+
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-radius")]
+    public StoppedFloat CircleRadius { get; set; } = new StoppedFloat() { Default = 5.0f };
+
+    [JsonConverter(typeof(StoppedColorConverter))]
+    [JsonProperty("circle-stroke-color")]
+    public StoppedColor CircleStrokeColor { get; set; } = new StoppedColor { Default = Colors.Black };
+
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-stroke-opacity")]
+    public StoppedFloat CircleStrokeOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
+
+    [JsonConverter(typeof(StoppedFloatConverter))]
+    [JsonProperty("circle-stroke-width")]
+    public StoppedFloat CircleStrokeWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
+
+    [JsonConverter(typeof(StoppedFloatArrayConverter))]
+    [JsonProperty("circle-translate")]
+    public StoppedFloatArray CircleTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
+
+    [JsonProperty("circle-translate-anchor")]
+    public string CircleTranslateAnchor { get; set; } = "map";
+
     [JsonConverter(typeof(StoppedBooleanConverter))]
     [JsonProperty("fill-antialias")]
     public StoppedBoolean FillAntialias { get; set; } = new StoppedBoolean() { Default = true };

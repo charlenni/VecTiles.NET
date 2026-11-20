@@ -30,6 +30,16 @@ public interface IPaint
 
     float[]? DashArray { get; }
 
+    /// <summary>
+    /// Radius of a circle in style px (only used by circle layers)
+    /// </summary>
+    float Radius { get; }
+
+    /// <summary>
+    /// Blur amount of a circle (only used by circle layers)
+    /// </summary>
+    float Blur { get; }
+
     void Update(EvaluationContext context);
 
     float GetMaxStrokeWidth(EvaluationContext context);

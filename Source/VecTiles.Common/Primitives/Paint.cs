@@ -9,6 +9,10 @@ public class Paint : IPaint
     EvaluationContext? _lastContext;
     float _strokeWidth;
 
+    float _radius;
+
+    float _blur;
+
     public Paint(string id)
     {
         Id = id;
@@ -39,6 +43,10 @@ public class Paint : IPaint
 
     public float[]? DashArray { get; private set; }
 
+    public float Radius { get; private set; }
+
+    public float Blur { get; private set; }
+
     public void Update(EvaluationContext context)
     {
         if (_lastContext != null && context.Equals(_lastContext))
@@ -51,10 +59,21 @@ public class Paint : IPaint
             Color = c.WithAlpha((byte)(c.A * o));
         }
 
-        if (variableOutlineColor || variableOpacity)
+        if (variableOutlineColor || variableOpacity || variableOutlineOpacity)
         {
             var c = variableOutlineColor && funcOutlineColor != null ? funcOutlineColor(context) : outlineColor;
-            var o = variableOpacity && funcOpacity != null ? funcOpacity(context) : opacity;
+            var o = variableOutlineOpacity && funcOutlineOpacity != null ?
+                funcOutlineOpacity(context) : _outlineOpacity;
+
+            if (variableOpacity && funcOpacity != null)
+            {
+                o *= funcOpacity(context);
+            }
+            else
+            {
+                o *= opacity;
+            }
+
             OutlineColor = c.WithAlpha((byte)(c.A * o));
         }
 
@@ -75,6 +94,24 @@ public class Paint : IPaint
         else
         {
             StrokeWidth = _strokeWidth * context.Scale;
+        }
+
+        if (variableRadius && funcRadius != null)
+        {
+            Radius = funcRadius(context) * context.Scale;
+        }
+        else
+        {
+            Radius = _radius * context.Scale;
+        }
+
+        if (variableBlur && funcBlur != null)
+        {
+            Blur = funcBlur(context) * context.Scale;
+        }
+        else
+        {
+            Blur = _blur * context.Scale;
         }
 
         if (variableStrokeCap && funcStrokeCap != null)
@@ -165,21 +202,40 @@ public class Paint : IPaint
 
     Color outlineColor = Colors.Empty;
 
+    float _outlineOpacity = 1.0f;
+
     bool variableOutlineColor = false;
 
+    bool variableOutlineOpacity = false;
+
     Func<EvaluationContext, Color>? funcOutlineColor;
+
+    Func<EvaluationContext, float>? funcOutlineOpacity;
 
     public void SetFixOutlineColor(Color c)
     {
         variableOutlineColor = false;
         outlineColor = c;
-        OutlineColor = outlineColor.WithAlpha((byte)(outlineColor.A * opacity));
+        OutlineColor = outlineColor.WithAlpha((byte)(outlineColor.A * opacity * _outlineOpacity));
     }
 
     public void SetVariableOutlineColor(Func<EvaluationContext, Color> func)
     {
         variableOutlineColor = true;
         funcOutlineColor = func;
+    }
+
+    public void SetFixOutlineOpacity(float o)
+    {
+        variableOutlineOpacity = false;
+        _outlineOpacity = o;
+        OutlineColor = outlineColor.WithAlpha((byte)(outlineColor.A * opacity * _outlineOpacity));
+    }
+
+    public void SetVariableOutlineOpacity(Func<EvaluationContext, float> func)
+    {
+        variableOutlineOpacity = true;
+        funcOutlineOpacity = func;
     }
 
     #endregion
@@ -366,6 +422,46 @@ public class Paint : IPaint
     {
         variableDashArray = true;
         funcDashArray = func;
+    }
+
+    #endregion
+
+    #region Radius
+
+    bool variableRadius = false;
+
+    Func<EvaluationContext, float>? funcRadius;
+
+    public void SetFixRadius(float radius)
+    {
+        variableRadius = false;
+        _radius = radius;
+    }
+
+    public void SetVariableRadius(Func<EvaluationContext, float> func)
+    {
+        variableRadius = true;
+        funcRadius = func;
+    }
+
+    #endregion
+
+    #region Blur
+
+    bool variableBlur = false;
+
+    Func<EvaluationContext, float>? funcBlur;
+
+    public void SetFixBlur(float blur)
+    {
+        variableBlur = false;
+        _blur = blur;
+    }
+
+    public void SetVariableBlur(Func<EvaluationContext, float> func)
+    {
+        variableBlur = true;
+        funcBlur = func;
     }
 
     #endregion

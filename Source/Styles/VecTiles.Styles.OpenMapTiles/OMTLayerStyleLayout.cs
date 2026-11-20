@@ -14,6 +14,8 @@ public class OMTLayerStyleLayout
 {
     [JsonProperty("visibility")] public string Visibility { get; set; } = "visible";
 
+    [JsonProperty("circle-sort-key")] public float? CircleSortKey { get; set; }
+
     [JsonProperty("fill-sort-key")] public float? FillSortKey { get; set; }
 
     [JsonProperty("line-cap")] public string LineCap { get; set; } = "butt";

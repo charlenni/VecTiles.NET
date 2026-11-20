@@ -1,6 +1,7 @@
-﻿using Newtonsoft.Json;
+using System.Text.Json;
 using VecTiles.Common.Primitives;
 using VecTiles.DataSources;
+using VecTiles.Styles.OpenMapTiles.Json;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
@@ -12,10 +13,8 @@ public class OMTStyleFileLoader
 
         var jsonArray = await ByteDataSource.GetBytesAsync(source).ConfigureAwait(false);
         using var jsonStream = new MemoryStream(jsonArray, writable: false);
-        using var jsonReader = new JsonTextReader(new StreamReader(jsonStream));
-        var serializer = new JsonSerializer();
 
-        omtStyleFile = serializer.Deserialize<OMTStyleFile>(jsonReader);
+        omtStyleFile = JsonSerializer.Deserialize<OMTStyleFile>(jsonStream, StyleJson.Options);
 
         if (omtStyleFile == null)
             throw new ArgumentException("Style file isn't valid");
@@ -56,13 +55,9 @@ public class OMTStyleFileLoader
             jsonBytes = await ByteDataSource.GetBytesAsync(spriteFile + ".json").ConfigureAwait(false);
         }
 
-        var serializer = new JsonSerializer();
-
-        using (var stream = new MemoryStream(jsonBytes))
-        using (var sr = new StreamReader(stream))
-        using (var jsonTextReader = new JsonTextReader(sr))
+        using (var stream = new MemoryStream(jsonBytes, writable: false))
         {
-            omtSprites = serializer.Deserialize<Dictionary<string, Sprite>>(jsonTextReader);
+            omtSprites = JsonSerializer.Deserialize<Dictionary<string, Sprite>>(stream, StyleJson.Options);
         }
 
         if (omtSprites == null)

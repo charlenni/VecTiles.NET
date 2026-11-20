@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -6,20 +6,18 @@ namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
 public class VarExpression : Expression
 {
-    public static IExpression Parse(JToken token, ExpressionParser parser)
+    public static IExpression Parse(JsonNode token, ExpressionParser parser)
     {
-        if (token == null || !(token is JArray array))
+        if (token == null || !(token is JsonArray array))
             throw new ArgumentException("");
 
         var length = array.Count;
 
-        if (length != 2 || !(array[1].Type == JTokenType.String))
+        if (length != 2 || array[1] is not JsonValue nameValue || !nameValue.TryGetValue<string>(out var name))
         {
             parser.Error("'var' expression requires exactly one string literal argument.");
             return null;
         }
-
-        string name = array[1].ToString();
 
         var bindingValue = parser.Scope.GetBinding(name);
 

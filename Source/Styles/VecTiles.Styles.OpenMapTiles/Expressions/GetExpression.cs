@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
@@ -18,15 +18,15 @@ public class GetExpression : Expression
         _key = key;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
-        if (array.Count != 2 || array[1].Type != JTokenType.String)
+        if (array.Count != 2 || array[1] is not JsonValue keyValue || !keyValue.TryGetValue<string>(out var key))
         {
             parser.Error("'get' expression requires exactly one string literal argument.");
             return null;
         }
 
-        return new GetExpression(array[1].ToString());
+        return new GetExpression(key);
     }
 
     public override object? Evaluate(EvaluationContext ctx)

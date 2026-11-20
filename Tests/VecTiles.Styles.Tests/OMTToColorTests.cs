@@ -1,5 +1,5 @@
 using VecTiles.Common.Primitives;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;

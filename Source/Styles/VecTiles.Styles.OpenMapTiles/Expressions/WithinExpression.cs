@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using NetTopologySuite.Geometries;
 using NetTopologySuite.Geometries.Prepared;
 using VecTiles.Common.Interfaces;
@@ -23,7 +23,7 @@ public class WithinExpression : Expression
         _geometry = geometry;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 2)
         {

@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -25,7 +25,7 @@ public class StepExpression : Expression
         _stops = stops;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
 
@@ -47,13 +47,13 @@ public class StepExpression : Expression
 
         for (int i = 3; i < length - 1; i += 2)
         {
-            if (array[i].Type is not (JTokenType.Integer or JTokenType.Float))
+            if (array[i] is not JsonValue stopValue || stopValue.GetValueKind() != System.Text.Json.JsonValueKind.Number)
             {
                 parser.Error("Expected a numeric stop.", i);
                 return null;
             }
 
-            double stop = (double)array[i];
+            double stop = stopValue.GetValue<double>();
 
             if (stop <= lastStop)
             {

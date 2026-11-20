@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -25,7 +25,7 @@ public class InterpolateExpression : Expression
         _stops = stops;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
 
@@ -38,17 +38,18 @@ public class InterpolateExpression : Expression
 
         double exponentialBase;
 
-        if (array[1] is JArray interpolation && interpolation.Count > 0)
+        if (array[1] is JsonArray interpolation && interpolation.Count > 0)
         {
-            switch (interpolation[0].ToString())
+            switch (interpolation[0]!.ToString())
             {
                 case "linear" when interpolation.Count == 1:
                     exponentialBase = 1;
                     break;
 
                 case "exponential" when interpolation.Count == 2
-                    && interpolation[1].Type is (JTokenType.Integer or JTokenType.Float):
-                    exponentialBase = (double)interpolation[1];
+                    && interpolation[1] is JsonValue baseValue
+                    && baseValue.GetValueKind() == System.Text.Json.JsonValueKind.Number:
+                    exponentialBase = baseValue.GetValue<double>();
                     break;
 
                 case "cubic-bezier":
@@ -75,13 +76,13 @@ public class InterpolateExpression : Expression
 
         for (int i = 3; i < length - 1; i += 2)
         {
-            if (array[i].Type is not (JTokenType.Integer or JTokenType.Float))
+            if (array[i] is not JsonValue stopValue || stopValue.GetValueKind() != System.Text.Json.JsonValueKind.Number)
             {
                 parser.Error("Expected a numeric stop.", i);
                 return null;
             }
 
-            double stop = (double)array[i];
+            double stop = stopValue.GetValue<double>();
 
             if (stop <= lastStop)
             {

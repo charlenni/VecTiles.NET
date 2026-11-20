@@ -1,7 +1,7 @@
 using System.Linq;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Order;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using VecTiles.Common.Interfaces;
@@ -168,7 +168,7 @@ public class OMTExpressionBenchmarks
 
     private static IExpression Parse(string json)
     {
-        return ExpressionParser.ParseExpression(JToken.Parse(json))!;
+        return ExpressionParser.ParseExpression(JsonNode.Parse(json))!;
     }
 
     private static string InArray(int size) => $$"""

@@ -1,6 +1,5 @@
-﻿using System.Text;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Styles.OpenMapTiles.Enums;
 
@@ -8,7 +7,7 @@ namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
 public class ExpressionParser 
 {
-    Dictionary<string, Func<JArray, ExpressionParser, IExpression>> expressionRegistry = new Dictionary<string, Func<JArray, ExpressionParser, IExpression>>
+    Dictionary<string, Func<JsonArray, ExpressionParser, IExpression?>> expressionRegistry = new Dictionary<string, Func<JsonArray, ExpressionParser, IExpression?>>
     {
         // Operators with their own Expression classes; operators without an
         // entry fall through to the compound expression registry
@@ -45,7 +44,7 @@ public class ExpressionParser
     public Dictionary<string, string> Errors { get; }
     public Scope Scope { get; }
 
-    public static IExpression? ParseExpression(JToken token, Type? expected = null)
+    public static IExpression? ParseExpression(JsonNode? token, Type? expected = null)
     {
         var errors = new Dictionary<string, string>();
         var parser = new ExpressionParser("", errors, expected, new Scope(new Dictionary<string, IExpression>()));
@@ -64,11 +63,11 @@ public class ExpressionParser
         return result;
     }
 
-    public static IExpression ParseExpression(string str, Type expected)
+    public static IExpression? ParseExpression(string str, Type expected)
     {
-        var json = JsonConvert.DeserializeObject(str);
+        var json = JsonNode.Parse(str);
 
-        if (json is JArray array)
+        if (json is JsonArray array)
         {
             var parser = new ExpressionParser("", new Dictionary<string, string>(), expected, new Scope(new Dictionary<string, IExpression>()));
             return parser.Parse(array, expected);
@@ -77,19 +76,19 @@ public class ExpressionParser
         return null;
     }
 
-    public ExpressionParser(string key, Dictionary<string, string> errors, Type expected, Scope scope)
+    public ExpressionParser(string key, Dictionary<string, string> errors, Type? expected, Scope scope)
     {
         Key = key;
         Errors = errors;
-        Expected = expected;
+        Expected = expected!;
         Scope = scope;
     }
 
-    public IExpression Parse(JToken token, Type expected)
+    public IExpression? Parse(JsonNode? token, Type? expected)
     {
-        IExpression result = null;
+        IExpression? result = null;
 
-        if (token is JArray array)
+        if (token is JsonArray array)
         {
             var length = array.Count;
 
@@ -99,13 +98,11 @@ public class ExpressionParser
                 return null;
             }
 
-            if (array[0].Type != JTokenType.String)
+            if (array[0] is not JsonValue operatorValue || !operatorValue.TryGetValue<string>(out var op))
             {
-                Errors.Add("Expression name must be a string, but found " + array[0].GetType() + " instead. If you wanted a literal array, use [\"literal\", [...]].", Key);
+                Errors.Add("Expression name must be a string, but found " + array[0]?.GetValueKind() + " instead. If you wanted a literal array, use [\"literal\", [...]].", Key);
                 return null;
             }
-
-            var op = array[0].ToString();
 
             if (expressionRegistry.TryGetValue(op, out var parse))
             {
@@ -117,7 +114,7 @@ public class ExpressionParser
                 result = CompoundExpression.Parse(array, this);
             }
         }
-        else if (token is JValue)
+        else if (token is JsonValue)
         {
             // A simple literal value
             result = new LiteralExpression(MatchExpression.ToValue(token));
@@ -129,26 +126,21 @@ public class ExpressionParser
         return null;
     }
 
-    //internal IExpression ParseExpression(JToken token, TypeAnnotationOption typeAnnotationOption = TypeAnnotationOption.None)
-    //{
-    //    return Parse(token, typeAnnotationOption);
-    //}
-
     /// <summary>
     /// Parse a child expression. For use by individual Expression.Parse() methods.
     /// </summary>
-    /// <param name="array">Array containing the child</param>
+    /// <param name="token">Node containing the child</param>
     /// <param name="index">Index of child in array</param>
     /// <param name="expected">Expected type for this child</param>
     /// <param name="typeAnnotationOption">Type annotations</param>
     /// <returns>Expression for this child</returns>
-    internal IExpression Parse(JToken token, int index, Type expected = null, TypeAnnotationOption typeAnnotationOption = TypeAnnotationOption.None) 
+    internal IExpression? Parse(JsonNode? token, int index, Type? expected = null, TypeAnnotationOption typeAnnotationOption = TypeAnnotationOption.None) 
     {
         var parser = new ExpressionParser(Key + "[" + index.ToString() + "]", Errors, expected, Scope);
         return parser.Parse(token, expected);
     }
 
-    internal IExpression Parse(JToken token, int index, Type expected, Dictionary<string, IExpression> bindings)
+    internal IExpression? Parse(JsonNode? token, int index, Type? expected, Dictionary<string, IExpression> bindings)
     {
         var parser = new ExpressionParser(Key +"[" + index.ToString() + "]", Errors, expected, new Scope(bindings, Scope));
         return parser.Parse(token, expected);

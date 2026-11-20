@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -21,7 +21,7 @@ public class MatchExpression : Expression
         _fallback = fallback;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
 
@@ -44,11 +44,11 @@ public class MatchExpression : Expression
         {
             object?[] labels;
 
-            if (array[i] is JArray labelArray)
+            if (array[i] is JsonArray labelArray)
             {
                 labels = labelArray.Select(ToValue).ToArray();
 
-                if (labels.Any(label => label is JToken || label is object?[]))
+                if (labels.Any(label => label is JsonNode || label is object?[]))
                 {
                     parser.Error($"Branch labels of a 'match' expression must be string, number or boolean values: 'match[{i}]'.", i);
                     return null;
@@ -58,7 +58,7 @@ public class MatchExpression : Expression
             {
                 var label = ToValue(array[i]);
 
-                if (label is JToken || label is object?[])
+                if (label is JsonNode || label is object?[])
                 {
                     parser.Error($"Branch labels of a 'match' expression must be string, number or boolean values: 'match[{i}]'.", i);
                     return null;
@@ -102,31 +102,43 @@ public class MatchExpression : Expression
     }
 
     /// <summary>
-    /// Parses a child token. Arrays are parsed as expressions, anything else
+    /// Parses a child node. Arrays are parsed as expressions, anything else
     /// is taken as a literal value.
     /// </summary>
-    internal static IExpression? ParseChild(JToken token, int index, ExpressionParser parser, Type? expected = null)
+    internal static IExpression? ParseChild(JsonNode? node, int index, ExpressionParser parser, Type? expected = null)
     {
-        if (token is JArray)
-            return parser.Parse(token, index, expected);
+        if (node is JsonArray)
+            return parser.Parse(node, index, expected);
 
-        return new LiteralExpression(ToValue(token));
+        return new LiteralExpression(ToValue(node));
     }
 
     /// <summary>
-    /// Converts a literal token into a .NET value (number, string, bool or null).
+    /// Converts a literal node into a .NET value (number, string, bool or null).
     /// </summary>
-    internal static object? ToValue(JToken token)
+    internal static object? ToValue(JsonNode? node)
     {
-        return token.Type switch
+        if (node == null || node.GetValueKind() == System.Text.Json.JsonValueKind.Null)
+            return null;
+
+        if (node is JsonArray array)
+            return array.Select(ToValue).ToArray();
+
+        if (node is JsonValue value)
         {
-            JTokenType.Integer or JTokenType.Float => Convert.ToDouble(((JValue)token).Value, System.Globalization.CultureInfo.InvariantCulture),
-            JTokenType.Boolean => (bool)((JValue)token).Value!,
-            JTokenType.Null or JTokenType.Undefined => null,
-            JTokenType.Array => ((JArray)token).Select(ToValue).ToArray(),
-            JTokenType.Object => token.ToString(),
-            _ => token.ToString()
-        };
+            return value.GetValueKind() switch
+            {
+                System.Text.Json.JsonValueKind.Number => value.TryGetValue<double>(out var number)
+                    ? number
+                    : value.GetValue<double>(),
+                System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False => value.GetValue<bool>(),
+                System.Text.Json.JsonValueKind.String => value.GetValue<string>(),
+                _ => value.ToJsonString()
+            };
+        }
+
+        // Objects keep their json text (like JToken.ToString() before)
+        return node.ToJsonString();
     }
 
     private static bool Matches(object? label, object? value)

@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -49,7 +49,7 @@ public class OMTDivideTests
     [Fact]
     public void DivideByZeroTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse("[\"/\", 10, 0]"));
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse("[\"/\", 10, 0]"));
 
         Assert.NotNull(expression);
         Assert.Null(expression!.Evaluate(OMTExpressionTestsHelper.CreateContext()));

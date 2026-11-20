@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -29,7 +29,7 @@ public class AssertionExpression : Expression
         _fallbacks = fallbacks;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         return Parse(array, 1, parser);
     }
@@ -39,9 +39,9 @@ public class AssertionExpression : Expression
     /// index (the operator name is already consumed), used for nested
     /// assertions like the expected type of "at"/"in".
     /// </summary>
-    internal static IExpression? Parse(JArray array, int startIndex, ExpressionParser parser)
+    internal static IExpression? Parse(JsonArray array, int startIndex, ExpressionParser parser)
     {
-        var type = array[0].ToString();
+        var type = array[0]!.GetValue<string>();
 
         if (array.Count < 2)
         {
@@ -53,9 +53,9 @@ public class AssertionExpression : Expression
         int inputIndex = 1;
 
         // Array assertion with item type: ["array", "number", value]
-        if (type == "array" && array.Count >= 3 && array[1].Type == JTokenType.String)
+        if (type == "array" && array.Count >= 3 && array[1] is JsonValue itemTypeValue && itemTypeValue.TryGetValue<string>(out var itemTypeName))
         {
-            itemType = array[1].ToString();
+            itemType = itemTypeName;
 
             inputIndex = 2;
         }

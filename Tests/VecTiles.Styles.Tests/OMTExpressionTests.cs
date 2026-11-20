@@ -1,5 +1,5 @@
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Json.Converter;
@@ -43,7 +43,7 @@ namespace VecTiles.Styles.MapboxTests
         [MemberData(nameof(MatchCases))]
         public void IconImageMatchExpressionTest(string? subclass, object? styleClass, string? expected)
         {
-            var expression = ExpressionParser.ParseExpression(JToken.Parse(IconImageExpression));
+            var expression = ExpressionParser.ParseExpression(JsonNode.Parse(IconImageExpression));
 
             Assert.NotNull(expression);
 
@@ -64,7 +64,7 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public void MatchWithNumberLabelsTest()
         {
-            var expression = ExpressionParser.ParseExpression(JToken.Parse(
+            var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
                 """
                 ["match", ["get", "rank"], [1, 4], "low", [2, 3], "high", "none"]
                 """));
@@ -83,7 +83,7 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public void CaseExpressionTest()
         {
-            var expression = ExpressionParser.ParseExpression(JToken.Parse(
+            var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
                 """
                 ["case", ["==", ["get", "brunnel"], "tunnel"], true, false]
                 """));
@@ -97,7 +97,7 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal(true, expression!.Evaluate(brunnelTunnelContext));
             Assert.Equal(false, expression!.Evaluate(brunnelRoadContext));
 
-            expression = ExpressionParser.ParseExpression(JToken.Parse(
+            expression = ExpressionParser.ParseExpression(JsonNode.Parse(
                 """
                 ["case", ["get", "is_tunnel"], "tunnel_11", "road_11"]
                 """));
@@ -116,7 +116,7 @@ namespace VecTiles.Styles.MapboxTests
         [Fact]
         public void LiteralExpressionTest()
         {
-            var expression = ExpressionParser.ParseExpression(JToken.Parse(
+            var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
                 """
                 ["literal", "traffic_sign"]
                 """));
@@ -132,16 +132,12 @@ namespace VecTiles.Styles.MapboxTests
         public void StoppedStringConverterParsesExpressionTest()
         {
             var converter = new StoppedStringConverter();
-            var reader = new JsonTextReader(new StringReader($@"{{ ""icon-image"": {IconImageExpression} }}"));
+            var json = $"{{ \"icon-image\": {IconImageExpression} }}";
+            var iconImage = JsonNode.Parse(json)!["icon-image"]!.ToJsonString();
 
-            // Move to the value of "icon-image"
-            reader.Read();
-            Assert.Equal(JsonToken.StartObject, reader.TokenType);
-            reader.Read();
-            Assert.Equal(JsonToken.PropertyName, reader.TokenType);
-            reader.Read();
+            var reader = new Utf8JsonReader(System.Text.Encoding.UTF8.GetBytes(iconImage));
 
-            var stoppedString = (StoppedString)converter.ReadJson(reader, typeof(StoppedString), null, JsonSerializer.CreateDefault());
+            var stoppedString = converter.Read(ref reader, typeof(StoppedString), new JsonSerializerOptions());
 
             Assert.NotNull(stoppedString);
             Assert.NotNull(stoppedString!.Expression);

@@ -1,5 +1,5 @@
 using System.Globalization;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -32,7 +32,7 @@ public class NumberFormatExpression : Expression
         MaxFractionDigits = maxFractionDigits;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 3)
         {
@@ -45,17 +45,17 @@ public class NumberFormatExpression : Expression
         if (input == null)
             return null;
 
-        if (array[2] is not JObject options)
+        if (array[2] is not JsonObject options)
         {
             parser.Error("Expected an options object.");
             return null;
         }
 
-        var locale = options.TryGetValue("locale", out var localeToken) ? localeToken.ToString() : null;
-        var currency = options.TryGetValue("currency", out var currencyToken) ? currencyToken.ToString() : null;
+        var locale = options.TryGetPropertyValue("locale", out var localeNode) ? localeNode?.ToString() : null;
+        var currency = options.TryGetPropertyValue("currency", out var currencyNode) ? currencyNode?.ToString() : null;
 
-        int? minFractionDigits = options.TryGetValue("min-fraction-digits", out var minToken) ? (int?)minToken.Value<double>() : null;
-        int? maxFractionDigits = options.TryGetValue("max-fraction-digits", out var maxToken) ? (int?)maxToken.Value<double>() : null;
+        int? minFractionDigits = options.TryGetPropertyValue("min-fraction-digits", out var minNode) ? (int?)ExpressionValueHelper.AsNumber(MatchExpression.ToValue(minNode)) : null;
+        int? maxFractionDigits = options.TryGetPropertyValue("max-fraction-digits", out var maxNode) ? (int?)ExpressionValueHelper.AsNumber(MatchExpression.ToValue(maxNode)) : null;
 
         return new NumberFormatExpression(input, locale, currency, minFractionDigits, maxFractionDigits);
     }

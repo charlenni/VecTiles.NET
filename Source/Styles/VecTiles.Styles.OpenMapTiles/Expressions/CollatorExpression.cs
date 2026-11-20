@@ -1,5 +1,5 @@
 using System.Globalization;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -88,20 +88,31 @@ public class CollatorExpression : Expression
         _collator = collator;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
-        if (array.Count != 2 || array[1] is not JObject options)
+        if (array.Count != 2 || array[1] is not JsonObject options)
         {
             parser.Error("Expected exactly one object literal argument.");
             return null;
         }
 
-        var caseSensitive = options.TryGetValue("case-sensitive", out var caseToken) && caseToken.Value<bool>();
-        var diacriticSensitive = options.TryGetValue("diacritic-sensitive", out var diacriticToken) && diacriticToken.Value<bool>();
-        var locale = options.TryGetValue("locale", out var localeToken) ? localeToken.Value<string>() : null;
-        var ignorePunctuation = options.TryGetValue("ignore-punctuation", out var punctuationToken) && punctuationToken.Value<bool>();
+        var caseSensitive = GetOption(options, "case-sensitive");
+        var diacriticSensitive = GetOption(options, "diacritic-sensitive");
+        var locale = options.TryGetPropertyValue("locale", out var localeNode) ? localeNode?.ToString() : null;
+        var ignorePunctuation = GetOption(options, "ignore-punctuation");
 
         return new CollatorExpression(new Collator(caseSensitive, diacriticSensitive, locale, ignorePunctuation));
+    }
+
+    /// <summary>
+    /// Reads an optional boolean option. A missing option means false.
+    /// </summary>
+    private static bool GetOption(JsonObject options, string name)
+    {
+        return options.TryGetPropertyValue(name, out var node)
+            && node is JsonValue value
+            && value.TryGetValue<bool>(out var result)
+            && result;
     }
 
     public override object? Evaluate(EvaluationContext ctx)

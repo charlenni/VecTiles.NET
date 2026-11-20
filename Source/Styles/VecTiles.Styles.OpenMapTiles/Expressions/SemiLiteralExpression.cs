@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -23,7 +23,7 @@ public class SemiLiteralExpression : Expression
         _elements = elements;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 2)
         {
@@ -31,7 +31,7 @@ public class SemiLiteralExpression : Expression
             return null;
         }
 
-        if (array[1] is JArray elements)
+        if (array[1] is JsonArray elements)
         {
             var parsedElements = new List<IExpression>();
 

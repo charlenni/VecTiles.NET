@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -16,11 +16,11 @@ public class OMTExpressionLetTests
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
-        var expressionA1 = ExpressionParser.ParseExpression(JToken.Parse(
+        var expressionA1 = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["let", "a", 1, "b", 2, ["var", "a"]]
             """));
-        var expressionA2 = ExpressionParser.ParseExpression(JToken.Parse(
+        var expressionA2 = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["let", "a", 1, "b", 2, ["var", "a"]]
             """));
@@ -34,11 +34,11 @@ public class OMTExpressionLetTests
     public void FixtureIsUnequalToOtherFixtureTest()
     {
         // The leaf difference of the fixture: the binding "b" is 2 vs. 3
-        var expressionA = ExpressionParser.ParseExpression(JToken.Parse(
+        var expressionA = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["let", "a", 1, "b", 2, ["var", "a"]]
             """));
-        var expressionB = ExpressionParser.ParseExpression(JToken.Parse(
+        var expressionB = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["let", "a", 1, "b", 3, ["var", "a"]]
             """));
@@ -51,7 +51,7 @@ public class OMTExpressionLetTests
     [Fact]
     public void FixtureEvaluationTest()
     {
-        var expressionA = ExpressionParser.ParseExpression(JToken.Parse(
+        var expressionA = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["let", "a", 1, "b", 2, ["var", "a"]]
             """));
@@ -60,7 +60,7 @@ public class OMTExpressionLetTests
         Assert.Equal(1d, expressionA!.Evaluate(OMTExpressionTestsHelper.CreateContext()));
 
         // Shadowing: the inner binding wins
-        var expressionShadow = ExpressionParser.ParseExpression(JToken.Parse(
+        var expressionShadow = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["let", "a", 1, ["let", "a", 2, ["var", "a"]]]
             """));

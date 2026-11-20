@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
@@ -16,6 +16,6 @@ public static class OMTExpressionFixture
     {
         var json = File.ReadAllText(Path.Combine("Files", "Expressions", baseName + "." + variant + ".json"));
 
-        return ExpressionParser.ParseExpression(JToken.Parse(json));
+        return ExpressionParser.ParseExpression(JsonNode.Parse(json));
     }
 }

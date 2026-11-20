@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -64,7 +64,7 @@ public class OMTExpressionMatchTests
     [Fact]
     public void LabelListTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse(
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["match", ["get", "x"], ["a", "b"], "Apple", "Kumquat"]
             """));

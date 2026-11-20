@@ -1,66 +1,47 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
-public class StoppedStringConverter : JsonConverter
+public class StoppedStringConverter : JsonConverter<StoppedString>
 {
-    public override bool CanConvert(Type objectType)
+    public override StoppedString Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return objectType == typeof(JsonStoppedString) || objectType == typeof(string);
-    }
+        var token = JsonNode.Parse(ref reader);
 
-    public override bool CanRead => true;
-
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-    {
-        JToken token = JToken.Load(reader);
-
-        if (token.Type == JTokenType.Array)
+        if (token is JsonArray)
         {
             // We have an array, so we assume, that it is an expression
             var expression = ExpressionParser.ParseExpression(token);
 
             if (expression == null)
-                throw new ArgumentException("Couldn't parse expression: " + token.ToString(Formatting.None));
+                throw new JsonException("Couldn't parse expression: " + token!.ToJsonString());
 
             return new StoppedString { Expression = expression };
         }
 
-        if (token.Type == JTokenType.Object)
+        if (token is JsonObject objectNode)
         {
-            var stoppedString = new StoppedString { Stops = new List<KeyValuePair<float, string>>() };
+            var stoppedString = new StoppedString { Base = StoppedJson.ReadBase(objectNode) };
+            var stops = new List<KeyValuePair<float, string>>();
 
-            JToken? baseToken = token.SelectToken("base");
-
-            if (baseToken != null)
-                stoppedString.Base = baseToken.ToObject<float>();
-            else
-                stoppedString.Base = 1f;
-
-            JToken? stops = token.SelectToken("stops");
-
-            if (stops == null)
-                return stoppedString;
-
-            foreach (var stop in stops)
+            foreach (var (zoom, value) in StoppedJson.Stops(objectNode))
             {
-                var zoom = stop?.First?.ToObject<float>() ?? 0.0f;
-                var text = stop?.Last?.ToObject<string>() ?? string.Empty;
-                stoppedString.Stops.Add(new KeyValuePair<float, string>(zoom, text));
+                stops.Add(new KeyValuePair<float, string>(zoom, StoppedExpression.ToStringValue(MatchExpression.ToValue(value))));
             }
+
+            stoppedString.Stops = stops;
 
             return stoppedString;
         }
 
-        return new StoppedString() { SingleVal = token?.Value<string>() ?? string.Empty };
+        return new StoppedString { SingleVal = StoppedExpression.ToStringValue(MatchExpression.ToValue(token)) };
     }
 
-    public override bool CanWrite => false;
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, StoppedString value, JsonSerializerOptions options)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Stopped values are only read, never written.");
     }
 }

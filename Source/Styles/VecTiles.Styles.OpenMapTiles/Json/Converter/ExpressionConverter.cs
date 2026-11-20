@@ -1,59 +1,46 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using VecTiles.Common.Interfaces;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
-public class ExpressionConverter : JsonConverter
+/// <summary>
+/// Json converter for layer filters. A layer filter is either an expression
+/// array (including the legacy v7 filter syntax) or null.
+/// </summary>
+public class ExpressionConverter : JsonConverter<IExpression>
 {
-    public override bool CanConvert(Type objectType)
-    {
-        //  objectType == typeof(JsonStoppedString) || objectType == typeof(string);
-        return true;
-    }
-
-    public override bool CanRead => true;
-
-    public override object? ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public override IExpression Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // A missing/undefined filter is valid for all features
-        if (reader.TokenType == JsonToken.Null)
-            return objectType == typeof(IExpression) ? Expression.Empty : null;
+        if (reader.TokenType == JsonTokenType.Null)
+            return Expression.Empty;
 
-        JToken token = JToken.Load(reader);
+        var token = JsonNode.Parse(ref reader);
 
-        switch (token.Type)
+        if (token is JsonArray array)
         {
-            case JTokenType.Object:
-                // It is a object, so we assume, that it is a stopped type
-                if (objectType.GenericTypeArguments.ToString() == "string")
-                    return CreateStoppedString(token);
-                break;
-            case JTokenType.Array:
-                // We have an array, so we assume, that it is an expression
-                if (objectType == typeof(IExpression))
-                    return ConvertFilter((JArray)token);
-                break;
+            // We have an array, so we assume, that it is an expression
+            return ConvertFilter(array);
         }
 
         return null;
     }
 
-    public override bool CanWrite => false;
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, IExpression value, JsonSerializerOptions options)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Expressions are only read, never written.");
     }
 
     /// <summary>
     /// Convert a layer filter to an expression. Filters in expression syntax are
     /// parsed directly, legacy filter arrays are converted to expression syntax first.
     /// </summary>
-    /// <param name="filter">JArray with the layer filter</param>
+    /// <param name="filter">Array with the layer filter</param>
     /// <returns>An expression that evaluates to a boolean for every feature</returns>
-    public static IExpression ConvertFilter(JArray filter)
+    public static IExpression ConvertFilter(JsonArray? filter)
     {
         // An empty filter is valid for all features
         if (filter == null || filter.Count == 0)
@@ -63,53 +50,25 @@ public class ExpressionConverter : JsonConverter
         var expression = ExpressionParser.ParseExpression(token, typeof(bool));
 
         if (expression == null)
-            throw new ArgumentException(nameof(filter), new FormatException("Couldn't parse filter: " + token.ToString(Formatting.None)));
+            throw new ArgumentException(nameof(filter), new FormatException("Couldn't parse filter: " + token.ToJsonString()));
 
         return expression;
     }
 
-    public StoppedString CreateStoppedString(JToken token)
-    {
-        var stoppedString = new StoppedString { Stops = new List<KeyValuePair<float, string>>() };
-
-        JToken? baseToken = token.SelectToken("base");
-
-        if (baseToken != null)
-            stoppedString.Base = baseToken.ToObject<float>();
-        else
-            stoppedString.Base = 1f;
-
-        JToken? stops = token.SelectToken("stops");
-
-        if (stops == null)
-            return stoppedString;
-
-        foreach (var stop in stops)
-        {
-            var zoom = stop?.First?.ToObject<float>() ?? 0.0f;
-            var text = stop?.Last?.ToObject<string>() ?? string.Empty;
-            stoppedString.Stops.Add(new KeyValuePair<float, string>(zoom, text));
-        }
-
-        return stoppedString;
-    }
-
-    public static bool IsExpressionFilter(JArray filter)
+    public static bool IsExpressionFilter(JsonArray? filter)
     {
         if (filter == null || filter.Count == 0)
             return false;
 
-        if (filter[0].Type != JTokenType.String)
+        if (filter[0] is not JsonValue operatorValue || !operatorValue.TryGetValue<string>(out var op))
             return false;
-
-        var op = filter[0].ToString();
 
         switch (op)
         {
             case "has":
                 if (filter.Count < 2)
                     return false;
-                var operand = filter[1].ToString();
+                var operand = MatchExpression.ToValue(filter[1]) as string ?? string.Empty;
                 return operand != "$id" && operand != "$type";
             case "in":
             case "!in":
@@ -122,7 +81,7 @@ public class ExpressionConverter : JsonConverter
             case ">=":
             case "<":
             case "<=":
-                return filter.Count == 3 && (filter[1].Type == JTokenType.Array || filter[2].Type == JTokenType.Array);
+                return filter.Count == 3 && (filter[1] is JsonArray || filter[2] is JsonArray);
             case "any":
             case "all":
                 // If we only have an "all" as filter
@@ -130,7 +89,7 @@ public class ExpressionConverter : JsonConverter
                     return false;
                 for (int i = 1; i < filter.Count; i++)
                 {
-                    if (!IsExpressionFilter(filter[i] as JArray) && filter.Type != JTokenType.Boolean)
+                    if (!IsExpressionFilter(filter[i] as JsonArray) && !(filter[i] is JsonValue value && value.TryGetValue(out bool _)))
                         return false;
                 }
 
@@ -147,12 +106,10 @@ public class ExpressionConverter : JsonConverter
     /// </summary>
     /// <param name="filter">Legacy filter array</param>
     /// <returns>Filter as expression array</returns>
-    private static JToken ConvertLegacyFilter(JArray filter)
+    private static JsonNode? ConvertLegacyFilter(JsonArray filter)
     {
-        if (filter[0].Type != JTokenType.String)
+        if (filter[0] is not JsonValue operatorValue || !operatorValue.TryGetValue<string>(out var op))
             throw new ArgumentException("Filter operator must be a string");
-
-        var op = filter[0].ToString();
 
         switch (op)
         {
@@ -165,27 +122,27 @@ public class ExpressionConverter : JsonConverter
                 if (filter.Count != 3)
                     throw new ArgumentException("Filter operator " + op + " must have exactly 2 operands");
 
-                return new JArray(op, ToKeyOperand(filter[1]), filter[2]);
+                return new JsonArray(op, ToKeyOperand(filter[1]), filter[2]!.DeepClone());
             case "in":
-                return new JArray(op, ToKeyOperand(filter[1]), new JArray("literal", Values(filter, 2)));
+                return new JsonArray(op, ToKeyOperand(filter[1]), new JsonArray("literal", Values(filter, 2)));
             case "!in":
-                return new JArray("!", new JArray("in", ToKeyOperand(filter[1]), new JArray("literal", Values(filter, 2))));
+                return new JsonArray("!", new JsonArray("in", ToKeyOperand(filter[1]), new JsonArray("literal", Values(filter, 2))));
             case "has":
-                return new JArray(op, ToKeyOperand(filter[1]));
+                return new JsonArray(op, ToKeyOperand(filter[1]));
             case "!has":
-                return new JArray("!", new JArray(op[1..], ToKeyOperand(filter[1])));
+                return new JsonArray("!", new JsonArray(op[1..], ToKeyOperand(filter[1])));
             case "all":
             case "any":
                 // An empty filter combination passes all features / no features
                 if (filter.Count == 1)
-                    return op == "all" ? new JArray("literal", true) : new JArray("literal", false);
+                    return op == "all" ? new JsonArray("literal", true) : new JsonArray("literal", false);
                 return ToOperatorArray(op, Children(filter));
             case "none":
                 var elements = Children(filter);
 
                 if (elements.Count == 0)
-                    return new JArray("literal", true);
-                return new JArray("!", ToOperatorArray("any", elements));
+                    return new JsonArray("literal", true);
+                return new JsonArray("!", ToOperatorArray("any", elements));
         }
 
         throw new ArgumentException("Filter operator must be one of \"==\", \"!=\", \">\", \">=\", \"<\", \"<=\", \"in\", \"!in\", \"all\", \"any\", \"none\", \"has\", or \"!has\"");
@@ -195,37 +152,44 @@ public class ExpressionConverter : JsonConverter
     /// Operand of a legacy filter key: "$type" and "$id" become the global
     /// properties "geometry-type" and "id", every other key a "get" expression.
     /// </summary>
-    private static JToken ToKeyOperand(JToken key)
+    private static JsonNode ToKeyOperand(JsonNode? key)
     {
-        if (key.Type != JTokenType.String)
+        if (key is not JsonValue keyValue || !keyValue.TryGetValue<string>(out var name))
             throw new ArgumentException("Filter expression key must be a string");
-
-        var name = key.ToString();
 
         return name switch
         {
-            "$type" => new JArray("geometry-type"),
-            "$id" => new JArray("id"),
-            _ => new JArray("get", name),
+            "$type" => new JsonArray("geometry-type"),
+            "$id" => new JsonArray("id"),
+            _ => new JsonArray("get", name),
         };
     }
 
-    private static JArray Values(JArray filter, int from)
+    private static JsonArray Values(JsonArray filter, int from)
     {
-        var values = new JArray();
+        var values = new JsonArray();
 
         for (int i = from; i < filter.Count; i++)
-            values.Add(filter[i]);
+            values.Add(filter[i]?.DeepClone());
 
         return values;
     }
 
-    private static JArray Children(JArray filter)
+    /// <summary>
+    /// The already converted children of a legacy filter combination. They are
+    /// collected in a list (not a JsonArray), because every node gets re-added
+    /// to the operator array afterwards and a JsonNode can only have one parent.
+    /// </summary>
+    private static List<JsonNode?> Children(JsonArray filter)
     {
-        var children = new JArray();
+        var children = new List<JsonNode?>();
 
         for (int i = 1; i < filter.Count; i++)
-            children.Add(filter[i] is JArray sub ? ConvertLegacyFilter(sub) : filter[i]);
+        {
+            // Existing nodes keep their parent, so nested filter arrays are
+            // cloned before the recursive conversion
+            children.Add(filter[i] is JsonArray sub ? ConvertLegacyFilter((JsonArray)sub.DeepClone()) : filter[i]?.DeepClone());
+        }
 
         return children;
     }
@@ -234,10 +198,9 @@ public class ExpressionConverter : JsonConverter
     /// An expression array [op, child1, child2, ...] for an operator with its
     /// already converted children.
     /// </summary>
-    private static JArray ToOperatorArray(string op, JArray children)
+    private static JsonArray ToOperatorArray(string op, List<JsonNode?> children)
     {
-        var array = new JArray();
-        array.Add(op);
+        var array = new JsonArray(op);
 
         foreach (var child in children)
             array.Add(child);

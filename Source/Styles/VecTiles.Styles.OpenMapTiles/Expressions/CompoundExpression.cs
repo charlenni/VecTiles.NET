@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -39,13 +39,15 @@ public class CompoundExpression : Expression
         _args = args;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
-        var op = CompoundExpressionRegistry.Find(array[0].ToString());
+        var op = array[0] is JsonValue operatorValue && operatorValue.TryGetValue<string>(out var operatorName)
+            ? CompoundExpressionRegistry.Find(operatorName)
+            : null;
 
         if (op == null)
         {
-            parser.Error($"Unknown expression \"{array[0]}\". If you wanted a literal array, use [\"literal\", [...]].");
+            parser.Error($"Unknown expression \"{MatchExpression.ToValue(array[0])}\". If you wanted a literal array, use [\"literal\", [...]].");
             return null;
         }
 

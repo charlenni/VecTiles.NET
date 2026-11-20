@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -46,7 +46,7 @@ public class OMTNumberTests
     [Fact]
     public void FallbackTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse("[\"number\", [\"get\", \"x\"], [\"number\", [\"get\", \"y\"]], 0]"));
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse("[\"number\", [\"get\", \"x\"], [\"number\", [\"get\", \"y\"]], 0]"));
 
         Assert.NotNull(expression);
 

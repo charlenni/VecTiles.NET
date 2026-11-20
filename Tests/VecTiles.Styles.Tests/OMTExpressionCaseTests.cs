@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -68,7 +68,7 @@ public class OMTExpressionCaseTests
     public void CaseRequiresPairsAndFallbackTest()
     {
         // No fallback output
-        var invalid = ExpressionParser.ParseExpression(JToken.Parse(
+        var invalid = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["case", ["get", "x"], "x"]
             """));

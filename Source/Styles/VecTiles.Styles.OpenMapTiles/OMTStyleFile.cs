@@ -1,5 +1,5 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Serialization;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles;
@@ -9,38 +9,39 @@ namespace VecTiles.Styles.OpenMapTiles;
 /// </summary>
 public class OMTStyleFile
 {
-    [JsonProperty("layers")]
+    [JsonPropertyName("layers")]
     public OMTLayerStyle[] Layers { get; set; } = [];
 
-    [JsonProperty("sources")]
+    [JsonPropertyName("sources")]
     public Dictionary<string, OMTSource> Sources { get; set; } = [];
 
-    [JsonProperty("version")]
+    [JsonPropertyName("version")]
     public int Version { get; set; }
 
-    [JsonProperty("bearing")]
+    [JsonPropertyName("bearing")]
     public float Bearing { get; set; } = 0.0f;
 
-    [JsonProperty("center")]
+    [JsonPropertyName("center")]
     public float[] Center { get; set; } = [];
 
-    [JsonProperty("glyphs")]
+    [JsonPropertyName("glyphs")]
     public string Glyphs { get; set; } = "mapbox://fonts/mapbox/{fontstack}/{range}.pbf";
 
-    [JsonProperty("metadata")]
-    public JObject? Metadata { get; set; }
+    [JsonPropertyName("metadata")]
+    public JsonObject? Metadata { get; set; }
 
-    [JsonProperty("name")]
+    [JsonPropertyName("name")]
     public string Name { get; set; } = string.Empty;
 
-    [JsonProperty("pitch")]
+    [JsonPropertyName("pitch")]
     public float Pitch { get; set; } = 0.0f;
 
-    [JsonProperty("sprite")]
+    [JsonPropertyName("sprite")]
+    [JsonInclude]
     internal string spriteFile = string.Empty;
 
     public SpriteDictionary? Sprites { get; set; }
 
-    [JsonProperty("zoom")]
+    [JsonPropertyName("zoom")]
     public float? Zoom { get; set; }
 }

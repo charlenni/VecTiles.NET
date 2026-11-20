@@ -1,19 +1,16 @@
-﻿using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using VecTiles.Common.Enums;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
-public class EnumConverter<T> : JsonConverter where T : struct, Enum
+public class EnumConverter<T> : JsonConverter<T> where T : struct, Enum
 {
-    public override bool CanConvert(Type objectType) => objectType == typeof(T);
-
-    public override bool CanRead => true;
-
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
+    public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        if (reader.TokenType == JsonToken.String)
+        if (reader.TokenType == JsonTokenType.String)
         {
-            var value = reader.Value?.ToString() ?? string.Empty;
+            var value = reader.GetString() ?? string.Empty;
             value = value.Replace("-", "");
             if (Enum.TryParse<T>(value, ignoreCase: true, out var result))
                 return result;
@@ -24,13 +21,11 @@ public class EnumConverter<T> : JsonConverter where T : struct, Enum
                 return (T)(object)LayerStyleType.Unknown;
         }
 
-        return default(T); // oder throw new JsonSerializationException(...)
+        return default;
     }
 
-    public override bool CanWrite => true;
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
     {
-        writer.WriteValue(value?.ToString());
+        writer.WriteStringValue(value.ToString());
     }
 }

@@ -11,7 +11,6 @@
     <PackageReference Include="Mapsui.Rendering.Skia" Version="5.1.0" />
     <PackageReference Include="Mapsui.Tiling" Version="5.1.0" />
     <PackageReference Include="NetTopologySuite.IO.VectorTiles" Version="1.1.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="protobuf-net" Version="3.4.40" />
   </ItemGroup>
 

@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -39,7 +39,7 @@ public class OMTInTests
     public void MembershipTest(double i, bool expected)
     {
         // Membership without the wrapping number assertion of the fixture
-        var expression = ExpressionParser.ParseExpression(JToken.Parse(
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["in", ["number", ["get", "i"]], ["array", ["get", "arr"]]]
             """));
@@ -54,7 +54,7 @@ public class OMTInTests
     [Fact]
     public void LargeHaystackUsesHashSetTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse(
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["in", ["number", ["get", "i"]], ["array", ["literal", [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]]]]
             """));
@@ -69,7 +69,7 @@ public class OMTInTests
     [Fact]
     public void SubstringTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse(
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse(
             """
             ["in", "ohn", "John Smith"]
             """));

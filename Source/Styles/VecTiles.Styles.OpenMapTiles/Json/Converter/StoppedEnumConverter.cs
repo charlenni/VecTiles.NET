@@ -1,76 +1,59 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
-public class StoppedEnumConverter<T> : JsonConverter where T: struct, Enum
+public class StoppedEnumConverter<T> : JsonConverter<StoppedEnum<T>> where T : struct, Enum
 {
-    public override bool CanConvert(Type objectType)
+    public override StoppedEnum<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return objectType == typeof(JsonStoppedString) || objectType == typeof(string);
-    }
+        var token = JsonNode.Parse(ref reader);
 
-    public override bool CanRead => true;
-
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-    {
-        JToken token = JToken.Load(reader);
-
-        if (token.Type == JTokenType.Array)
+        if (token is JsonArray)
         {
             // We have an array, so we assume, that it is an expression
             var expression = ExpressionParser.ParseExpression(token);
 
             if (expression == null)
-                throw new ArgumentException("Couldn't parse expression: " + token.ToString(Formatting.None));
+                throw new JsonException("Couldn't parse expression: " + token!.ToJsonString());
 
             return new StoppedEnum<T> { Expression = expression };
         }
 
-        if (token.Type == JTokenType.Object)
+        if (token is JsonObject objectNode)
         {
-            var stoppedEnum = new StoppedEnum<T> { Stops = new List<KeyValuePair<float, T>>() };
+            var stoppedEnum = new StoppedEnum<T> { Base = StoppedJson.ReadBase(objectNode) };
+            var stops = new List<KeyValuePair<float, T>>();
 
-            JToken? baseToken = token.SelectToken("base");
-
-            if (baseToken != null)
-                stoppedEnum.Base = baseToken.ToObject<float>();
-            else
-                stoppedEnum.Base = 1f;
-
-            JToken? stops = token.SelectToken("stops");
-
-            if (stops == null)
-                return stoppedEnum;
-
-            foreach (var stop in stops)
+            foreach (var (zoom, value) in StoppedJson.Stops(objectNode))
             {
-                var zoom = stop?.First?.ToObject<float>() ?? 0.0f;
-                var enumString = stop?.Last?.ToObject<string>() ?? string.Empty;
-                if (Enum.TryParse<T>(enumString, ignoreCase: true, out var enumValue1))
+                var enumString = StoppedExpression.ToStringValue(MatchExpression.ToValue(value));
+
+                if (Enum.TryParse<T>(enumString, ignoreCase: true, out var enumValue))
                 {
-                    stoppedEnum.Stops.Add(new KeyValuePair<float, T>(zoom, enumValue1));
+                    stops.Add(new KeyValuePair<float, T>(zoom, enumValue));
                 }
             }
+
+            stoppedEnum.Stops = stops;
 
             return stoppedEnum;
         }
 
-        var result = new StoppedEnum<T> { SingleVal = default(T) };
+        var result = new StoppedEnum<T> { SingleVal = default };
 
-        if (Enum.TryParse<T>(token?.Value<string>(), ignoreCase: true, out var enumValue2))
+        if (Enum.TryParse<T>(StoppedExpression.ToStringValue(MatchExpression.ToValue(token)), ignoreCase: true, out var singleValue))
         {
-            result.SingleVal = enumValue2;
+            result.SingleVal = singleValue;
         }
 
         return result;
     }
 
-    public override bool CanWrite => false;
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, StoppedEnum<T> value, JsonSerializerOptions options)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Stopped values are only read, never written.");
     }
 }

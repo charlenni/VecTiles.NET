@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -42,7 +42,7 @@ public class OMTMinusTests
     [Fact]
     public void NegationTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse("[\"-\", [\"number\", [\"get\", \"x\"]]]"));
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse("[\"-\", [\"number\", [\"get\", \"x\"]]]"));
 
         Assert.NotNull(expression);
 

@@ -8,7 +8,6 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="VecTiles.Styles.Tests" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="protobuf-net" Version="3.4.40" />
   </ItemGroup>
 

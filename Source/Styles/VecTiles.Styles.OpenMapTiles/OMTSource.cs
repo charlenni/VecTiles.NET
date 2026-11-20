@@ -1,11 +1,12 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+﻿using System.Text.Json;
+using System.Text.Json.Serialization;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Converters.OpenMapTiles;
 using VecTiles.DataSources;
 using VecTiles.Styles.OpenMapTiles.Enums;
 using VecTiles.Styles.OpenMapTiles.Expressions;
+using VecTiles.Styles.OpenMapTiles.Json;
 using VecTiles.Styles.OpenMapTiles.Json.Converter;
 using VecTiles.TileDataSources;
 
@@ -17,83 +18,83 @@ namespace VecTiles.Styles.OpenMapTiles;
 /// </summary>
 public class OMTSource
 {
-    [JsonProperty("attribution")]
+    [JsonPropertyName("attribution")]
     public string Attribution { get; set; } = string.Empty;
 
-    [JsonProperty("bounds")]
+    [JsonPropertyName("bounds")]
     public float[] Bounds { get; set; } = [-180.0f, -85.051129f, 180.0f, 85.051129f];
 
-    [JsonProperty("buffer")]
+    [JsonPropertyName("buffer")]
     public int Buffer { get; set; } = 128;
 
-    [JsonProperty("cluster")]
+    [JsonPropertyName("cluster")]
     public bool Cluster { get; set; } = false;
 
-    [JsonProperty("clusterMaxZoom")]
+    [JsonPropertyName("clusterMaxZoom")]
     public float ClusterMaxZoom { get; set; } = 0.0f;
 
-    [JsonProperty("clusterMinPoints")]
+    [JsonPropertyName("clusterMinPoints")]
     public int ClusterMinPoints { get; set; } = 2;
 
     // clusterProperties
 
-    [JsonProperty("clusterRadius")]
+    [JsonPropertyName("clusterRadius")]
     public int ClusterRadius { get; set; } = 50;
 
     // data
 
-    [JsonProperty("dynamic")]
+    [JsonPropertyName("dynamic")]
     public bool Dynamic { get; set; } = false;
 
-    [JsonConverter(typeof(StringEnumConverter))]
-    [JsonProperty("encoding")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonPropertyName("encoding")]
     public Encoding Encoding { get; set; } = Encoding.OpenMapTiles;
 
     [JsonConverter(typeof(ExpressionConverter))]
-    [JsonProperty("filter")]
+    [JsonPropertyName("filter")]
     public IExpression Filter { get; set; } = Expression.Empty;
 
-    [JsonProperty("generateId")]
+    [JsonPropertyName("generateId")]
     public bool GenerateId { get; set; } = false;
 
-    [JsonProperty("lineMetrics")]
+    [JsonPropertyName("lineMetrics")]
     public bool LineMetrics { get; set; } = false;
 
-    [JsonProperty("id")]
+    [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
 
-    [JsonProperty("maxzoom")]
+    [JsonPropertyName("maxzoom")]
     public int MaxZoom { get; set; } = 22;
 
-    [JsonProperty("minzoom")]
+    [JsonPropertyName("minzoom")]
     public int MinZoom { get; set; } = 0;
 
     // promoteId
 
-    [JsonProperty("rasterLayers")]
+    [JsonPropertyName("rasterLayers")]
     public string RasterLayers { get; set; } = string.Empty;
 
-    [JsonConverter(typeof(StringEnumConverter))]
-    [JsonProperty("scheme")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonPropertyName("scheme")]
     public Scheme Scheme { get; set; } = Scheme.Xyz;
 
-    [JsonConverter(typeof(StringEnumConverter))]
-    [JsonProperty("type")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    [JsonPropertyName("type")]
     public SourceType SourceType { get; set; }
 
-    [JsonProperty("tiles")]
+    [JsonPropertyName("tiles")]
     public IList<string>? Tiles { get; set; }
 
-    [JsonProperty("tileSize")]
+    [JsonPropertyName("tileSize")]
     public int TileSize { get; set; } = 512;
 
-    [JsonProperty("url")]
+    [JsonPropertyName("url")]
     public string? Url { get; set; }
 
-    [JsonProperty("urls")]
+    [JsonPropertyName("urls")]
     public string[] Urls { get; set; } = [];
 
-    [JsonProperty("volatile")]
+    [JsonPropertyName("volatile")]
     public bool Volatile { get; set; } = false;
 
     public string Name { get; internal set; } = string.Empty;
@@ -139,7 +140,7 @@ public class OMTSource
         var bytes = await ByteDataSource.GetBytesAsync(tileJsonUrl).ConfigureAwait(false)
             ?? throw new ArgumentException($"Could not load TileJSON '{tileJsonUrl}'");
 
-        var tileJson = JsonConvert.DeserializeObject<TileJson>(System.Text.Encoding.UTF8.GetString(bytes))
+        var tileJson = JsonSerializer.Deserialize<TileJson>(System.Text.Encoding.UTF8.GetString(bytes), StyleJson.Options)
             ?? throw new ArgumentException($"TileJSON '{tileJsonUrl}' isn't valid");
 
         if (tileJson.Tiles is { Count: > 0 })
@@ -159,16 +160,16 @@ public class OMTSource
 
     private class TileJson
     {
-        [JsonProperty("attribution")]
+        [JsonPropertyName("attribution")]
         public string Attribution { get; set; } = string.Empty;
 
-        [JsonProperty("minzoom")]
+        [JsonPropertyName("minzoom")]
         public int Minzoom { get; set; } = 0;
 
-        [JsonProperty("maxzoom")]
+        [JsonPropertyName("maxzoom")]
         public int Maxzoom { get; set; } = 0;
 
-        [JsonProperty("tiles")]
+        [JsonPropertyName("tiles")]
         public IList<string>? Tiles { get; set; }
     }
 }

@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
@@ -26,7 +26,7 @@ public class CoercionExpression : Expression
         _fallbacks = fallbacks;
     }
 
-    public static IExpression? Parse(JArray array, ExpressionParser parser)
+    public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count < 2)
         {
@@ -34,7 +34,7 @@ public class CoercionExpression : Expression
             return null;
         }
 
-        var type = array[0].ToString();
+        var type = array[0]!.GetValue<string>();
 
         if (type is not ("to-string" or "to-number" or "to-boolean" or "to-color"))
         {

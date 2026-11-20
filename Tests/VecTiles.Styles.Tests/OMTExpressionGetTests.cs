@@ -1,4 +1,4 @@
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.MapboxTests;
@@ -16,8 +16,8 @@ public class OMTExpressionGetTests
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
-        var expressionA1 = ExpressionParser.ParseExpression(JToken.Parse("""["get", "x"]"""));
-        var expressionA2 = ExpressionParser.ParseExpression(JToken.Parse("""["get", "x"]"""));
+        var expressionA1 = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", "x"]"""));
+        var expressionA2 = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", "x"]"""));
 
         Assert.NotNull(expressionA1);
         Assert.NotNull(expressionA2);
@@ -28,8 +28,8 @@ public class OMTExpressionGetTests
     public void FixtureIsUnequalToOtherFixtureTest()
     {
         // The leaf difference of the fixture: "x" vs. "x_other"
-        var expressionA = ExpressionParser.ParseExpression(JToken.Parse("""["get", "x"]"""));
-        var expressionB = ExpressionParser.ParseExpression(JToken.Parse("""["get", "x_other"]"""));
+        var expressionA = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", "x"]"""));
+        var expressionB = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", "x_other"]"""));
 
         Assert.NotNull(expressionA);
         Assert.NotNull(expressionB);
@@ -39,7 +39,7 @@ public class OMTExpressionGetTests
     [Fact]
     public void FixtureEvaluationTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse("""["get", "x"]"""));
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", "x"]"""));
 
         Assert.NotNull(expression);
 
@@ -51,7 +51,7 @@ public class OMTExpressionGetTests
     [Fact]
     public void FixtureEvaluatesToNullOnMissingAttributeTest()
     {
-        var expression = ExpressionParser.ParseExpression(JToken.Parse("""["get", "x_other"]"""));
+        var expression = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", "x_other"]"""));
 
         Assert.NotNull(expression);
 
@@ -63,7 +63,7 @@ public class OMTExpressionGetTests
     [Fact]
     public void GetRequiresStringLiteralKeyTest()
     {
-        var invalid = ExpressionParser.ParseExpression(JToken.Parse("""["get", 42]"""));
+        var invalid = ExpressionParser.ParseExpression(JsonNode.Parse("""["get", 42]"""));
 
         Assert.Null(invalid);
     }

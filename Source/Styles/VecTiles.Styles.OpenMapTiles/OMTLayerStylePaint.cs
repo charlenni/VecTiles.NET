@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+﻿using System.Text.Json.Serialization;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
@@ -9,285 +9,285 @@ namespace VecTiles.Styles.OpenMapTiles;
 public class OMTLayerStylePaint
 {
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("background-color")]
+    [JsonPropertyName("background-color")]
     public StoppedColor BackgroundColor { get; set; } = new StoppedColor { Default = Colors.Black };
     
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("background-emissive-strength")]
+    [JsonPropertyName("background-emissive-strength")]
     public StoppedFloat BackgroundEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("background-opacity")]
+    [JsonPropertyName("background-opacity")]
     public StoppedFloat BackgroundOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedStringConverter))]
-    [JsonProperty("background-pattern")]
+    [JsonPropertyName("background-pattern")]
     public StoppedString BackgroundPattern { get; set; } = new StoppedString() { Default = string.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("circle-blur")]
+    [JsonPropertyName("circle-blur")]
     public StoppedFloat CircleBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("circle-color")]
+    [JsonPropertyName("circle-color")]
     public StoppedColor CircleColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("circle-emissive-strength")]
+    [JsonPropertyName("circle-emissive-strength")]
     public StoppedFloat CircleEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("circle-opacity")]
+    [JsonPropertyName("circle-opacity")]
     public StoppedFloat CircleOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
-    [JsonProperty("circle-pitch-alignment")]
+    [JsonPropertyName("circle-pitch-alignment")]
     public string CirclePitchAlignment { get; set; } = "viewport";
 
-    [JsonProperty("circle-pitch-scale")]
+    [JsonPropertyName("circle-pitch-scale")]
     public string CirclePitchScale { get; set; } = "map";
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("circle-radius")]
+    [JsonPropertyName("circle-radius")]
     public StoppedFloat CircleRadius { get; set; } = new StoppedFloat() { Default = 5.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("circle-stroke-color")]
+    [JsonPropertyName("circle-stroke-color")]
     public StoppedColor CircleStrokeColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("circle-stroke-opacity")]
+    [JsonPropertyName("circle-stroke-opacity")]
     public StoppedFloat CircleStrokeOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("circle-stroke-width")]
+    [JsonPropertyName("circle-stroke-width")]
     public StoppedFloat CircleStrokeWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("circle-translate")]
+    [JsonPropertyName("circle-translate")]
     public StoppedFloatArray CircleTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
 
-    [JsonProperty("circle-translate-anchor")]
+    [JsonPropertyName("circle-translate-anchor")]
     public string CircleTranslateAnchor { get; set; } = "map";
 
     [JsonConverter(typeof(StoppedBooleanConverter))]
-    [JsonProperty("fill-antialias")]
+    [JsonPropertyName("fill-antialias")]
     public StoppedBoolean FillAntialias { get; set; } = new StoppedBoolean() { Default = true };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("fill-color")]
+    [JsonPropertyName("fill-color")]
     public StoppedColor FillColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("fill-emissive-strength")]
+    [JsonPropertyName("fill-emissive-strength")]
     public StoppedFloat FillEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("fill-opacity")]
+    [JsonPropertyName("fill-opacity")]
     public StoppedFloat FillOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("fill-outline-color")]
+    [JsonPropertyName("fill-outline-color")]
     public StoppedColor FillOutlineColor { get; set; } = new StoppedColor() { Default = new Color(0, 0, 0, 0) };
 
     [JsonConverter(typeof(StoppedStringConverter))]
-    [JsonProperty("fill-pattern")]
+    [JsonPropertyName("fill-pattern")]
     public StoppedString FillPattern { get; set; } = new StoppedString() { Default = string.Empty };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("fill-translate")]
+    [JsonPropertyName("fill-translate")]
     public StoppedFloatArray FillTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
 
-    [JsonProperty("fill-translate-anchor")]
+    [JsonPropertyName("fill-translate-anchor")]
     public string FillTranslateAnchor { get; set; } = "map";
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-blur")]
+    [JsonPropertyName("line-blur")]
     public StoppedFloat LineBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("line-color")]
+    [JsonPropertyName("line-color")]
     public StoppedColor LineColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("line-dasharray")]
+    [JsonPropertyName("line-dasharray")]
     public StoppedFloatArray LineDashArray { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-emissive-strength")]
+    [JsonPropertyName("line-emissive-strength")]
     public StoppedFloat LineEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-gap-width")]
+    [JsonPropertyName("line-gap-width")]
     public StoppedFloat LineGapWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("line-gradient")]
+    [JsonPropertyName("line-gradient")]
     public StoppedColor LineGradient { get; set; } = new StoppedColor() { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-occlusion-opacity")]
+    [JsonPropertyName("line-occlusion-opacity")]
     public StoppedFloat LineOcclusionOpacity { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-offset")]
+    [JsonPropertyName("line-offset")]
     public StoppedFloat LineOffset { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-opacity")]
+    [JsonPropertyName("line-opacity")]
     public StoppedFloat LineOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedStringConverter))]
-    [JsonProperty("line-pattern")]
+    [JsonPropertyName("line-pattern")]
     public StoppedString LinePattern { get; set; } = new StoppedString { Default = string.Empty };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("line-translate")]
+    [JsonPropertyName("line-translate")]
     public StoppedFloatArray LineTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
 
-    [JsonProperty("line-translate-anchor")]
+    [JsonPropertyName("line-translate-anchor")]
     public string LineTranslateAnchor { get; set; } = "map";
 
-    [JsonProperty("line-trim-offset")]
+    [JsonPropertyName("line-trim-offset")]
     public float[] LineTrimOffset { get; set; } = [0, 0];
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("line-width")]
+    [JsonPropertyName("line-width")]
     public StoppedFloat LineWidth { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("icon-color")]
+    [JsonPropertyName("icon-color")]
     public StoppedColor IconColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-brightness-max")]
+    [JsonPropertyName("icon-color-brightness-max")]
     public StoppedFloat IconColorBrightnessMax { get; set; } = new StoppedFloat { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-brightness-min")]
+    [JsonPropertyName("icon-color-brightness-min")]
     public StoppedFloat IconColorBrightnessMin { get; set; } = new StoppedFloat { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-contrast")]
+    [JsonPropertyName("icon-color-contrast")]
     public StoppedFloat IconColorContrast { get; set; } = new StoppedFloat { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-color-saturation")]
+    [JsonPropertyName("icon-color-saturation")]
     public StoppedFloat IconColorSaturation { get; set; } = new StoppedFloat { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-emissive-strength")]
+    [JsonPropertyName("icon-emissive-strength")]
     public StoppedFloat IconEmissiveStrength { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-halo-blur")]
+    [JsonPropertyName("icon-halo-blur")]
     public StoppedFloat IconHaloBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("icon-halo-color")]
+    [JsonPropertyName("icon-halo-color")]
     public StoppedColor IconHaloColor { get; set; } = new StoppedColor { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-halo-width")]
+    [JsonPropertyName("icon-halo-width")]
     public StoppedFloat IconHaloWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-image-cross-fade")]
+    [JsonPropertyName("icon-image-cross-fade")]
     public StoppedFloat IconImageCrossFade { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-occlusion-opacity")]
+    [JsonPropertyName("icon-occlusion-opacity")]
     public StoppedFloat IconOcclusionOpacity { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("icon-opacity")]
+    [JsonPropertyName("icon-opacity")]
     public StoppedFloat IconOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("icon-translate")]
+    [JsonPropertyName("icon-translate")]
     public StoppedFloatArray IconTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
 
     [JsonConverter(typeof(StoppedEnumConverter<MapAlignment>))]
-    [JsonProperty("icon-translate-anchor")]
+    [JsonPropertyName("icon-translate-anchor")]
     public StoppedEnum<MapAlignment> IconTranslateAnchor { get; set; } = new StoppedEnum<MapAlignment> { Default = MapAlignment.Map };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("text-color")]
+    [JsonPropertyName("text-color")]
     public StoppedColor TextColor { get; set; } = new StoppedColor { Default = Colors.Black };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-emissive-strength")]
+    [JsonPropertyName("text-emissive-strength")]
     public StoppedFloat TextEmissiveStrength { get; set; } = new StoppedFloat() { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-halo-blur")]
+    [JsonPropertyName("text-halo-blur")]
     public StoppedFloat TextHaloBlur { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("text-halo-color")]
+    [JsonPropertyName("text-halo-color")]
     public StoppedColor TextHaloColor { get; set; } = new StoppedColor { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-halo-width")]
+    [JsonPropertyName("text-halo-width")]
     public StoppedFloat TextHaloWidth { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-occlusion-opacity")]
+    [JsonPropertyName("text-occlusion-opacity")]
     public StoppedFloat TextOcclusionOpacity { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("text-opacity")]
+    [JsonPropertyName("text-opacity")]
     public StoppedFloat TextOpacity { get; set; } = new StoppedFloat { Default = 1.0f };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("text-translate")]
+    [JsonPropertyName("text-translate")]
     public StoppedFloatArray TextTranslate { get; set; } = new StoppedFloatArray() { Default = [0, 0] };
 
     [JsonConverter(typeof(StoppedEnumConverter<MapAlignment>))]
-    [JsonProperty("text-translate-anchor")]
+    [JsonPropertyName("text-translate-anchor")]
     public StoppedEnum<MapAlignment> TextTranslateAnchor { get; set; } = new StoppedEnum<MapAlignment> { Default = MapAlignment.Map };
 
-    [JsonProperty("raster-brightness-max")]
+    [JsonPropertyName("raster-brightness-max")]
     public StoppedFloat RasterBrightnessMax { get; set; } = new StoppedFloat { Default = 1.0f };
 
-    [JsonProperty("raster-brightness-min")]
+    [JsonPropertyName("raster-brightness-min")]
     public StoppedFloat RasterBrightnessMin { get; set; } = new StoppedFloat { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedColorConverter))]
-    [JsonProperty("raster-color")]
+    [JsonPropertyName("raster-color")]
     public StoppedColor RasterColor { get; set; } = new StoppedColor() { Default = Colors.Empty };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("raster-color-mix")]
+    [JsonPropertyName("raster-color-mix")]
     public StoppedFloatArray RasterColorMix { get; set; } = new StoppedFloatArray { Default = [0.2126f, 0.7152f, 0.0722f, 0.0f] };
 
     [JsonConverter(typeof(StoppedFloatArrayConverter))]
-    [JsonProperty("raster-color-range")]
+    [JsonPropertyName("raster-color-range")]
     public StoppedFloatArray RasterColorRange { get; set; } = new StoppedFloatArray() { Default = [] };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-contrast")]
+    [JsonPropertyName("raster-contrast")]
     public StoppedFloat RasterContrast { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-emissive-strength")]
+    [JsonPropertyName("raster-emissive-strength")]
     public StoppedFloat RasterEmissiveStrength { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-fade-duration")]
+    [JsonPropertyName("raster-fade-duration")]
     public StoppedFloat RasterFadeDuration { get; set; } = new StoppedFloat() { Default = 300.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-hue-rotate")]
+    [JsonPropertyName("raster-hue-rotate")]
     public StoppedFloat RasterHueRotate { get; set; } = new StoppedFloat() { Default = 0.0f };
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-opacity")]
+    [JsonPropertyName("raster-opacity")]
     public StoppedFloat RasterOpacity { get; set; } = new StoppedFloat() { Default = 1.0f };
 
-    [JsonProperty("raster-resampling")]
+    [JsonPropertyName("raster-resampling")]
     public string RasterResampling { get; set; } = "linear";
 
     [JsonConverter(typeof(StoppedFloatConverter))]
-    [JsonProperty("raster-saturation")]
+    [JsonPropertyName("raster-saturation")]
     public StoppedFloat RasterSaturation { get; set; } = new StoppedFloat() { Default = 0.0f };
 }

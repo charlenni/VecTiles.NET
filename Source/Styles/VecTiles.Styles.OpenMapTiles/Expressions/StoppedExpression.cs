@@ -1,5 +1,5 @@
 using System.Globalization;
-using Newtonsoft.Json.Linq;
+using System.Text.Json.Nodes;
 using VecTiles.Common.Extensions;
 using VecTiles.Common.Primitives;
 
@@ -63,7 +63,7 @@ internal static class StoppedExpression
         null => [],
         float[] array => array,
         IEnumerable<float> array => [.. array],
-        JArray array => [.. array.Select(item => ToFloat(item))],
+        JsonArray array => [.. array.Select(item => ToFloat(MatchExpression.ToValue(item)))],
         IEnumerable<object?> array => [.. array.Select(item => ToFloat(item))],
         _ => []
     };

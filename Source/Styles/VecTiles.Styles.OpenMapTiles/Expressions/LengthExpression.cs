@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using System.Text.Json.Nodes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
@@ -6,9 +6,9 @@ namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
 public class LengthExpression : Expression
 {
-    public static IExpression? Parse(JToken token, ExpressionParser parser)
+    public static IExpression? Parse(JsonNode token, ExpressionParser parser)
     {
-        if (token == null || token is not JArray array)
+        if (token == null || token is not JsonArray array)
             throw new ArgumentException("");
 
         var length = array.Count;

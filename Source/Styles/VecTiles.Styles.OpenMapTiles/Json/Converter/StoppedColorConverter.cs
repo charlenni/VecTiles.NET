@@ -1,68 +1,49 @@
-﻿using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using VecTiles.Common.Extensions;
-using VecTiles.Common.Primitives;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
-public class StoppedColorConverter : JsonConverter
+public class StoppedColorConverter : JsonConverter<StoppedColor>
 {
-    public override bool CanConvert(Type objectType)
+    public override StoppedColor Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
-        return objectType == typeof(JsonStoppedString) || objectType == typeof(string);
-    }
+        var token = JsonNode.Parse(ref reader);
 
-    public override bool CanRead => true;
-
-    public override object ReadJson(JsonReader reader, Type objectType, object? existingValue, JsonSerializer serializer)
-    {
-        JToken token = JToken.Load(reader);
-
-        if (token.Type == JTokenType.Array)
+        if (token is JsonArray)
         {
             // We have an array, so we assume, that it is an expression
             var expression = ExpressionParser.ParseExpression(token);
 
             if (expression == null)
-                throw new ArgumentException("Couldn't parse expression: " + token.ToString(Formatting.None));
+                throw new JsonException("Couldn't parse expression: " + token!.ToJsonString());
 
             return new StoppedColor { Expression = expression };
         }
 
-        if (token.Type == JTokenType.Object)
+        if (token is JsonObject objectNode)
         {
-            var stoppedColor = new StoppedColor { Stops = new List<KeyValuePair<float, Color>>() };
+            var stoppedColor = new StoppedColor { Base = StoppedJson.ReadBase(objectNode) };
+            var stops = new List<KeyValuePair<float, Common.Primitives.Color>>();
 
-            JToken? baseToken = token.SelectToken("base");
-
-            if (baseToken != null)
-                stoppedColor.Base = baseToken.ToObject<float>();
-            else
-                stoppedColor.Base = 1f;
-
-            JToken? stops = token.SelectToken("stops");
-
-            if (stops == null)
-                return stoppedColor;
-
-            foreach (var stop in stops)
+            foreach (var (zoom, value) in StoppedJson.Stops(objectNode))
             {
-                var zoom = stop?.First?.ToObject<float>() ?? 0.0f;
-                var colorString = stop?.Last?.ToObject<string>() ?? string.Empty;
-                stoppedColor.Stops.Add(new KeyValuePair<float, Color>(zoom, colorString.FromString()));
+                var colorString = StoppedExpression.ToStringValue(MatchExpression.ToValue(value));
+                stops.Add(new KeyValuePair<float, Common.Primitives.Color>(zoom, colorString.FromString()));
             }
+
+            stoppedColor.Stops = stops;
 
             return stoppedColor;
         }
 
-        return new StoppedColor() { SingleVal = token?.Value<string>()?.FromString() ?? Colors.Black };
+        return new StoppedColor { SingleVal = StoppedExpression.ToColor(MatchExpression.ToValue(token)) };
     }
 
-    public override bool CanWrite => false;
-
-    public override void WriteJson(JsonWriter writer, object? value, JsonSerializer serializer)
+    public override void Write(Utf8JsonWriter writer, StoppedColor value, JsonSerializerOptions options)
     {
-        throw new NotImplementedException();
+        throw new NotSupportedException("Stopped values are only read, never written.");
     }
 }

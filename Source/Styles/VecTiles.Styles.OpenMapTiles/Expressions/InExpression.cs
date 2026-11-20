@@ -9,8 +9,11 @@ namespace VecTiles.Styles.OpenMapTiles.Expressions;
 /// Implements the "in" expression: ["in", needle, haystack], where the haystack
 /// is a string or an array. Keeps the optimization of the old InFilter: for
 /// literal arrays with more than 10 values a HashSet provides O(1) lookups,
-/// while small lists are searched linearly (cache locality).
-/// The negated v7 forms ("!in", "!has") stay in the filter system.
+/// while small lists are searched linearly (cache locality). Small literal
+/// arrays are specialized into typed string[]/double[] arrays on first use, so
+/// the common case with 2-4 values doesn't go through the generic AreEqual
+/// dispatch for every element. The negated v7 forms ("!in", "!has") stay in
+/// the filter system.
 /// </summary>
 public class InExpression : Expression
 {
@@ -26,6 +29,12 @@ public class InExpression : Expression
     private HashSet<object>? _valueSet;
 
     private HashSet<double>? _numberSet;
+
+    // Literal haystacks of 10 values or less, specialized on first evaluation
+    // to avoid re-evaluating _haystack and the AreEqual dispatch per element
+    private string[]? _stringValues;
+
+    private double[]? _numberValues;
 
     public InExpression(IExpression needle, IExpression haystack)
     {
@@ -54,6 +63,21 @@ public class InExpression : Expression
     {
         var needle = _needle.Evaluate(ctx);
 
+        // Specialized literal haystacks don't need to be evaluated per feature
+        if (_stringValues != null)
+            return needle is string stringValue && Contains(_stringValues, stringValue);
+
+        if (_numberValues != null)
+        {
+            if (needle == null)
+                return false;
+
+            var number = ExpressionValueHelper.AsNumber(needle);
+
+            // A non-number can never be equal to a number value (AreEqual)
+            return number != null && Contains(_numberValues, number.GetValueOrDefault());
+        }
+
         switch (_haystack.Evaluate(ctx))
         {
             case string haystackString:
@@ -72,15 +96,15 @@ public class InExpression : Expression
         if (needle == null)
             return false;
 
-        if (_valueSet == null && haystackArray.Length > HashSetThreshold)
+        if (haystackArray.Length > HashSetThreshold)
         {
-            _valueSet = [.. haystackArray.Where(value => value != null && !ExpressionValueHelper.IsNumber(value))];
-            _numberSet = [.. haystackArray.Select(value => ExpressionValueHelper.AsNumber(value)).Where(number => number != null).Cast<double>()];
-        }
+            if (_valueSet == null && _numberSet == null)
+            {
+                _valueSet = [.. haystackArray.Where(value => value != null && !ExpressionValueHelper.IsNumber(value))];
+                _numberSet = [.. haystackArray.Select(value => ExpressionValueHelper.AsNumber(value)).Where(number => number != null).Cast<double>()];
+            }
 
-        // HashSet for O(1) lookup if we have more than 10 values (like InFilter)
-        if (_valueSet != null || _numberSet != null)
-        {
+            // HashSet for O(1) lookup if we have more than 10 values (like InFilter)
             if (ExpressionValueHelper.IsNumber(needle))
                 return _numberSet!.Contains((double)ExpressionValueHelper.AsNumber(needle)!);
 
@@ -90,10 +114,103 @@ public class InExpression : Expression
             return false;
         }
 
+        if (_stringValues == null && _numberValues == null)
+            SpecializeSmallLiteral(haystackArray);
+
+        // Typed fast paths for all-string / all-number literal arrays
+        if (_stringValues != null)
+            return needle is string stringValue && Contains(_stringValues, stringValue);
+
+        if (_numberValues != null)
+        {
+            var number = ExpressionValueHelper.AsNumber(needle);
+            return number != null && Contains(_numberValues, number.GetValueOrDefault());
+        }
+
         // For small lists, linear search is faster (cache locality)
         for (var i = 0; i < haystackArray.Length; i++)
         {
             if (ExpressionValueHelper.AreEqual(haystackArray[i], needle))
+                return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Classifies a small literal array once: all-strings and all-numbers get
+    /// typed fast paths, everything else stays on the general AreEqual path.
+    /// </summary>
+    private void SpecializeSmallLiteral(object?[] haystackArray)
+    {
+        var allStrings = true;
+        var allNumbers = true;
+
+        for (var i = 0; i < haystackArray.Length; i++)
+        {
+            var value = haystackArray[i];
+
+            if (value == null)
+            {
+                allStrings = false;
+                allNumbers = false;
+            }
+            else if (value is bool or object?[])
+            {
+                allStrings = false;
+                allNumbers = false;
+            }
+            else if (value is string)
+            {
+                allNumbers = false;
+            }
+            else if (ExpressionValueHelper.IsNumber(value))
+            {
+                allStrings = false;
+            }
+            else
+            {
+                allStrings = false;
+                allNumbers = false;
+            }
+        }
+
+        if (allStrings)
+        {
+            var values = new string[haystackArray.Length];
+
+            for (var i = 0; i < values.Length; i++)
+                values[i] = (string)haystackArray[i]!;
+
+            _stringValues = values;
+        }
+        else if (allNumbers)
+        {
+            var values = new double[haystackArray.Length];
+
+            for (var i = 0; i < values.Length; i++)
+                values[i] = ExpressionValueHelper.AsNumber(haystackArray[i])!.Value;
+
+            _numberValues = values;
+        }
+    }
+
+    private static bool Contains(string[] values, string value)
+    {
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (string.Equals(values[i], value, StringComparison.Ordinal))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool Contains(double[] values, double value)
+    {
+        for (var i = 0; i < values.Length; i++)
+        {
+            if (values[i] == value)
                 return true;
         }
 

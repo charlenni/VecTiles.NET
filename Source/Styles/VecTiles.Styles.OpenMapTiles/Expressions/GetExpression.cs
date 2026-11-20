@@ -13,6 +13,12 @@ public class GetExpression : Expression
 {
     private readonly string _key;
 
+    /// <summary>
+    /// The attribute key of the expression, for parse-time specializations
+    /// like GetEqualsExpression and GetOrderExpression.
+    /// </summary>
+    public string Key => _key;
+
     public GetExpression(string key)
     {
         _key = key;
@@ -31,12 +37,11 @@ public class GetExpression : Expression
 
     public override object? Evaluate(EvaluationContext ctx)
     {
+        // GetOptionalValue does the dictionary lookup once; Exists + indexer
+        // would search twice
         var attributes = ctx.Feature?.Attributes ?? ctx.Attributes;
 
-        if (attributes == null || !attributes.Exists(_key))
-            return null;
-
-        return attributes[_key];
+        return attributes?.GetOptionalValue(_key);
     }
 
     public override object? PossibleOutputs()

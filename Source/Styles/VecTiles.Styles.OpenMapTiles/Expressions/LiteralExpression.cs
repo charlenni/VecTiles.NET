@@ -7,6 +7,12 @@ public sealed class LiteralExpression : IExpression
 {
     private readonly object? _value;
 
+    /// <summary>
+    /// The literal value of the expression, for parse-time specializations
+    /// like GetEqualsExpression and GetOrderExpression.
+    /// </summary>
+    public object? Value => _value;
+
     public LiteralExpression(object? value) => _value = value;
 
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)

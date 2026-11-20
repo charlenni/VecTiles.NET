@@ -66,6 +66,33 @@ public class CompoundExpression : Expression
         if (parser.Errors.Count > 0)
             return null;
 
+        // Specializations of the most common filter shapes that the old
+        // filter system evaluated directly
+        if (args!.Length == 2)
+        {
+            if (op.Name == "==" || op.Name == "!=")
+            {
+                var equals = GetEqualsExpression.Create(args[0], args[1], op.Name == "!=");
+
+                if (equals != null)
+                    return equals;
+            }
+            else if (op.Name == "<" || op.Name == "<=")
+            {
+                var order = GetOrderExpression.Create(args[0], args[1], -1, op.Name == "<=");
+
+                if (order != null)
+                    return order;
+            }
+            else if (op.Name == ">" || op.Name == ">=")
+            {
+                var order = GetOrderExpression.Create(args[0], args[1], 1, op.Name == ">=");
+
+                if (order != null)
+                    return order;
+            }
+        }
+
         return new CompoundExpression(op, args!);
     }
 

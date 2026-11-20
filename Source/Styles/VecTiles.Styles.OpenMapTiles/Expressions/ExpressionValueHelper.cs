@@ -18,15 +18,12 @@ internal static class ExpressionValueHelper
 
     /// <summary>
     /// Value of an attribute, or null if the attribute doesn't exist.
+    /// GetOptionalValue does the dictionary lookup once; Exists + indexer
+    /// would search twice.
     /// </summary>
     public static object? GetAttribute(EvaluationContext? ctx, string key)
     {
-        var attributes = GetAttributes(ctx);
-
-        if (attributes == null || !attributes.Exists(key))
-            return null;
-
-        return attributes[key];
+        return GetAttributes(ctx)?.GetOptionalValue(key);
     }
 
     /// <summary>

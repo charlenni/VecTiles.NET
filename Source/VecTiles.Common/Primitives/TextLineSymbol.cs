@@ -97,9 +97,10 @@ public class TextLineSymbol : Symbol
     /// </summary>
     public float LineHeight { get; init; } = 1.2f;
 
-    // TODO: Activate text letter spacing
-    // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
-    //public float LetterSpacing { get; init; } = 0f;
+    /// <summary>
+    /// Additional letter spacing between characters
+    /// </summary>
+    public float LetterSpacing { get; init; } = 0f;
 
     /// <summary>
     /// Function to calculate font size of symbol text from EvaluationContext
@@ -169,9 +170,7 @@ public class TextLineSymbol : Symbol
             TranslateAnchor = TranslateAnchor,
             MaxWidth = MaxWidth,
             LineHeight = LineHeight,
-            // TODO: Activate text letter spacing
-            // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
-            //LetterSpacing = LetterSpacing,
+            LetterSpacing = LetterSpacing,
         };
 
         return result;

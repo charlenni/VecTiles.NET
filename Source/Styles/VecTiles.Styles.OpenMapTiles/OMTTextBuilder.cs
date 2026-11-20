@@ -154,9 +154,7 @@ public class OMTTextBuilder
             FontNames = _fontNames,
             FontSize = _fontSize,
             LineHeight = GetLineHeight(context),
-            // TODO: Activate text letter spacing
-            // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
-            //LetterSpacing = _letterSpacing,
+            LetterSpacing = GetLetterSpacing(context),
             HaloBlur = _haloBlur,
             HaloColor = _haloColor,
             HaloWidth = _haloWidth,
@@ -207,9 +205,7 @@ public class OMTTextBuilder
             FontNames = _fontNames,
             FontSize = _fontSize,
             LineHeight = GetLineHeight(context),
-            // TODO: Activate text letter spacing
-            // Can be activated when we switch to RichTextKit >= 0.6.x (Style.LetterSpacing exists from that version on)
-            //LetterSpacing = _letterSpacing,
+            LetterSpacing = GetLetterSpacing(context),
             HaloBlur = _haloBlur,
             HaloColor = _haloColor,
             HaloWidth = _haloWidth,
@@ -242,6 +238,11 @@ public class OMTTextBuilder
     private float GetLineHeight(EvaluationContext context)
     {
         return _textLineHeight.Expression != null ? _textLineHeight.Evaluate(context) : _lineHeight;
+    }
+
+    private float GetLetterSpacing(EvaluationContext context)
+    {
+        return _textLetterSpacing.Expression != null ? _textLetterSpacing.Evaluate(context) : _letterSpacing;
     }
 
     private float GetRotation(EvaluationContext context)

@@ -14,7 +14,7 @@ public static class OMTExpressionFixture
 {
     public static IExpression? Parse(string baseName, string variant = "a")
     {
-        var json = File.ReadAllText(Path.Combine("Files", "expression_equality", baseName + "." + variant + ".json"));
+        var json = File.ReadAllText(Path.Combine("Files", "Expressions", baseName + "." + variant + ".json"));
 
         return ExpressionParser.ParseExpression(JToken.Parse(json));
     }

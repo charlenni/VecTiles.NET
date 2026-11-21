@@ -59,20 +59,23 @@ public static class Parser
         for (int i = 0; i < pbfTile?.Layers?.Count; i++)
         {
             var pbfLayer = pbfTile.Layers[i];
-            
+
             // Create a new Layer for the VectorTile
             var vectorTileLayer = new Layer(pbfLayer.Features.Count)
             {
                 Name = pbfLayer.Name,
             };
 
+            // The extent of the coordinate space is defined per layer in the MVT format
+            var layerOverzoom = overzoom.WithExtent(pbfLayer.Extent);
+
             // Convert all features
             for(var j = 0; j < pbfLayer.Features.Count; j++)
             {
                 var pbfFeature = pbfLayer.Features[j];
-                
-                var feature = ParseFeature(pbfFeature, pbfLayer.Name, pbfLayer.Keys, pbfLayer.Values, pbfLayer.Extent,
-                    overzoom);
+
+                var feature = ParseFeature(pbfFeature, pbfLayer.Name, pbfLayer.Keys, pbfLayer.Values,
+                    layerOverzoom);
 
                 if (feature != null)
                 {
@@ -88,7 +91,7 @@ public static class Parser
         return vectorTile;
     }
 
-    private static IFeature? ParseFeature(PbfFeature pbfFeature, string layerName, List<string> keys, List<PbfValue> values, uint extent, Overzoom overzoom)
+    private static IFeature? ParseFeature(PbfFeature pbfFeature, string layerName, List<string> keys, List<PbfValue> values, Overzoom overzoom)
     {
         var geometry = ParseGeometry(pbfFeature.Geometry, pbfFeature.Type, overzoom);
 

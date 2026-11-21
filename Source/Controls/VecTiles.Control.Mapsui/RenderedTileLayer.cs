@@ -375,6 +375,11 @@ public class RenderedTileLayer : BaseLayer
     }
 
     /// <summary>
+    /// True when a retained frame of a previous complete draw exists.
+    /// </summary>
+    internal bool HasRetainedFrame => _retainedFrame != null;
+
+    /// <summary>
     /// Draws the retained frame when the given key matches the key the
     /// current frame was drawn with (unchanged viewport and view). The
     /// expensive style layer rasterization is then skipped completely.

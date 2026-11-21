@@ -200,6 +200,7 @@ public static class RenderedTileLayerRenderer
                 surface.Canvas.Clear(SKColors.Transparent);
                 surface.Canvas.Save();
                 surface.Canvas.Scale(densityX, densityY);
+                DrawRetainedFrameUnderlay(renderedLayer, surface.Canvas, viewport, view.Placement.Incomplete);
                 DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
                     drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
                 surface.Canvas.Restore();
@@ -215,8 +216,31 @@ public static class RenderedTileLayerRenderer
             return;
         }
 
+        // While the tile set of the view is incomplete (e.g. the tiles of a
+        // new zoom level are still arriving), the retained frame of the
+        // previous view is drawn first, mapped into the current viewport:
+        // the not yet arrived tile areas show the old map content scaled to
+        // the new view (pixelated, but the image never falls back to a
+        // cleared background and does not flicker)
+        DrawRetainedFrameUnderlay(renderedLayer, canvas, viewport, view.Placement.Incomplete);
+
         DrawInStyleLayerOrder(canvas, viewport, view, screenExtent, rotation, renderedLayer,
             drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
+    }
+
+    /// <summary>
+    /// Draws the retained frame of the previous view as the underlay of the
+    /// current draw, but only while the placement of the current view is
+    /// still incomplete (tiles missing); with a complete view the tiles
+    /// cover the whole screen and the underlay would only be overdrawn.
+    /// </summary>
+    private static void DrawRetainedFrameUnderlay(RenderedTileLayer renderedLayer, SKCanvas canvas,
+        Viewport viewport, bool incomplete)
+    {
+        if (incomplete && renderedLayer.HasRetainedFrame)
+        {
+            renderedLayer.DrawRetainedFrame(canvas, viewport);
+        }
     }
 
     /// <summary>

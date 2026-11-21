@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTStringTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTStringTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,12 +39,18 @@ public class OMTStringTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
         Assert.Equal("value", OMTExpressionFixture.Parse("string", "a")!.Evaluate(OMTExpressionTestsHelper.CreateContext(("x", "value"))));
     }
 
+    /// <summary>
+    /// Verifies that a non-string attribute value evaluates to null when no fallback is given.
+    /// </summary>
     [Fact]
     public void NonStringWithoutFallbackTest()
     {

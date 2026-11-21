@@ -53,6 +53,10 @@ public class TileFetchSchedulerTests
         return new RenderedTile(info.ToTile());
     }
 
+    /// <summary>
+    /// Verifies that a tile whose source answers without data is skipped and the
+    /// fetch result is marked incomplete.
+    /// </summary>
     [Fact]
     public async Task MissingTile_IsSkippedAndMarkedIncomplete()
     {
@@ -71,6 +75,10 @@ public class TileFetchSchedulerTests
         Assert.True(result.Incomplete);
     }
 
+    /// <summary>
+    /// Verifies that a fetch failing with an exception does not fail the pass:
+    /// the other tiles arrive and the result is marked incomplete.
+    /// </summary>
     [Fact]
     public async Task FailingTile_DoesNotFailTheOtherTiles()
     {
@@ -90,6 +98,10 @@ public class TileFetchSchedulerTests
         Assert.True(result.Incomplete);
     }
 
+    /// <summary>
+    /// Verifies that with a single worker the tile nearest to the given world
+    /// center is fetched first.
+    /// </summary>
     [Fact]
     public async Task CenterFirst_SingleWorkerFetchesNearestTileFirst()
     {
@@ -108,6 +120,10 @@ public class TileFetchSchedulerTests
         Assert.Equal((3, 2, 8), source.Requests[0]);
     }
 
+    /// <summary>
+    /// Verifies that a fetch pass with an already cancelled token throws
+    /// <see cref="OperationCanceledException" /> before any further fetch starts.
+    /// </summary>
     [Fact]
     public async Task CancelledFetch_ThrowsImmediately()
     {

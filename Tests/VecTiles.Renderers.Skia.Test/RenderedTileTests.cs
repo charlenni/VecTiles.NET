@@ -32,6 +32,10 @@ public class RenderedTileTests
     private readonly string _resultFile;
     private readonly string _diffFile;
 
+    /// <summary>
+    /// Computes the paths of the golden image, the result bitmap and the diff bitmap
+    /// from the fixed center tile.
+    /// </summary>
     public RenderedTileTests()
     {
         var name = $"RenderedTile-Z{Zoom}-X{CenterX}-Y{CenterY}";
@@ -40,6 +44,11 @@ public class RenderedTileTests
         _diffFile = Path.Combine(ResultsFolder, name + "-diff.png");
     }
 
+    /// <summary>
+    /// Renders the center tile together with its 3x3 surroundings and compares it
+    /// with the golden image (or recreates the golden image when the update
+    /// environment variable is set).
+    /// </summary>
     [Fact]
     public void RenderTile_CenterTileMatchesGoldenImage()
     {

@@ -22,11 +22,20 @@ public class SchanzengrabenOverlapScanTests
 
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public SchanzengrabenOverlapScanTests(ITestOutputHelper output) => _output = output;
 
     private const double WorldWidth = 40075016.686;
     private const double WorldHalf = WorldWidth / 2;
 
+    /// <summary>
+    /// Scans the Schanzengraben area with a panning viewport over a grid of small
+    /// steps and reports the drawn symbols that overlap other collision boxes.
+    /// </summary>
+    /// <param name="fractionalZoom">The fractional zoom of the viewport.</param>
     [Theory]
     [InlineData(17.0)]
     [InlineData(17.25)]

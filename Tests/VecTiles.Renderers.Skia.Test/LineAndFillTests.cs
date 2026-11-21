@@ -9,6 +9,10 @@ using VecTiles.TileDataSources;
 
 namespace VecTiles.Renderers.Skia.Test;
 
+/// <summary>
+/// Visual tests that render tiles of the Zurich MBTiles file with the osm-liberty
+/// style to PNG files, mainly exercising line and fill drawing.
+/// </summary>
 public class LineAndFillTests
 {
     private static readonly string _path = Utilities.DataFiles;
@@ -16,6 +20,9 @@ public class LineAndFillTests
     private readonly string _styleFile = Path.Combine(_path, "osm-liberty.json");
     private readonly Renderer _renderer;
 
+    /// <summary>
+    /// Sets up a renderer with the MBTiles vector data source and the loaded osm-liberty style.
+    /// </summary>
     public LineAndFillTests()
     {
         var dataSource = new MbTilesTileDataSource(_dataFile, determineZoomLevelsFromTilesTable: true, determineTileRangeFromTilesTable: true);
@@ -33,6 +40,13 @@ public class LineAndFillTests
         _renderer = new Renderer([new KeyValuePair<string, ITileDataSource>(vectorDataSource.Name, vectorDataSource)],  styleFile.Layers, renderFactory);
     }
 
+    /// <summary>
+    /// Renders the given tile with the osm-liberty style and saves the
+    /// 512x512 result bitmap for visual inspection.
+    /// </summary>
+    /// <param name="x">Tile x coordinate (at the given zoom).</param>
+    /// <param name="y">Tile y coordinate (at the given zoom).</param>
+    /// <param name="zoom">The zoom level of the tile.</param>
     [Theory]
     [InlineData(0, 0, 0)]
     [InlineData(1, 0, 1)]

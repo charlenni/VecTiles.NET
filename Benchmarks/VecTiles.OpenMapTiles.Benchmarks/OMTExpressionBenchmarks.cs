@@ -75,6 +75,11 @@ public class OMTExpressionBenchmarks
 
     private IExpression _collatorEquals;
 
+    /// <summary>
+    /// Parses all benchmark expressions from their JSON sources and creates
+    /// the test features together with a matching evaluation context per
+    /// feature.
+    /// </summary>
     [GlobalSetup]
     public void Setup()
     {
@@ -248,6 +253,11 @@ public class OMTExpressionBenchmarks
     // ATTRIBUTE ACCESS
     // =========================================================================
 
+    /// <summary>
+    /// Evaluates a get expression for the attribute "name" once per test
+    /// context. This is the baseline of the benchmark run.
+    /// </summary>
+    /// <returns>True if the expression evaluated to a non-null value for at least one context.</returns>
     [Benchmark(Baseline = true)]
     public bool Get()
     {
@@ -259,6 +269,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a literal string expression once per test context.</summary>
+    /// <returns>True if the expression evaluated to a non-null value for at least one context.</returns>
     [Benchmark]
     public bool Literal()
     {
@@ -274,6 +286,8 @@ public class OMTExpressionBenchmarks
     // COMPARISONS (with the equivalent filter next to it)
     // =========================================================================
 
+    /// <summary>Evaluates an "==" comparison against a string attribute, the future replacement of EqualityFilter.</summary>
+    /// <returns>The XOR checksum of the per-context comparison results.</returns>
     [Benchmark]
     public bool Equals_String()
     {
@@ -285,6 +299,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "==" comparison against an integer attribute, the future replacement of EqualityFilter.</summary>
+    /// <returns>The XOR checksum of the per-context comparison results.</returns>
     [Benchmark]
     public bool Equals_Int()
     {
@@ -296,6 +312,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "!=" comparison against a string attribute, the future replacement of EqualityFilter.</summary>
+    /// <returns>The XOR checksum of the per-context comparison results.</returns>
     [Benchmark]
     public bool NotEquals_String()
     {
@@ -307,6 +325,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "&lt;" comparison against a float attribute, the future replacement of ComparisonFilter.</summary>
+    /// <returns>The XOR checksum of the per-context comparison results.</returns>
     [Benchmark]
     public bool LessThan_Float()
     {
@@ -318,6 +338,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "&gt;" comparison against a float attribute, the future replacement of ComparisonFilter.</summary>
+    /// <returns>The XOR checksum of the per-context comparison results.</returns>
     [Benchmark]
     public bool GreaterThan_Float()
     {
@@ -333,6 +355,8 @@ public class OMTExpressionBenchmarks
     // MEMBERSHIP "in" (HashSet optimization of InFilter, with the filter)
     // =========================================================================
 
+    /// <summary>Evaluates an "in" expression against a small literal list (10 entries), the future replacement of InFilter.</summary>
+    /// <returns>The XOR checksum of the per-context membership results.</returns>
     [Benchmark]
     public bool In_SmallList()
     {
@@ -344,6 +368,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "in" expression against a medium literal list (100 entries), the future replacement of InFilter.</summary>
+    /// <returns>The XOR checksum of the per-context membership results.</returns>
     [Benchmark]
     public bool In_MediumList()
     {
@@ -355,6 +381,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "in" expression against a large literal list (1000 entries), the future replacement of InFilter including its HashSet optimization.</summary>
+    /// <returns>The XOR checksum of the per-context membership results.</returns>
     [Benchmark]
     public bool In_LargeList()
     {
@@ -366,6 +394,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "in" expression against a small literal list of numbers.</summary>
+    /// <returns>The XOR checksum of the per-context membership results.</returns>
     [Benchmark]
     public bool In_NumberList()
     {
@@ -377,6 +407,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "has" expression for an attribute that exists on every test feature.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Has_Existing()
     {
@@ -388,6 +420,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "has" expression for an attribute that is missing on every test feature.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Has_Missing()
     {
@@ -403,6 +437,8 @@ public class OMTExpressionBenchmarks
     // LOGIC (short-circuit like the AllFilter/AnyFilter family)
     // =========================================================================
 
+    /// <summary>Evaluates an "all" expression with three conditions that short-circuits like the AllFilter family.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool All()
     {
@@ -414,6 +450,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "any" expression with three conditions that short-circuits on the first match.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Any()
     {
@@ -425,6 +463,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "!" expression that negates a boolean coercion of a string attribute.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Not()
     {
@@ -440,6 +480,8 @@ public class OMTExpressionBenchmarks
     // DISPATCHING EXPRESSIONS
     // =========================================================================
 
+    /// <summary>Evaluates a "match" expression that dispatches on a string attribute.</summary>
+    /// <returns>The XOR checksum of the per-context result string lengths.</returns>
     [Benchmark]
     public bool Match()
     {
@@ -451,6 +493,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "case" expression whose condition is an "==" comparison on a string attribute.</summary>
+    /// <returns>The XOR checksum of the per-context result string lengths.</returns>
     [Benchmark]
     public bool Case()
     {
@@ -462,6 +506,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "coalesce" expression that returns the first non-null attribute.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Coalesce()
     {
@@ -477,6 +523,8 @@ public class OMTExpressionBenchmarks
     // ZOOM EXPRESSIONS
     // =========================================================================
 
+    /// <summary>Evaluates a "step" expression that maps the zoom level to discrete stops.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Step()
     {
@@ -488,6 +536,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "interpolate" expression with exponential base between zoom stops.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Interpolate_Exponential()
     {
@@ -503,6 +553,8 @@ public class OMTExpressionBenchmarks
     // COERCIONS AND STRING OPERATIONS
     // =========================================================================
 
+    /// <summary>Evaluates a "number" type assertion on an attribute.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool NumberAssertion()
     {
@@ -514,6 +566,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "to-string" coercion of an integer attribute.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool ToString_()
     {
@@ -525,6 +579,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "concat" expression that joins a literal with an attribute value.</summary>
+    /// <returns>The XOR checksum of the per-context result string lengths.</returns>
     [Benchmark]
     public bool Concat()
     {
@@ -536,6 +592,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates an "upcase" expression on a string attribute.</summary>
+    /// <returns>The XOR checksum of the per-context result string lengths.</returns>
     [Benchmark]
     public bool Upcase()
     {
@@ -551,6 +609,8 @@ public class OMTExpressionBenchmarks
     // ARITHMETIC
     // =========================================================================
 
+    /// <summary>Evaluates a "+" arithmetic expression over two attributes and a literal.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Plus()
     {
@@ -562,6 +622,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "min" expression over an attribute and a literal.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Min()
     {
@@ -573,6 +635,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Evaluates a "sqrt" expression on an attribute.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Sqrt()
     {
@@ -588,6 +652,8 @@ public class OMTExpressionBenchmarks
     // COLLATOR
     // =========================================================================
 
+    /// <summary>Evaluates an "==" comparison with a case-sensitive collator on a string attribute.</summary>
+    /// <returns>The XOR checksum of the per-context results.</returns>
     [Benchmark]
     public bool Equals_WithCollator()
     {
@@ -603,18 +669,24 @@ public class OMTExpressionBenchmarks
     // SINGLE CONTEXT BENCHMARKS (for micro-optimization testing)
     // =========================================================================
 
+    /// <summary>Evaluates the string "==" expression once on a single context, for micro-optimization testing.</summary>
+    /// <returns>The comparison result for the single context.</returns>
     [Benchmark]
     public bool Equals_String_SingleContext()
     {
         return (bool)_equalsString.Evaluate(_contextWithAllAttributes)!;
     }
 
+    /// <summary>Evaluates the large-list "in" expression once on a single context, for micro-optimization testing.</summary>
+    /// <returns>The membership result for the single context.</returns>
     [Benchmark]
     public bool In_LargeList_SingleContext()
     {
         return (bool)_inLarge.Evaluate(_contextWithAllAttributes)!;
     }
 
+    /// <summary>Evaluates the "all" expression once on a single context, for micro-optimization testing.</summary>
+    /// <returns>The evaluation result for the single context.</returns>
     [Benchmark]
     public bool All_SingleContext()
     {
@@ -625,6 +697,8 @@ public class OMTExpressionBenchmarks
     // EDGE CASE BENCHMARKS
     // =========================================================================
 
+    /// <summary>Evaluates several expressions against a feature without optional attributes, to measure the cost of missing attributes.</summary>
+    /// <returns>The XOR checksum of the evaluation results.</returns>
     [Benchmark]
     public bool MissingAttributes()
     {
@@ -637,6 +711,8 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Creates a new evaluation context per feature, as the renderer does for every feature, and evaluates the get expression for each.</summary>
+    /// <returns>The XOR checksum of the evaluation results.</returns>
     [Benchmark]
     public bool MultipleContextsPerCall()
     {
@@ -649,6 +725,7 @@ public class OMTExpressionBenchmarks
         return result;
     }
 
+    /// <summary>Clears the benchmark state.</summary>
     [GlobalCleanup]
     public void Cleanup()
     {

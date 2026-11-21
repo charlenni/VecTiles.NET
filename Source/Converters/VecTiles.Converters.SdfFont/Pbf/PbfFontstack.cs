@@ -3,6 +3,9 @@ using ProtoBuf;
 
 namespace VecTiles.Converters.SdfFont.Pbf;
 
+/// <summary>
+/// Represents a fontstack from a Mapbox SDF font glyph PBF message.
+/// </summary>
 [ProtoContract(Name = "fontstack")]
 public sealed class PbfFontstack : IExtensible
 {

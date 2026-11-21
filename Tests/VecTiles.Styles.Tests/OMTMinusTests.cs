@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTMinusTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTMinusTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,12 +39,18 @@ public class OMTMinusTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
         Assert.Equal(-2d, OMTExpressionFixture.Parse("minus", "a")!.Evaluate(OMTExpressionTestsHelper.CreateContext()));
     }
 
+    /// <summary>
+    /// Verifies that the minus expression with a single operand negates the value.
+    /// </summary>
     [Fact]
     public void NegationTest()
     {

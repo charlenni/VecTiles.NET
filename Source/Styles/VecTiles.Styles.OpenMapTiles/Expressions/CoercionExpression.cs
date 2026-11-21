@@ -26,6 +26,12 @@ public class CoercionExpression : Expression
         _fallbacks = fallbacks;
     }
 
+    /// <summary>
+    /// Parses a coercion expression like ["to-number", input, fallback...].
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count < 2)
@@ -62,6 +68,12 @@ public class CoercionExpression : Expression
         return new CoercionExpression(type, input, [.. fallbacks]);
     }
 
+    /// <summary>
+    /// Evaluates and coerces the input value to the target type. When coercion
+    /// fails, the fallbacks are tried in order.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The coerced value, or null if the input and no fallback can be coerced.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var value = _input.Evaluate(ctx);
@@ -81,6 +93,11 @@ public class CoercionExpression : Expression
         return null;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a coercion expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
@@ -153,6 +170,13 @@ public class CoercionExpression : Expression
             alpha);
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="CoercionExpression"/>, comparing target type, input
+    /// expression and all fallback expressions.
+    /// </summary>
+    /// <param name="other">The coercion expression to compare with.</param>
+    /// <returns>True if the coercion expressions are equal; otherwise, false.</returns>
     public bool Equals(CoercionExpression? other)
     {
         if (other is null)
@@ -173,8 +197,10 @@ public class CoercionExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CoercionExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

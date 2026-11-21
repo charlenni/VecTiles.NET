@@ -7,12 +7,21 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.DataSources.HttpTileDataSource;
 
+/// <summary>
+/// Tile data source that fetches tiles from an HTTP(S) tile server.
+/// </summary>
 public class HttpTileDataSource : ITileDataSource
 {
     HttpTileSource _httpTileSource;
     HttpClientHandler _httpHandler;
     HttpClient _httpClient;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="HttpTileDataSource"/> class for the given tile source URL.
+    /// </summary>
+    /// <param name="sources">List of possible tile source URLs; the first one is used.</param>
+    /// <param name="minZoom">Minimum zoom level supported by the source.</param>
+    /// <param name="maxZoom">Maximum zoom level supported by the source.</param>
     public HttpTileDataSource(string[] sources, int minZoom, int maxZoom)
     {
         _httpTileSource = new HttpTileSource(new GlobalSphericalMercator(minZoom, maxZoom), sources[0]);
@@ -28,6 +37,9 @@ public class HttpTileDataSource : ITileDataSource
     /// <inheritdoc/>
     public string Name => _httpTileSource.Name;
 
+    /// <summary>
+    /// Gets or sets the attribution text of the tile source.
+    /// </summary>
     public string Attribution { get; set; }
 
     /// <inheritdoc/>

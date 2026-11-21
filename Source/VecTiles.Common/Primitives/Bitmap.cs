@@ -8,6 +8,10 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class Bitmap : IBitmap
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Bitmap"/> class with the given binary data.
+    /// </summary>
+    /// <param name="binary">The binary data of the bitmap.</param>
     public Bitmap(byte[] binary)
     {
         Binary = binary;

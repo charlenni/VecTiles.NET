@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTAnyTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTAnyTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,6 +39,9 @@ public class OMTAnyTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Theory]
     [InlineData(true, true, true)]
     [InlineData(false, true, true)]
@@ -49,6 +58,9 @@ public class OMTAnyTests
         Assert.Equal(expected, expression!.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that a failing assertion on a missing attribute makes the result falsy.
+    /// </summary>
     [Fact]
     public void MissingAttributeIsFalsyTest()
     {

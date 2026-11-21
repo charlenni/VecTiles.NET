@@ -5,6 +5,10 @@ using VecTiles.Common.Enums;
 
 namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 
+/// <summary>
+/// Accumulates vertex positions and UVs and builds vertex buffers for them.
+/// Fill and line tessellation append their geometry here.
+/// </summary>
 public class VertexBuilder
 {
     /// <summary>
@@ -21,12 +25,19 @@ public class VertexBuilder
     /// </summary>
     private readonly List<SKPoint> _uv;
 
+    /// <summary>
+    /// Create an empty vertex builder.
+    /// </summary>
     public VertexBuilder()
     {
         _pos = new();
         _uv = new();
     }
 
+    /// <summary>
+    /// Create a vertex builder with initial capacity for its lists.
+    /// </summary>
+    /// <param name="size">Initial capacity in vertices.</param>
     public VertexBuilder(int size)
     {
         _pos = new(size);

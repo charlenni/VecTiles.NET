@@ -2,15 +2,31 @@
 
 namespace VecTiles.Styles.OpenMapTiles.Extensions;
 
+/// <summary>
+/// Extension methods for rotating a <see cref="Envelope"/> around its center,
+/// an arbitrary point, or an anchor given as a fraction of its extents.
+/// </summary>
 public static class EnvelopeExtensions
 {
     const double convert = Math.PI / 180.0;
 
+    /// <summary>
+    /// Rotates the envelope around its center by the given angle in degrees,
+    /// recomputing the smallest axis-aligned envelope enclosing the rotated bounds.
+    /// </summary>
+    /// <param name="envelope">The envelope to rotate; it is modified in place.</param>
+    /// <param name="angle">The rotation angle in degrees (clockwise).</param>
     public static void RotateDegrees(this Envelope envelope, double angle)
     {
         envelope.RotateRadiant(angle * convert);
     }
 
+    /// <summary>
+    /// Rotates the envelope around its center by the given angle in radians,
+    /// recomputing the smallest axis-aligned envelope enclosing the rotated bounds.
+    /// </summary>
+    /// <param name="envelope">The envelope to rotate; it is modified in place.</param>
+    /// <param name="angle">The rotation angle in radians.</param>
     public static void RotateRadiant(this Envelope envelope, double angle)
     {
         var sin = Math.Abs(Math.Sin(angle));
@@ -47,6 +63,14 @@ public static class EnvelopeExtensions
         envelope.Init(minX, maxX, minY, maxY);*/
     }
 
+    /// <summary>
+    /// Rotates the envelope around the specified point by the given angle in degrees,
+    /// recomputing the smallest axis-aligned envelope enclosing the rotated bounds.
+    /// </summary>
+    /// <param name="envelope">The envelope to rotate; it is modified in place.</param>
+    /// <param name="angleDegrees">The rotation angle in degrees.</param>
+    /// <param name="pointX">The X coordinate of the rotation center.</param>
+    /// <param name="pointY">The Y coordinate of the rotation center.</param>
     public static void RotateDegreesAroundPoint(this Envelope envelope, double angleDegrees, double pointX, double pointY)
     {
         // Convert angle from degrees to radians
@@ -55,11 +79,28 @@ public static class EnvelopeExtensions
         envelope.RotateRadiantAroundPoint(angleRadians, pointX, pointY);
     }
 
+    /// <summary>
+    /// Rotates the envelope around the specified point by the given angle in radians,
+    /// recomputing the smallest axis-aligned envelope enclosing the rotated bounds.
+    /// </summary>
+    /// <param name="envelope">The envelope to rotate; it is modified in place.</param>
+    /// <param name="angleRadians">The rotation angle in radians.</param>
+    /// <param name="pointX">The X coordinate of the rotation center.</param>
+    /// <param name="pointY">The Y coordinate of the rotation center.</param>
     public static void RotateRadiantAroundPoint(this Envelope envelope, double angleRadians, double pointX, double pointY)
     {
         RotateRadiantAroundCenter(envelope, angleRadians, pointX, pointY);
     }
 
+    /// <summary>
+    /// Rotates the envelope around an anchor point given as fractions of the envelope's
+    /// width and height by the given angle in degrees, recomputing the smallest
+    /// axis-aligned envelope enclosing the rotated bounds.
+    /// </summary>
+    /// <param name="envelope">The envelope to rotate; it is modified in place.</param>
+    /// <param name="angleDegrees">The rotation angle in degrees.</param>
+    /// <param name="anchorX">The anchor X as a fraction of the envelope's width.</param>
+    /// <param name="anchorY">The anchor Y as a fraction of the envelope's height.</param>
     public static void RotateDegreesAroundAnchor(this Envelope envelope, double angleDegrees, double anchorX, double anchorY)
     {
         // Convert angle from degrees to radians
@@ -68,6 +109,15 @@ public static class EnvelopeExtensions
         envelope.RotateRadiantAroundAnchor(angleRadians, anchorX, anchorY);
     }
 
+    /// <summary>
+    /// Rotates the envelope around an anchor point given as fractions of the envelope's
+    /// width and height by the given angle in radians, recomputing the smallest
+    /// axis-aligned envelope enclosing the rotated bounds.
+    /// </summary>
+    /// <param name="envelope">The envelope to rotate; it is modified in place.</param>
+    /// <param name="angleRadians">The rotation angle in radians.</param>
+    /// <param name="anchorX">The anchor X as a fraction of the envelope's width.</param>
+    /// <param name="anchorY">The anchor Y as a fraction of the envelope's height.</param>
     public static void RotateRadiantAroundAnchor(this Envelope envelope, double angleRadians, double anchorX, double anchorY)
     {
         // Calculate the center of rotation in world coordinates:

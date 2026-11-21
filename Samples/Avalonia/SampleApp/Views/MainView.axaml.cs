@@ -16,6 +16,11 @@ using SampleApp.Widgets;
 
 namespace SampleApp.Views;
 
+/// <summary>
+/// The main sample view: hosts the map control with a rendered tile layer
+/// loaded from a style source, plus the debug layer, widgets and UI controls
+/// for style visibility, rotation and feature info.
+/// </summary>
 public partial class MainView : UserControl
 {
     private readonly string _path = "Files";
@@ -23,6 +28,11 @@ public partial class MainView : UserControl
     private readonly OMTRenderedTileSource _tileSource;
     private readonly RenderedTileLayer _tileLayer;
 
+    /// <summary>
+    /// Initializes the main view: adds the rendered tile layer and the tile
+    /// grid debug layer to the map, creates the style checkboxes and the zoom
+    /// widget and centers the map on the style's center/zoom.
+    /// </summary>
     public MainView()
     {
         InitializeComponent();

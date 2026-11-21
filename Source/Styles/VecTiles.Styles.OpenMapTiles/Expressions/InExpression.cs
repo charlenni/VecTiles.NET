@@ -36,12 +36,23 @@ public class InExpression : Expression
 
     private double[]? _numberValues;
 
+    /// <summary>
+    /// Initializes a new <see cref="InExpression"/> with needle and haystack expressions.
+    /// </summary>
+    /// <param name="needle">The expression yielding the value to search for.</param>
+    /// <param name="haystack">The expression yielding the string or array to search in.</param>
     public InExpression(IExpression needle, IExpression haystack)
     {
         _needle = needle;
         _haystack = haystack;
     }
 
+    /// <summary>
+    /// Parses an "in" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 3)
@@ -59,6 +70,13 @@ public class InExpression : Expression
         return new InExpression(needle, haystack);
     }
 
+    /// <summary>
+    /// Evaluates the needle and haystack and returns whether the needle is
+    /// contained in the haystack (substring for strings, element for arrays),
+    /// using the specialized literal value sets for literal haystacks.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>True if the needle is contained in the haystack; otherwise, false.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var needle = _needle.Evaluate(ctx);
@@ -217,11 +235,22 @@ public class InExpression : Expression
         return false;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of an "in" expression cannot
+    /// be determined statically (the result can be true or false).
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="InExpression"/>, comparing needle and haystack expressions.
+    /// </summary>
+    /// <param name="other">The in expression to compare with.</param>
+    /// <returns>True if the expressions are equal; otherwise, false.</returns>
     public bool Equals(InExpression? other)
     {
         return other is not null
@@ -229,7 +258,9 @@ public class InExpression : Expression
                 || (_needle.Equals(other._needle) && _haystack.Equals(other._haystack)));
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is InExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() => (_needle.GetHashCode() * 397) ^ _haystack.GetHashCode();
 }

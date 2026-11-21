@@ -9,6 +9,10 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class VectorTile
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VectorTile"/> class with capacity for the given number of layers.
+    /// </summary>
+    /// <param name="numOfLayers">The expected number of layers. Defaults to 0.</param>
     public VectorTile(int numOfLayers = 0)
     {
         Layers = new List<Layer>(numOfLayers);

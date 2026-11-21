@@ -6,6 +6,11 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Extensions
 {
+    /// <summary>
+    /// Extension methods for strings used in style properties: replacing
+    /// field placeholders ("{tag}") with feature or context values and
+    /// applying text transforms.
+    /// </summary>
     public static class StringExtensions
     {
         static Regex _regExFields = new Regex(@"\{(.*?)\}", (RegexOptions)8);
@@ -48,6 +53,14 @@ namespace VecTiles.Styles.OpenMapTiles.Extensions
 
         static Regex _regExAttributes = new Regex(@"\{(.*?)\}", RegexOptions.Compiled);
 
+        /// <summary>
+        /// Replaces all "{placeholder}" occurrences with feature or context values.
+        /// Names starting with "name" fall back to a localized name for the current culture.
+        /// Placeholders without a matching value are removed.
+        /// </summary>
+        /// <param name="text">The string containing placeholders to replace.</param>
+        /// <param name="context">The evaluation context providing feature and style attribute lookups; may be null.</param>
+        /// <returns>The string with all placeholders resolved.</returns>
         public static string ReplaceWithTags(this string text, EvaluationContext? context = null)
         {
             var match = _regExAttributes.Match(text);
@@ -92,6 +105,13 @@ namespace VecTiles.Styles.OpenMapTiles.Extensions
             return result;
         }
 
+        /// <summary>
+        /// Applies the given text transform to the string, converting it to upper
+        /// or lower case using the current culture.
+        /// </summary>
+        /// <param name="text">The string to transform.</param>
+        /// <param name="textTransform">The transform to apply; "none" returns the string unchanged.</param>
+        /// <returns>The transformed string.</returns>
         public static string ReplaceWithTransforms(this string text, TextTransform textTransform)
         {
             return textTransform switch

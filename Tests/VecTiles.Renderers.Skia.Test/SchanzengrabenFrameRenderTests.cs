@@ -22,6 +22,10 @@ public class SchanzengrabenFrameRenderTests
 
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public SchanzengrabenFrameRenderTests(ITestOutputHelper output) => _output = output;
 
     private const int Zoom = 17;
@@ -29,6 +33,13 @@ public class SchanzengrabenFrameRenderTests
     private const double WorldHalf = WorldWidth / 2;
     private static double TileSpanWorld => WorldWidth / Math.Pow(2, Zoom);
 
+    /// <summary>
+    /// Renders the Schanzengraben frame at the given fractional zoom and viewport
+    /// size and writes the bitmap to the results folder.
+    /// </summary>
+    /// <param name="fractionalZoom">The fractional zoom of the viewport.</param>
+    /// <param name="width">The viewport width in pixels.</param>
+    /// <param name="height">The viewport height in pixels.</param>
     [Theory]
     [InlineData(17.0, 1024, 768)]
     [InlineData(17.1, 1024, 768)]

@@ -31,6 +31,13 @@ public class Renderer
         _renderFactory = renderFactory;
     }
 
+    /// <summary>
+    /// Renders the given tile with all visible styles and their sources and
+    /// returns the resulting rendered tile. Returns null when no source
+    /// provides data for the tile or no style produces content.
+    /// </summary>
+    /// <param name="tile">Tile to render.</param>
+    /// <returns>The rendered tile, or null when there is nothing to render.</returns>
     public async Task<IRenderedTile?> Render(Tile tile)
     {
         var rawTiles = new Dictionary<string, object?>();

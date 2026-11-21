@@ -3,8 +3,17 @@ using VecTiles.Common.Enums;
 
 namespace VecTiles.Common.Extensions;
 
+/// <summary>
+/// Provides extension methods for the <see cref="Anchor"/> enumeration.
+/// </summary>
 public static class AnchorExtensions
 {
+    /// <summary>
+    /// Converts an <see cref="Anchor"/> to a normalized <see cref="Point"/> with coordinates
+    /// in the range 0..1, where the point marks the anchor position within a symbol.
+    /// </summary>
+    /// <param name="anchor">The anchor to convert.</param>
+    /// <returns>The normalized anchor point.</returns>
     public static Point ToPoint(this Anchor anchor)
     {
         return anchor switch

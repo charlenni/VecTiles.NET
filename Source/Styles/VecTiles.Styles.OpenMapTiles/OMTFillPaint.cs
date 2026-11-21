@@ -5,8 +5,20 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Creates a <see cref="Paint"/> for a fill layer from the paint
+/// properties of an OpenMapTiles style.
+/// </summary>
 public static class OMTFillPaint
 {
+    /// <summary>
+    /// Creates a paint from the fill properties (color, opacity, antialias, outline
+    /// color, pattern) of the given layer style.
+    /// </summary>
+    /// <param name="style">The layer style; must be an <see cref="OMTLayerStyle"/>.</param>
+    /// <param name="spriteFactory">Factory that resolves a sprite name into a sprite image.</param>
+    /// <returns>The paint for the fill layer.</returns>
+    /// <exception cref="ArgumentException">Thrown if the style is not an <see cref="OMTLayerStyle"/>.</exception>
     public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
     {
         if (style is not OMTLayerStyle omtStyle)

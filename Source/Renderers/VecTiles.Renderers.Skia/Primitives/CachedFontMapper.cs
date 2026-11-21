@@ -8,7 +8,7 @@ namespace VecTiles.Renderers.Skia.Primitives;
 /// Font mapper that caches resolved <see cref="SKTypeface"/> instances.
 ///
 /// RichTextKit resolves the typeface of every style run with
-/// <see cref="SKTypeface.FromFamilyName"/> during layout, which queries the font
+/// <see cref="SKTypeface.FromFamilyName(string, int, int, SkiaSharp.SKFontStyleSlant)"/> during layout, which queries the font
 /// system and takes several milliseconds per call. This mapper caches typefaces by
 /// their font signature, so the lookup only happens once per font signature
 /// instead of once per layout run.

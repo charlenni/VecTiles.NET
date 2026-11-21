@@ -17,6 +17,12 @@ public class CoalesceExpression : Expression
         _expressions = expressions;
     }
 
+    /// <summary>
+    /// Parses a "coalesce" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count < 2)
@@ -40,6 +46,11 @@ public class CoalesceExpression : Expression
         return new CoalesceExpression([.. expressions]);
     }
 
+    /// <summary>
+    /// Evaluates the expressions in order and returns the first non-null value.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The first non-null value, or null if all expressions evaluate to null.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         // Stops at the first expression with a non-null value
@@ -54,11 +65,22 @@ public class CoalesceExpression : Expression
         return null;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a "coalesce" expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="CoalesceExpression"/>, comparing all operand expressions.
+    /// </summary>
+    /// <param name="other">The coalesce expression to compare with.</param>
+    /// <returns>True if the coalesce expressions are equal; otherwise, false.</returns>
     public bool Equals(CoalesceExpression? other)
     {
         if (other is null)
@@ -79,8 +101,10 @@ public class CoalesceExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CoalesceExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         int hashCode = 0;

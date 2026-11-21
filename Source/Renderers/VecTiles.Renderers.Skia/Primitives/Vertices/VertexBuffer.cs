@@ -43,8 +43,15 @@ public sealed class VertexBuffer : IDisposable
 
     private SKVertices? _vertices;
 
+    /// <summary>
+    /// Gets the vertices in native SkiaSharp format; the empty shared
+    /// buffer when no vertices were created.
+    /// </summary>
     public SKVertices Vertices => _vertices ?? Empty;
 
+    /// <summary>
+    /// Disposes the native vertices.
+    /// </summary>
     public void Dispose()
     {
         _vertices?.Dispose();

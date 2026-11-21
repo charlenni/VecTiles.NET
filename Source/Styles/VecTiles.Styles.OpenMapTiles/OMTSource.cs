@@ -18,89 +18,171 @@ namespace VecTiles.Styles.OpenMapTiles;
 /// </summary>
 public class OMTSource
 {
+    /// <summary>
+    /// Attribution (copyright notice) displayed for the source.
+    /// </summary>
     [JsonPropertyName("attribution")]
     public string Attribution { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Longitude/latitude bounds limiting which tiles are requested for the source.
+    /// </summary>
     [JsonPropertyName("bounds")]
     public float[] Bounds { get; set; } = [-180.0f, -85.051129f, 180.0f, 85.051129f];
 
+    /// <summary>
+    /// Size of the tile buffer on each side, in pixels; 0 means no buffer.
+    /// </summary>
     [JsonPropertyName("buffer")]
     public int Buffer { get; set; } = 128;
 
+    /// <summary>
+    /// Whether point features of a GeoJSON source are clustered.
+    /// </summary>
     [JsonPropertyName("cluster")]
     public bool Cluster { get; set; } = false;
 
+    /// <summary>
+    /// Zoom level at which point clustering is disabled and points are drawn individually.
+    /// </summary>
     [JsonPropertyName("clusterMaxZoom")]
     public float ClusterMaxZoom { get; set; } = 0.0f;
 
+    /// <summary>
+    /// Minimum number of points needed to form a cluster.
+    /// </summary>
     [JsonPropertyName("clusterMinPoints")]
     public int ClusterMinPoints { get; set; } = 2;
 
     // clusterProperties
 
+    /// <summary>
+    /// Radius of each cluster when clustering point data, in pixels.
+    /// </summary>
     [JsonPropertyName("clusterRadius")]
     public int ClusterRadius { get; set; } = 50;
 
     // data
 
+    /// <summary>
+    /// Whether the source data can change dynamically and be reloaded.
+    /// </summary>
     [JsonPropertyName("dynamic")]
     public bool Dynamic { get; set; } = false;
 
+    /// <summary>
+    /// Vertical encoding of the terrain (raster-dem sources).
+    /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     [JsonPropertyName("encoding")]
     public Encoding Encoding { get; set; } = Encoding.OpenMapTiles;
 
+    /// <summary>
+    /// Filter limiting the features of the source that are used.
+    /// </summary>
     [JsonConverter(typeof(ExpressionConverter))]
     [JsonPropertyName("filter")]
     public IExpression Filter { get; set; } = Expression.Empty;
 
+    /// <summary>
+    /// Whether feature ids are generated for a GeoJSON source that has none.
+    /// </summary>
     [JsonPropertyName("generateId")]
     public bool GenerateId { get; set; } = false;
 
+    /// <summary>
+    /// Whether per-line metrics (distance, indexes) are computed for a GeoJSON line source.
+    /// </summary>
     [JsonPropertyName("lineMetrics")]
     public bool LineMetrics { get; set; } = false;
 
+    /// <summary>
+    /// Id of the source, as used by the style layers' "source" property.
+    /// </summary>
     [JsonPropertyName("id")]
     public string Id { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Maximum zoom level of the source; tiles above are upscaled from this level.
+    /// </summary>
     [JsonPropertyName("maxzoom")]
     public int MaxZoom { get; set; } = 22;
 
+    /// <summary>
+    /// Minimum zoom level of the source; tiles below are downscaled from this level.
+    /// </summary>
     [JsonPropertyName("minzoom")]
     public int MinZoom { get; set; } = 0;
 
     // promoteId
 
+    /// <summary>
+    /// Names of the raster layers to use from the source.
+    /// </summary>
     [JsonPropertyName("rasterLayers")]
     public string RasterLayers { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Tile coordinate scheme of the source; xyz or tms.
+    /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     [JsonPropertyName("scheme")]
     public Scheme Scheme { get; set; } = Scheme.Xyz;
 
+    /// <summary>
+    /// Type of the source, e.g. vector, raster, or geojson.
+    /// </summary>
     [JsonConverter(typeof(JsonStringEnumConverter))]
     [JsonPropertyName("type")]
     public SourceType SourceType { get; set; }
 
+    /// <summary>
+    /// Tile URL templates, e.g. "https://example.com/{z}/{x}/{y}.pbf".
+    /// </summary>
     [JsonPropertyName("tiles")]
     public IList<string>? Tiles { get; set; }
 
+    /// <summary>
+    /// Tile size of the source, in pixels; 512 (MapLibre/OMT) or 256.
+    /// </summary>
     [JsonPropertyName("tileSize")]
     public int TileSize { get; set; } = 512;
 
+    /// <summary>
+    /// URL pointing to a TileJSON resource describing the source.
+    /// </summary>
     [JsonPropertyName("url")]
     public string? Url { get; set; }
 
+    /// <summary>
+    /// Alternative tile URL templates used instead of "tiles".
+    /// </summary>
     [JsonPropertyName("urls")]
     public string[] Urls { get; set; } = [];
 
+    /// <summary>
+    /// Whether the source data is volatile and can change between loads.
+    /// </summary>
     [JsonPropertyName("volatile")]
     public bool Volatile { get; set; } = false;
 
+    /// <summary>
+    /// Name of the source, as assigned by its key in the style file's "sources" dictionary.
+    /// </summary>
     public string Name { get; internal set; } = string.Empty;
 
+    /// <summary>
+    /// The tile data source created from this source description, or null until
+    /// <see cref="CreateAsync"/> has run successfully.
+    /// </summary>
     public ITileDataSource? DataSource { get; internal set; }
 
+    /// <summary>
+    /// Creates the actual tile data source from the source description, resolving a
+    /// TileJSON reference if necessary and wrapping vector data with the
+    /// OpenMapTiles tile converter.
+    /// </summary>
+    /// <returns>A task that completes when the data source has been created.</returns>
     public async Task CreateAsync()
     {
         string sourceUrl = string.Empty;

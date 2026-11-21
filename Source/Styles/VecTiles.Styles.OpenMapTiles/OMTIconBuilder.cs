@@ -10,6 +10,10 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles
 {
+    /// <summary>
+    /// Builds icons for symbols of an OpenMapTiles layer, evaluating the icon
+    /// layout and paint properties of the layer style.
+    /// </summary>
     public class OMTIconBuilder
     {
         private readonly OMTLayerStyle _style;
@@ -37,6 +41,13 @@ namespace VecTiles.Styles.OpenMapTiles
         private readonly Func<EvaluationContext, MapAlignment> _translateAnchor;
         private readonly Func<EvaluationContext, Tile, double> _sortOrder;
 
+        /// <summary>
+        /// Initializes the icon builder with a layer style and evaluation context,
+        /// resolving the icon layout and paint properties.
+        /// </summary>
+        /// <param name="style">The symbol layer style whose icon properties are used.</param>
+        /// <param name="spriteFactory">Factory that resolves a sprite name into a sprite.</param>
+        /// <param name="context">The evaluation context the layer was created with.</param>
         public OMTIconBuilder(OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context)
         {
             _style = style;
@@ -80,6 +91,13 @@ namespace VecTiles.Styles.OpenMapTiles
             };
         }
 
+        /// <summary>
+        /// Builds an icon point symbol for a point feature.
+        /// </summary>
+        /// <param name="tile">The tile the feature belongs to.</param>
+        /// <param name="point">The anchor position of the icon in tile coordinates.</param>
+        /// <param name="feature">The feature to build the icon for.</param>
+        /// <returns>The icon point symbol, or null if the icon image could not be resolved.</returns>
         public IconPointSymbol? Build(Tile tile, Point point, IFeature feature)
         {
             var context = _context.WithFeature(feature);
@@ -118,6 +136,14 @@ namespace VecTiles.Styles.OpenMapTiles
             return symbol;
         }
 
+        /// <summary>
+        /// Builds an icon line symbol for a linear or polygonal feature (an icon
+        /// placed along the line or outline).
+        /// </summary>
+        /// <param name="tile">The tile the feature belongs to.</param>
+        /// <param name="geometry">The geometry the icon follows.</param>
+        /// <param name="feature">The feature to build the icon for.</param>
+        /// <returns>The icon line symbol, or null if the icon image could not be resolved.</returns>
         public IconLineSymbol? Build(Tile tile, Geometry geometry, IFeature feature)
         {
             var context = _context.WithFeature(feature);

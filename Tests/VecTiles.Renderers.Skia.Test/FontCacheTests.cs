@@ -3,15 +3,22 @@ using VecTiles.Renderers.Skia.Primitives;
 
 namespace VecTiles.Renderers.Skia.Test;
 
+/// <summary>
+/// Unit tests for the font lookup, registration and fallback behavior of <see cref="FontCache" />.
+/// </summary>
 public class FontCacheTests : IDisposable
 {
-    // Registrations are global, so they must not leak into other test classes
-    // (e.g. the font tests comparing rendered bitmaps)
+    /// <summary>
+    /// Resets the font cache so global registrations do not leak into other test classes.
+    /// </summary>
     public void Dispose()
     {
         FontCache.Reset();
     }
 
+    /// <summary>
+    /// Verifies that <see cref="FontCache.GetMissingFonts" /> reports family names that cannot be resolved.
+    /// </summary>
     [Fact]
     public void GetMissingFonts_ReportsUnresolvableFamilies()
     {
@@ -20,6 +27,9 @@ public class FontCacheTests : IDisposable
         Assert.Contains("This Family Does Not Exist 12345", missing);
     }
 
+    /// <summary>
+    /// Verifies that a family registered via <see cref="FontCache.RegisterFontFile" /> is not reported as missing.
+    /// </summary>
     [Fact]
     public void GetMissingFonts_AcceptsRegisteredFontFiles()
     {
@@ -33,6 +43,9 @@ public class FontCacheTests : IDisposable
         Assert.Empty(missing);
     }
 
+    /// <summary>
+    /// Verifies that a family from a font search path becomes resolvable on the next lookup.
+    /// </summary>
     [Fact]
     public void AddFontSearchPath_MakesFamilyAvailableLazily()
     {
@@ -46,6 +59,10 @@ public class FontCacheTests : IDisposable
         Assert.Empty(missing);
     }
 
+    /// <summary>
+    /// Verifies that a style created from a family resolved via a search path keeps the
+    /// original family name.
+    /// </summary>
     [Fact]
     public void AddFontSearchPath_BeforeStyleLoad_KeepsOriginalFamilyName()
     {
@@ -59,6 +76,9 @@ public class FontCacheTests : IDisposable
         Assert.Equal(typeface.FamilyName, style!.FontFamily);
     }
 
+    /// <summary>
+    /// Verifies that an unknown family falls back to the system default typeface.
+    /// </summary>
     [Fact]
     public void CreateFonts_UnknownFamily_FallsBackToSystemDefault()
     {
@@ -68,12 +88,19 @@ public class FontCacheTests : IDisposable
         Assert.Equal(SKTypeface.Default.FamilyName, style!.FontFamily);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="FontCache.CreateFonts" /> with no names throws a <see cref="VecTiles.Common.Exceptions.FontNotFoundException" />.
+    /// </summary>
     [Fact]
     public void CreateFonts_EmptyNames_ThrowsFontNotFound()
     {
         Assert.Throws<VecTiles.Common.Exceptions.FontNotFoundException>(() => FontCache.CreateFonts($"FontCacheTests_{Guid.NewGuid():N}", []));
     }
 
+    /// <summary>
+    /// Verifies that a missing family is loaded via the configured font source resolver
+    /// and that the resolver is only consulted once.
+    /// </summary>
     [Fact]
     public void CreateFonts_MissingFont_LoadsFontFromSourceResolver()
     {
@@ -95,6 +122,9 @@ public class FontCacheTests : IDisposable
         Assert.Equal(1, calls);
     }
 
+    /// <summary>
+    /// Verifies that a source resolver returning no match falls back to the system default typeface.
+    /// </summary>
     [Fact]
     public void CreateFonts_SourceResolverReturnsNull_FallsBackToSystemDefault()
     {
@@ -106,6 +136,10 @@ public class FontCacheTests : IDisposable
         Assert.Equal(SKTypeface.Default.FamilyName, style!.FontFamily);
     }
 
+    /// <summary>
+    /// Verifies that the source resolver is consulted at most once per unknown family,
+    /// even across repeated style creations.
+    /// </summary>
     [Fact]
     public void CreateFonts_UnknownFamily_ConsultsSourceResolverOnlyOnce()
     {

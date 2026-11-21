@@ -5,8 +5,13 @@ using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
+/// <summary>
+/// JSON converter for zoom-dependent boolean values. Accepts a plain boolean,
+/// a stops object, or an expression array.
+/// </summary>
 public class StoppedBooleanConverter : JsonConverter<StoppedBoolean>
 {
+    /// <inheritdoc />
     public override StoppedBoolean Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var token = JsonNode.Parse(ref reader);
@@ -41,6 +46,8 @@ public class StoppedBooleanConverter : JsonConverter<StoppedBoolean>
         return new StoppedBoolean { SingleVal = StoppedExpression.ToBoolean(MatchExpression.ToValue(token)) };
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown; stopped values are read-only.</exception>
     public override void Write(Utf8JsonWriter writer, StoppedBoolean value, JsonSerializerOptions options)
     {
         throw new NotSupportedException("Stopped values are only read, never written.");

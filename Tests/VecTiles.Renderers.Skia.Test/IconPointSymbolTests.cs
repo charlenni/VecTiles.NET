@@ -7,6 +7,10 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Renderers.Skia.Test;
 
+/// <summary>
+/// Visual tests for <see cref="IconPointSymbol" />: draws symbols with every
+/// supported style property and compares the rendered bitmaps with the saved originals.
+/// </summary>
 public class IconPointSymbolTests
 {
     private readonly string Folder = Path.Combine(Utilities.DataFiles);
@@ -19,6 +23,9 @@ public class IconPointSymbolTests
     private Sprite _sprite;
     private EvaluationContext _context = new EvaluationContext(0, 1, 0);
 
+    /// <summary>
+    /// Prepares a 201x201 canvas centered at (100, 100) and loads the osm-liberty sprite atlas.
+    /// </summary>
     public IconPointSymbolTests()
     {
         _bitmap = Utilities.CreateBitmap(201, 201);
@@ -40,6 +47,11 @@ public class IconPointSymbolTests
         _sprite = new Sprite(atlas, 168, 223, 19, 19);
     }
 
+    /// <summary>
+    /// Draws the icon with the given unanchored offset and compares the result with the original image.
+    /// </summary>
+    /// <param name="x">Offset in x direction in pixels.</param>
+    /// <param name="y">Offset in y direction in pixels.</param>
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(20.0, 0.0)]
@@ -56,6 +68,12 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-Offset-{x}x-{y}y.png"));
     }
 
+    /// <summary>
+    /// Draws the icon with the given offset and a scale factor of 2 and compares the result with the original image.
+    /// </summary>
+    /// <param name="x">Offset in x direction in pixels.</param>
+    /// <param name="y">Offset in y direction in pixels.</param>
+    /// <param name="scale">The scale factor applied to the symbol.</param>
     [Theory]
     [InlineData(0.0, 0.0, 2.0)]
     [InlineData(20.0, 0.0, 2.0)]
@@ -72,6 +90,10 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-OffsetWithScale-{x}x-{y}y-{scale}scale.png"));
     }
 
+    /// <summary>
+    /// Verifies that a sprite from a 2x pixel ratio atlas is drawn at its CSS pixel size
+    /// (half the atlas pixel size) and occupies an envelope of that size.
+    /// </summary>
     [Fact]
     public void DrawsPixelRatioTwoSpriteAtCssSize()
     {
@@ -139,6 +161,11 @@ public class IconPointSymbolTests
         return (minX, minY, maxX, maxY);
     }
 
+    /// <summary>
+    /// Draws the icon anchored at the given relative anchor point and compares the result with the original image.
+    /// </summary>
+    /// <param name="x">Relative anchor position in x direction (0 to 1).</param>
+    /// <param name="y">Relative anchor position in y direction (0 to 1).</param>
     [Theory]
     [InlineData(0.5, 0.5)]
     [InlineData(0, 0.5)]
@@ -159,6 +186,10 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-Anchor-{x*100}x-{y*100}y.png"));
     }
 
+    /// <summary>
+    /// Draws the icon with the given opacity and compares the result with the original image.
+    /// </summary>
+    /// <param name="opacity">The opacity applied to the symbol (0 to 1).</param>
     [Theory]
     [InlineData(1.0)]
     [InlineData(0.5)]
@@ -175,6 +206,11 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-Opacity-{opacity * 100}.png"));
     }
 
+    /// <summary>
+    /// Draws the icon with the given translate distance and compares the result with the original image.
+    /// </summary>
+    /// <param name="tx">Translate distance in x direction in pixels.</param>
+    /// <param name="ty">Translate distance in y direction in pixels.</param>
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(10.0, 0.0)]
@@ -191,6 +227,13 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-Translate-{tx}x-{ty}y.png"));
     }
 
+    /// <summary>
+    /// Draws the icon with a translate offset under a rotated map for both translate anchors
+    /// and both rotation alignments, comparing the result with the original image.
+    /// </summary>
+    /// <param name="translateAnchor">The <see cref="MapAlignment" /> value of the translate anchor.</param>
+    /// <param name="alignment">The <see cref="MapAlignment" /> value of the rotation alignment.</param>
+    /// <param name="mapRotation">The rotation of the map in degrees.</param>
     [Theory]
     [InlineData(0, 0, 75)] // Map
     [InlineData(0, 1, 75)] // Map
@@ -213,6 +256,10 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, rotationContext, $"Icon-TranslateAnchor-{anchor}-Alignment-{rotationAlignment}.png"));
     }
 
+    /// <summary>
+    /// Draws the icon rotated by the given angle and compares the result with the original image.
+    /// </summary>
+    /// <param name="rotation">The rotation in degrees.</param>
     [Theory]
     [InlineData(0)]
     [InlineData(15)]
@@ -237,6 +284,13 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-Rotation-{rotation}.png"));
     }
 
+    /// <summary>
+    /// Draws the rotated icon under a rotated map for each rotation alignment
+    /// and compares the result with the original image.
+    /// </summary>
+    /// <param name="alignment">The <see cref="MapAlignment" /> value of the rotation alignment.</param>
+    /// <param name="rotation">The rotation of the symbol in degrees.</param>
+    /// <param name="mapRotation">The rotation of the map in degrees.</param>
     [Theory]
     [InlineData(0, 15, 30)] // Map
     [InlineData(1, 15, 30)] // Viewport
@@ -260,6 +314,10 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, rotationContext, $"Icon-RotationAlignment-{align}-{rotation}-{mapRotation}.png"));
     }
 
+    /// <summary>
+    /// Draws the icon with the given padding around the symbol and compares the result with the original image.
+    /// </summary>
+    /// <param name="padding">The padding around the symbol in pixels.</param>
     [Theory]
     [InlineData(0)]
     [InlineData(4)]
@@ -276,6 +334,12 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-Padding-{padding}.png"));
     }
 
+    /// <summary>
+    /// Draws the icon with and without keep-upright at four rotations and compares
+    /// the result with the original image.
+    /// </summary>
+    /// <param name="keepUpright">Whether the symbol is forced to stay upright.</param>
+    /// <param name="rotation">The rotation of the symbol in degrees.</param>
     [Theory]
     [InlineData(false, 45f)]
     [InlineData(true, 45f)]
@@ -298,6 +362,10 @@ public class IconPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Icon-KeepUpright-{keepUpright}-{rotation}.png"));
     }
 
+    /// <summary>
+    /// Verifies that <see cref="IconPointSymbol.Copy" /> copies all properties to a new symbol,
+    /// keeping references for shared objects and delegates while copying envelopes by value.
+    /// </summary>
     [Fact]
     public void CopyCopiesAllProperties()
     {

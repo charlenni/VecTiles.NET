@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTMinTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTMinTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,6 +39,9 @@ public class OMTMinTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
@@ -43,6 +52,9 @@ public class OMTMinTests
         Assert.Equal(-5d, expression!.Evaluate(OMTExpressionTestsHelper.CreateContext(("x", -5d))));
     }
 
+    /// <summary>
+    /// Verifies that a missing attribute that cannot be compared numerically evaluates to null.
+    /// </summary>
     [Fact]
     public void MissingAttributeTest()
     {

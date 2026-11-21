@@ -4,6 +4,9 @@ using VecTiles.Converters.SdfFont.Pbf;
 
 namespace VecTiles.Converters.SdfFont;
 
+/// <summary>
+/// Converts binary Mapbox SDF font glyph data (optionally Gzip compressed) into <see cref="PbfGlyphs"/> glyph collections.
+/// </summary>
 public class SdfFontConverter
 {
     /// <summary>

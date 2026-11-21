@@ -4,8 +4,19 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles.Expressions;
 
+/// <summary>
+/// Implements the "let" expression: ["let", name1, value1, ..., result]. Binds
+/// named expressions to variables usable via "var" inside the result, which is
+/// evaluated in the extended scope.
+/// </summary>
 public class LetExpression : Expression
 {
+    /// <summary>
+    /// Parses a "let" expression from the given JSON token.
+    /// </summary>
+    /// <param name="token">The JSON token of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression Parse(JsonNode token, ExpressionParser parser) 
     {
         if (token == null || !(token is JsonArray array))
@@ -58,6 +69,11 @@ public class LetExpression : Expression
         return new LetExpression(bindings, result);
     }
 
+    /// <summary>
+    /// Initializes a new <see cref="LetExpression"/> with variable bindings and result.
+    /// </summary>
+    /// <param name="bindings">The variable names bound to their value expressions.</param>
+    /// <param name="result">The expression evaluated in the extended scope.</param>
     public LetExpression(Dictionary<string, IExpression> bindings, IExpression result)
     {
         Bindings = bindings;
@@ -67,16 +83,32 @@ public class LetExpression : Expression
     Dictionary<string, IExpression> Bindings;
     IExpression Result;
 
+    /// <summary>
+    /// Evaluates the result expression; the bindings are already resolved
+    /// through the scope at parse time.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The value of the result expression.</returns>
     public override object Evaluate(EvaluationContext ctx)
     {
         return Result.Evaluate(ctx);
     }
 
+    /// <summary>
+    /// Returns the possible outputs of the result expression.
+    /// </summary>
+    /// <returns>The possible output(s) of the result expression.</returns>
     public override object PossibleOutputs()
     {
         return Result.PossibleOutputs(); ;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="LetExpression"/>, comparing all bindings and the result.
+    /// </summary>
+    /// <param name="other">The let expression to compare with.</param>
+    /// <returns>True if the let expressions are equal; otherwise, false.</returns>
     public bool Equals(LetExpression? other)
     {
         if (other is null)
@@ -97,8 +129,10 @@ public class LetExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is LetExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         return Result?.GetHashCode() ?? 0;

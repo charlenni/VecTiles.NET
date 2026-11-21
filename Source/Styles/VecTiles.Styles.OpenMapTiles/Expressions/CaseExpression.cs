@@ -13,12 +13,23 @@ public class CaseExpression : Expression
     private readonly (IExpression Condition, IExpression Output)[] _branches;
     private readonly IExpression _fallback;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CaseExpression"/> class.
+    /// </summary>
+    /// <param name="branches">Pairs of condition and output expressions, evaluated in order.</param>
+    /// <param name="fallback">The output used when no condition is true.</param>
     public CaseExpression((IExpression, IExpression)[] branches, IExpression fallback)
     {
         _branches = branches;
         _fallback = fallback;
     }
 
+    /// <summary>
+    /// Parses a "case" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
@@ -55,6 +66,12 @@ public class CaseExpression : Expression
         return new CaseExpression([.. branches], fallback);
     }
 
+    /// <summary>
+    /// Evaluates the branches in order and returns the output of the first
+    /// branch whose condition is truthy, or the fallback output when none is.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The value of the first matching branch or of the fallback.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         foreach (var (condition, output) in _branches)
@@ -66,6 +83,10 @@ public class CaseExpression : Expression
         return _fallback.Evaluate(ctx);
     }
 
+    /// <summary>
+    /// Returns the possible outputs of all branch outputs and the fallback.
+    /// </summary>
+    /// <returns>The possible outputs of the branch and fallback outputs.</returns>
     public override object? PossibleOutputs()
     {
         return _branches.Select(b => b.Output).Append(_fallback).Select(o => o.PossibleOutputs());
@@ -83,6 +104,12 @@ public class CaseExpression : Expression
         };
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="CaseExpression"/>, comparing all branches and the fallback.
+    /// </summary>
+    /// <param name="other">The case expression to compare with.</param>
+    /// <returns>True if the case expressions are equal; otherwise, false.</returns>
     public bool Equals(CaseExpression? other)
     {
         if (other is null)
@@ -104,8 +131,10 @@ public class CaseExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CaseExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

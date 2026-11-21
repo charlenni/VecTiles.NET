@@ -68,6 +68,14 @@ public static class FontCache
         }
     }
 
+    /// <summary>
+    /// Creates a text style with the first font of the given font name list
+    /// that can be resolved, in the order given.
+    /// </summary>
+    /// <param name="styleName">Name of the style, used for error messages.</param>
+    /// <param name="names">Font family names to try, in order.</param>
+    /// <returns>The created text style.</returns>
+    /// <exception cref="FontNotFoundException">No font of the list could be resolved.</exception>
     public static Style? CreateFonts(string styleName, string[] names)
     {
         if (names == null || names.Length == 0)

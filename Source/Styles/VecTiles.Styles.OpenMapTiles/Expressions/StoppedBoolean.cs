@@ -60,8 +60,10 @@ public class StoppedBoolean : IStopped<bool>
     bool _hasStops = false;
     IList<KeyValuePair<float, bool>> _stops = [];
 
+    /// <summary>The interpolation base of the stop curve. Booleans are not interpolated, so this value has no effect on the evaluation.</summary>
     public float Base { get; set; } = 1f;
 
+    /// <summary>The zoom/value stops of the stopped function, in ascending zoom order.</summary>
     public IList<KeyValuePair<float, bool>> Stops
     {
         get => _stops;
@@ -128,11 +130,13 @@ public class StoppedBoolean : IStopped<bool>
         return false;
     }
 
+    /// <inheritdoc />
     public bool PossibleOutputs()
     {
         throw new System.NotImplementedException();
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         if (Expression != null)

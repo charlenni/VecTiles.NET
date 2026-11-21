@@ -3,10 +3,16 @@ using VecTiles.Styles.OpenMapTiles;
 
 namespace VecTiles.Styles.MapboxTests
 {
+    /// <summary>
+    /// Tests for loading a Mapbox style file and sprites with OMTStyleFileLoader using the osm-liberty style as fixture.
+    /// </summary>
     public class OMTStyleLoaderTests
     {
         readonly string _path = "Files";
 
+        /// <summary>
+        /// Checks that loading the style file populates the metadata.
+        /// </summary>
         [Fact]
         public async Task CheckStyleFileMetadataTest()
         {
@@ -18,6 +24,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.True(mapboxStyleFile.Metadata.ContainsKey("maputnik:license"));
         }
 
+        /// <summary>
+        /// Checks that the style file version is at least 8 and a center is present.
+        /// </summary>
         [Fact]
         public async Task CheckStyleFileVersionAndCenterTest()
         {
@@ -30,6 +39,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Empty(mapboxStyleFile.Center);
         }
 
+        /// <summary>
+        /// Checks that the style file references a glyphs URL with a {fontstack} placeholder.
+        /// </summary>
         [Fact]
         public async Task CheckStyleFileGlyphsTest()
         {
@@ -41,6 +53,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Contains("{fontstack}", mapboxStyleFile.Glyphs);
         }
 
+        /// <summary>
+        /// Checks that the style file layers are parsed in the expected order.
+        /// </summary>
         [Fact]
         public async Task CheckStyleFileLayerOrderTest()
         {
@@ -54,6 +69,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("bridge_major_rail_hatching", mapboxStyleFile.Layers[80].Name);
         }
 
+        /// <summary>
+        /// Checks that the water layer is parsed with the expected properties.
+        /// </summary>
         [Fact]
         public async Task CheckStyleFileLayerPropertiesTest()
         {
@@ -68,6 +86,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("water", layer.SourceLayer);
         }
 
+        /// <summary>
+        /// Checks that loading the style file also loads all sprites.
+        /// </summary>
         [Fact]
         public async Task CheckLoadingSpriteFileTest()
         {
@@ -79,6 +100,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.True(mapboxStyleFile.Sprites != null);
             Assert.True(mapboxStyleFile.Sprites.Sprites.Count() == 244);
         }
+        /// <summary>
+        /// Checks that the loaded sprites have positive dimensions and unique names.
+        /// </summary>
         [Fact]
         public async Task CheckSpritePropertiesTest()
         {
@@ -101,6 +125,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal(spriteNames.Count, spriteNames.Distinct().Count());
         }
 
+        /// <summary>
+        /// Checks that the style file contains sources, including the OpenMapTiles source.
+        /// </summary>
         [Fact]
         public async Task CheckStyleFileSourcesExistTest()
         {
@@ -115,6 +142,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Contains("openmaptiles", mapboxStyleFile.Sources.Keys);
         }
 
+        /// <summary>
+        /// Checks that the natural_earth_shaded_relief raster source has valid tile URLs.
+        /// </summary>
         [Fact]
         public async Task CheckSourcePropertiesTilesTest()
         {
@@ -141,6 +171,9 @@ namespace VecTiles.Styles.MapboxTests
             }
         }
 
+        /// <summary>
+        /// Checks that the openmaptiles vector source has a non-empty URL.
+        /// </summary>
         [Fact]
         public async Task CheckSourcePropertiesUrlTest()
         {
@@ -158,6 +191,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.False(string.IsNullOrEmpty(source.Url));
         }
 
+        /// <summary>
+        /// Checks that all source names in the style file are unique.
+        /// </summary>
         [Fact]
         public async Task CheckAllSourcesHaveUniqueNamesTest()
         {
@@ -169,6 +205,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal(sourceNames.Count, sourceNames.Distinct().Count());
         }
 
+        /// <summary>
+        /// Checks that sprite loading prefers the @2x pair when it is available.
+        /// </summary>
         [Fact]
         public async Task LoadSpritesUses2xPairWhenAvailableTest()
         {
@@ -179,6 +218,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal(30, sprites.Sprites["airport_11"].Width);
         }
 
+        /// <summary>
+        /// Checks that sprite loading falls back to the unsuffixed pair.
+        /// </summary>
         [Fact]
         public async Task LoadSpritesFallsBackToUnsuffixedPairTest()
         {

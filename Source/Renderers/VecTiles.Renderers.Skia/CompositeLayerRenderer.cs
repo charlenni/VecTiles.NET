@@ -13,11 +13,16 @@ public class CompositeLayerRenderer : ILayerRenderer, IDisposable
 {
     private readonly List<ILayerRenderer> _renderers;
 
+    /// <summary>
+    /// Create a composite layer renderer from the given layer renderers.
+    /// </summary>
+    /// <param name="renderers">Layer renderers drawn in the given order.</param>
     public CompositeLayerRenderer(IEnumerable<ILayerRenderer> renderers)
     {
         _renderers = [.. renderers];
     }
 
+    /// <inheritdoc />
     public void Draw(object canvas, EvaluationContext context)
     {
         foreach (var renderer in _renderers)
@@ -26,6 +31,7 @@ public class CompositeLayerRenderer : ILayerRenderer, IDisposable
         }
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         foreach (var renderer in _renderers)

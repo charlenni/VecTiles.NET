@@ -14,6 +14,12 @@ public class MatchExpression : Expression
     private readonly (object?[] Labels, IExpression Output)[] _branches;
     private readonly IExpression _fallback;
 
+    /// <summary>
+    /// Initializes a new <see cref="MatchExpression"/> with input, branches and fallback.
+    /// </summary>
+    /// <param name="input">The expression yielding the value to match against the labels.</param>
+    /// <param name="branches">Pairs of label lists and output expressions, evaluated in order.</param>
+    /// <param name="fallback">The output used when no label matches the input.</param>
     public MatchExpression(IExpression input, (object?[], IExpression)[] branches, IExpression fallback)
     {
         _input = input;
@@ -21,6 +27,12 @@ public class MatchExpression : Expression
         _fallback = fallback;
     }
 
+    /// <summary>
+    /// Parses a "match" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
@@ -83,6 +95,12 @@ public class MatchExpression : Expression
         return new MatchExpression(input, [.. branches], fallback);
     }
 
+    /// <summary>
+    /// Evaluates the input and returns the output of the first branch whose
+    /// labels match the input value, or the fallback output when none matches.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The value of the first matching branch or of the fallback.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var value = _input.Evaluate(ctx);
@@ -96,6 +114,10 @@ public class MatchExpression : Expression
         return _fallback.Evaluate(ctx);
     }
 
+    /// <summary>
+    /// Returns the possible outputs of all branch outputs and the fallback.
+    /// </summary>
+    /// <returns>The possible outputs of the branch and fallback outputs.</returns>
     public override object? PossibleOutputs()
     {
         return _branches.Select(b => b.Output).Append(_fallback).Select(o => o.PossibleOutputs());
@@ -164,6 +186,13 @@ public class MatchExpression : Expression
         return value is sbyte or byte or short or ushort or int or uint or long or ulong or float or double or decimal;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="MatchExpression"/>, comparing input, all branch labels and
+    /// outputs, and the fallback.
+    /// </summary>
+    /// <param name="other">The match expression to compare with.</param>
+    /// <returns>True if the match expressions are equal; otherwise, false.</returns>
     public bool Equals(MatchExpression? other)
     {
         if (other is null)
@@ -196,8 +225,10 @@ public class MatchExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is MatchExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

@@ -3,8 +3,18 @@ using VecTiles.Common.Enums;
 
 namespace VecTiles.Common.Primitives;
 
+/// <summary>
+/// Text symbol that is placed and aligned along a line geometry.
+/// </summary>
 public class TextLineSymbol : Symbol
 {
+    /// <summary>
+    /// Initializes a new text line symbol.
+    /// </summary>
+    /// <param name="tile">The tile the symbol belongs to.</param>
+    /// <param name="id">The unique identifier of the symbol.</param>
+    /// <param name="geometry">The line geometry along which the text is placed.</param>
+    /// <param name="text">The text to draw.</param>
     public TextLineSymbol(Tile tile, ulong id, Geometry geometry, string text) : base(tile, id)
     {
         Geometry = geometry;
@@ -137,6 +147,10 @@ public class TextLineSymbol : Symbol
     /// </summary>
     public Func<EvaluationContext, float, float>? MaxWidth { get; init; }
 
+    /// <summary>
+    /// Creates a copy of this symbol with all its current property values.
+    /// </summary>
+    /// <returns>A new <see cref="TextLineSymbol"/> with the same values as this symbol.</returns>
     public TextLineSymbol Copy()
     {
         var result = new TextLineSymbol(Tile, Id, Geometry, Text)

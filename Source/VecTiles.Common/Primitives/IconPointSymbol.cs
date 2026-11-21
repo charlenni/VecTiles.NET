@@ -4,8 +4,18 @@ using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Common.Primitives;
 
+/// <summary>
+/// Point symbol showing an icon at a point geometry.
+/// </summary>
 public class IconPointSymbol : Symbol
 {
+    /// <summary>
+    /// Initializes a new icon point symbol.
+    /// </summary>
+    /// <param name="tile">The tile the symbol belongs to.</param>
+    /// <param name="id">The unique identifier of the symbol.</param>
+    /// <param name="point">The point where the symbol is placed.</param>
+    /// <param name="sprite">The sprite used for the icon.</param>
     public IconPointSymbol(Tile tile, ulong id, Point point, ISprite sprite) : base(tile, id)
     {
         Point = point;
@@ -87,6 +97,10 @@ public class IconPointSymbol : Symbol
     /// </summary>
     public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; init; }
     
+    /// <summary>
+    /// Creates a copy of this symbol with all its current property values.
+    /// </summary>
+    /// <returns>A new <see cref="IconPointSymbol"/> with the same values as this symbol.</returns>
     public IconPointSymbol Copy()
     {
         var result = new IconPointSymbol(Tile, Id, Point, Icon)

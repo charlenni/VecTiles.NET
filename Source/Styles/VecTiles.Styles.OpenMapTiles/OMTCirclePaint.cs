@@ -4,8 +4,20 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Creates a <see cref="Paint"/> for a circle layer from the paint
+/// properties of an OpenMapTiles style.
+/// </summary>
 public static class OMTCirclePaint
 {
+    /// <summary>
+    /// Creates a fill paint from the circle properties (radius, color, blur, stroke)
+    /// of the given layer style.
+    /// </summary>
+    /// <param name="style">The layer style; must be an <see cref="OMTLayerStyle"/>.</param>
+    /// <param name="spriteFactory">Factory that resolves a sprite name into a sprite image.</param>
+    /// <returns>The paint for the circle layer.</returns>
+    /// <exception cref="ArgumentException">Thrown if the style is not an <see cref="OMTLayerStyle"/>.</exception>
     public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
     {
         if (style is not OMTLayerStyle omtStyle)

@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTHasTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTHasTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,6 +39,9 @@ public class OMTHasTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
@@ -43,6 +52,11 @@ public class OMTHasTests
         Assert.Equal(true, expression!.Evaluate(OMTExpressionTestsHelper.CreateContext(("x", true))));
     }
 
+    /// <summary>
+    /// Verifies that the has expression reports whether the attribute key exists, even for null values.
+    /// </summary>
+    /// <param name="key">The attribute key to set.</param>
+    /// <param name="value">The attribute value to set.</param>
     [Theory]
     [InlineData("x", true)]
     [InlineData("x", null)]

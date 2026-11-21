@@ -25,6 +25,12 @@ public class StepExpression : Expression
         _stops = stops;
     }
 
+    /// <summary>
+    /// Parses a "step" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
@@ -74,6 +80,13 @@ public class StepExpression : Expression
         return new StepExpression(input, baseValue, [.. stops]);
     }
 
+    /// <summary>
+    /// Evaluates the input and returns the base value if the input is below
+    /// all stops, or the output of the greatest stop less than or equal to
+    /// the input.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The value of the matching stop or the base value, or null if the input cannot be evaluated.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var inputValue = CompoundOperators.EvaluateNumber(ctx, _input);
@@ -94,11 +107,22 @@ public class StepExpression : Expression
         return result;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a "step" expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="StepExpression"/>, comparing input, base value and all stops.
+    /// </summary>
+    /// <param name="other">The step expression to compare with.</param>
+    /// <returns>True if the step expressions are equal; otherwise, false.</returns>
     public bool Equals(StepExpression? other)
     {
         if (other is null)
@@ -119,8 +143,10 @@ public class StepExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is StepExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

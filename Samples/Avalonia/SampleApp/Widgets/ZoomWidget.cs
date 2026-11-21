@@ -13,14 +13,23 @@ namespace SampleApp.Widgets;
 /// </summary>
 public enum ZoomWidgetPosition
 {
+    /// <summary>Top-left corner of the map control.</summary>
     TopLeft,
+    /// <summary>Center of the top edge.</summary>
     TopCenter,
+    /// <summary>Top-right corner of the map control.</summary>
     TopRight,
+    /// <summary>Middle of the left edge.</summary>
     MiddleLeft,
+    /// <summary>Center of the map control.</summary>
     Center,
+    /// <summary>Middle of the right edge.</summary>
     MiddleRight,
+    /// <summary>Bottom-left corner of the map control.</summary>
     BottomLeft,
+    /// <summary>Center of the bottom edge.</summary>
     BottomCenter,
+    /// <summary>Bottom-right corner of the map control.</summary>
     BottomRight
 }
 
@@ -33,6 +42,11 @@ public class ZoomWidget : TextBoxWidget
 {
     private readonly Map _map;
 
+    /// <summary>
+    /// Creates a zoom widget that displays the current zoom level of the map
+    /// and updates itself whenever the map's viewport changes.
+    /// </summary>
+    /// <param name="map">The map whose navigator's viewport is observed.</param>
     public ZoomWidget(Map map)
     {
         _map = map ?? throw new ArgumentNullException(nameof(map));
@@ -50,6 +64,10 @@ public class ZoomWidget : TextBoxWidget
 
     private ZoomWidgetPosition _zoomPosition = ZoomWidgetPosition.TopRight;
 
+    /// <summary>
+    /// Gets or sets the position of the widget on the map control. Setting
+    /// this also updates the widget's horizontal and vertical alignment.
+    /// </summary>
     public ZoomWidgetPosition ZoomPosition
     {
         get => _zoomPosition;

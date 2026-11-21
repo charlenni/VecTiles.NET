@@ -2,8 +2,19 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Tests.Primitives
 {
+    /// <summary>
+    /// Unit tests for the <see cref="Tile" /> primitive.
+    /// </summary>
     public class TileTests
     {
+        /// <summary>
+        /// Verifies that <see cref="Tile.CalculateTileId(int, int, int)" /> and <see cref="Tile.CalculateTile" />
+        /// round-trip between tile coordinates and tile id.
+        /// </summary>
+        /// <param name="x">Tile x coordinate.</param>
+        /// <param name="y">Tile y coordinate.</param>
+        /// <param name="zoom">Zoom level of the tile.</param>
+        /// <param name="expectedId">Expected tile id for the given coordinates.</param>
         [Theory]
         [InlineData(0, 0, 0, 0UL)]
         [InlineData(1, 0, 1, 2UL)]
@@ -20,6 +31,9 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal(zoom, rzoom);
         }
 
+        /// <summary>
+        /// Verifies that a tile constructed from its id exposes the correct x/y/zoom properties.
+        /// </summary>
         [Fact]
         public void Tile_ConstructedWithId_HasCorrectProperties()
         {
@@ -31,6 +45,9 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.True(tile.IsValid);
         }
 
+        /// <summary>
+        /// Verifies that a tile constructed from x/y/zoom computes the matching tile id.
+        /// </summary>
         [Fact]
         public void Tile_ConstructedWithXYZoom_HasCorrectId()
         {
@@ -42,6 +59,9 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal(3, tile.Zoom);
         }
 
+        /// <summary>
+        /// Verifies equality semantics and hash codes of tiles with identical or different coordinates.
+        /// </summary>
         [Fact]
         public void Tile_Equals_And_GetHashCode_Work()
         {
@@ -53,6 +73,9 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal(t1.GetHashCode(), t2.GetHashCode());
         }
 
+        /// <summary>
+        /// Verifies the "x-y@z" string format of <see cref="Tile.ToString" />.
+        /// </summary>
         [Fact]
         public void Tile_ToString_ReturnsExpectedFormat()
         {
@@ -60,6 +83,9 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal("1x-2y@3z", tile.ToString());
         }
 
+        /// <summary>
+        /// Verifies that <see cref="Tile.Parent" /> returns the enclosing tile at one zoom level up.
+        /// </summary>
         [Fact]
         public void Tile_Parent_ReturnsCorrectTile()
         {
@@ -70,6 +96,10 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal(2, parent.Zoom);
         }
 
+        /// <summary>
+        /// Verifies that <see cref="Tile.IsDirectNeighbour" /> recognizes horizontal and vertical
+        /// neighbours but not the tile itself.
+        /// </summary>
         [Fact]
         public void Tile_IsDirectNeighbour_Works()
         {
@@ -82,6 +112,9 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.False(Tile.IsDirectNeighbour(t1.Id, t4.Id));
         }
 
+        /// <summary>
+        /// Verifies that <see cref="Tile.GetSubTiles" /> returns the 2x2 sub range at the deeper zoom.
+        /// </summary>
         [Fact]
         public void Tile_GetSubTiles_ReturnsCorrectRange()
         {
@@ -94,6 +127,10 @@ namespace VecTiles.Common.Tests.Primitives
             Assert.Equal(3, range.Zoom);
         }
 
+        /// <summary>
+        /// Verifies that <see cref="Tile.InvertX" /> and <see cref="Tile.InvertY" />
+        /// mirror the respective coordinate at the zoom level.
+        /// </summary>
         [Fact]
         public void Tile_InvertX_And_InvertY_Work()
         {

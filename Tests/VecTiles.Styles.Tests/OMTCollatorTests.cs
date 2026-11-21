@@ -10,6 +10,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTExpressionCollatorTests
 {
+    /// <summary>
+    /// Provides the collator fixture base names used by the collator theories.
+    /// </summary>
     public static IEnumerable<object?[]> CollatorFixtures =>
         new[]
         {
@@ -17,6 +20,9 @@ public class OMTExpressionCollatorTests
             new object?[] { "collator4" }, new object?[] { "collator5" }
         };
 
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Theory]
     [MemberData(nameof(CollatorFixtures))]
     public void FixtureIsStructurallyEqualToItselfTest(string fixture)
@@ -29,6 +35,9 @@ public class OMTExpressionCollatorTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Theory]
     [MemberData(nameof(CollatorFixtures))]
     public void FixtureIsUnequalToOtherFixtureTest(string fixture)
@@ -41,6 +50,9 @@ public class OMTExpressionCollatorTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the collator options from the collator1 fixtures control case sensitivity.
+    /// </summary>
     [Fact]
     public void CaseSensitivityTest()
     {
@@ -51,6 +63,9 @@ public class OMTExpressionCollatorTests
         Assert.Equal(0, caseInsensitive.Compare("a", "A"));
     }
 
+    /// <summary>
+    /// Verifies that the collator options from the collator2 fixtures control diacritic sensitivity.
+    /// </summary>
     [Fact]
     public void DiacriticSensitivityTest()
     {
@@ -61,6 +76,9 @@ public class OMTExpressionCollatorTests
         Assert.Equal(0, diacriticInsensitive.Compare("a", "\u00e4"));
     }
 
+    /// <summary>
+    /// Verifies that the collators use the locale configured by the collator3 fixtures.
+    /// </summary>
     [Fact]
     public void LocaleTest()
     {

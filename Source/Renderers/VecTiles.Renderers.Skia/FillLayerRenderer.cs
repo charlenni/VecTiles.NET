@@ -7,6 +7,10 @@ using VecTiles.Renderers.Skia.Primitives.Vertices;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Draws the filled polygons of a fill layer as tessellated vertices and,
+/// when present, the polygon outline as a line vertex buffer.
+/// </summary>
 public class FillLayerRenderer : ILayerRenderer, IDisposable
 {
     private readonly VertexBuffer _fillBuffer;
@@ -17,10 +21,23 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
     private readonly FillShader? _fillShader = FillShader.Create();
     private readonly LineShader? _lineShader = LineShader.Create(1f);
 
+    /// <summary>
+    /// Create a fill layer renderer without polygon outline.
+    /// </summary>
+    /// <param name="fillBuffer">Vertex buffer with the tessellated fill geometry.</param>
+    /// <param name="clip">Whether to clip the drawing to the tile bounds.</param>
+    /// <param name="paint">Fill paint evaluated at draw time.</param>
     public FillLayerRenderer(VertexBuffer fillBuffer, bool clip, IPaint paint) : this(fillBuffer, null, clip, paint)
     {
     }
     
+    /// <summary>
+    /// Create a fill layer renderer with polygon outline.
+    /// </summary>
+    /// <param name="fillBuffer">Vertex buffer with the tessellated fill geometry.</param>
+    /// <param name="lineBuffer">Vertex buffer with the outline geometry, or null.</param>
+    /// <param name="clip">Whether to clip the drawing to the tile bounds.</param>
+    /// <param name="paint">Fill paint evaluated at draw time.</param>
     public FillLayerRenderer(VertexBuffer fillBuffer, VertexBuffer? lineBuffer, bool clip, IPaint paint)
     {
         _fillBuffer = fillBuffer;
@@ -29,6 +46,7 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
         _paint = paint;
     }
     
+    /// <inheritdoc />
     public void Draw(object canvas, EvaluationContext context)
     {
         if (canvas is not SKCanvas skCanvas)
@@ -72,6 +90,7 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
         skCanvas.Restore();
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _fillBuffer?.Dispose();

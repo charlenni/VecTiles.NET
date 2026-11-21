@@ -3,8 +3,14 @@ using System.Text;
 
 namespace VecTiles.DataSources.Tests;
 
+/// <summary>
+/// Unit tests for the URI schemes handled by <see cref="ByteDataSource" />.
+/// </summary>
 public class ByteDataSourceTests
 {
+    /// <summary>
+    /// Verifies that an svg-content URI returns the SVG markup as UTF-8 bytes.
+    /// </summary>
     [Fact]
     public async Task LoadFromSvgContentScheme_ReturnsUtf8Bytes()
     {
@@ -19,6 +25,9 @@ public class ByteDataSourceTests
         Assert.Equal(Encoding.UTF8.GetBytes(svg), result);
     }
 
+    /// <summary>
+    /// Verifies that a base64-content URI returns the decoded bytes.
+    /// </summary>
     [Fact]
     public async Task LoadFromBase64ContentScheme_ReturnsDecodedBytes()
     {
@@ -34,6 +43,9 @@ public class ByteDataSourceTests
         Assert.Equal(Encoding.UTF8.GetBytes(data), result);
     }
 
+    /// <summary>
+    /// Verifies that a file URI returns the contents of the referenced file.
+    /// </summary>
     [Fact]
     public async Task LoadFromFileScheme_ReturnsFileBytes()
     {
@@ -57,6 +69,9 @@ public class ByteDataSourceTests
         }
     }
 
+    /// <summary>
+    /// Verifies that <see cref="ByteDataSource.GetBytesAsync" /> rejects an unsupported URI scheme.
+    /// </summary>
     [Fact]
     public async Task GetBytesAsync_UnsupportedScheme_ThrowsArgumentException()
     {
@@ -67,6 +82,9 @@ public class ByteDataSourceTests
         await Assert.ThrowsAsync<ArgumentException>(() => ByteDataSource.GetBytesAsync(source));
     }
 
+    /// <summary>
+    /// Verifies that an embedded URI whose resource does not exist throws an error.
+    /// </summary>
     [Fact]
     public void LoadFromEmbeddedScheme_ResourceNotFound_ThrowsException()
     {

@@ -2,6 +2,9 @@ using SkiaSharp;
 
 namespace VecTiles.Renderers.Skia.Extensions;
 
+/// <summary>
+/// Extension methods for <see cref="SKPath" /> used by the symbol renderers.
+/// </summary>
 public static class SKPathExtensions
 {
     /// <summary>

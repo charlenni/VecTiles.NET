@@ -14,8 +14,16 @@ public sealed record LineSymbolAnchorPlacement(float Position, bool Icon, bool T
 /// </summary>
 public sealed class LineSymbolPlacementRun
 {
+    /// <summary>
+    /// Run without any placed anchors, used when nothing of the symbol fits
+    /// onto the line.
+    /// </summary>
     public static readonly LineSymbolPlacementRun Empty = new(Array.Empty<IReadOnlyList<LineSymbolAnchorPlacement>>());
 
+    /// <summary>
+    /// Create a placement run for already placed anchor decisions.
+    /// </summary>
+    /// <param name="contours">Placed anchors per geometry contour, in contour order.</param>
     public LineSymbolPlacementRun(IReadOnlyList<IReadOnlyList<LineSymbolAnchorPlacement>> contours)
     {
         Contours = contours;

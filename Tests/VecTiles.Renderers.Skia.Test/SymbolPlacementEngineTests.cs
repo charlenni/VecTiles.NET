@@ -47,6 +47,10 @@ public class SymbolPlacementEngineTests
         return SymbolPlacementEngine.Compute([tile], ZoomLevel, WorldToScreen);
     }
 
+    /// <summary>
+    /// Verifies that two colliding symbols are resolved in favor of the higher
+    /// style layer; the lower symbol is rejected.
+    /// </summary>
     [Fact]
     public void Collision_HigherStyleLayerWins()
     {
@@ -70,6 +74,10 @@ public class SymbolPlacementEngineTests
         Assert.Contains(low, result.Rejected);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="PlacementResult.PlacedByLayer" /> lists the
+    /// style layers in ascending style order when there are no collisions.
+    /// </summary>
     [Fact]
     public void PlacedByLayer_KeepsAscendingStyleOrder()
     {

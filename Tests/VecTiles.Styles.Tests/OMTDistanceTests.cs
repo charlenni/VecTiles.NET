@@ -12,6 +12,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTDistanceTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -23,6 +26,9 @@ public class OMTDistanceTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -34,6 +40,9 @@ public class OMTDistanceTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the distance is (almost) zero when the feature point lies on the fixture geometry.
+    /// </summary>
     [Fact]
     public void FeatureOnTheGeometryTest()
     {
@@ -48,6 +57,9 @@ public class OMTDistanceTests
         Assert.InRange((double)distance!, 0d, 1d);
     }
 
+    /// <summary>
+    /// Verifies that the distance for a point inside the line ring is measured to the nearest segment.
+    /// </summary>
     [Fact]
     public void FeatureInsideTheLineRingTest()
     {

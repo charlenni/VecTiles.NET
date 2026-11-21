@@ -15,8 +15,15 @@ public class SchanzengrabenDumpTests
     readonly string _path = Path.Combine("Files", "zurich.mbtiles");
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper for logging dumped features.</param>
     public SchanzengrabenDumpTests(ITestOutputHelper output) => _output = output;
 
+    /// <summary>
+    /// Writes the poi and waterway features of the tile and its neighbors to the test output.
+    /// </summary>
     [Fact]
     public async Task DumpPoiAndWaterwayFeatures()
     {

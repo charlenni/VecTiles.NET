@@ -19,6 +19,7 @@ public class DistanceExpression : Expression
     /// <summary>Mean earth radius in meters (WGS84).</summary>
     public const double EarthRadius = 6371008.8;
 
+    /// <summary>Meters per degree of latitude at the equator, derived from <see cref="EarthRadius"/>.</summary>
     public const double MetersPerDegree = Math.PI * EarthRadius / 180.0;
 
     private readonly Geometry _geometry;
@@ -28,6 +29,12 @@ public class DistanceExpression : Expression
         _geometry = geometry;
     }
 
+    /// <summary>
+    /// Parses a "distance" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 2)
@@ -44,6 +51,12 @@ public class DistanceExpression : Expression
         return new DistanceExpression(geometry);
     }
 
+    /// <summary>
+    /// Evaluates the geodesic distance in meters between the geometry of the
+    /// evaluated feature and the reference geometry given at parse time.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The distance in meters, or null if the feature has no geometry.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var featureGeometry = ctx.Feature?.Geometry;
@@ -131,18 +144,36 @@ public class DistanceExpression : Expression
         return (longitude * MetersPerDegree * scale, latitude * MetersPerDegree);
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a "distance" expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="DistanceExpression"/>, comparing the reference geometries
+    /// topologically.
+    /// </summary>
+    /// <param name="other">The distance expression to compare with.</param>
+    /// <returns>True if the geometries are equal; otherwise, false.</returns>
     public bool Equals(DistanceExpression? other)
         => other is not null && (ReferenceEquals(this, other) || _geometry.EqualsTopologically(other._geometry));
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is DistanceExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() => _geometry.GetHashCode();
 
+    /// <summary>
+    /// Returns a string representation of this expression with its reference geometry.
+    /// </summary>
+    /// <returns>A string containing the reference geometry.</returns>
     public override string ToString()
     {
         var builder = new StringBuilder("distance: ").AppendLine(_geometry.ToString());

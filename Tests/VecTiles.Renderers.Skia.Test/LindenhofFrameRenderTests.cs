@@ -22,6 +22,10 @@ public class LindenhofFrameRenderTests
 
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public LindenhofFrameRenderTests(ITestOutputHelper output) => _output = output;
 
     private const int Zoom = 18;
@@ -29,6 +33,12 @@ public class LindenhofFrameRenderTests
     private const double WorldHalf = WorldWidth / 2;
     private static double TileSpanWorld => WorldWidth / Math.Pow(2, Zoom);
 
+    /// <summary>
+    /// Renders the Lindenhof frame with and without the tile above and saves the
+    /// bitmap under the given file name for visual inspection.
+    /// </summary>
+    /// <param name="withTileAbove">Whether tile 18/137291/91802 is part of the view.</param>
+    /// <param name="fileName">Name of the saved result bitmap.</param>
     [Theory]
     [InlineData(true, "lindenhof-with-91802.png")]
     [InlineData(false, "lindenhof-without-91802.png")]

@@ -6,8 +6,14 @@ using VecTiles.Converters.OpenMapTiles.Pbf;
 
 namespace VecTiles.Converters.OpenMapTiles.Parser;
 
+/// <summary>
+/// Parses tiles in OpenMapTiles PBF format into <see cref="VectorTile"/> instances.
+/// </summary>
 public static class Parser
 {
+    /// <summary>
+    /// Name of the attribute the feature identifier is stored under.
+    /// </summary>
     public static string Id = "id";
 
     private static GeometryFactory geometryFactory = GeometryFactory.Default;

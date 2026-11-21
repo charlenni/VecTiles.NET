@@ -76,6 +76,13 @@ public sealed class GetEqualsExpression : Expression
         };
     }
 
+    /// <summary>
+    /// Evaluates the attribute of the feature under the stored key and
+    /// compares it to the stored literal, respecting the comparison kind and
+    /// the negation flag.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>True if the comparison matches the negation setting; otherwise, false.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var value = ExpressionValueHelper.GetAttribute(ctx, _key);
@@ -91,11 +98,23 @@ public sealed class GetEqualsExpression : Expression
         return result != _negated;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of the comparison cannot be
+    /// determined statically (the result can be true or false).
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="GetEqualsExpression"/>, comparing key, negation flag,
+    /// comparison kind and literal value.
+    /// </summary>
+    /// <param name="other">The expression to compare with.</param>
+    /// <returns>True if the expressions are equal; otherwise, false.</returns>
     public bool Equals(GetEqualsExpression? other)
     {
         return other is not null
@@ -107,7 +126,9 @@ public sealed class GetEqualsExpression : Expression
             && string.Equals(_stringValue, other._stringValue, StringComparison.Ordinal);
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is GetEqualsExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_key, _negated, _stringValue, _numberValue, _boolValue);
 }

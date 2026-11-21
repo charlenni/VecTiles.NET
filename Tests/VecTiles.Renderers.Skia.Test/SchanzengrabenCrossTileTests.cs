@@ -28,6 +28,10 @@ public class SchanzengrabenCrossTileTests
 
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public SchanzengrabenCrossTileTests(ITestOutputHelper output) => _output = output;
 
     private const int Zoom = 17;
@@ -35,6 +39,13 @@ public class SchanzengrabenCrossTileTests
     private const double WorldHalf = WorldWidth / 2;
     private static double TileSpanWorld => WorldWidth / Math.Pow(2, Zoom);
 
+    /// <summary>
+    /// Renders the water_name_line placement variants around tile 17/68642/45902 and
+    /// writes the result bitmaps for comparison of the label placement.
+    /// </summary>
+    /// <param name="mode">
+    /// The variant: "without-68644", "with-68644" (tile added artificially) or "panned-right".
+    /// </param>
     [Theory]
     [InlineData("without-68644")]
     [InlineData("with-68644")]

@@ -5,8 +5,19 @@ using VecTiles.Styles.OpenMapTiles.Json;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Loads an OpenMapTiles style file from a file path or URL, including its
+/// sources and sprites.
+/// </summary>
 public class OMTStyleFileLoader
 {
+    /// <summary>
+    /// Loads and deserializes the style file, creates its data sources, and
+    /// loads the referenced sprite file.
+    /// </summary>
+    /// <param name="source">File path or URL of the style file.</param>
+    /// <returns>The loaded style file with sources and sprites initialized.</returns>
+    /// <exception cref="ArgumentException">Thrown if the file isn't a valid style file.</exception>
     public static async Task<OMTStyleFile> Load(string source)
     {
         OMTStyleFile? omtStyleFile;
@@ -26,6 +37,11 @@ public class OMTStyleFileLoader
         return omtStyleFile;
     }
 
+    /// <summary>
+    /// Names each source by its key in the dictionary and creates its data source.
+    /// </summary>
+    /// <param name="sources">The source descriptions of the style file, keyed by name.</param>
+    /// <returns>A task that completes when all sources have been created.</returns>
     public static async Task CreateSources(Dictionary<string, OMTSource> sources)
     {
         foreach (var source in sources)
@@ -35,6 +51,13 @@ public class OMTStyleFileLoader
         }
     }
 
+    /// <summary>
+    /// Loads a sprite atlas from its base path ("@2x" version when available,
+    /// unsuffixed version as fallback), returning the dictionary of sprites.
+    /// </summary>
+    /// <param name="spriteFile">Base path or URL of the sprite file, without file extension.</param>
+    /// <returns>The sprite dictionary with each sprite's atlas set to the loaded bitmap.</returns>
+    /// <exception cref="ArgumentException">Thrown if the sprite JSON isn't valid.</exception>
     public static async Task<SpriteDictionary> LoadSprites(string spriteFile)
     {
         Dictionary<string, Sprite>? omtSprites;

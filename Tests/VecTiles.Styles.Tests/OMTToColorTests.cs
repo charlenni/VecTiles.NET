@@ -12,6 +12,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTToColorTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -23,6 +26,9 @@ public class OMTToColorTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -34,6 +40,9 @@ public class OMTToColorTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the to-color fixture converts a CSS color string into a color.
+    /// </summary>
     [Fact]
     public void StringColorTest()
     {
@@ -46,6 +55,9 @@ public class OMTToColorTests
         Assert.Equal(new Color(255, 0, 0, 255), color);
     }
 
+    /// <summary>
+    /// Verifies that a non-color attribute value evaluates to null when no fallback is given.
+    /// </summary>
     [Fact]
     public void NonColorWithoutFallbackTest()
     {

@@ -8,13 +8,19 @@ using SampleApp.Views;
 
 namespace SampleApp;
 
+/// <summary>
+/// The sample application: loads the XAML and sets up the main window or main
+/// view with a <see cref="MainViewModel"/> for the current application lifetime.
+/// </summary>
 public partial class App : Application
 {
+    /// <inheritdoc />
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
     }
 
+    /// <inheritdoc />
     public override void OnFrameworkInitializationCompleted()
     {
         // Line below is needed to remove Avalonia data validation.

@@ -60,8 +60,10 @@ public class StoppedEnum<T> : IStopped<T> where T : struct, Enum
     bool _hasStops = false;
     IList<KeyValuePair<float, T>> _stops = [];
 
+    /// <summary>The interpolation base of the stop curve. Enum values are not interpolated, so this value has no effect on the evaluation.</summary>
     public float Base { get; set; } = 1f;
 
+    /// <summary>The zoom/value stops of the stopped function, in ascending zoom order.</summary>
     public IList<KeyValuePair<float, T>> Stops
     {
         get => _stops;
@@ -132,11 +134,13 @@ public class StoppedEnum<T> : IStopped<T> where T : struct, Enum
         return default(T);
     }
 
+    /// <inheritdoc />
     public T PossibleOutputs()
     {
         throw new System.NotImplementedException();
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         if (Expression != null)

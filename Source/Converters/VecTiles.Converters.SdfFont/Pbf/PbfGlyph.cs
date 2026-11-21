@@ -2,6 +2,9 @@
 
 namespace VecTiles.Converters.SdfFont.Pbf;
 
+/// <summary>
+/// Represents a single glyph (character) with its signed distance field bitmap from a Mapbox SDF font PBF message.
+/// </summary>
 [ProtoContract(Name = "glyph")]
 public sealed class PbfGlyph : IExtensible
 {

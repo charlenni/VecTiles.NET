@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTExpressionVarTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTExpressionVarTests
         Assert.Null(expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
@@ -35,6 +41,9 @@ public class OMTExpressionVarTests
         Assert.Equal("Apple", expression!.Evaluate(OMTExpressionTestsHelper.CreateContext()));
     }
 
+    /// <summary>
+    /// Verifies that a let expression referencing an unknown variable fails to parse.
+    /// </summary>
     [Fact]
     public void UnknownVariableTest()
     {

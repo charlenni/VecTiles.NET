@@ -78,6 +78,10 @@ internal static class PlacementServiceTestSupport
 /// </summary>
 public class PlacementServiceTests
 {
+    /// <summary>
+    /// Verifies that while a new placement pass for a changed tile set runs,
+    /// the retained set of the previous pass is handed out, so symbols stay on screen.
+    /// </summary>
     [Fact]
     public void RetainedSet_KeepsSymbolsWhileNewPassRuns()
     {
@@ -130,6 +134,10 @@ public class PlacementServiceTests
         Assert.NotSame(resultA, resultB);
     }
 
+    /// <summary>
+    /// Verifies that a zoom change hands the retained set of the old zoom out
+    /// as an incomplete, rescaled holdover until the new pass finishes.
+    /// </summary>
     [Fact]
     public void ZoomChange_HandsOutTheRetainedSetAsRescaledHoldover()
     {
@@ -173,6 +181,10 @@ public class PlacementServiceTests
         source.Gate.TrySetResult(true);
     }
 
+    /// <summary>
+    /// Verifies that line runs of a holdover are rescaled by 2^(old - new)
+    /// into the canonical placement space of the new zoom, and back again.
+    /// </summary>
     [Fact]
     public void Holdover_LineRunsAreRescaledIntoTheNewZoomSpace()
     {
@@ -213,6 +225,10 @@ public class PlacementServiceTests
         Assert.Equal(80f, anchorBack.Placement.PathLength);
     }
 
+    /// <summary>
+    /// Verifies that an incomplete pass does not replace the retained set,
+    /// so symbols stay on screen while tiles are still missing.
+    /// </summary>
     [Fact]
     public void IncompletePass_DoesNotReplaceTheRetainedSet()
     {
@@ -232,6 +248,11 @@ public class PlacementServiceTests
         Assert.Same(resultA, service.Update(keyB, 8, (x, y) => (x, y)).Placement);
     }
 
+    /// <summary>
+    /// Verifies the placement crossfade transitions: no fade on the first draw and
+    /// on holdover exchanges, a fade when a holdover or a cached set is replaced
+    /// by the finished placement, and an instant swap for a replacement at the same zoom.
+    /// </summary>
     [Fact]
     public void PlacementFade_StartsWhenHoldoverIsReplaced()
     {
@@ -286,6 +307,10 @@ public class PlacementServiceTests
         Assert.Equal(1f, newAlpha);
     }
 
+    /// <summary>
+    /// Verifies that while an incomplete result is on screen, no new fetch passes
+    /// start within the retry cooldown.
+    /// </summary>
     [Fact]
     public void IncompleteResult_NoNewFetchAttemptsWithinCooldown()
     {
@@ -317,6 +342,10 @@ public class PlacementServiceTests
         Assert.Equal(2, source.Requests.Count);
     }
 
+    /// <summary>
+    /// Verifies that an incomplete view schedules a retry after the cooldown,
+    /// which fires a completion event and starts a new fetch pass.
+    /// </summary>
     [Fact]
     public async Task IncompleteResult_SchedulesARetryWhileTheHoldoverIsOnScreen()
     {
@@ -367,6 +396,10 @@ public class PlacementServiceTests
             "the scheduled retry did not start a new placement pass");
     }
 
+    /// <summary>
+    /// Verifies that <see cref="PlacementService.TileArrived" /> fires once for
+    /// every arrived tile of the view.
+    /// </summary>
     [Fact]
     public void TileArrived_FiresForEachTileOfTheView()
     {
@@ -386,6 +419,12 @@ public class PlacementServiceTests
         Assert.Single(arrived);
     }
 
+    /// <summary>
+    /// Tests, that ClearCache (e.g. after a style change in the sample app)
+    /// drops the arrived tiles of the view, so that the next Update for the
+    /// same view starts a new fetch pass - otherwise no tile is fetched or
+    /// drawn at all until the user moves the map.
+    /// </summary>
     [Fact]
     public void ClearCache_RestartsTheFetchPassForAnUnchangedView()
     {
@@ -416,6 +455,10 @@ public class PlacementServiceTests
 /// </summary>
 public class PlacementServiceTileRetentionTests
 {
+    /// <summary>
+    /// Verifies that a pan keeps the tiles of the previous view that still
+    /// overlap the new tile set, so they draw immediately.
+    /// </summary>
     [Fact]
     public void Pan_KeepsOverlappingTilesOfThePreviousView()
     {
@@ -438,6 +481,10 @@ public class PlacementServiceTileRetentionTests
         Assert.Equal(2, ids.Count);
     }
 
+    /// <summary>
+    /// Verifies that an update with an unchanged tile set keeps all tiles and
+    /// does not start new fetches.
+    /// </summary>
     [Fact]
     public void PanOfTheWholeView_TileSetUntouched_KeepsAllTiles()
     {
@@ -456,6 +503,10 @@ public class PlacementServiceTileRetentionTests
         Assert.Equal(2, source.Requests.Count);
     }
 
+    /// <summary>
+    /// Verifies that a zoom change drops the tiles of the previous zoom level;
+    /// retained tiles of the wrong level must not appear.
+    /// </summary>
     [Fact]
     public void ZoomChange_DropsAllTiles()
     {

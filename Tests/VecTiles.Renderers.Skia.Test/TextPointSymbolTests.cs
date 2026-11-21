@@ -10,6 +10,10 @@ using TextAlignment = Topten.RichTextKit.TextAlignment;
 
 namespace VecTiles.Renderers.Skia.Test;
 
+/// <summary>
+/// Visual tests for <see cref="TextPointSymbol" />: draws labels with every
+/// supported style property and compares the rendered bitmaps with the saved originals.
+/// </summary>
 public class TextPointSymbolTests
 {
     private static readonly string _path = Utilities.DataFiles;
@@ -22,6 +26,9 @@ public class TextPointSymbolTests
     private SKFont _font = new SKFont(SKTypeface.FromFamilyName("Roboto", SKFontStyle.Bold));
     private EvaluationContext _context = new EvaluationContext(0, 1, 0);
 
+    /// <summary>
+    /// Prepares a 201x201 canvas centered at (100, 100).
+    /// </summary>
     public TextPointSymbolTests()
     {
         _bitmap = Utilities.CreateBitmap(201, 201);
@@ -32,6 +39,11 @@ public class TextPointSymbolTests
         _canvas.Translate(100, 100);
     }
 
+    /// <summary>
+    /// Draws the label with the given unanchored offset and compares the result with the original image.
+    /// </summary>
+    /// <param name="x">Offset in x direction in pixels.</param>
+    /// <param name="y">Offset in y direction in pixels.</param>
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(20.0, 0.0)]
@@ -51,6 +63,11 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Text-Offset-{x}x-{y}y.png"));
     }
 
+    /// <summary>
+    /// Draws the label anchored at the given relative anchor point and compares the result with the original image.
+    /// </summary>
+    /// <param name="x">Relative anchor position in x direction (0 to 1).</param>
+    /// <param name="y">Relative anchor position in y direction (0 to 1).</param>
     [Theory]
     [InlineData(0.5, 0.5)]
     [InlineData(0, 0.5)]
@@ -75,6 +92,10 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Text-Anchor-{x * 100}x-{y * 100}y.png"));
     }
 
+    /// <summary>
+    /// Draws labels with opacities from 1 down to 0.1 at fixed positions and
+    /// compares the combined bitmap with the original image.
+    /// </summary>
     [Fact]
     public void OpacityTest()
     {
@@ -122,6 +143,12 @@ public class TextPointSymbolTests
         _canvas.Restore();
     }
 
+    /// <summary>
+    /// Draws the label with the given translate distance (map anchored) and compares
+    /// the result with the original image.
+    /// </summary>
+    /// <param name="tx">Translate distance in x direction in pixels.</param>
+    /// <param name="ty">Translate distance in y direction in pixels.</param>
     [Theory]
     [InlineData(0.0, 0.0)]
     [InlineData(10.0, 0.0)]
@@ -142,6 +169,13 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Text-Translate-{tx}x-{ty}y.png"));
     }
 
+    /// <summary>
+    /// Draws the label with a translate offset under a rotated map for both translate
+    /// anchors and both rotation alignments, comparing the result with the original image.
+    /// </summary>
+    /// <param name="translateAnchor">The <see cref="MapAlignment" /> value of the translate anchor.</param>
+    /// <param name="alignment">The <see cref="MapAlignment" /> value of the rotation alignment.</param>
+    /// <param name="mapRotation">The rotation of the map in degrees.</param>
     [Theory]
     [InlineData(0, 0, 75)] // Map
     [InlineData(0, 1, 75)] // Map
@@ -167,6 +201,11 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, rotationContext, $"Text-TranslateAnchor-{anchor}-Alignment-{rotationAlignment}.png"));
     }
 
+    /// <summary>
+    /// Draws the label rotated by the given angle (viewport aligned) and compares
+    /// the result with the original image.
+    /// </summary>
+    /// <param name="rotation">The rotation in degrees.</param>
     [Theory]
     [InlineData(0)]
     [InlineData(15)]
@@ -195,6 +234,13 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Text-Rotation-{rotation}.png"));
     }
 
+    /// <summary>
+    /// Draws the rotated label under a rotated map for each rotation alignment
+    /// and compares the result with the original image.
+    /// </summary>
+    /// <param name="alignment">The <see cref="MapAlignment" /> value of the rotation alignment.</param>
+    /// <param name="rotation">The rotation of the symbol in degrees.</param>
+    /// <param name="mapRotation">The rotation of the map in degrees.</param>
     [Theory]
     [InlineData(0, 15, 30)] // Map
     [InlineData(1, 15, 30)] // Viewport
@@ -221,6 +267,10 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, rotationContext, $"Text-RotationAlignment-{align}-{rotation}-{mapRotation}.png"));
     }
 
+    /// <summary>
+    /// Draws labels with paddings from 0 to 15 at fixed positions and compares
+    /// the combined bitmap with the original image.
+    /// </summary>
     [Fact]
     public void PaddingTest()
     {
@@ -266,6 +316,10 @@ public class TextPointSymbolTests
         _canvas.Restore();
     }
 
+    /// <summary>
+    /// Draws labels in several Roboto variants at fixed positions and compares
+    /// the combined bitmap with the original image.
+    /// </summary>
     [Fact]
     public void FontTest()
     {
@@ -310,6 +364,12 @@ public class TextPointSymbolTests
         _canvas.Restore();
     }
 
+    /// <summary>
+    /// Draws the label with and without keep-upright at four rotations and
+    /// compares the result with the original image.
+    /// </summary>
+    /// <param name="keepUpright">Whether the symbol is forced to stay upright.</param>
+    /// <param name="rotation">The rotation of the symbol in degrees.</param>
     [Theory]
     [InlineData(false, 0f)]
     [InlineData(false, 45f)]
@@ -336,6 +396,10 @@ public class TextPointSymbolTests
         Assert.True(DrawAndCompare(symbol, _context, $"Text-KeepUpright-{keepUpright}-{rotation}.png"));
     }
 
+    /// <summary>
+    /// Verifies that <see cref="TextPointSymbol.Copy" /> copies all properties to a new symbol,
+    /// keeping references for shared objects and delegates while copying envelopes by value.
+    /// </summary>
     [Fact]
     public void CopyCopiesAllProperties()
     {
@@ -486,8 +550,14 @@ public class TextPointSymbolTests
         return Utilities.CompareBitmaps(Path.Combine(ResultsFolder, filename), Path.Combine(OriginalsFolder, filename));
     }
 
+    /// <summary>
+    /// Tests the letter spacing of the rendered text layout.
+    /// </summary>
     public class TextLetterSpacingTests
     {
+        /// <summary>
+        /// Verifies that a letter spacing greater than zero widens the measured text.
+        /// </summary>
         [Fact]
         public void SpacingWidensText()
         {

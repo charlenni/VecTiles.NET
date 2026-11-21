@@ -2,6 +2,9 @@
 
 namespace VecTiles.Converters.SdfFont.Pbf;
 
+/// <summary>
+/// Represents a Mapbox SDF font glyphs PBF message containing one or more fontstacks.
+/// </summary>
 [ProtoContract(Name = "glyphs")]
 public sealed class PbfGlyphs : IExtensible
 {

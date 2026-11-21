@@ -2,8 +2,16 @@ using Xunit;
 
 namespace VecTiles.Renderers.Skia.Test;
 
+/// <summary>
+/// Diagnostic: dumps the zoom math values (declaring assemblies of the
+/// ToZoomLevel/ToResolution extension methods and a reference resolution)
+/// to /tmp/zoommath.txt.
+/// </summary>
 public class ZoomMathDumpTests
 {
+    /// <summary>
+    /// Writes the zoom math dump; produces no assertions.
+    /// </summary>
     [Fact]
     public void DumpZoomMath()
     {

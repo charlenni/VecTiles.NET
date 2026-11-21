@@ -1,13 +1,34 @@
 ﻿namespace VecTiles.Common.Primitives;
 
+/// <summary>
+/// Provides a set of predefined default <see cref="Color"/> values.
+/// </summary>
 public static class  Colors
 {
     // Default colors
+    /// <summary>
+    /// Fully transparent color.
+    /// </summary>
     public static Color Empty = new(0, 0, 0, 0);
+    /// <summary>
+    /// Black color.
+    /// </summary>
     public static Color Black = new(0, 0, 0, 255);
+    /// <summary>
+    /// White color.
+    /// </summary>
     public static Color White = new(255, 255, 255, 255);
+    /// <summary>
+    /// Red color.
+    /// </summary>
     public static Color Red = new(255, 0, 0, 255);
+    /// <summary>
+    /// Green color.
+    /// </summary>
     public static Color Green = new(0, 255, 0, 255);
+    /// <summary>
+    /// Blue color.
+    /// </summary>
     public static Color Blue = new(0, 0, 255, 255);
 }
 

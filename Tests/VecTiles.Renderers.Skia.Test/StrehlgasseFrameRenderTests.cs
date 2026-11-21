@@ -21,6 +21,10 @@ public class StrehlgasseFrameRenderTests
     
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public StrehlgasseFrameRenderTests(ITestOutputHelper output) => _output = output;
 
     private const int Zoom = 18;
@@ -28,6 +32,10 @@ public class StrehlgasseFrameRenderTests
     private const double WorldHalf = WorldWidth / 2;
     private static double TileSpanWorld => WorldWidth / Math.Pow(2, Zoom);
 
+    /// <summary>
+    /// Renders the Strehlgasse frame at zoom 17.9 and logs the placement of both
+    /// symbols to the test output for overlap analysis.
+    /// </summary>
     [Fact]
     public void RenderStrehlgasseFrame()
     {

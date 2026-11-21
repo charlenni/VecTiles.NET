@@ -39,6 +39,14 @@ public class CompoundExpression : Expression
         _args = args;
     }
 
+    /// <summary>
+    /// Parses a compound operator expression from the given JSON array,
+    /// dispatching to the operator registered in
+    /// <see cref="CompoundExpressionRegistry"/>.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var op = array[0] is JsonValue operatorValue && operatorValue.TryGetValue<string>(out var operatorName)
@@ -96,16 +104,33 @@ public class CompoundExpression : Expression
         return new CompoundExpression(op, args!);
     }
 
+    /// <summary>
+    /// Evaluates the compound operator with the parsed argument expressions.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The value produced by the operator, or null if it fails.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         return _operator.Evaluate(ctx, _args);
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a compound expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="CompoundExpression"/>, comparing the operator name and all
+    /// argument expressions.
+    /// </summary>
+    /// <param name="other">The compound expression to compare with.</param>
+    /// <returns>True if the compound expressions are equal; otherwise, false.</returns>
     public bool Equals(CompoundExpression? other)
     {
         if (other is null)
@@ -126,8 +151,10 @@ public class CompoundExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CompoundExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

@@ -12,6 +12,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTWithinTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -23,6 +26,9 @@ public class OMTWithinTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -34,6 +40,9 @@ public class OMTWithinTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that a point inside the fixture polygon evaluates to true.
+    /// </summary>
     [Fact]
     public void PointInsidePolygonTest()
     {
@@ -44,6 +53,9 @@ public class OMTWithinTests
         Assert.Equal(true, expression!.Evaluate(OMTExpressionTestsHelper.CreateContext(new Point(1, 1))));
     }
 
+    /// <summary>
+    /// Verifies that a point outside the fixture polygon evaluates to false.
+    /// </summary>
     [Fact]
     public void PointOutsidePolygonTest()
     {
@@ -54,6 +66,9 @@ public class OMTWithinTests
         Assert.Equal(false, expression!.Evaluate(OMTExpressionTestsHelper.CreateContext(new Point(7, 7))));
     }
 
+    /// <summary>
+    /// Verifies that a point on the polygon boundary counts as within.
+    /// </summary>
     [Fact]
     public void PointOnBoundaryTest()
     {

@@ -5,8 +5,20 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Creates a <see cref="Paint"/> for a line layer from the paint
+/// properties of an OpenMapTiles style.
+/// </summary>
 public static class OMTLinePaint
 {
+    /// <summary>
+    /// Creates a stroke paint from the line properties (color, width, opacity,
+    /// dash array, pattern, cap, and join) of the given layer style.
+    /// </summary>
+    /// <param name="style">The layer style; must be an <see cref="OMTLayerStyle"/>.</param>
+    /// <param name="spriteFactory">Factory that resolves a sprite name into a sprite image.</param>
+    /// <returns>The paint for the line layer.</returns>
+    /// <exception cref="ArgumentException">Thrown if the style is not an <see cref="OMTLayerStyle"/>.</exception>
     public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
     {
         if (style is not OMTLayerStyle omtStyle)

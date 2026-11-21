@@ -4,10 +4,19 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Creates paints for OpenMapTiles layer styles, resolving sprite references
+/// through the given sprite dictionary.
+/// </summary>
 public class OMTPaintFactory : IPaintFactory
 {
     Func<string, Sprite> _spriteFactory;
 
+    /// <summary>
+    /// Initializes the factory with a sprite dictionary used to resolve sprite names.
+    /// </summary>
+    /// <param name="spriteDictionary">The dictionary containing the sprites referenced by the styles.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the dictionary is null.</exception>
     public OMTPaintFactory(SpriteDictionary? spriteDictionary) 
     {
         if (spriteDictionary == null)
@@ -21,6 +30,7 @@ public class OMTPaintFactory : IPaintFactory
         };
     }
 
+    /// <inheritdoc />
     public IPaint? CreatePaint(ILayerStyle style)
     {
         return style.StyleType switch

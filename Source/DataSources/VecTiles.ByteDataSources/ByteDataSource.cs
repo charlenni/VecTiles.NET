@@ -15,11 +15,29 @@ namespace VecTiles.DataSources;
 /// </summary>
 public static class ByteDataSource
 {
+    /// <summary>
+    /// Scheme of a source URI that identifies an embedded manifest resource.
+    /// </summary>
     public const string EmbeddedScheme = "embedded";
+    /// <summary>
+    /// Scheme of a source URI that identifies a file in the file system.
+    /// </summary>
     public const string FileScheme = "file";
+    /// <summary>
+    /// Scheme of a source URI that identifies a resource on an unsecured HTTP server.
+    /// </summary>
     public const string HttpScheme = "http";
+    /// <summary>
+    /// Scheme of a source URI that identifies a resource on an HTTPS server.
+    /// </summary>
     public const string HttpsScheme = "https";
+    /// <summary>
+    /// Scheme for a source URI whose payload is the raw UTF-8 encoded SVG content itself.
+    /// </summary>
     public const string SvgContentScheme = "svg-content";
+    /// <summary>
+    /// Scheme for a source URI whose payload is the base64 encoded content itself.
+    /// </summary>
     public const string Base64ContentScheme = "base64-content";
 
     private static ConcurrentDictionary<string, Assembly>? _embeddedResources;

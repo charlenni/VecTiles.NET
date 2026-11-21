@@ -6,18 +6,28 @@ using VecTiles.Renderers.Skia.Extensions;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Draws the circles of a circle layer: fills each circle at its evaluated
+/// radius and optionally draws an outline around it.
+/// </summary>
 public class CircleLayerRenderer : ILayerRenderer, IDisposable
 {
     private readonly SKPoint[] _points;
     private readonly IPaint _paint;
     private readonly SKPaint _skPaint = new() { IsAntialias = true };
 
+    /// <summary>
+    /// Create a circle layer renderer for the given circle centers and paint.
+    /// </summary>
+    /// <param name="points">Circle centers in tile pixel coordinates.</param>
+    /// <param name="paint">Circle paint evaluated at draw time.</param>
     public CircleLayerRenderer(SKPoint[] points, IPaint paint)
     {
         _points = points;
         _paint = paint;
     }
 
+    /// <inheritdoc />
     public void Draw(object canvas, EvaluationContext context)
     {
         if (canvas is not SKCanvas skCanvas)
@@ -76,6 +86,7 @@ public class CircleLayerRenderer : ILayerRenderer, IDisposable
         skCanvas.Restore();
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _skPaint.Dispose();

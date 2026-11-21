@@ -7,6 +7,10 @@ using VecTiles.Renderers.Skia.Primitives.Vertices;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Draws the stroked lines of a line layer as expanded tessellated line
+/// geometry, supporting dash arrays and image patterns.
+/// </summary>
 public class LineLayerRenderer : ILayerRenderer, IDisposable
 {
     private readonly VertexBuffer _lineBuffer;
@@ -15,6 +19,13 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
     private readonly SKPaint _skPaint = new() { IsAntialias = true };
     private readonly LineShader? _shader;
 
+    /// <summary>
+    /// Create a line layer renderer for the given line geometry and paint.
+    /// </summary>
+    /// <param name="lineBuffer">Vertex buffer with the tessellated line geometry.</param>
+    /// <param name="clip">Whether to clip the drawing to the tile bounds.</param>
+    /// <param name="paint">Line paint evaluated at draw time.</param>
+    /// <param name="maxStrokeWidth">Largest stroke width the vertex buffer was expanded for.</param>
     public LineLayerRenderer(VertexBuffer lineBuffer, bool clip, IPaint paint, float maxStrokeWidth)
     {
         _lineBuffer = lineBuffer;
@@ -24,6 +35,7 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         _shader = LineShader.Create(maxStrokeWidth);
     }
 
+    /// <inheritdoc />
     public void Draw(object canvas, EvaluationContext context)
     {
         if (canvas is not SKCanvas skCanvas)
@@ -68,6 +80,7 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         skCanvas.Restore();
     }
 
+    /// <inheritdoc />
     public void Dispose()
     {
         _lineBuffer?.Dispose();

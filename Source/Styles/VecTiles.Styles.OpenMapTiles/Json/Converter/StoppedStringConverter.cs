@@ -5,8 +5,13 @@ using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
+/// <summary>
+/// JSON converter for zoom-dependent string values. Accepts a plain string,
+/// a stops object, or an expression array.
+/// </summary>
 public class StoppedStringConverter : JsonConverter<StoppedString>
 {
+    /// <inheritdoc />
     public override StoppedString Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var token = JsonNode.Parse(ref reader);
@@ -40,6 +45,8 @@ public class StoppedStringConverter : JsonConverter<StoppedString>
         return new StoppedString { SingleVal = StoppedExpression.ToStringValue(MatchExpression.ToValue(token)) };
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown; stopped values are read-only.</exception>
     public override void Write(Utf8JsonWriter writer, StoppedString value, JsonSerializerOptions options)
     {
         throw new NotSupportedException("Stopped values are only read, never written.");

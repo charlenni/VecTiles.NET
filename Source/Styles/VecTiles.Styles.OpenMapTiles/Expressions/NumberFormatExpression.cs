@@ -15,12 +15,16 @@ public class NumberFormatExpression : Expression
 {
     private readonly IExpression _input;
 
+    /// <summary>The locale tag (BCP 47) used for formatting, or null for the invariant culture.</summary>
     public string? Locale { get; }
 
+    /// <summary>The currency code for currency formatting, or null for plain number formatting.</summary>
     public string? Currency { get; }
 
+    /// <summary>The minimum number of fraction digits, or null to use the default.</summary>
     public int? MinFractionDigits { get; }
 
+    /// <summary>The maximum number of fraction digits, or null to use the default.</summary>
     public int? MaxFractionDigits { get; }
 
     private NumberFormatExpression(IExpression input, string? locale, string? currency, int? minFractionDigits, int? maxFractionDigits)
@@ -32,6 +36,12 @@ public class NumberFormatExpression : Expression
         MaxFractionDigits = maxFractionDigits;
     }
 
+    /// <summary>
+    /// Parses a "number-format" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 3)
@@ -60,6 +70,13 @@ public class NumberFormatExpression : Expression
         return new NumberFormatExpression(input, locale, currency, minFractionDigits, maxFractionDigits);
     }
 
+    /// <summary>
+    /// Evaluates the number and formats it like MapLibre: with the locale
+    /// settings, as currency when a currency option is given, and with the
+    /// configured fraction digit limits.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The formatted number string, or null if the input is not a number.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var value = ExpressionValueHelper.AsNumber(_input.Evaluate(ctx));
@@ -118,11 +135,23 @@ public class NumberFormatExpression : Expression
         return value.ToString("N" + max, numberFormat);
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a "number-format"
+    /// expression cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="NumberFormatExpression"/>, comparing input expression and
+    /// all formatting options.
+    /// </summary>
+    /// <param name="other">The number-format expression to compare with.</param>
+    /// <returns>True if the expressions are equal; otherwise, false.</returns>
     public bool Equals(NumberFormatExpression? other)
     {
         return other is not null
@@ -134,8 +163,10 @@ public class NumberFormatExpression : Expression
                     && MaxFractionDigits == other.MaxFractionDigits));
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is NumberFormatExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

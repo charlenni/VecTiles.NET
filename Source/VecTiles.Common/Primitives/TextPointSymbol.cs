@@ -3,8 +3,18 @@ using VecTiles.Common.Enums;
 
 namespace VecTiles.Common.Primitives;
 
+/// <summary>
+/// Text symbol that is placed at a point geometry.
+/// </summary>
 public class TextPointSymbol : Symbol
 {
+    /// <summary>
+    /// Initializes a new text point symbol.
+    /// </summary>
+    /// <param name="tile">The tile the symbol belongs to.</param>
+    /// <param name="id">The unique identifier of the symbol.</param>
+    /// <param name="point">The point where the text is placed.</param>
+    /// <param name="text">The text to draw.</param>
     public TextPointSymbol(Tile tile, ulong id, Point point, string text) : base(tile, id)
     {
         Point = point;
@@ -131,6 +141,10 @@ public class TextPointSymbol : Symbol
     /// </summary>
     public Func<EvaluationContext, float, float>? MaxWidth { get; init; }
 
+    /// <summary>
+    /// Creates a copy of this symbol with all its current property values.
+    /// </summary>
+    /// <returns>A new <see cref="TextPointSymbol"/> with the same values as this symbol.</returns>
     public TextPointSymbol Copy()
     {
         var result = new TextPointSymbol(Tile, Id, Point, Text)

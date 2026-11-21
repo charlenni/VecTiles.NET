@@ -13,8 +13,22 @@
 /// </summary>
 public enum TypeAnnotationOption
 {
+    /// <summary>
+    /// Keeps the parser's default behavior, which asserts value expressions for
+    /// number, string, boolean, and array expectations and coerces them for color
+    /// or formatted-string expectations.
+    /// </summary>
     None,
+    /// <summary>
+    /// Wraps a mismatched value expression in a coercion instead of an assertion.
+    /// </summary>
     Coerce,
+    /// <summary>
+    /// Wraps a mismatched value expression in an assertion instead of a coercion.
+    /// </summary>
     Assert,
+    /// <summary>
+    /// Omits type annotations entirely, e.g. for the "coalesce" operator.
+    /// </summary>
     Omit,
 }

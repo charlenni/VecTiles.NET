@@ -2,8 +2,15 @@
 
 namespace VecTiles.Renderers.Common.Interfaces;
 
+/// <summary>
+/// A tile that has been rendered for the current zoom level. It holds the
+/// tile it was rendered for and the rendered layer entries in style file order.
+/// </summary>
 public interface IRenderedTile
 {
+    /// <summary>
+    /// Gets the tile this rendered tile was created for.
+    /// </summary>
     public Tile Tile { get; }
 
     /// <summary>

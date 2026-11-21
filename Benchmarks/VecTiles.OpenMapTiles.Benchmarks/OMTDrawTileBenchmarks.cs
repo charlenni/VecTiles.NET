@@ -38,6 +38,11 @@ public class OMTDrawTileBenchmarks
         MapRenderer.RegisterLayerRenderer("rendered-tile-layer", RenderedTileLayerRenderer.Draw);
     }
 
+    /// <summary>
+    /// Initializes the tile source, the rendered tile layer and a viewport on
+    /// the center tile, renders all nine benchmark tiles once and runs the
+    /// synchronous placement pass, so the benchmarks measure only the drawing.
+    /// </summary>
     [GlobalSetup]
     public async Task Setup()
     {

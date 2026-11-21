@@ -12,6 +12,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTExpressionMatchTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -23,6 +26,9 @@ public class OMTExpressionMatchTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -34,6 +40,9 @@ public class OMTExpressionMatchTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Theory]
     [InlineData("a", "Apple")]
     [InlineData("b", "Banana")]
@@ -49,6 +58,9 @@ public class OMTExpressionMatchTests
         Assert.Equal(expected, expression.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that the match fixture falls back to the default output when the attribute is missing.
+    /// </summary>
     [Fact]
     public void FixtureFallsBackOnMissingAttributeTest()
     {
@@ -61,6 +73,9 @@ public class OMTExpressionMatchTests
         Assert.Equal("Kumquat", expression.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that the match expression matches input values against label lists.
+    /// </summary>
     [Fact]
     public void LabelListTest()
     {

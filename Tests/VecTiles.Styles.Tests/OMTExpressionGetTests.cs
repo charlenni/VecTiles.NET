@@ -13,6 +13,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTExpressionGetTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -24,6 +27,9 @@ public class OMTExpressionGetTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -36,6 +42,9 @@ public class OMTExpressionGetTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
@@ -48,6 +57,9 @@ public class OMTExpressionGetTests
         Assert.Equal("value", expression.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that the get expression evaluates to null when the attribute is missing.
+    /// </summary>
     [Fact]
     public void FixtureEvaluatesToNullOnMissingAttributeTest()
     {
@@ -60,6 +72,9 @@ public class OMTExpressionGetTests
         Assert.Null(expression.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that a get expression without a string literal key fails to parse.
+    /// </summary>
     [Fact]
     public void GetRequiresStringLiteralKeyTest()
     {

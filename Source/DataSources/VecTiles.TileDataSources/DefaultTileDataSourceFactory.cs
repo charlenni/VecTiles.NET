@@ -11,9 +11,21 @@ namespace VecTiles.DataSources;
 /// </summary>
 public static class DefaultTileDataSourceFactory
 {
+    /// <summary>
+    /// Scheme of a source URI that identifies a file in the file system.
+    /// </summary>
     public const string FileScheme = "file";
+    /// <summary>
+    /// Scheme of a source URI that identifies an MBTiles file.
+    /// </summary>
     public const string MbTilesScheme = "mbtiles";
+    /// <summary>
+    /// Scheme of a source URI that identifies tiles on an unsecured HTTP server.
+    /// </summary>
     public const string HttpScheme = "http";
+    /// <summary>
+    /// Scheme of a source URI that identifies tiles on an HTTPS server.
+    /// </summary>
     public const string HttpsScheme = "https";
 
     /// <summary>

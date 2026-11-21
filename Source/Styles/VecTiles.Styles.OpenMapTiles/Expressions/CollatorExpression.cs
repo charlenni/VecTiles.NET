@@ -88,6 +88,12 @@ public class CollatorExpression : Expression
         _collator = collator;
     }
 
+    /// <summary>
+    /// Parses a "collator" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 2 || array[1] is not JsonObject options)
@@ -115,19 +121,37 @@ public class CollatorExpression : Expression
             && result;
     }
 
+    /// <summary>
+    /// Evaluates to the collator configured by the parsed options.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The <see cref="Collator"/> instance of this expression.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         return _collator;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a "collator" expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="CollatorExpression"/>, comparing the underlying collator options.
+    /// </summary>
+    /// <param name="other">The collator expression to compare with.</param>
+    /// <returns>True if the collator expressions are equal; otherwise, false.</returns>
     public bool Equals(CollatorExpression? other) => other is not null && _collator.Equals(other._collator);
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is CollatorExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() => (_collator.CaseSensitive, _collator.DiacriticSensitive, _collator.IgnorePunctuation, _collator.Locale).GetHashCode();
 }

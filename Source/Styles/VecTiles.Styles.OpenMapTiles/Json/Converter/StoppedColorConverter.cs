@@ -6,8 +6,13 @@ using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
+/// <summary>
+/// JSON converter for zoom-dependent color values. Accepts a color string,
+/// a stops object, or an expression array.
+/// </summary>
 public class StoppedColorConverter : JsonConverter<StoppedColor>
 {
+    /// <inheritdoc />
     public override StoppedColor Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var token = JsonNode.Parse(ref reader);
@@ -42,6 +47,8 @@ public class StoppedColorConverter : JsonConverter<StoppedColor>
         return new StoppedColor { SingleVal = StoppedExpression.ToColor(MatchExpression.ToValue(token)) };
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown; stopped values are read-only.</exception>
     public override void Write(Utf8JsonWriter writer, StoppedColor value, JsonSerializerOptions options)
     {
         throw new NotSupportedException("Stopped values are only read, never written.");

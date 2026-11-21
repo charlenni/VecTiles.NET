@@ -11,6 +11,10 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Builds text symbols (point labels and line labels) for an OpenMapTiles
+/// layer, evaluating the text layout and paint properties of the layer style.
+/// </summary>
 public class OMTTextBuilder
 {
     private OMTLayerStyle _style;
@@ -58,6 +62,12 @@ public class OMTTextBuilder
     /// </summary>
     public static readonly string[] DefaultFontNames = ["Open Sans Regular", "Arial Unicode MS Regular"];
 
+    /// <summary>
+    /// Initializes the text builder with a layer style and an evaluation context,
+    /// resolving the text layout and paint properties, including the fonts to use.
+    /// </summary>
+    /// <param name="style">The symbol layer style whose text properties are used.</param>
+    /// <param name="context">The evaluation context the layer was created with.</param>
     public OMTTextBuilder(OMTLayerStyle style, EvaluationContext context)
     {
         _style = style;
@@ -121,6 +131,14 @@ public class OMTTextBuilder
         };
     }
 
+    /// <summary>
+    /// Builds a text point symbol for a point feature from its evaluated text-field,
+    /// or null when the resulting text is empty.
+    /// </summary>
+    /// <param name="tile">The tile the feature belongs to.</param>
+    /// <param name="point">The anchor position of the text in tile coordinates.</param>
+    /// <param name="feature">The feature to build the text for.</param>
+    /// <returns>The text point symbol, or null if no text is produced.</returns>
     public TextPointSymbol? Build(Tile tile, Point point, IFeature feature)
     {
         var context = _context.WithFeature(feature);
@@ -170,6 +188,14 @@ public class OMTTextBuilder
         return symbol;
     }
 
+    /// <summary>
+    /// Builds a text line symbol (a label placed along the line or outline)
+    /// for a linear or polygonal feature, or null when the resulting text is empty.
+    /// </summary>
+    /// <param name="tile">The tile the feature belongs to.</param>
+    /// <param name="geometry">The geometry the text follows.</param>
+    /// <param name="feature">The feature to build the text for.</param>
+    /// <returns>The text line symbol, or null if no text is produced.</returns>
     public TextLineSymbol? Build(Tile tile, Geometry geometry, IFeature feature)
     {
         var context = _context.WithFeature(feature);

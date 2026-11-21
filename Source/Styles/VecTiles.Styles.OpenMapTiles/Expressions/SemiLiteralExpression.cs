@@ -23,6 +23,12 @@ public class SemiLiteralExpression : Expression
         _elements = elements;
     }
 
+    /// <summary>
+    /// Parses a "semiliteral" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         if (array.Count != 2)
@@ -56,6 +62,12 @@ public class SemiLiteralExpression : Expression
         return new SemiLiteralExpression(expression, null);
     }
 
+    /// <summary>
+    /// Evaluates a single expression directly, or evaluates all array elements
+    /// into an array of their current values.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The expression value or the array of evaluated element values.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         if (_elements == null)
@@ -64,11 +76,23 @@ public class SemiLiteralExpression : Expression
         return _elements.Select(element => element.Evaluate(ctx)).ToArray();
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of a "semiliteral" expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="SemiLiteralExpression"/>, comparing the wrapped expression
+    /// or all element expressions.
+    /// </summary>
+    /// <param name="other">The semiliteral expression to compare with.</param>
+    /// <returns>True if the semiliteral expressions are equal; otherwise, false.</returns>
     public bool Equals(SemiLiteralExpression? other)
     {
         if (other is null)
@@ -86,8 +110,10 @@ public class SemiLiteralExpression : Expression
         return _expression is not null && other._expression is not null && _expression.Equals(other._expression);
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is SemiLiteralExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         int hashCode = 17;

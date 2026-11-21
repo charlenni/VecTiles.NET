@@ -2,8 +2,17 @@
 
 namespace VecTiles.Controls.Mapsui;
 
+/// <summary>
+/// Tile schema for 512x512 vector tiles in the GlobalSphericalMercator (EPSG:3857) projection.
+/// </summary>
 public class GlobalSphericalMercator512 : TileSchema
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GlobalSphericalMercator512"/> class.
+    /// </summary>
+    /// <param name="yAxis">The Y axis convention (OSM or TMS) of the tiles.</param>
+    /// <param name="minZoom">Minimum zoom level of the schema.</param>
+    /// <param name="maxZoom">Maximum zoom level of the schema.</param>
     public GlobalSphericalMercator512(YAxis yAxis = YAxis.OSM, int minZoom = 0, int maxZoom = 24)
     {
         Name = "GlobalSphericalMercator-512";

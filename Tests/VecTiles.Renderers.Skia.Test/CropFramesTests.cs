@@ -11,8 +11,21 @@ public class CropFramesTests
 {
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public CropFramesTests(ITestOutputHelper output) => _output = output;
 
+    /// <summary>
+    /// Crops the given region of an app pipeline frame, scales it up three times
+    /// and writes the result as a new PNG to the results folder.
+    /// </summary>
+    /// <param name="frame">Frame identifier appended to the app pipeline file name.</param>
+    /// <param name="x">Left coordinate of the region in pixels.</param>
+    /// <param name="y">Top coordinate of the region in pixels.</param>
+    /// <param name="width">Width of the region in pixels.</param>
+    /// <param name="height">Height of the region in pixels.</param>
     [Theory]
     [InlineData("17,0", 520, 480, 320, 250)]
     [InlineData("17,4", 560, 560, 320, 250)]

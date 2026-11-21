@@ -4,8 +4,20 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Renderers.Skia.Extensions;
 
+/// <summary>
+/// Extension methods to convert a paint abstraction into SkiaSharp paints.
+/// </summary>
 public static class IPaintExtension
 {
+    /// <summary>
+    /// Updates the paint for the evaluation context and converts it to one or
+    /// more ready to use <see cref="SKPaint" /> instances. A paint combining
+    /// fill and stroke is converted to a fill paint followed by an outline
+    /// stroke paint.
+    /// </summary>
+    /// <param name="paint">Paint to convert; its values are updated for the context.</param>
+    /// <param name="context">Context used to evaluate data-driven paint properties.</param>
+    /// <returns>The SkiaSharp paints to draw with.</returns>
     public static IEnumerable<SKPaint> ToSKPaint(this IPaint paint, EvaluationContext context)
     {
         paint.Update(context);

@@ -28,6 +28,10 @@ public class LindenhofSingleFrameTests
 
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public LindenhofSingleFrameTests(ITestOutputHelper output) => _output = output;
 
     private const int Zoom = 18;
@@ -35,6 +39,12 @@ public class LindenhofSingleFrameTests
     private const double WorldHalf = WorldWidth / 2;
     private static double TileSpanWorld => WorldWidth / Math.Pow(2, Zoom);
 
+    /// <summary>
+    /// Renders the Lindenhof view with and without the tile above and verifies that
+    /// at least one Lindenhof label is placed when the merged geometry becomes a
+    /// MultiLineString (tile above gone).
+    /// </summary>
+    /// <param name="withTileAbove">Whether tile 18/137291/91802 is part of the view.</param>
     [Theory]
     [InlineData(true)]   // tile 91802 present
     [InlineData(false)]  // tile 91802 gone

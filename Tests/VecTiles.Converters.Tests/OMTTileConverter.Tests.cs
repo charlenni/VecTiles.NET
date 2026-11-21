@@ -5,10 +5,17 @@ using VecTiles.TileDataSources;
 
 namespace VecTiles.Converters.Tests;
 
+/// <summary>
+/// Integration tests for <see cref="OMTTileConverter" /> using a real OpenMapTiles MBTiles file.
+/// </summary>
 public class OMTConverterTests
 {
     readonly string _path = Path.Combine("Files", "zurich.mbtiles");
 
+    /// <summary>
+    /// Verifies that a Zurich MBTiles tile converted by <see cref="OMTTileConverter" />
+    /// yields the expected layers, features and attributes.
+    /// </summary>
     [Fact]
     public async Task VectorTileConverterTest()
     {

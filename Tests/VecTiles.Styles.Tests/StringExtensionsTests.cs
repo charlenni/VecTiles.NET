@@ -4,8 +4,14 @@ using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Styles.MapboxTests
 {
+    /// <summary>
+    /// Tests for the ReplaceWithTags string extension.
+    /// </summary>
     public class StringExtensionsTests
     {
+        /// <summary>
+        /// Verifies that ReplaceWithTags replaces all tokens with the feature attribute values.
+        /// </summary>
         [Fact]
         public void ReplaceWithTagsReplacesAllTokens()
         {
@@ -17,6 +23,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("Kiel\u000aKiel (Plattdeutsch)", result);
         }
 
+        /// <summary>
+        /// Verifies that ReplaceWithTags removes tokens whose attribute is missing.
+        /// </summary>
         [Fact]
         public void ReplaceWithTagsRemovesMissingNameTokens()
         {
@@ -28,6 +37,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("Kiel\u000a", result);
         }
 
+        /// <summary>
+        /// Verifies that ReplaceWithTags leaves unknown tokens untouched.
+        /// </summary>
         [Fact]
         public void ReplaceWithTagsLeavesUnknownTokens()
         {

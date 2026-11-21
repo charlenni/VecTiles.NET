@@ -5,8 +5,15 @@ using Xunit;
 
 namespace VecTiles.Common.Tests.Primitives;
 
+/// <summary>
+/// Unit tests for <see cref="LineSymbolMerger" />.
+/// </summary>
 public class LineSymbolMergerTests
 {
+    /// <summary>
+    /// Verifies that line symbols of the same feature across two adjacent tiles are merged
+    /// into one continuous line, with the buffer overhang clipped at the tile borders.
+    /// </summary>
     [Fact]
     public void MergeById_MergesSegmentsOfSameFeature()
     {
@@ -34,6 +41,10 @@ public class LineSymbolMergerTests
         Assert.Equal(y, line.Coordinates[1].Y, 5);
     }
 
+    /// <summary>
+    /// Verifies that the merged symbol keeps the position of the first segment
+    /// and that unrelated symbols stay untouched and ordered after it.
+    /// </summary>
     [Fact]
     public void MergeById_KeepsOrderAndOtherSymbols()
     {
@@ -50,6 +61,9 @@ public class LineSymbolMergerTests
         Assert.Same(other, result[1]);
     }
 
+    /// <summary>
+    /// Verifies that a line symbol without a counterpart in another tile is passed through unchanged.
+    /// </summary>
     [Fact]
     public void MergeById_PassesThroughSingleLineSymbolsUnchanged()
     {
@@ -62,6 +76,9 @@ public class LineSymbolMergerTests
         Assert.Same(symbol, Assert.IsType<LineSymbol>(line));
     }
 
+    /// <summary>
+    /// Verifies that symbols with id 0 (data sources without feature ids) are never merged.
+    /// </summary>
     [Fact]
     public void MergeById_DataWithoutIdsIsNeverMerged()
     {
@@ -83,6 +100,10 @@ public class LineSymbolMergerTests
         Assert.Same(symbols[1], result[1]);
     }
 
+    /// <summary>
+    /// Verifies that unconnected segments of the same feature become a
+    /// <see cref="MultiLineString" /> instead of a single line.
+    /// </summary>
     [Fact]
     public void Merge_UnconnectedSegmentsBecomeMultiLineString()
     {
@@ -98,6 +119,10 @@ public class LineSymbolMergerTests
         Assert.Equal(2, multi.NumGeometries);
     }
 
+    /// <summary>
+    /// Verifies that buffer points beyond the tile borders are removed while
+    /// interior vertices survive the merge.
+    /// </summary>
     [Fact]
     public void Merge_ClipsBufferOverhangAtTileBorders()
     {
@@ -121,6 +146,10 @@ public class LineSymbolMergerTests
         Assert.All(line.Coordinates, c => Assert.InRange(c.X, tileA.Left, tileB.Right));
     }
 
+    /// <summary>
+    /// Verifies that the merged symbol inherits id, tile, spacing and icon/text symbols
+    /// from the first segment.
+    /// </summary>
     [Fact]
     public void Merge_CopiesSymbolPropertiesFromFirstSymbol()
     {

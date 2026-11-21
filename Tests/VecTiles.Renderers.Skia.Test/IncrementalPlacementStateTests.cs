@@ -50,6 +50,10 @@ public class IncrementalPlacementStateTests
         return SymbolPlacementEngine.Compute(tiles, ZoomLevel, WorldToScreen, default, state);
     }
 
+    /// <summary>
+    /// Verifies that a first placement pass with a fresh state places exactly
+    /// like a pass without a state.
+    /// </summary>
     [Fact]
     public void FirstPass_WithFreshState_PlacesLikeWithoutState()
     {
@@ -74,6 +78,10 @@ public class IncrementalPlacementStateTests
         Assert.Empty(withState.Rejected);
     }
 
+    /// <summary>
+    /// Verifies that a symbol repeated over a tile boundary keeps the placement
+    /// decision of the first pass instead of being placed again or moved.
+    /// </summary>
     [Fact]
     public void SecondPass_KeepsPlacedPosition_AndDoesNotDecideTwice()
     {
@@ -96,6 +104,10 @@ public class IncrementalPlacementStateTests
         Assert.Empty(second.Rejected);
     }
 
+    /// <summary>
+    /// Verifies that a rejection survives a later pass in which the blocking
+    /// symbol no longer exists, so the label does not jump in afterwards.
+    /// </summary>
     [Fact]
     public void SecondPass_RejectedStaysRejected_WhenSpaceFreesUp()
     {
@@ -120,6 +132,10 @@ public class IncrementalPlacementStateTests
         Assert.Empty(second.Rejected);
     }
 
+    /// <summary>
+    /// Verifies that symbols of a tile that left the viewport keep their decisions:
+    /// the remaining features are not re-placed.
+    /// </summary>
     [Fact]
     public void SecondPass_WithoutTheTile_KeepsItsDecision()
     {
@@ -141,6 +157,67 @@ public class IncrementalPlacementStateTests
         Assert.Same(firstVisible, entry);
     }
 
+    /// <summary>
+    /// Verifies that a re-rendered symbol without feature id (id 0) is recognized
+    /// by its anchor (tile, position and text) and keeps its placement instead of
+    /// colliding with the box of its own first pass.
+    /// </summary>
+    [Fact]
+    public void SecondPass_AfterReRender_WithoutFeatureId_KeepsThePlacement()
+    {
+        // The bug of the "Goto Center" report: a view is entered a second
+        // time, but its placement result was evicted and its tiles have been
+        // re-rendered in the meantime. The re-render produces FRESH symbol
+        // instances. Features without an id attribute carry id 0, so the old
+        // decision can no longer be found by identity: the fresh instance
+        // gets re-examined against the collision tree and collides with the
+        // (placed) box of its own first pass! The state must recognize the
+        // re-rendered point symbol by its anchor (tile + position + text)
+        var state = new IncrementalPlacementState();
+        var envelope = new Envelope(-10, 10, -10, 10);
+        var firstTile = Layer(("place_city", [TextSymbol(0, 100, 100, envelope)]));
+
+        var first = Compute(state, firstTile);
+        Assert.Single(first.PlacedByLayer["place_city"]);
+
+        // Re-render of the same tile: same feature, same anchor, id 0 —
+        // new symbol instances
+        var secondTile = Layer(("place_city", [TextSymbol(0, 100, 100, envelope)]));
+
+        var second = Compute(state, secondTile);
+
+        var entry = Assert.Single(second.PlacedByLayer["place_city"]);
+        Assert.Empty(second.Rejected);
+        Assert.Same(first.PlacedByLayer["place_city"][0], entry);
+    }
+
+    /// <summary>
+    /// Verifies that two id-less symbols at different anchors are recognized as
+    /// distinct decisions after a re-render, even when the merge order is swapped.
+    /// </summary>
+    [Fact]
+    public void SecondPass_AfterReRender_WithoutFeatureId_DifferentAnchor_IsPlacedIndependently()
+    {
+        // Two different labels at different anchors are two decisions — the
+        // anchor key must not identify them as the same symbol
+        var state = new IncrementalPlacementState();
+        var envelope = new Envelope(-10, 10, -10, 10);
+        var first = Compute(state, Layer(("place_city",
+            [TextSymbol(0, 100, 100, envelope), TextSymbol(0, 500, 500, envelope)])));
+        Assert.Equal(2, first.PlacedByLayer["place_city"].Count);
+
+        // Re-render, order swapped (the merge order of two fresh tiles)
+        var second = Compute(state, Layer(("place_city",
+            [TextSymbol(0, 500, 500, envelope), TextSymbol(0, 100, 100, envelope)])));
+
+        Assert.Equal(2, second.PlacedByLayer["place_city"].Count);
+        Assert.Empty(second.Rejected);
+    }
+
+    /// <summary>
+    /// Verifies that once the state has accumulated <see cref="IncrementalPlacementState.MaxDecisions" />
+    /// decisions, the next pass starts clean and places everything again, including new symbols.
+    /// </summary>
     [Fact]
     public void MaxDecisions_Exceeded_NextPassStartsClean()
     {

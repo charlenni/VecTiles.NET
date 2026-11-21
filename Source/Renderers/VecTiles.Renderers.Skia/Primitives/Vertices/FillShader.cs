@@ -8,10 +8,18 @@ namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 // Unified fill shader: solid color OR atlas sprite via a child shader.
 // One SKRuntimeEffect serves both cases; uUseTexture selects the path.
 // ============================================================================
+/// <summary>
+/// Runtime effect shader for fill layers. A single effect serves solid color
+/// and atlas sprite patterns; the mode is selected per Update call. The fill
+/// color is multiplied by global alpha in the shader, so the SKPaint uses white.
+/// </summary>
 public class FillShader(SKRuntimeEffect effect) : IDisposable
 {
     private readonly SKRuntimeEffect _effect = effect;
 
+    /// <summary>
+    /// Gets the SkSL source of the fill shader.
+    /// </summary>
     public const string SkSl = """
         uniform shader uTexture;   // child: sprite image (or 1x1 white fallback)
         uniform float4 uColor;     // solid fill color (premultiplied in shader)
@@ -46,6 +54,10 @@ public class FillShader(SKRuntimeEffect effect) : IDisposable
     private static readonly Lazy<SKShader> _whiteShader =
         new(() => CreateWhiteShader(), LazyThreadSafetyMode.ExecutionAndPublication);
 
+    /// <summary>
+    /// Gets the shared 1x1 white fallback shader bound to the child slot when
+    /// no texture is used (an unbound child would sample as transparent).
+    /// </summary>
     public static SKShader WhiteShader => _whiteShader.Value;
 
     private static SKShader CreateWhiteShader()
@@ -58,6 +70,10 @@ public class FillShader(SKRuntimeEffect effect) : IDisposable
             new SKSamplingOptions(SKFilterMode.Linear));
     }
 
+    /// <summary>
+    /// Disposes the shared white shader when it was created, e.g. on
+    /// application shutdown. Do not call it from instance Dispose().
+    /// </summary>
     public static void DisposeSharedResources()
     {
         if (_whiteShader.IsValueCreated) _whiteShader.Value.Dispose();
@@ -146,6 +162,10 @@ public class FillShader(SKRuntimeEffect effect) : IDisposable
         return _effect.ToShader(uniforms, children);
     }
 
+    /// <summary>
+    /// Disposes the cached sprite shader and the runtime effect. Sprite images
+    /// themselves are owned by their sprites, not by this shader.
+    /// </summary>
     public void Dispose()
     {
         // Sprite images are owned by the sprites, not by this shader.

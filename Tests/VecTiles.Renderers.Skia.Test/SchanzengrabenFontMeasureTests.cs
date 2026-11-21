@@ -14,8 +14,18 @@ public class SchanzengrabenFontMeasureTests
 {
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public SchanzengrabenFontMeasureTests(ITestOutputHelper output) => _output = output;
 
+    /// <summary>
+    /// Verifies that the width of "Schanzengraben" measured by the layout
+    /// matches the width of the glyphs drawn on a long path.
+    /// </summary>
+    /// <param name="fontNames">The font name candidates for the label.</param>
+    /// <param name="fontSize">The font size in pixels.</param>
     [Theory]
     [InlineData(new[] { "Roboto Regular" }, 12f)]
     [InlineData(new[] { "Roboto Condensed Italic" }, 12f)]

@@ -29,6 +29,12 @@ public class AssertionExpression : Expression
         _fallbacks = fallbacks;
     }
 
+    /// <summary>
+    /// Parses an assertion expression like ["number", input, fallback...].
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         return Parse(array, 1, parser);
@@ -86,6 +92,12 @@ public class AssertionExpression : Expression
         return new AssertionExpression(type, itemType, input, [.. fallbacks]);
     }
 
+    /// <summary>
+    /// Evaluates the assertion: returns the input value when it matches the
+    /// asserted type, otherwise the first fallback value that matches.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The asserted value, or null if the input and no fallback match.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var value = _input.Evaluate(ctx);
@@ -104,6 +116,11 @@ public class AssertionExpression : Expression
         return null;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of an assertion cannot be
+    /// determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
@@ -134,6 +151,13 @@ public class AssertionExpression : Expression
         };
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="AssertionExpression"/>, comparing type, item type, input
+    /// expression and all fallback expressions.
+    /// </summary>
+    /// <param name="other">The assertion expression to compare with.</param>
+    /// <returns>True if the assertions are equal; otherwise, false.</returns>
     public bool Equals(AssertionExpression? other)
     {
         if (other is null)
@@ -155,8 +179,10 @@ public class AssertionExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is AssertionExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

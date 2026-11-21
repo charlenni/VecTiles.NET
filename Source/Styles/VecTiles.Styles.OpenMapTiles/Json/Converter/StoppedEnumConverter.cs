@@ -5,8 +5,14 @@ using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
+/// <summary>
+/// JSON converter for zoom-dependent enum values. Accepts a plain enum name,
+/// a stops object, or an expression array.
+/// </summary>
+/// <typeparam name="T">The enum type of the values.</typeparam>
 public class StoppedEnumConverter<T> : JsonConverter<StoppedEnum<T>> where T : struct, Enum
 {
+    /// <inheritdoc />
     public override StoppedEnum<T> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var token = JsonNode.Parse(ref reader);
@@ -52,6 +58,8 @@ public class StoppedEnumConverter<T> : JsonConverter<StoppedEnum<T>> where T : s
         return result;
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown; stopped values are read-only.</exception>
     public override void Write(Utf8JsonWriter writer, StoppedEnum<T> value, JsonSerializerOptions options)
     {
         throw new NotSupportedException("Stopped values are only read, never written.");

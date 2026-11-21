@@ -60,8 +60,10 @@ public class StoppedFloatArray : IStopped<float[]>
     bool _hasStops = false;
     IList<KeyValuePair<float, float[]>> _stops = [];
 
+    /// <summary>The interpolation base of the exponential stop interpolation.</summary>
     public float Base { get; set; } = 1f;
 
+    /// <summary>The zoom/value stops of the stopped function, in ascending zoom order.</summary>
     public IList<KeyValuePair<float, float[]>> Stops
     {
         get => _stops;
@@ -149,11 +151,13 @@ public class StoppedFloatArray : IStopped<float[]>
         return [];
     }
 
+    /// <inheritdoc />
     public float[] PossibleOutputs()
     {
         throw new System.NotImplementedException();
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         if (Expression != null)

@@ -99,7 +99,19 @@ public readonly struct TilesKey : IEquatable<TilesKey>
     public override string ToString() =>
         $"TilesKey(Rotation={Rotation}, Count={_indices.Length})";
 
+    /// <summary>
+    /// Compares two keys for equality.
+    /// </summary>
+    /// <param name="left">The left key.</param>
+    /// <param name="right">The right key.</param>
+    /// <returns><see langword="true"/> if the keys are equal; otherwise, <see langword="false"/>.</returns>
     public static bool operator ==(TilesKey left, TilesKey right) => left.Equals(right);
 
+    /// <summary>
+    /// Compares two keys for inequality.
+    /// </summary>
+    /// <param name="left">The left key.</param>
+    /// <param name="right">The right key.</param>
+    /// <returns><see langword="true"/> if the keys are unequal; otherwise, <see langword="false"/>.</returns>
     public static bool operator !=(TilesKey left, TilesKey right) => !left.Equals(right);
 }

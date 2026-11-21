@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTInTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTInTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,6 +39,11 @@ public class OMTInTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the number operand is contained in the array attribute.
+    /// </summary>
+    /// <param name="i">The value of the i attribute.</param>
+    /// <param name="expected">The expected membership result.</param>
     [Theory]
     [InlineData(20d, true)]
     [InlineData(1d, false)]
@@ -51,6 +62,9 @@ public class OMTInTests
         Assert.Equal(expected, expression!.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that membership in a large literal array haystack evaluates correctly.
+    /// </summary>
     [Fact]
     public void LargeHaystackUsesHashSetTest()
     {
@@ -66,6 +80,9 @@ public class OMTInTests
         Assert.Equal(true, expression!.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that the in expression supports substring checks on strings.
+    /// </summary>
     [Fact]
     public void SubstringTest()
     {

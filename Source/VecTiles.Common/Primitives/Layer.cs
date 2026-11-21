@@ -9,6 +9,10 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class Layer
 {
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Layer"/> class with capacity for the given number of features.
+    /// </summary>
+    /// <param name="numOfFeatures">The expected number of features. Defaults to 0.</param>
     public Layer(int numOfFeatures = 0)
     {
         Features = new List<IFeature>(numOfFeatures);

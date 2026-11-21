@@ -12,6 +12,7 @@ namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 /// </summary>
 public class ExpressionConverter : JsonConverter<IExpression>
 {
+    /// <inheritdoc />
     public override IExpression Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         // A missing/undefined filter is valid for all features
@@ -29,6 +30,8 @@ public class ExpressionConverter : JsonConverter<IExpression>
         return null;
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown; expressions are read-only.</exception>
     public override void Write(Utf8JsonWriter writer, IExpression value, JsonSerializerOptions options)
     {
         throw new NotSupportedException("Expressions are only read, never written.");
@@ -55,6 +58,12 @@ public class ExpressionConverter : JsonConverter<IExpression>
         return expression;
     }
 
+    /// <summary>
+    /// Determines whether the given filter array is already in expression syntax
+    /// (rather than the legacy v7 filter syntax).
+    /// </summary>
+    /// <param name="filter">The filter array to check; may be null or empty.</param>
+    /// <returns>true if the filter is an expression array; otherwise false.</returns>
     public static bool IsExpressionFilter(JsonArray? filter)
     {
         if (filter == null || filter.Count == 0)

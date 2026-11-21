@@ -5,8 +5,23 @@ using VecTiles.Renderers.Skia.Primitives.Vertices;
 
 namespace VecTiles.Renderers.Skia.Extensions;
 
+/// <summary>
+/// Extension methods to convert feature geometry into tessellated vertices
+/// for fill and line drawing.
+/// </summary>
 public static class IFeatureExtensions
 {
+    /// <summary>
+    /// Adds the line geometry of the feature to the vertex builder, expanded
+    /// to a stroke of the given maximum width.
+    /// </summary>
+    /// <param name="feature">Feature whose geometry is converted.</param>
+    /// <param name="builder">Vertex builder to add the vertices to.</param>
+    /// <param name="maxWidth">Maximum stroke width the geometry is expanded for.</param>
+    /// <param name="startCap">Cap style at the start of a line.</param>
+    /// <param name="endCap">Cap style at the end of a line.</param>
+    /// <param name="join">Join style at line corners.</param>
+    /// <returns>The vertex builder with the added vertices.</returns>
     public static VertexBuilder ToVertices(this IFeature feature,
         VertexBuilder builder,
         float maxWidth, 
@@ -17,6 +32,13 @@ public static class IFeatureExtensions
         return LineGeometryToVertices(builder, feature.Geometry, maxWidth, startCap, endCap, join); 
     }
 
+    /// <summary>
+    /// Adds the filled polygon geometry of the feature to the vertex builder.
+    /// </summary>
+    /// <param name="feature">Feature whose geometry is converted.</param>
+    /// <param name="builder">Vertex builder to add the vertices to.</param>
+    /// <param name="join">Join style at polygon corners.</param>
+    /// <returns>The vertex builder with the added vertices.</returns>
     public static VertexBuilder ToVertices(this IFeature feature,
         VertexBuilder builder,
         StrokeJoin join)
@@ -24,6 +46,15 @@ public static class IFeatureExtensions
         return FilledPolygonGeometryToVertices(builder, feature.Geometry, join); 
     }
 
+    /// <summary>
+    /// Adds the outline of the polygon geometry of the feature to the vertex
+    /// builder, expanded to a stroke of the given maximum width.
+    /// </summary>
+    /// <param name="feature">Feature whose geometry is converted.</param>
+    /// <param name="builder">Vertex builder to add the vertices to.</param>
+    /// <param name="maxWidth">Maximum stroke width the outline is expanded for.</param>
+    /// <param name="join">Join style at polygon corners.</param>
+    /// <returns>The vertex builder with the added vertices.</returns>
     public static VertexBuilder ToVertices(this IFeature feature, 
         VertexBuilder builder,
         float maxWidth, 

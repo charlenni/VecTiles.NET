@@ -40,10 +40,25 @@ namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 // ============================================================================
 // 1) Tessellation: polylines / polygons -> triangles with UVs
 // ============================================================================
+/// <summary>
+/// Tessellation of polylines and polygons into triangles with UVs. Line
+/// vertices carry signed distance and arc length in the UVs so stroke width,
+/// dashes and patterns are controlled by the shader at draw time.
+/// </summary>
 public static class Tessellation
 {
     // --------------------------------------------------------------------
     //  Shared polygon triangulation (solid u=0 OR world UVs)
+    /// <summary>
+    /// Triangulates a polygon with optional hole rings using earcut and appends
+    /// the triangles to the vertex lists. Holes must follow their outer ring in
+    /// ring order (outer ring first).
+    /// </summary>
+    /// <param name="outer">Coordinates of the outer ring.</param>
+    /// <param name="holes">Hole rings, or null.</param>
+    /// <param name="worldUvs">When true, UVs carry the world position (u = x, v = y) for textured fills; otherwise UVs are left at zero for solid fills.</param>
+    /// <param name="pos">List the vertex positions are appended to.</param>
+    /// <param name="uv">List the vertex UVs are appended to.</param>
     // --------------------------------------------------------------------
     public static void TessellatePolygon(
         Coordinate[] outer,
@@ -124,6 +139,20 @@ public static class Tessellation
     // --------------------------------------------------------------------
     //  Core: Tessellation of ONE polyline
     // --------------------------------------------------------------------
+    /// <summary>
+    /// Expands a polyline into two triangle strips (left and right of the
+    /// centerline) with segment quads trimmed at the corner bisectors and
+    /// joins and caps emitted either as miter triangles or fans.
+    /// </summary>
+    /// <param name="pts">Polyline points in order.</param>
+    /// <param name="hw">Half of the stroke width in pixels.</param>
+    /// <param name="startCap">Cap style at the start of the line.</param>
+    /// <param name="endCap">Cap style at the end of the line.</param>
+    /// <param name="join">Join style at interior corners.</param>
+    /// <param name="miterLimit">Miter limit for miter joins.</param>
+    /// <param name="pos">List the vertex positions are appended to.</param>
+    /// <param name="uv">List the vertex UVs are appended to.</param>
+    /// <param name="closedRing">When true, treats the polyline as a closed ring and emits the join at the closing seam.</param>
     public static void TessellatePolyline(
         PointF[] pts, float hw,
         StrokeCap startCap, StrokeCap endCap,
@@ -364,6 +393,12 @@ public static class Tessellation
             AddCapRound(pts[pointCount - 1], endOutward, hw, arcLength: cumLen[pointCount - 1], pos, uv);
     }
 
+    /// <summary>
+    /// Converts NTS coordinates to a list of points, dropping the duplicated
+    /// closing coordinate when the first and last point are equal.
+    /// </summary>
+    /// <param name="coords">Coordinates to convert.</param>
+    /// <returns>The points of the coordinate list without a duplicated closing coordinate.</returns>
     public static PointF[] CompactToPoints(Coordinate[] coords)
     {
         if (coords is null)

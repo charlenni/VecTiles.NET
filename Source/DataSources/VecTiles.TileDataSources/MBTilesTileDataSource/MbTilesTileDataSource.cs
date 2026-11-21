@@ -77,6 +77,23 @@ public class MbTilesTileDataSource : ITileDataSource
         }
     }
 
+    ///  <summary>
+    ///  Initializes a new instance of the <see cref="MbTilesTileDataSource"/> class based on the specified database file.
+    ///  </summary>
+    ///  <param name="path">Path to the mbtiles file</param>
+    ///  <param name="schema">The TileSchema of the mbtiles file. If this parameter is set the schema information
+    ///  within the mbtiles file will be ignored.</param>
+    ///  <param name="type">BaseLayer or Overlay</param>
+    ///  <param name="determineZoomLevelsFromTilesTable">When 'determineZoomLevelsFromTilesTable' is true the zoom levels
+    ///  will be determined from the available tiles in the 'tiles' table. This operation can take long if there are many tiles in
+    ///  the 'tiles' table. When 'determineZoomLevelsFromTilesTable' is false the zoom levels will be read from the metadata table
+    /// (by reading 'zoomMin' and 'zoomMax'). If there are no zoom levels specified in the metadata table the GlobalSphericalMercator
+    /// default levels are assumed. This parameter will have no effect if the schema is passed in as argument. The default is false.</param>
+    ///  <param name="determineTileRangeFromTilesTable">In some cases not all tiles specified by the schema are present in each
+    ///  level. When 'determineTileRangeFromTilesTable' is 'true' the range of tiles available for each level is determined
+    ///  by the tiles present for each level in the 'tiles' table. The advantage is that requests can be faster because they do not have to
+    ///  go to the database if they are outside the TileRange. The downside is that for large files it can take long to read the TileRange
+    ///  from the tiles table. The default is false.</param>
     public MbTilesTileDataSource(string path,
         ITileSchema? schema = null,
         MbTilesType type = MbTilesType.None,
@@ -126,12 +143,24 @@ public class MbTilesTileDataSource : ITileDataSource
     /// </summary>
     public string Attribution { get; set; }
 
+    ///  <summary>
+    ///  Minimum zoom level of the MBTiles file content
+    ///  </summary>
     public int MinZoom { get; private set; }
 
+    ///  <summary>
+    ///  Maximum zoom level of the MBTiles file content
+    ///  </summary>
     public int MaxZoom { get; private set; }
 
+    ///  <summary>
+    ///  Source type of the MBTiles file content, vector for Pbf format, raster otherwise
+    ///  </summary>
     public SourceType SourceType { get; private set; }
 
+    ///  <summary>
+    ///  Tile scheme of the MBTiles file content, based on the Y axis of the schema
+    ///  </summary>
     public Scheme Scheme { get; }
 
     /// <summary>
@@ -353,6 +382,12 @@ public class MbTilesTileDataSource : ITileDataSource
         return false;
     }
 
+    ///  <summary>
+    ///  Get binary data for a non-tiled source in URL notation. Not supported for this data source.
+    ///  </summary>
+    ///  <param name="source">Source as URL string</param>
+    ///  <returns>Task which returns binary data</returns>
+    ///  <exception cref="NotImplementedException">Always thrown, because this data source does not provide this method</exception>
     public Task<byte[]?> GetBytesAsync(string source)
     {
         throw new NotImplementedException();

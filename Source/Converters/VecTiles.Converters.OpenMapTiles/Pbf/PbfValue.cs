@@ -8,6 +8,9 @@ namespace VecTiles.Converters.OpenMapTiles.Pbf;
 [ProtoContract(Name = @"value")]
 public sealed class PbfValue
 {
+    /// <summary>
+    /// Initializes all value fields and "has value" flags to their defaults.
+    /// </summary>
     public PbfValue()
     {
         _floatValue = 0;

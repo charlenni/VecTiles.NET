@@ -12,6 +12,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTExpressionCaseTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -23,6 +26,9 @@ public class OMTExpressionCaseTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -34,6 +40,9 @@ public class OMTExpressionCaseTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Theory]
     [InlineData(true, true, "x")]
     [InlineData(true, false, "x")]
@@ -49,6 +58,9 @@ public class OMTExpressionCaseTests
         Assert.Equal(expected, expression.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that the case fixture falls back to the otherwise output when all conditions are falsy.
+    /// </summary>
     [Fact]
     public void FixtureFallsBackOnFalsyConditionsTest()
     {
@@ -64,6 +76,9 @@ public class OMTExpressionCaseTests
         Assert.Equal("otherwise_other", expressionB.Evaluate(context));
     }
 
+    /// <summary>
+    /// Verifies that a case expression without a fallback output fails to parse.
+    /// </summary>
     [Fact]
     public void CaseRequiresPairsAndFallbackTest()
     {

@@ -11,6 +11,11 @@ using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Renderers.Skia;
 
+/// <summary>
+/// Skia implementation of <see cref="IRenderFactory" />. Converts the
+/// features of a vector tile into drawable layer renderers for the given
+/// style, creating the tessellated vertex buffers at render time.
+/// </summary>
 public class RenderFactory : IRenderFactory
 {
     static readonly SKRect _tileRect = new SKRect(0, 0, 512, 512);
@@ -21,6 +26,12 @@ public class RenderFactory : IRenderFactory
     private ISymbolRenderer _pointSymbolRenderer = new PointSymbolRenderer();
     private ISymbolRenderer _iconPointSymbolRenderer = new IconPointSymbolRenderer();
 
+    /// <summary>
+    /// Create a render factory that prepares a paint for each given style.
+    /// </summary>
+    /// <param name="styles">Styles to create paints for.</param>
+    /// <param name="paintFactory">Factory to create the paints of geometry layers.</param>
+    /// <param name="symbolFactory">Factory to create the symbols of symbol layers.</param>
     public RenderFactory(IEnumerable<ILayerStyle> styles, IPaintFactory paintFactory, ISymbolFactory symbolFactory)
     {
         _symbolFactory = symbolFactory;
@@ -39,11 +50,13 @@ public class RenderFactory : IRenderFactory
         }
     }
 
+    /// <inheritdoc />
     public ILayerRenderer CreateBackgroundLayer(ILayerStyle style)
     {
         return new BackgroundLayerRenderer(_tileRect, _paints[style.Name]);
     }
 
+    /// <inheritdoc />
     public ILayerRenderer CreateRasterLayer(ILayerStyle style, byte[] data)
     {
         using var bitmap = SKBitmap.Decode(data);
@@ -56,6 +69,7 @@ public class RenderFactory : IRenderFactory
         return new RasterLayerRenderer(_tileRect, _paints[style.Name], bitmap);
     }
 
+    /// <inheritdoc />
     public ILayerRenderer CreateVectorFillLayer(ILayerStyle style,
         EvaluationContext context,
         IEnumerable<IFeature> features)
@@ -148,6 +162,7 @@ public class RenderFactory : IRenderFactory
         return new FillLayerRenderer(fillBuilder.Build(), true, _paints[style.Name]);
     }
 
+    /// <inheritdoc />
     public ILayerRenderer CreateVectorLineLayer(ILayerStyle style, 
         EvaluationContext context, 
         IEnumerable<IFeature> features)
@@ -236,6 +251,7 @@ public class RenderFactory : IRenderFactory
         return new LineLayerRenderer(builder.Build(), false, _paints[style.Name], maxStrokeWidth);
     }
 
+    /// <inheritdoc />
     public ILayerRenderer CreateVectorCircleLayer(ILayerStyle style,
         EvaluationContext context,
         IEnumerable<IFeature> features)
@@ -390,6 +406,7 @@ public class RenderFactory : IRenderFactory
         return paint;
     }
 
+    /// <inheritdoc />
     public ISymbol? CreateSymbol(Tile tile,
         ILayerStyle style, 
         EvaluationContext context, 

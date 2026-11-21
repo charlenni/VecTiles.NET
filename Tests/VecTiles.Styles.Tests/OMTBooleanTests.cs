@@ -11,6 +11,9 @@ namespace VecTiles.Styles.MapboxTests;
 /// </summary>
 public class OMTBooleanTests
 {
+    /// <summary>
+    /// Verifies that fixture a is structurally equal to a second parse of the same fixture.
+    /// </summary>
     [Fact]
     public void FixtureIsStructurallyEqualToItselfTest()
     {
@@ -22,6 +25,9 @@ public class OMTBooleanTests
         Assert.Equal(expressionA1, expressionA2);
     }
 
+    /// <summary>
+    /// Verifies that fixture a is not structurally equal to fixture b, which differs in exactly one leaf.
+    /// </summary>
     [Fact]
     public void FixtureIsUnequalToOtherFixtureTest()
     {
@@ -33,6 +39,9 @@ public class OMTBooleanTests
         Assert.NotEqual(expressionA, expressionB);
     }
 
+    /// <summary>
+    /// Verifies that the fixtures evaluate to the expected results.
+    /// </summary>
     [Fact]
     public void FixtureEvaluationTest()
     {
@@ -43,6 +52,9 @@ public class OMTBooleanTests
         Assert.Equal(true, expression!.Evaluate(OMTExpressionTestsHelper.CreateContext(("x", true))));
     }
 
+    /// <summary>
+    /// Verifies that a non-boolean attribute value evaluates to null when no fallback is given.
+    /// </summary>
     [Fact]
     public void NonBooleanWithoutFallbackTest()
     {
@@ -54,6 +66,9 @@ public class OMTBooleanTests
         Assert.Null(expression!.Evaluate(OMTExpressionTestsHelper.CreateContext(("x", 1d))));
     }
 
+    /// <summary>
+    /// Verifies that a missing attribute evaluates to null when no fallback is given.
+    /// </summary>
     [Fact]
     public void MissingAttributeWithoutFallbackTest()
     {

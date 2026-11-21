@@ -8,6 +8,11 @@ using VecTiles.Styles.OpenMapTiles;
 
 namespace VecTiles.OpenMapTiles.Benchmarks;
 
+/// <summary>
+/// Benchmarks for the OpenMapTiles vector tile conversion: reads raw vector
+/// tiles from an MBTiles data source at several zoom levels and converts them
+/// with an <see cref="OMTTileConverter"/> into transcoded <c>VectorTile</c>s.
+/// </summary>
 [MemoryDiagnoser]
 public class OMTConverterBenchmarks
 {
@@ -27,6 +32,10 @@ public class OMTConverterBenchmarks
 
     private List<byte[]?> _data = [null, null, null, null];
     
+    /// <summary>
+    /// Loads the style file, creates the MBTiles data source and the tile
+    /// converter and prefetches the raw tile data for all benchmark tiles.
+    /// </summary>
     [GlobalSetup]
     public void Setup()
     {
@@ -47,11 +56,24 @@ public class OMTConverterBenchmarks
     [Arguments(1)]
     [Arguments(2)]
     [Arguments(3)]*/
+    /// <summary>
+    /// Reads the raw vector tile data of one benchmark tile from the MBTiles
+    /// data source.
+    /// </summary>
+    /// <param name="i">Index of the benchmark tile to read.</param>
+    /// <returns>The MVT byte data of the tile, or null if it is not available.</returns>
     public async Task<byte[]?> ReadVectorTile(int i)
     {
         return await _dataSource.GetTileAsync(_tiles[i]);
     }
 
+    /// <summary>
+    /// Converts the prefetched raw tile data of one benchmark tile into a
+    /// <c>VectorTile</c> with the OpenMapTiles tile converter.
+    /// </summary>
+    /// <param name="i">Index of the prefetched raw tile data to convert.</param>
+    /// <param name="j">Index of the benchmark tile that defines the target tile.</param>
+    /// <returns>The converted <c>VectorTile</c>, or null if the converter is not initialized.</returns>
     [Benchmark]
     //[Arguments(0, 0)]
     //[Arguments(1, 1)]
@@ -63,6 +85,7 @@ public class OMTConverterBenchmarks
         return await _tileConverter?.Convert(_tiles[j], _tiles[i], _data[i]);
     }
 
+    /// <summary>Cleans up the benchmark resources.</summary>
     [GlobalCleanup]
     public void Cleanup()
     {

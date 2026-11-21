@@ -5,8 +5,13 @@ using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Styles.OpenMapTiles.Json.Converter;
 
+/// <summary>
+/// JSON converter for zoom-dependent float array values. Accepts a plain float
+/// array, a stops object, or an expression array.
+/// </summary>
 public class StoppedFloatArrayConverter : JsonConverter<StoppedFloatArray>
 {
+    /// <inheritdoc />
     public override StoppedFloatArray Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
     {
         var token = JsonNode.Parse(ref reader);
@@ -42,6 +47,8 @@ public class StoppedFloatArrayConverter : JsonConverter<StoppedFloatArray>
         return new StoppedFloatArray { SingleVal = StoppedExpression.ToFloatArray(MatchExpression.ToValue(token)) };
     }
 
+    /// <inheritdoc />
+    /// <exception cref="NotSupportedException">Always thrown; stopped values are read-only.</exception>
     public override void Write(Utf8JsonWriter writer, StoppedFloatArray value, JsonSerializerOptions options)
     {
         throw new NotSupportedException("Stopped values are only read, never written.");

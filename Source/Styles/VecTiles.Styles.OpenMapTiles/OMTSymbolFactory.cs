@@ -7,10 +7,20 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
+/// <summary>
+/// Creates symbols for features of OpenMapLayers symbol layers according to
+/// their symbol placement (point or line), using cached icon and text builders
+/// per layer and zoom level.
+/// </summary>
 public class OMTSymbolFactory : ISymbolFactory
 {
     Func<string, ISprite?> _spriteFactory;
 
+    /// <summary>
+    /// Initializes the factory with a sprite dictionary used to resolve icon names.
+    /// </summary>
+    /// <param name="spriteFile">The dictionary containing the sprites referenced by the styles.</param>
+    /// <exception cref="ArgumentNullException">Thrown if the dictionary is null.</exception>
     public OMTSymbolFactory(SpriteDictionary? spriteFile)
     {
         if (spriteFile == null)
@@ -27,6 +37,8 @@ public class OMTSymbolFactory : ISymbolFactory
         };
     }
 
+    /// <inheritdoc />
+    /// <exception cref="InvalidDataException">Thrown for unsupported symbol placements.</exception>
     public ISymbol? CreateSymbol(Tile tile, ILayerStyle style, EvaluationContext context, IFeature feature)
     {
         var omtLayerStyle = (OMTLayerStyle)style;

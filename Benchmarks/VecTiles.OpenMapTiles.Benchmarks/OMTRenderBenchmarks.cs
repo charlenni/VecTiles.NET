@@ -10,6 +10,11 @@ using VecTiles.Styles.OpenMapTiles;
 
 namespace VecTiles.OpenMapTiles.Benchmarks;
 
+/// <summary>
+/// Benchmarks for the OpenMapTiles vector tile rendering: reads raw vector
+/// tiles from an MBTiles data source at several zoom levels and renders them
+/// through the style renderer into <c>IRenderedTile</c>s.
+/// </summary>
 [MemoryDiagnoser]
 public class OMTRenderBenchmarks
 {
@@ -29,6 +34,10 @@ public class OMTRenderBenchmarks
 
     private List<byte[]?> _data = [null, null, null, null];
     
+    /// <summary>
+    /// Loads the style file, creates the MBTiles data source and the style
+    /// renderer and prefetches the raw tile data for all benchmark tiles.
+    /// </summary>
     [GlobalSetup]
     public void Setup()
     {
@@ -46,6 +55,12 @@ public class OMTRenderBenchmarks
                 new OMTSymbolFactory(styleFile.Sprites)));
     }
 
+    /// <summary>
+    /// Reads and renders one benchmark tile: the raw tile data is fetched from
+    /// the MBTiles data source, converted and rendered with the style renderer.
+    /// </summary>
+    /// <param name="i">Index of the benchmark tile to render.</param>
+    /// <returns>The rendered tile, or null if the renderer is not initialized.</returns>
     [Benchmark]
     [Arguments(0)]
     [Arguments(1)]
@@ -57,11 +72,19 @@ public class OMTRenderBenchmarks
         return await _renderer?.Render(_tiles[i]);
     }
 
+    /// <summary>
+    /// Reads and renders one benchmark tile per layer, as a variant of
+    /// <see cref="RenderVectorTile(int)"/> whose per-layer rendering path can
+    /// be benchmarked separately.
+    /// </summary>
+    /// <param name="i">Index of the benchmark tile to render.</param>
+    /// <returns>The rendered tile, or null if the renderer is not initialized.</returns>
     public async Task<IRenderedTile?> RenderVectorLayerTile(int i)
     {
         return await _renderer?.Render(_tiles[i]);
     }
 
+    /// <summary>Cleans up the benchmark resources.</summary>
     [GlobalCleanup]
     public void Cleanup()
     {

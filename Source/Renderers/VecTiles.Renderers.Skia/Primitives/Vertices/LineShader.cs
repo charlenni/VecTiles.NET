@@ -3,6 +3,11 @@ using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 
+/// <summary>
+/// Runtime effect shader for line layers. Renders the stroke from the
+/// expanded line mesh and applies dash patterns (via a 1D coverage texture)
+/// or sprite patterns, both changeable at draw time without re-tessellating.
+/// </summary>
 public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
 {
     // Style calibration factor: 1 = dash length equals the stroke width
@@ -85,6 +90,11 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
     // Optional: release the shared static image (e.g. in tests).
     // Do NOT call this from instance Dispose() -- other instances
     // would break.
+    /// <summary>
+    /// Disposes the dash and pattern shaders created by this instance, the
+    /// dash texture image and the runtime effect. The shared white shader
+    /// stays alive for other instances.
+    /// </summary>
     public void Dispose()
     {
         // Dispose the pattern shader only if it is instance-owned.
@@ -96,6 +106,10 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
         _effect.Dispose();
     }
 
+    /// <summary>
+    /// Disposes the shared static white shader image when it was created
+    /// (e.g. in tests). Do not call it from instance Dispose().
+    /// </summary>
     public static void DisposeSharedResources()
     {
         if (_whiteShader.IsValueCreated) 

@@ -59,8 +59,10 @@ public class StoppedString : IStopped<string>
     bool _hasStops = false;
     IList<KeyValuePair<float, string>> _stops = [];
 
+    /// <summary>The interpolation base of the stop curve. Strings are not interpolated, so this value has no effect on the evaluation.</summary>
     public float Base { get; set; } = 1f;
 
+    /// <summary>The zoom/value stops of the stopped function, in ascending zoom order.</summary>
     public IList<KeyValuePair<float, string>> Stops
     {
         get => _stops;
@@ -135,11 +137,13 @@ public class StoppedString : IStopped<string>
         return string.Empty;
     }
 
+    /// <inheritdoc />
     public string PossibleOutputs()
     {
         throw new System.NotImplementedException();
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         if (Expression != null)

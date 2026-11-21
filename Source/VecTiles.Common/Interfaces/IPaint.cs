@@ -8,26 +8,59 @@ namespace VecTiles.Common.Interfaces;
 /// </summary>
 public interface IPaint
 {
+    /// <summary>
+    /// Painting style defining whether the geometry is filled, stroked or both.
+    /// </summary>
     PaintStyle Style { get; }
 
+    /// <summary>
+    /// Fill color.
+    /// </summary>
     Color Color { get; }
 
+    /// <summary>
+    /// Outline color (only used by fill layers).
+    /// </summary>
     Color OutlineColor { get; }
 
+    /// <summary>
+    /// Opacity of the painting (1.0 is fully opaque).
+    /// </summary>
     float Opacity { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether antialiasing is used when rendering the geometry.
+    /// </summary>
     bool IsAntialias { get; }
 
+    /// <summary>
+    /// Width of the stroke in style px.
+    /// </summary>
     float StrokeWidth { get; }
 
+    /// <summary>
+    /// Cap of a stroked line.
+    /// </summary>
     StrokeCap StrokeCap { get; }
 
+    /// <summary>
+    /// Join of a stroked line.
+    /// </summary>
     StrokeJoin StrokeJoin { get; }
 
+    /// <summary>
+    /// Maximum length of the miter join of a stroked line.
+    /// </summary>
     float StrokeMiter { get; }
 
+    /// <summary>
+    /// Pattern sprite used for filling.
+    /// </summary>
     ISprite? Pattern { get; }
 
+    /// <summary>
+    /// Dash pattern as an array of dash and gap lengths, or <c>null</c> for a solid line.
+    /// </summary>
     float[]? DashArray { get; }
 
     /// <summary>
@@ -40,9 +73,23 @@ public interface IPaint
     /// </summary>
     float Blur { get; }
 
+    /// <summary>
+    /// Updates all properties of the paint using the given evaluation context.
+    /// </summary>
+    /// <param name="context">The evaluation context with zoom information and feature attributes.</param>
     void Update(EvaluationContext context);
 
+    /// <summary>
+    /// Gets the maximum stroke width of the paint, i.e. the (largest) stroke width evaluated at the current zoom.
+    /// </summary>
+    /// <param name="context">The evaluation context with zoom information and feature attributes.</param>
+    /// <returns>The maximum stroke width in style px.</returns>
     float GetMaxStrokeWidth(EvaluationContext context);
-    
+
+    /// <summary>
+    /// Gets the output value for stroke-width evaluated against the nearest integer zoom level.
+    /// </summary>
+    /// <param name="context">The evaluation context with zoom information and feature attributes.</param>
+    /// <returns>The stroke width obtained when using the integer zoom.</returns>
     float GetStrokeWidthFromIntZoom(EvaluationContext context);
 }

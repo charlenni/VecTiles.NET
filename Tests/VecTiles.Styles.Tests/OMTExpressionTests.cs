@@ -10,6 +10,9 @@ namespace VecTiles.Styles.MapboxTests
 {
     // Expression tests for "get", "match", "case" and "literal" with the icon
     // image evaluation of osm-liberty style variants in mind
+    /// <summary>
+    /// Expression tests for "get", "match", "case" and "literal" with the icon image evaluation of osm-liberty style variants in mind.
+    /// </summary>
     public class OMTExpressionTests
     {
         const string IconImageExpression =
@@ -23,6 +26,9 @@ namespace VecTiles.Styles.MapboxTests
             ]
             """;
 
+        /// <summary>
+        /// Provides the input rows for the icon image match expression theory.
+        /// </summary>
         public static TheoryData<string, object?, string?> MatchCases => new()
         {
             // Subclass equals one of the labels -> the subclass itself
@@ -39,6 +45,12 @@ namespace VecTiles.Styles.MapboxTests
             { null, null, null }
         };
 
+        /// <summary>
+        /// Verifies that the icon image match expression resolves the feature subclass to the expected output.
+        /// </summary>
+        /// <param name="subclass">The feature subclass value, or null if missing.</param>
+        /// <param name="styleClass">The feature class value, or null if missing.</param>
+        /// <param name="expected">The expected expression result.</param>
         [Theory]
         [MemberData(nameof(MatchCases))]
         public void IconImageMatchExpressionTest(string? subclass, object? styleClass, string? expected)
@@ -61,6 +73,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal(expected, expression.Evaluate(context));
         }
 
+        /// <summary>
+        /// Verifies that the match expression supports numeric labels.
+        /// </summary>
         [Fact]
         public void MatchWithNumberLabelsTest()
         {
@@ -80,6 +95,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("none", expression.Evaluate(otherContext));
         }
 
+        /// <summary>
+        /// Verifies that the case expression evaluates its conditions and falls back on a missing attribute.
+        /// </summary>
         [Fact]
         public void CaseExpressionTest()
         {
@@ -113,6 +131,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("road_11", expression.Evaluate(missingContext));
         }
 
+        /// <summary>
+        /// Verifies that the literal expression evaluates to its literal value.
+        /// </summary>
         [Fact]
         public void LiteralExpressionTest()
         {
@@ -128,6 +149,9 @@ namespace VecTiles.Styles.MapboxTests
             Assert.Equal("traffic_sign", expression.Evaluate(context));
         }
 
+        /// <summary>
+        /// Verifies that the stopped string converter parses expression based style values as an expression.
+        /// </summary>
         [Fact]
         public void StoppedStringConverterParsesExpressionTest()
         {

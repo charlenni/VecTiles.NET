@@ -97,6 +97,10 @@ public class LineShaderPatternTests
             "Set VECTILES_RENDER_TEST_UPDATE_GOLDEN=true to recreate the golden image.");
     }
 
+    /// <summary>
+    /// Verifies that the pattern of a horizontal line matches the golden image:
+    /// gradient across the line, repeating along it.
+    /// </summary>
     [Fact]
     public void Pattern_HorizontalLine_MatchesGoldenImage()
     {
@@ -112,6 +116,10 @@ public class LineShaderPatternTests
         DrawAndCompare(vertices, update, "Line-Pattern-Horizontal.png");
     }
 
+    /// <summary>
+    /// Verifies that the pattern rotates with a diagonal line so the gradient stays
+    /// perpendicular to the line direction.
+    /// </summary>
     [Fact]
     public void Pattern_DiagonalLine_MatchesGoldenImage()
     {
@@ -127,6 +135,10 @@ public class LineShaderPatternTests
         DrawAndCompare(vertices, update, "Line-Pattern-Diagonal.png");
     }
 
+    /// <summary>
+    /// Verifies that a @2x pattern sprite repeats at its CSS size (one repeat
+    /// per 4 world pixels) along the line.
+    /// </summary>
     [Fact]
     public void Pattern_PixelRatioTwo_MatchesGoldenImage()
     {

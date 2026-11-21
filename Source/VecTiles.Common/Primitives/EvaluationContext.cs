@@ -9,8 +9,19 @@ namespace VecTiles.Common.Primitives;
 /// </summary>
 public class EvaluationContext : IEquatable<EvaluationContext>
 {
+    /// <summary>
+    /// An empty evaluation context with zoom level 0 and default values for all other properties.
+    /// </summary>
     public static readonly EvaluationContext Empty = new EvaluationContext(0);
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="EvaluationContext"/> class.
+    /// </summary>
+    /// <param name="zoom">The zoom level to evaluate in.</param>
+    /// <param name="scale">The scale factor. Defaults to 1.</param>
+    /// <param name="rotation">The rotation in degrees. Defaults to 0.</param>
+    /// <param name="attributes">The attributes of the feature. Defaults to <c>null</c>.</param>
+    /// <param name="feature">The feature to evaluate for. Defaults to <c>null</c>.</param>
     public EvaluationContext(float? zoom, float scale = 1, float rotation = 0, AttributesTable? attributes = null, IFeature? feature = null)
     {
         Zoom = zoom;
@@ -20,6 +31,11 @@ public class EvaluationContext : IEquatable<EvaluationContext>
         Feature = feature;
     }
 
+    /// <summary>
+    /// Creates a copy of this evaluation context with the given feature set.
+    /// </summary>
+    /// <param name="feature">The feature to evaluate for.</param>
+    /// <returns>A new evaluation context with the given feature and unchanged other properties.</returns>
     public EvaluationContext WithFeature(IFeature feature)
     {
         return new EvaluationContext(Zoom, Scale, Rotation, Attributes, feature);

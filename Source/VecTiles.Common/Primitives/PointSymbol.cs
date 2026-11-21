@@ -2,8 +2,20 @@
 
 namespace VecTiles.Common.Primitives;
 
+/// <summary>
+/// Combined container for an icon point symbol and/or a text point symbol on the same point geometry,
+/// together with the flags steering which parts are drawn.
+/// </summary>
 public class PointSymbol : Symbol
 {
+    /// <summary>
+    /// Initializes a new point symbol from an optional icon symbol and an optional text symbol.
+    /// </summary>
+    /// <param name="tile">The tile the symbol belongs to.</param>
+    /// <param name="id">The unique identifier of the symbol.</param>
+    /// <param name="point">The point where the symbol is placed.</param>
+    /// <param name="icon">The optional icon symbol.</param>
+    /// <param name="text">The optional text symbol.</param>
     public PointSymbol(Tile tile, ulong id, Point point, IconPointSymbol? icon, TextPointSymbol? text) : base(tile, id)
     {
         Point = point;
@@ -53,10 +65,21 @@ public class PointSymbol : Symbol
     /// </summary>
     public bool DrawTextWithoutIcon { get; }
 
+    /// <summary>
+    /// Gets a value indicating whether this symbol contains an icon symbol.
+    /// </summary>
     public bool HasIcon => IconSymbol != null;
 
+    /// <summary>
+    /// Gets a value indicating whether this symbol contains a text symbol.
+    /// </summary>
     public bool HasText => TextSymbol != null;
 
+    /// <summary>
+    /// Sets the draw flags for the icon and text parts of this symbol, e.g. after collision detection.
+    /// </summary>
+    /// <param name="drawIcon">Whether the icon part should be drawn.</param>
+    /// <param name="drawText">Whether the text part should be drawn.</param>
     public void SetDrawFlags(bool drawIcon, bool drawText)
     {
         DrawIcon = drawIcon;

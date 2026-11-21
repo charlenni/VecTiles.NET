@@ -47,6 +47,14 @@ public sealed class GetOrderExpression : Expression
         return null;
     }
 
+    /// <summary>
+    /// Evaluates the attribute of the feature under the stored key and
+    /// compares it to the stored bound, respecting the direction, equality
+    /// tolerance and negation-free comparison semantics of the operator.
+    /// Non-number attribute values are incomparable and evaluate to false.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>True if the comparison matches the operator; otherwise, false.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         // A non-number attribute value is incomparable with the bound, like
@@ -61,11 +69,23 @@ public sealed class GetOrderExpression : Expression
         return _allowEqual ? comparison * _sign >= 0 : comparison == _sign;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of the comparison cannot be
+    /// determined statically (the result can be true or false).
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="GetOrderExpression"/>, comparing key, bound, direction and
+    /// equality tolerance.
+    /// </summary>
+    /// <param name="other">The expression to compare with.</param>
+    /// <returns>True if the expressions are equal; otherwise, false.</returns>
     public bool Equals(GetOrderExpression? other)
     {
         return other is not null
@@ -75,7 +95,9 @@ public sealed class GetOrderExpression : Expression
             && _allowEqual == other._allowEqual;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is GetOrderExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode() => HashCode.Combine(_key, _bound, _sign, _allowEqual);
 }

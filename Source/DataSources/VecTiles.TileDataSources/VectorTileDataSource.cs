@@ -14,6 +14,11 @@ public class VectorTileDataSource : IVectorTileDataSource
     private readonly ITileDataSource _dataSource;
     private readonly ITileConverter _converter;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="VectorTileDataSource"/> class.
+    /// </summary>
+    /// <param name="dataSource">The ITileDataSource to fetch the raw tile data from.</param>
+    /// <param name="converter">The ITileConverter to convert the raw tile data into a VectorTile.</param>
     public VectorTileDataSource(ITileDataSource dataSource, ITileConverter converter)
     {
         _dataSource = dataSource;

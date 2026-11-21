@@ -11,12 +11,19 @@ using MapsuiLogger = Mapsui.Logging.Logger;
 
 namespace VecTiles.Controls.Mapsui;
 
+/// <summary>
+/// A tile source that renders OpenMapTiles vector tile data according to a loaded OpenMapTiles style file.
+/// </summary>
 public class OMTRenderedTileSource : IRenderedTileSource
 {
     private readonly Renderer _renderer;
     private readonly MemoryCache<IRenderedTile> _cache;
     private readonly OMTStyleFile _styleFile;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OMTRenderedTileSource"/> class from a style file source.
+    /// </summary>
+    /// <param name="source">Source in URL notation pointing to the OpenMapTiles style file, including to the data sources and sprites it references.</param>
     public OMTRenderedTileSource(string source)
     {
         _styleFile = OMTStyleFileLoader.Load(source).Result;
@@ -46,10 +53,19 @@ public class OMTRenderedTileSource : IRenderedTileSource
         }
     }
 
+    /// <summary>
+    /// Tile schema of the rendered tiles, GlobalSphericalMercator with 512x512 tiles.
+    /// </summary>
     public ITileSchema Schema { get; private set; }
 
+    /// <summary>
+    /// Name of the loaded style file.
+    /// </summary>
     public string Name { get; private set; }
 
+    /// <summary>
+    /// Attribution of the first data source in the style file that provides one.
+    /// </summary>
     public Attribution Attribution { get; private set; }
 
     /// <summary>
@@ -75,6 +91,11 @@ public class OMTRenderedTileSource : IRenderedTileSource
         _cache.Clear();
     }
 
+    /// <summary>
+    /// Renders the tile for the given tile info, returning a cached tile when available.
+    /// </summary>
+    /// <param name="tileInfo">Tile info of the tile to render.</param>
+    /// <returns>The rendered tile, or null when it could not be rendered.</returns>
     public async Task<IRenderedTile?> GetTileAsync(TileInfo tileInfo)
     {
         var tile = _cache.Find(tileInfo.Index);

@@ -66,6 +66,9 @@ public class PlacedPointFeatureTests
         return new PlacementResult { PlacedByLayer = placedByLayer, ZoomLevel = zoomLevel };
     }
 
+    /// <summary>
+    /// Verifies that a <see langword="null" /> placement produces an empty hit list.
+    /// </summary>
     [Fact]
     public void NullPlacementReturnsEmptyList()
     {
@@ -74,6 +77,10 @@ public class PlacedPointFeatureTests
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Verifies that a click on the anchor builds a feature with layer, symbol, id, title,
+    /// world position and the icon rectangle, without a text rectangle.
+    /// </summary>
     [Fact]
     public void HitsIconAtTheAnchorAndBuildsTheFeature()
     {
@@ -100,6 +107,10 @@ public class PlacedPointFeatureTests
         Assert.Null(hit.TextRectangle);
     }
 
+    /// <summary>
+    /// Verifies that a symbol without text and feature name keeps the title empty
+    /// and carries the source category from the symbol factory.
+    /// </summary>
     [Fact]
     public void KeepsTheTitleEmptyForUnnamedSymbolsAndCarriesTheSourceCategory()
     {
@@ -125,6 +136,10 @@ public class PlacedPointFeatureTests
         Assert.Equal(7, hit.Id);
     }
 
+    /// <summary>
+    /// Verifies that a click on the label below the anchor hits the text part
+    /// and reports its rectangle, without an icon rectangle.
+    /// </summary>
     [Fact]
     public void HitsTextBelowTheAnchor()
     {
@@ -143,6 +158,9 @@ public class PlacedPointFeatureTests
         Assert.Equal(540, hit.TextRectangle.MaxY, 6);
     }
 
+    /// <summary>
+    /// Verifies that a click outside icon and text envelopes yields no hits.
+    /// </summary>
     [Fact]
     public void MissesOutsideEnvelopes()
     {
@@ -155,6 +173,9 @@ public class PlacedPointFeatureTests
         Assert.Empty(hits);
     }
 
+    /// <summary>
+    /// Verifies that a symbol whose icon and text are not drawn is not hit.
+    /// </summary>
     [Fact]
     public void MissesWhenBothPartsAreNotDrawn()
     {
@@ -166,6 +187,10 @@ public class PlacedPointFeatureTests
         Assert.Empty(hits);
     }
 
+    /// <summary>
+    /// Verifies that the hit test only reacts at the screen position of the
+    /// anchor, not to world-space proximity alone.
+    /// </summary>
     [Fact]
     public void AnchorDistanceIsRespected()
     {
@@ -187,6 +212,10 @@ public class PlacedPointFeatureTests
         Assert.Same(outer, hit.Symbol);
     }
 
+    /// <summary>
+    /// Verifies that hits at the same anchor are reported with the topmost
+    /// style layer first.
+    /// </summary>
     [Fact]
     public void ReportsTopMostLayerFirst()
     {
@@ -205,6 +234,9 @@ public class PlacedPointFeatureTests
         Assert.Same(bottom, hits[1].Symbol);
     }
 
+    /// <summary>
+    /// Verifies that placed line symbols are not returned by the point hit test.
+    /// </summary>
     [Fact]
     public void SkipsLineSymbols()
     {
@@ -225,6 +257,10 @@ public class PlacedPointFeatureTests
         Assert.Same(symbol, hit.Symbol);
     }
 
+    /// <summary>
+    /// Verifies that a fixed pixel offset from the anchor hits at any resolution,
+    /// because envelope and click mapping share the canonical placement space.
+    /// </summary>
     [Fact]
     public void HitsAtTheSameScreenDistanceAtAnyZoom()
     {
@@ -248,6 +284,10 @@ public class PlacedPointFeatureTests
         }
     }
 
+    /// <summary>
+    /// Verifies that a world position maps through a rotated viewport to the same
+    /// hit, with the icon rectangle as the axis-aligned box of the turned rectangle.
+    /// </summary>
     [Fact]
     public void HitsTheSameWorldPositionOnARotatedViewport()
     {

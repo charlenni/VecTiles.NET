@@ -60,8 +60,10 @@ public class StoppedColor : IStopped<Color>
     bool _hasStops = false;
     IList<KeyValuePair<float, Color>> _stops = [];
 
+    /// <summary>The interpolation base of the exponential stop interpolation.</summary>
     public float Base { get; set; } = 1f;
 
+    /// <summary>The zoom/value stops of the stopped function, in ascending zoom order.</summary>
     public IList<KeyValuePair<float, Color>> Stops
     {
         get => _stops;
@@ -164,11 +166,13 @@ public class StoppedColor : IStopped<Color>
         return Colors.Empty;
     }
 
+    /// <inheritdoc />
     public Color PossibleOutputs()
     {
         throw new NotImplementedException();
     }
 
+    /// <inheritdoc />
     public override string ToString()
     {
         if (Expression != null)

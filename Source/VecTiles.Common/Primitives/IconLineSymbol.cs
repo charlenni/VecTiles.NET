@@ -4,8 +4,18 @@ using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Common.Primitives;
 
+/// <summary>
+/// Line symbol with an icon that is placed along a line geometry.
+/// </summary>
 public class IconLineSymbol : Symbol
 {
+    /// <summary>
+    /// Initializes a new icon line symbol.
+    /// </summary>
+    /// <param name="tile">The tile the symbol belongs to.</param>
+    /// <param name="id">The unique identifier of the symbol.</param>
+    /// <param name="geometry">The line geometry along which the icon is placed.</param>
+    /// <param name="sprite">The sprite used for the icon.</param>
     public IconLineSymbol(Tile tile, ulong id, Geometry geometry, ISprite sprite) : base(tile, id)
     {
         Geometry = geometry;
@@ -87,6 +97,10 @@ public class IconLineSymbol : Symbol
     /// </summary>
     public Func<EvaluationContext, MapAlignment>? TranslateAnchor { get; init; }
             
+    /// <summary>
+    /// Creates a copy of this symbol with all its current property values.
+    /// </summary>
+    /// <returns>A new <see cref="IconLineSymbol"/> with the same values as this symbol.</returns>
     public IconLineSymbol Copy()
     {
         var result = new IconLineSymbol(Tile, Id, Geometry, Icon)

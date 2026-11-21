@@ -25,6 +25,12 @@ public class InterpolateExpression : Expression
         _stops = stops;
     }
 
+    /// <summary>
+    /// Parses an "interpolate" expression from the given JSON array.
+    /// </summary>
+    /// <param name="array">The JSON array of the expression, starting with the operator name.</param>
+    /// <param name="parser">The parser used to parse the arguments and report errors.</param>
+    /// <returns>The parsed expression, or null if parsing failed.</returns>
     public static IExpression? Parse(JsonArray array, ExpressionParser parser)
     {
         var length = array.Count;
@@ -102,6 +108,13 @@ public class InterpolateExpression : Expression
         return new InterpolateExpression(exponentialBase, input, [.. stops]);
     }
 
+    /// <summary>
+    /// Evaluates the input and returns the output at the surrounding stops,
+    /// linearly or exponentially blended between them. Values below the first
+    /// or above the last stop return the nearest stop output.
+    /// </summary>
+    /// <param name="ctx">The evaluation context.</param>
+    /// <returns>The interpolated output value, or null if the input cannot be evaluated.</returns>
     public override object? Evaluate(EvaluationContext ctx)
     {
         var inputValue = CompoundOperators.EvaluateNumber(ctx, _input);
@@ -172,11 +185,23 @@ public class InterpolateExpression : Expression
         return upper == 0 ? 0 : lower / upper;
     }
 
+    /// <summary>
+    /// Always returns null: the possible outputs of an "interpolate" expression
+    /// cannot be determined statically.
+    /// </summary>
+    /// <returns>Null, because the possible outputs are unknown.</returns>
     public override object? PossibleOutputs()
     {
         return null;
     }
 
+    /// <summary>
+    /// Indicates whether the current object is equal to another
+    /// <see cref="InterpolateExpression"/>, comparing exponential base, input
+    /// expression and all stops.
+    /// </summary>
+    /// <param name="other">The interpolate expression to compare with.</param>
+    /// <returns>True if the interpolate expressions are equal; otherwise, false.</returns>
     public bool Equals(InterpolateExpression? other)
     {
         if (other is null)
@@ -197,8 +222,10 @@ public class InterpolateExpression : Expression
         return true;
     }
 
+    /// <inheritdoc />
     public override bool Equals(object? obj) => obj is InterpolateExpression other && Equals(other);
 
+    /// <inheritdoc />
     public override int GetHashCode()
     {
         unchecked

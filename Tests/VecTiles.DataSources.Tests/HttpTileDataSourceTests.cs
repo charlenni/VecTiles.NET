@@ -10,6 +10,9 @@ namespace VecTiles.DataSources.Tests;
 /// </summary>
 public class HttpTileDataSourceTests
 {
+    /// <summary>
+    /// Verifies that the constructor exposes the zoom range and source type of the template URL source.
+    /// </summary>
     [Fact]
     public void Constructor_ExposesZoomRangeOfSource()
     {

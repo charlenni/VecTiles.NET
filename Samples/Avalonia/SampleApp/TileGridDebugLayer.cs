@@ -9,6 +9,11 @@ using Mapsui.Styles;
 
 namespace SampleApp;
 
+/// <summary>
+/// Debug layer that renders the tile grid of a tile schema: for every tile in
+/// the current view it draws the tile boundary and a label with the TileIndex
+/// value (Level/Col/Row).
+/// </summary>
 public class TileGridDebugLayer : MemoryLayer
 {
     private readonly ITileSchema _schema;
@@ -29,6 +34,7 @@ public class TileGridDebugLayer : MemoryLayer
         };
     }
 
+    /// <inheritdoc />
     public override IEnumerable<IFeature> GetFeatures(MRect box, double resolution)
     {
         if (box == null || resolution <= 0)

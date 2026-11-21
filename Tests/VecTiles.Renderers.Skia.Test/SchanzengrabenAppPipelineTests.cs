@@ -20,11 +20,20 @@ public class SchanzengrabenAppPipelineTests
 
     private readonly ITestOutputHelper _output;
 
+    /// <summary>
+    /// Initializes the test with the xUnit output helper.
+    /// </summary>
+    /// <param name="output">The xUnit output helper.</param>
     public SchanzengrabenAppPipelineTests(ITestOutputHelper output) => _output = output;
 
     private const double WorldWidth = 40075016.686;
     private const double WorldHalf = WorldWidth / 2;
 
+    /// <summary>
+    /// Renders the Schanzengraben frame at the given fractional zoom through the app
+    /// pipeline with debug borders and writes the bitmap to the results folder.
+    /// </summary>
+    /// <param name="fractionalZoom">The fractional zoom of the viewport.</param>
     [Theory]
     [InlineData(17.0)]
     [InlineData(17.2)]

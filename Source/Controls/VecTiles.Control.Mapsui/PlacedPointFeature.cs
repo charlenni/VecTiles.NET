@@ -26,6 +26,15 @@ public sealed class PlacedPointFeature : PointFeature
         typeof(BaseFeature).GetProperty(nameof(Id), System.Reflection.BindingFlags.Instance |
             System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)!;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PlacedPointFeature"/> class for a placed point symbol.
+    /// </summary>
+    /// <param name="point">Anchor of the symbol in map (world) coordinates.</param>
+    /// <param name="styleLayer">Name of the style layer the symbol belongs to.</param>
+    /// <param name="symbol">The placed point symbol with the details of the source feature.</param>
+    /// <param name="title">Title of the symbol: the text of the label, or the name of the feature when the label carries no text.</param>
+    /// <param name="iconRectangle">Frame of the drawn icon in screen coordinates of the viewport of the request, null when no icon is drawn.</param>
+    /// <param name="textRectangle">Frame of the drawn label in screen coordinates of the viewport of the request, null when no label is drawn.</param>
     public PlacedPointFeature(MPoint point, string styleLayer, PointSymbol symbol,
         string title, MRect? iconRectangle, MRect? textRectangle) : base(point)
     {

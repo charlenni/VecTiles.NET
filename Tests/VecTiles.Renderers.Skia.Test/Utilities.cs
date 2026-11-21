@@ -3,6 +3,10 @@ using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace VecTiles.Renderers.Skia.Test;
 
+/// <summary>
+/// Test helpers of the Skia renderer tests: repository-backed data file paths,
+/// bitmap creation and saving, and bitmap comparison against golden images.
+/// </summary>
 public static class Utilities
 {
     private static readonly Lazy<(string RepoRoot, string ProjectDir)> _folders = new(() =>
@@ -47,6 +51,12 @@ public static class Utilities
     /// </summary>
     public static string TestFiles => Path.Combine(_folders.Value.ProjectDir, "Files");
 
+    /// <summary>
+    /// Creates an RGBA bitmap with premultiplied alpha of the given size.
+    /// </summary>
+    /// <param name="width">The width of the bitmap in pixels.</param>
+    /// <param name="height">The height of the bitmap in pixels.</param>
+    /// <returns>The newly created bitmap.</returns>
     public static SKBitmap CreateBitmap(int width, int height)
     {
         var imageInfo = new SKImageInfo 
@@ -60,6 +70,11 @@ public static class Utilities
         return new SKBitmap(imageInfo);
     }
 
+    /// <summary>
+    /// Saves the bitmap as a PNG file with the given name, creating the directory if needed.
+    /// </summary>
+    /// <param name="bitmap">The bitmap to save.</param>
+    /// <param name="filename">The target file name.</param>
     public static void SaveBitmap(SKBitmap bitmap, string filename)
     {
         var directory = Path.GetDirectoryName(filename);
@@ -82,6 +97,12 @@ public static class Utilities
         }
     }
 
+    /// <summary>
+    /// Saves the bitmap as a PNG file and disposes it afterwards
+    /// (helper for the tests' single-use canvases).
+    /// </summary>
+    /// <param name="bitmap">The bitmap to save and dispose.</param>
+    /// <param name="filename">The target file name.</param>
     public static void SaveAndDestroyBitmap(SKBitmap bitmap, string filename)
     {
         SaveBitmap(bitmap, filename);

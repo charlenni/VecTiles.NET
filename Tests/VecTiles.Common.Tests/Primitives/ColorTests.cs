@@ -2,8 +2,14 @@
 
 namespace VecTiles.Common.Tests.Primitives;
 
+/// <summary>
+/// Unit tests for the <see cref="Color" /> primitive and the <see cref="Colors" /> constants.
+/// </summary>
 public class ColorTests
 {
+    /// <summary>
+    /// Verifies that the RGBA constructor stores the component values unchanged.
+    /// </summary>
     [Fact]
     public void Constructor_SetsPropertiesCorrectly()
     {
@@ -14,6 +20,9 @@ public class ColorTests
         Assert.Equal((byte)40, color.A);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="Colors.Empty" /> has all components set to zero.
+    /// </summary>
     [Fact]
     public void Empty_IsAllZero()
     {
@@ -24,6 +33,9 @@ public class ColorTests
         Assert.Equal((byte)0, color.A);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="Colors.Black" /> is opaque black (RGB 0, alpha 255).
+    /// </summary>
     [Fact]
     public void Black_IsOpaqueBlack()
     {
@@ -34,6 +46,9 @@ public class ColorTests
         Assert.Equal((byte)255, color.A);
     }
 
+    /// <summary>
+    /// Verifies that <see cref="Color.ToString" /> returns the "Color [R..;G..;B..;A..]" format.
+    /// </summary>
     [Fact]
     public void ToString_ReturnsExpectedFormat()
     {
@@ -41,6 +56,9 @@ public class ColorTests
         Assert.Equal("Color [R1;G2;B3;A4]", color.ToString());
     }
 
+    /// <summary>
+    /// Verifies that colors with identical component values compare equal.
+    /// </summary>
     [Fact]
     public void Equality_WorksForSameValues()
     {
@@ -50,6 +68,9 @@ public class ColorTests
         Assert.True(c1 == c2);
     }
 
+    /// <summary>
+    /// Verifies that colors with different component values compare unequal.
+    /// </summary>
     [Fact]
     public void Inequality_WorksForDifferentValues()
     {

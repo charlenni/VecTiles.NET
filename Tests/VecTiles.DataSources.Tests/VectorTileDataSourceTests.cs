@@ -56,6 +56,10 @@ public class VectorTileDataSourceTests
         }
     }
 
+    /// <summary>
+    /// Verifies that above the source max zoom the ancestor tile at the max zoom is
+    /// fetched directly, without failed requests at the intermediate zooms.
+    /// </summary>
     [Fact]
     public async Task OverzoomTile_FetchesAncestorAtSourceMaxZoomDirectly()
     {
@@ -82,6 +86,10 @@ public class VectorTileDataSourceTests
         Assert.Equal([1, 2, 3], converter.LastCall!.Value.Data);
     }
 
+    /// <summary>
+    /// Verifies that a tile within the source zoom range is fetched directly and passed
+    /// to the converter with requested and provided tile equal.
+    /// </summary>
     [Fact]
     public async Task TileWithinZoomRange_FetchesRequestedTileOnly()
     {
@@ -102,6 +110,10 @@ public class VectorTileDataSourceTests
         Assert.Equal(requested, converter.LastCall!.Value.Provided);
     }
 
+    /// <summary>
+    /// Verifies that a missing tile within the zoom range falls back to the parent tile,
+    /// which is reported as the provided tile to the converter.
+    /// </summary>
     [Fact]
     public async Task MissingTileWithinZoomRange_FallsBackToParent()
     {
@@ -124,6 +136,10 @@ public class VectorTileDataSourceTests
         Assert.Equal(12, converter.LastCall!.Value.Provided.Zoom);
     }
 
+    /// <summary>
+    /// Verifies that a request above the source max zoom clamps the first fetch to the
+    /// max zoom ancestor and then walks down to the root, returning no tile for an empty source.
+    /// </summary>
     [Fact]
     public async Task NoDataAnywhere_ClampsFirstRequestAndWalksDownToRoot()
     {

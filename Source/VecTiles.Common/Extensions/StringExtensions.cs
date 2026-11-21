@@ -4,6 +4,10 @@ using VecTiles.Common.Primitives;
 
 namespace VecTiles.Common.Extensions
 {
+    /// <summary>
+    /// Provides conversion extensions for strings, e.g. parsing Mapbox GL color
+    /// representations into <see cref="Color"/> values and enumerations from style strings.
+    /// </summary>
     public static class StringExtensions
     {
         /// <summary>

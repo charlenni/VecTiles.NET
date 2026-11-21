@@ -35,6 +35,9 @@ public class RetainedFrameAffineTests
             (float)(old.W * oldDensity), (float)(old.H * oldDensity), current, canvas.TotalMatrix)!.Value;
     }
 
+    /// <summary>
+    /// Verifies that for an unchanged viewport the retained frame is mapped one to one.
+    /// </summary>
     [Fact]
     public void SameViewport_MapsTheImageOneToOne()
     {
@@ -49,6 +52,10 @@ public class RetainedFrameAffineTests
         AssertPointNear(matrix, 400, 300, 400, 300, "center");
     }
 
+    /// <summary>
+    /// Verifies that with a density 2 canvas the retained frame image is mapped
+    /// one to one in device pixels, without a second density scaling.
+    /// </summary>
     [Fact]
     public void SameViewport_HighDpi_MapsTheImageOneToOneInDevicePixels()
     {
@@ -71,6 +78,10 @@ public class RetainedFrameAffineTests
         AssertPointNear(matrix, 800, 600, 800, 600, "center");
     }
 
+    /// <summary>
+    /// Verifies that after zooming in the retained frame maps the world points
+    /// to the scale of the new resolution: twice the draw size, same world center.
+    /// </summary>
     [Fact]
     public void ZoomedIn_MapsTheWorldPointsToTheNewScale()
     {
@@ -90,6 +101,10 @@ public class RetainedFrameAffineTests
         AssertPointNear(matrix, 400, 100, 400, -100, "y-scale");
     }
 
+    /// <summary>
+    /// Verifies that after panning the retained frame content is mapped to the
+    /// new screen position, shifted by the pan distance.
+    /// </summary>
     [Fact]
     public void Panned_MapsTheWorldPointsToTheNewPosition()
     {

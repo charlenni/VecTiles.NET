@@ -9,7 +9,15 @@ namespace VecTiles.Renderers.Common;
 /// </summary>
 /// <param name="Tiles">The fetched rendered tiles.</param>
 /// <param name="Incomplete">True when at least one tile could not be fetched.</param>
-public sealed record TileFetchResult(IReadOnlyList<IRenderedTile>? Tiles, bool Incomplete);
+/// <param name="MissingTiles">
+/// The tile infos of the request that could not be fetched (null when every
+/// tile arrived). Lets the caller distinguish which tiles are missing, e.g.
+/// tile sources that do not cover the padded tile ring of a viewport: a
+/// missing tile outside the screen must not keep the placement from being
+/// published.
+/// </param>
+public sealed record TileFetchResult(IReadOnlyList<IRenderedTile>? Tiles, bool Incomplete,
+    IReadOnlyList<TileInfo>? MissingTiles = null);
 
 /// <summary>
 /// Fetches the rendered tiles needed by the placement pass. The tiles are
@@ -73,11 +81,11 @@ public sealed class TileFetchScheduler
 
                 if (tile is null)
                 {
-                    return null;
+                    return (tileInfo, (IRenderedTile?)null);
                 }
 
                 onTileFetched?.Invoke(tileInfo, tile);
-                return tile;
+                return (tileInfo, (IRenderedTile?)tile);
             }
             catch (OperationCanceledException)
             {
@@ -87,7 +95,7 @@ public sealed class TileFetchScheduler
             {
                 // A tile that fails to load stays missing in the placement;
                 // it must not fail the pass over all the other tiles
-                return null;
+                return (tileInfo, (IRenderedTile?)null);
             }
             finally
             {
@@ -95,9 +103,10 @@ public sealed class TileFetchScheduler
             }
         })).ConfigureAwait(false);
 
-        var tiles = fetched.Where(t => t is not null).Cast<IRenderedTile>().ToList();
+        var tiles = fetched.Where(f => f.Item2 is not null).Select(f => f.Item2!).ToList();
+        var missing = fetched.Where(f => f.Item2 is null).Select(f => f.Item1).ToList();
 
-        return new TileFetchResult(tiles, tiles.Count < tileInfos.Count);
+        return new TileFetchResult(tiles, tiles.Count < tileInfos.Count, missing);
     }
 
     private static IEnumerable<TileInfo> OrderByPriority(IReadOnlyList<TileInfo> tileInfos, (double X, double Y)? centerWorld)

@@ -120,7 +120,7 @@ public static class RenderedTileLayerRenderer
         // the center of the viewport is the world center of the (unrotated)
         // viewport, so tiles near the center are fetched first
         var view = renderedLayer.Update(placementTileInfos, zoomLevel, placementWorldToScreen,
-            (center.X, center.Y));
+            (center.X, center.Y), screenTileInfos.ToArray());
 
         // Symbol crossfade: when the holdover of the previous zoom was
         // replaced by the finished placement of this zoom, the old symbols

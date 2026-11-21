@@ -327,11 +327,30 @@ public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
     /// The center of the viewport in world coordinates; tiles near the
     /// center are fetched first. Null keeps the order of the input.
     /// </param>
+    /// <param name="screenTileInfos">
+    /// The tile infos that really intersect the screen (the subset of
+    /// <paramref name="tileInfos"/> visible on screen). Only a missing screen
+    /// tile keeps the placement result incomplete; a missing tile of the
+    /// padding ring (a data set that does not cover the whole ring, e.g. a
+    /// local MBTiles file) does not stop the placement from being published.
+    /// </param>
     public PlacementView Update(IReadOnlyList<TileInfo> tileInfos, int zoomLevel,
-        Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld = null)
+        Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld = null,
+        IReadOnlyList<TileInfo>? screenTileInfos = null)
     {
-        return _placementService.Update(tileInfos, zoomLevel, worldToScreen, centerWorld);
+        var view = _placementService.Update(tileInfos, zoomLevel, worldToScreen, centerWorld, screenTileInfos);
+        CurrentPlacement = view;
+        return view;
     }
+
+    /// <summary>
+    /// The placement snapshot the last <see cref="Update"/> handed out (the
+    /// arrived tiles of the view plus the placement result that the drawing
+    /// phase uses). Sample/diagnostic surfaces can read it to show which
+    /// symbols the placement has placed at the current zoom — for example to
+    /// distinguish a placement that rejected a symbol from a drawing problem.
+    /// </summary>
+    public PlacementView? CurrentPlacement { get; private set; }
 
     /// <summary>
     /// Returns the placed point symbols (icon and/or text) whose envelope

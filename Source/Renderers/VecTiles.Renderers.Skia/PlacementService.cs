@@ -178,9 +178,20 @@ public sealed class PlacementService
     /// The center of the viewport in world coordinates; tiles near the center
     /// are fetched first. Null keeps the order of the input.
     /// </param>
+    /// <param name="screenTileInfos">
+    /// The tiles that really intersect the screen (the subset of
+    /// <paramref name="tileInfos"/> visible on screen). A missing screen tile
+    /// keeps the result incomplete (the holdover stays on the screen until
+    /// the tile arrives); a missing tile outside this set (the padding ring
+    /// of a tile source with a limited coverage, e.g. a local MBTiles file)
+    /// no longer blocks the publication of the placement — its symbols are
+    /// placed from what arrived, which is complete inside the screen. Null
+    /// treats every tile of the view as a screen tile (the old behavior).
+    /// </param>
     /// <returns>The arrived tiles and the placement result of the view.</returns>
     public PlacementView Update(IReadOnlyList<TileInfo> tileInfos, int zoomLevel,
-        Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld = null)
+        Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld = null,
+        IReadOnlyList<TileInfo>? screenTileInfos = null)
     {
         var infoArray = tileInfos as TileInfo[] ?? [.. tileInfos];
         var key = (new TilesKey(infoArray.ToTile()), zoomLevel);
@@ -234,7 +245,8 @@ public sealed class PlacementService
                     StartFetchPass(infoArray, key, centerWorld, _viewCts!.Token);
 
                     // Symbols follow, once the zoom has settled
-                    StartDelayedRun(infoArray, key, zoomLevel, worldToScreen, centerWorld, _debounceCts!.Token, _runCts.Token);
+                    StartDelayedRun(infoArray, key, zoomLevel, worldToScreen, centerWorld, _debounceCts!.Token,
+                        _runCts.Token, screenTileInfos);
                 }
             }
             else if (_placements.TryGetValue(key, out var incompleteCached)
@@ -260,7 +272,8 @@ public sealed class PlacementService
                     _runCts?.Dispose();
                     _runCts = new CancellationTokenSource();
 
-                    StartRun(infoArray, key, zoomLevel, worldToScreen, centerWorld, _runCts.Token, _generation);
+                    StartRun(infoArray, key, zoomLevel, worldToScreen, centerWorld, _runCts.Token, _generation,
+                        screenTileInfos);
                 }
             }
 
@@ -277,7 +290,8 @@ public sealed class PlacementService
         {
             // Outside the lock: callbacks of the pass (AddTileToView) take
             // the lock themselves
-            RunPass(infoArray, key, zoomLevel, worldToScreen, centerWorld, CancellationToken.None).GetAwaiter().GetResult();
+            RunPass(infoArray, key, zoomLevel, worldToScreen, centerWorld, CancellationToken.None,
+                screenTileInfos).GetAwaiter().GetResult();
         }
 
         lock (_lock)
@@ -463,7 +477,7 @@ public sealed class PlacementService
     /// </summary>
     private void StartDelayedRun(IReadOnlyList<TileInfo> tileInfos, (TilesKey Tiles, int Zoom) key, int zoomLevel,
         Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld,
-        CancellationToken debounceToken, CancellationToken runToken)
+        CancellationToken debounceToken, CancellationToken runToken, IReadOnlyList<TileInfo>? screenTileInfos)
     {
         var generation = _generation;
 
@@ -479,7 +493,8 @@ public sealed class PlacementService
                 return;
             }
 
-            await StartRun(tileInfos, key, zoomLevel, worldToScreen, centerWorld, runToken, generation)
+            await StartRun(tileInfos, key, zoomLevel, worldToScreen, centerWorld, runToken, generation,
+                screenTileInfos)
                 .ConfigureAwait(false);
         });
     }
@@ -493,7 +508,7 @@ public sealed class PlacementService
     /// </summary>
     private async Task StartRun(IReadOnlyList<TileInfo> tileInfos, (TilesKey Tiles, int Zoom) key, int zoomLevel,
         Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld,
-        CancellationToken token, int generation)
+        CancellationToken token, int generation, IReadOnlyList<TileInfo>? screenTileInfos = null)
     {
         PlacementResult? result = null;
 
@@ -502,7 +517,8 @@ public sealed class PlacementService
             var fetch = await _fetchScheduler.FetchAsync(tileInfos, centerWorld, token,
                 (info, tile) => AddTileToView(key, info, tile)).ConfigureAwait(false);
 
-            result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom));
+            result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom),
+                screenTileInfos);
         }
         catch (OperationCanceledException)
         {
@@ -612,14 +628,15 @@ public sealed class PlacementService
     /// </summary>
     private async Task RunPass(IReadOnlyList<TileInfo> tileInfos, (TilesKey Tiles, int Zoom) key, int zoomLevel,
         Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld,
-        CancellationToken token)
+        CancellationToken token, IReadOnlyList<TileInfo>? screenTileInfos = null)
     {
         try
         {
             var fetch = await _fetchScheduler.FetchAsync(tileInfos, centerWorld, token,
                 (info, tile) => AddTileToView(key, info, tile)).ConfigureAwait(false);
 
-            var result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom));
+            var result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom),
+                screenTileInfos);
 
             lock (_lock)
             {
@@ -661,17 +678,29 @@ public sealed class PlacementService
     /// labels stay where the pass that first placed them put them, also when
     /// the tile set of the viewport changes.
     /// </summary>
+    /// <param name="fetch">The tiles the pass fetched and whether any is missing.</param>
+    /// <param name="zoomLevel">The canonical zoom level of the pass.</param>
+    /// <param name="worldToScreen">World to placement-space projection.</param>
+    /// <param name="token">Cancels the pass.</param>
+    /// <param name="incremental">The persistent state of the zoom level.</param>
+    /// <param name="screenTileInfos">
+    /// The tiles that really intersect the screen. Only a missing screen tile
+    /// keeps the result incomplete — a missing padding tile (a source with a
+    /// limited coverage) must not keep the placement from being published.
+    /// </param>
     private static PlacementResult ComputePlacement(TileFetchResult fetch, int zoomLevel,
         Func<double, double, (double, double)> worldToScreen, CancellationToken token,
-        IncrementalPlacementState incremental)
+        IncrementalPlacementState incremental, IReadOnlyList<TileInfo>? screenTileInfos = null)
     {
+        var blocksPublication = BlocksPublication(fetch, screenTileInfos);
+
         if (fetch.Tiles is null || fetch.Tiles.Count == 0)
         {
             // Viewport contains no tiles or there is no information for these tiles
             return new PlacementResult
             {
                 PlacedByLayer = new Dictionary<string, List<PlacementEntry>>(),
-                Incomplete = fetch.Incomplete,
+                Incomplete = blocksPublication,
                 ZoomLevel = zoomLevel,
             };
         }
@@ -680,10 +709,45 @@ public sealed class PlacementService
         // result is not published (see the latch), so its decisions must not
         // enter the persistent state either — the pass that sees the complete
         // tile set decides and pins the labels
-        var placed = SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token,
-            fetch.Incomplete ? null : incremental);
+        var placed = blocksPublication
+            ? SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, null) with { Incomplete = true }
+            : SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, incremental);
 
-        return fetch.Incomplete ? placed with { Incomplete = true } : placed;
+        return placed;
+    }
+
+    /// <summary>
+    /// True when the placement result of this fetch must not replace the
+    /// retained set of the view: a screen tile is missing (its symbols may
+    /// still be missing), so the holdover stays on the screen until the tile
+    /// arrives. Missing tiles outside the screen set (the padding ring of a
+    /// tile source with a limited coverage) do not block: everything the
+    /// user sees is placed from complete data. Without a screen tile set
+    /// every missing tile blocks (the old behavior).
+    /// </summary>
+    private static bool BlocksPublication(TileFetchResult fetch, IReadOnlyList<TileInfo>? screenTileInfos)
+    {
+        if (!fetch.Incomplete)
+        {
+            return false;
+        }
+
+        if (screenTileInfos is null)
+        {
+            return true;
+        }
+
+        var missing = fetch.MissingTiles;
+        if (missing is null)
+        {
+            // Older TileFetchResult without the missing tile report: assume
+            // the worst (a missing tile may be a screen tile)
+            return true;
+        }
+
+        var screenIndexes = screenTileInfos.Select(info => info.Index).ToHashSet();
+
+        return missing.Any(info => screenIndexes.Contains(info.Index));
     }
 
     /// <summary>

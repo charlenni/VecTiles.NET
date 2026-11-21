@@ -41,6 +41,8 @@
 						<Button x:Name="ButtonCenter" Content="Goto Center" HorizontalContentAlignment="Center" HorizontalAlignment="Stretch" Click="ButtonCenter_Click"/>
 						<CheckBox x:Name="CheckBoxDebugLayer" Content="Debug Layer" HorizontalAlignment="Stretch" Click="CheckBoxDebugLayer_Click" />
 						<CheckBox x:Name="CheckBoxValidBorder" Content="Valid Borders" HorizontalAlignment="Stretch" Click="CheckBoxValid_Click" />
+						<TextBlock Text="Click on icon/text" FontWeight="Bold" Padding="0, 10, 0, 5" TextAlignment="Center" HorizontalAlignment="Stretch" />
+						<TextBlock x:Name="HitTestText" Text="" TextWrapping="Wrap" HorizontalAlignment="Stretch" />
 					</StackPanel>
 					<TextBlock x:Name="StylesHeader" Text="Styles" FontWeight="Bold" Padding="0,10,0,0" Grid.Row="1" HorizontalAlignment="Stretch" TextAlignment="Center" />
 					<ScrollViewer x:Name="StylesScroll" Grid.Row="2">

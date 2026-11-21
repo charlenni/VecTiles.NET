@@ -27,8 +27,8 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        var styleSource = $"file://{_path}/osm-liberty.json";
-        //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
+        //var styleSource = $"file://{_path}/osm-liberty.json";
+        var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
         _tileSource = new OMTRenderedTileSource(styleSource);
 
@@ -48,6 +48,8 @@ public partial class MainView : UserControl
         performanceWidget.Opacity = 1;
 
         MapControl.Map.Widgets.Add(new MouseCoordinatesWidget());
+
+        MapControl.PointerReleased += MapControl_PointerReleased;
 
         MapControl.Map.Widgets.Add(new ZoomWidget(MapControl.Map)
         {
@@ -117,6 +119,42 @@ public partial class MainView : UserControl
         _tileLayer.ClearCache();
 
         MapControl.Map.RefreshData(Mapsui.ChangeType.Discrete);
+    }
+
+    private async void MapControl_PointerReleased(object? sender, Avalonia.Input.PointerReleasedEventArgs e)
+    {
+        if (e.InitialPressMouseButton != Avalonia.Input.MouseButton.Left)
+        {
+            return;
+        }
+
+        var position = e.GetPosition(MapControl);
+
+        // Over the standard Mapsui feature info interface: every layer that
+        // implements ILayerFeatureInfo answers feature info requests with the
+        // same contract, no cast to the concrete layer type is needed
+        if (_tileLayer is not Mapsui.Layers.ILayerFeatureInfo featureInfoProvider)
+        {
+            HitTestText.Text = string.Empty;
+            return;
+        }
+
+        var result = await featureInfoProvider.GetFeatureInfoAsync(
+            MapControl.Map.Navigator.Viewport, new Mapsui.Manipulations.ScreenPosition(position.X, position.Y));
+
+        var hits = result.SelectMany(entry => entry.Value).OfType<PlacedPointFeature>().ToList();
+
+        HitTestText.Text = hits.Count == 0
+            ? string.Empty
+            : string.Join("\n", hits.Select(h =>
+            {
+                // The consumer decides what to show for features without a
+                // name: here the source category as fallback display
+                var label = !string.IsNullOrEmpty(h.Title) ? h.Title
+                    : !string.IsNullOrEmpty(h.SourceClass) ? h.SourceClass
+                    : h.SourceSubclass;
+                return $"{label} (id {h.Id}) in layer '{h.StyleLayer}' at {Math.Round(h.Point.X, 1)}/{Math.Round(h.Point.Y, 1)}";
+            }));
     }
     
     private (MPoint centerPoint, float zoom) GetCenterPoint()

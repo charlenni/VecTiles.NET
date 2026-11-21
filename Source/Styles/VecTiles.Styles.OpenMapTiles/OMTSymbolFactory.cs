@@ -105,6 +105,10 @@ public class OMTSymbolFactory : ISymbolFactory
         {
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"].ToString() : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() : string.Empty,
+            // Source categories of the vector data, independent of the
+            // OpenMapTiles schema keys (e.g. basemap.de: klasse/art)
+            SourceClass = AttributeValue(feature, "class", "klasse"),
+            SourceSubclass = AttributeValue(feature, "subclass", "art"),
             Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"].ToString()) : int.MaxValue
         };
 
@@ -114,6 +118,30 @@ public class OMTSymbolFactory : ISymbolFactory
         }
 
         return symbol;
+    }
+
+    /// <summary>
+    /// The first of the given attribute keys that the feature carries with a
+    /// non-empty string value; empty when none exists. Used for the category
+    /// fallback of sources that do not use the OpenMapTiles attribute keys.
+    /// </summary>
+    private static string AttributeValue(IFeature feature, params string[] keys)
+    {
+        foreach (var key in keys)
+        {
+            if (feature.Attributes?.Exists(key) != true)
+            {
+                continue;
+            }
+
+            var value = feature.Attributes[key]?.ToString();
+            if (!string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+        }
+
+        return string.Empty;
     }
 
     private ISymbol? CreateLineSymbol(Tile tile, OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context, IFeature feature)
@@ -150,6 +178,10 @@ public class OMTSymbolFactory : ISymbolFactory
         {
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"].ToString() : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() : string.Empty,
+            // Source categories of the vector data, independent of the
+            // OpenMapTiles schema keys (e.g. basemap.de: klasse/art)
+            SourceClass = AttributeValue(feature, "class", "klasse"),
+            SourceSubclass = AttributeValue(feature, "subclass", "art"),
             Rank = feature.Attributes.Exists("rank") ? int.Parse(feature.Attributes["rank"].ToString()) : int.MaxValue,
             Spacing = style.Layout.SymbolSpacing.Evaluate(context),
 

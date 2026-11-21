@@ -116,6 +116,8 @@ public static class LineSymbolMerger
             SortOrder = first.SortOrder,
             Class = first.Class,
             Subclass = first.Subclass,
+            SourceClass = first.SourceClass,
+            SourceSubclass = first.SourceSubclass,
             Rank = first.Rank,
             AllowOthers = first.AllowOthers,
             Spacing = first.Spacing,

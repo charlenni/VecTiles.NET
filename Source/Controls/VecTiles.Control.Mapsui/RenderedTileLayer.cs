@@ -1,6 +1,7 @@
 using BruTile;
 using Mapsui;
 using Mapsui.Layers;
+using Mapsui.Manipulations;
 using Mapsui.Rendering;
 using Mapsui.Rendering.Skia;
 using Mapsui.Extensions;
@@ -23,7 +24,7 @@ namespace VecTiles.Controls.Mapsui;
 /// placement pass runs in the background (see <see cref="PlacementService"/>)
 /// and the layer redraws once the new symbol set is ready.
 /// </summary>
-public class RenderedTileLayer : BaseLayer
+public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
 {
     private const string _customLayerRendererName = "rendered-tile-layer";
 
@@ -330,6 +331,43 @@ public class RenderedTileLayer : BaseLayer
         Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld = null)
     {
         return _placementService.Update(tileInfos, zoomLevel, worldToScreen, centerWorld);
+    }
+
+    /// <summary>
+    /// Returns the placed point symbols (icon and/or text) whose envelope
+    /// contains the given screen position, as feature objects ordered from
+    /// the visually topmost symbol downwards. The test runs against the
+    /// placement the last drawn frame drew its symbols from — during the
+    /// short crossfade phase after a zoom change the fading-out holdover is
+    /// not included, and line symbols (labels along lines) are not covered
+    /// by the hit test. Returns an empty list when nothing was placed yet or
+    /// nothing was hit.
+    /// </summary>
+    /// <param name="screenX">The x coordinate of the click position in screen pixels.</param>
+    /// <param name="screenY">The y coordinate of the click position in screen pixels.</param>
+    /// <param name="viewport">The current viewport of the map (including its rotation).</param>
+    public IReadOnlyList<PlacedPointFeature> GetPointFeaturesAt(double screenX, double screenY, Viewport viewport)
+    {
+        return PlacedPointFeatureTester.GetPointFeaturesAt(_lastDrawnPlacement, screenX, screenY, viewport);
+    }
+
+    /// <inheritdoc />
+    public Task<IDictionary<string, IEnumerable<IFeature>>> GetFeatureInfoAsync(Viewport viewport, ScreenPosition screenPosition)
+    {
+        IDictionary<string, IEnumerable<IFeature>> result = FeatureInfoResult(viewport, screenPosition.X, screenPosition.Y);
+        return Task.FromResult(result);
+    }
+
+    /// <summary>
+    /// The result of a feature info request at a screen position: the placed
+    /// point symbols under the position, keyed by the layer name. A layer
+    /// name that is null or empty uses the name of the type, so the result
+    /// never carries a null key.
+    /// </summary>
+    private Dictionary<string, IEnumerable<IFeature>> FeatureInfoResult(Viewport viewport, double x, double y)
+    {
+        var key = string.IsNullOrEmpty(Name) ? GetType().Name : Name;
+        return new Dictionary<string, IEnumerable<IFeature>> { [key] = GetPointFeaturesAt(x, y, viewport) };
     }
 
     /// <inheritdoc />

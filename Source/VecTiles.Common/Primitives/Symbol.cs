@@ -56,6 +56,20 @@ public abstract class Symbol : ISymbol
     public string Subclass { get; set; } = string.Empty;
 
     /// <summary>
+    /// Class attribute of the source vector data, independent of the
+    /// OpenMapTiles schema: set from the attribute key the source uses for
+    /// its class (e.g. "class" or "klasse"). Lets consumers of the symbol
+    /// show a fallback for features without name.
+    /// </summary>
+    public string SourceClass { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Subclass attribute of the source vector data (e.g. "subclass" or
+    /// "art"); see <see cref="SourceClass"/>.
+    /// </summary>
+    public string SourceSubclass { get; init; } = string.Empty;
+
+    /// <summary>
     /// Rank of this symbol as integer
     /// </summary>
     public int Rank { get; set; } = 0;

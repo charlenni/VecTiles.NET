@@ -96,6 +96,8 @@ public class IconPointSymbol : Symbol
             SortOrder = SortOrder,
             Class = Class,
             Subclass = Subclass,
+            SourceClass = SourceClass,
+            SourceSubclass = SourceSubclass,
             Rank = Rank,
             AllowOthers = AllowOthers,
             Envelope = Envelope?.Copy(),

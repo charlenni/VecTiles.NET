@@ -96,54 +96,6 @@ public partial class MainView : UserControl
         var (centerPoint, zoom) = GetCenterPoint();
 
         MapControl.Map.Navigator.CenterOnAndZoomTo(centerPoint, zoom.ToResolution());
-
-        // Diagnostic ticker for the placement status line: shows the
-        // placement result the renderer draws from (per zoom the counts of
-        // the placed symbols per style layer), so a missing icon on the map
-        // can be classified as "not placed" (count 0), "placed" (count > 0,
-        // a drawing problem) or "stale frame" (no update at all)
-        var placementTicker = new Avalonia.Threading.DispatcherTimer
-        {
-            Interval = TimeSpan.FromMilliseconds(500)
-        };
-        placementTicker.Tick += (_, _) => UpdatePlacementStatus();
-        placementTicker.Start();
-    }
-
-    private string _lastPlacementStatus = string.Empty;
-
-    private void UpdatePlacementStatus()
-    {
-        var placement = _tileLayer.CurrentPlacement?.Placement;
-        if (placement is null)
-        {
-            return;
-        }
-
-        var layers = string.Join(", ", placement.PlacedByLayer
-            .Where(pair => pair.Value.Count > 0)
-            .Select(pair => $"{pair.Key}:{pair.Value.Count}"));
-
-        // Counts of the diagnostic symbol subclass: separates a placement
-        // that rejected the symbol (placed 0, rejected > 0) from a drawing
-        // problem (placed > 0, but the symbol is missing on the map)
-        var placedCanoe = placement.PlacedByLayer
-            .SelectMany(pair => pair.Value)
-            .Count(entry => entry.Symbol is VecTiles.Common.Primitives.Symbol { Subclass: "canoe_polo" });
-        var rejectedCanoe = placement.Rejected
-            .OfType<VecTiles.Common.Primitives.Symbol>()
-            .Count(symbol => symbol.Subclass == "canoe_polo");
-
-        var status = $"z{placement.ZoomLevel} holdover={(placement.IsHoldover ? placement.SourceZoomLevel.ToString() : "-")} " +
-            $"incomplete={placement.Incomplete} {layers} canoe:{placedCanoe}/{rejectedCanoe}";
-
-        if (status == _lastPlacementStatus)
-        {
-            return;
-        }
-
-        _lastPlacementStatus = status;
-        PlacementStatusText.Text = status;
     }
 
     private void ButtonCenter_Click(object sender, Avalonia.Interactivity.RoutedEventArgs e)

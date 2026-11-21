@@ -37,7 +37,6 @@ public class SchanzengrabenAppPipelineTests
         using var layer = new RenderedTileLayer(tileSource)
         {
             ShowValidBorders = true,
-            ShowInvalidBorders = true,
             SynchronousPlacement = true,
         };
 

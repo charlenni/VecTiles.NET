@@ -29,7 +29,6 @@ namespace VecTiles.Controls.Mapsui;
 /// </summary>
 public static class RenderedTileLayerRenderer
 {
-    private static readonly SKPaint DebugPaint = new() { Color = SKColors.Orange, StrokeWidth = 1, IsStroke = true };
 
     private static readonly SKRect TileRect = new(0, 0, 512, 512);
 
@@ -166,7 +165,10 @@ public static class RenderedTileLayerRenderer
 
         object frameKey = (view.Placement, tilesKey, viewport.CenterX, viewport.CenterY,
             viewport.Resolution, viewport.Rotation, viewport.Width, viewport.Height,
-            destRect, zoomLevel, placementFade.Old, (byte)Math.Round(placementFade.OldAlpha * 255));
+            destRect, zoomLevel, placementFade.Old, (byte)Math.Round(placementFade.OldAlpha * 255),
+            // The border flags change the content of the frame: without them
+            // a toggled checkbox would still blit the rasterized old frame
+            renderedLayer.ShowValidBorders);
         if (renderedLayer.TryReuseFrame(frameKey, canvas))
         {
             return;
@@ -513,11 +515,6 @@ public static class RenderedTileLayerRenderer
                 }
             }
         }
-
-        if (renderedLayer.ShowInvalidBorders && drawSymbols)
-        {
-            DrawInvalidBorders(canvas, view.Placement.Rejected, placementWorldToScreen, placementScale, drawWorldToScreen);
-        }
     }
 
     /// <summary>
@@ -604,69 +601,6 @@ public static class RenderedTileLayerRenderer
         geometryLayer.Renderer.Draw(canvas, drawContext);
 
         canvas.Restore();
-    }
-
-    /// <summary>
-    /// Draws the rejected collision envelopes as debug borders. The envelopes
-    /// are stored in the unrotated canonical placement space; they are moved
-    /// into the real screen space relative to the symbol anchor and drawn at
-    /// placement size. Under map rotation the border orientation differs from
-    /// the checked envelope (approximation, debugging only).
-    /// </summary>
-    private static void DrawInvalidBorders(SKCanvas canvas, IReadOnlyList<ISymbol> rejected,
-        Func<double, double, (double, double)> placementWorldToScreen, float placementScale,
-        Func<double, double, (double, double)> drawWorldToScreen)
-    {
-        foreach (var symbol in rejected)
-        {
-            if (symbol is not PointSymbol pointSymbol)
-            {
-                // Line symbols record their collision boxes only inside the
-                // quadtree of the placement pass; for the debug display the
-                // geometry envelope marks the rejected area
-                var geometryEnvelope = (symbol as LineSymbol)?.Geometry.EnvelopeInternal;
-                if (geometryEnvelope is null)
-                {
-                    continue;
-                }
-
-                var centerX = (geometryEnvelope.MinX + geometryEnvelope.MaxX) / 2;
-                var centerY = (geometryEnvelope.MinY + geometryEnvelope.MaxY) / 2;
-
-                var (minGX, minGY) = placementWorldToScreen(geometryEnvelope.MinX, geometryEnvelope.MinY);
-                var (maxGX, maxGY) = placementWorldToScreen(geometryEnvelope.MaxX, geometryEnvelope.MaxY);
-                var (placementCenterX, placementCenterY) = placementWorldToScreen(centerX, centerY);
-                var (anchorX, anchorY) = drawWorldToScreen(centerX, centerY);
-
-                var offX = (minGX - placementCenterX) * placementScale;
-                var offY = (minGY - placementCenterY) * placementScale;
-
-                canvas.DrawRect(new SKRect((float)(anchorX + offX), (float)(anchorY + offY),
-                    (float)(anchorX + offX + (maxGX - minGX) * placementScale),
-                    (float)(anchorY + offY + (maxGY - minGY) * placementScale)), DebugPaint);
-                continue;
-            }
-
-            foreach (var envelope in new[] { pointSymbol.IconSymbol?.ScreenEnvelope, pointSymbol.TextSymbol?.ScreenEnvelope })
-            {
-                if (envelope is null)
-                {
-                    continue;
-                }
-
-                // Anchor in the placement space, to position the envelope
-                var (placementAnchorX, placementAnchorY) = placementWorldToScreen(pointSymbol.Point.X, pointSymbol.Point.Y);
-                var (drawX, drawY) = drawWorldToScreen(pointSymbol.Point.X, pointSymbol.Point.Y);
-
-                var offX = (envelope.MinX - placementAnchorX) * placementScale;
-                var offY = (envelope.MinY - placementAnchorY) * placementScale;
-                var width = (envelope.MaxX - envelope.MinX) * placementScale;
-                var height = (envelope.MaxY - envelope.MinY) * placementScale;
-
-                canvas.DrawRect(new SKRect((float)(drawX + offX), (float)(drawY + offY),
-                    (float)(drawX + offX + width), (float)(drawY + offY + height)), DebugPaint);
-            }
-        }
     }
 
     /// <summary>

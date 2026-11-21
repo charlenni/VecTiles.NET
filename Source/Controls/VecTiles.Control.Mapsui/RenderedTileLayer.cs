@@ -228,11 +228,6 @@ public class RenderedTileLayer : BaseLayer
     public bool ShowValidBorders { get; set; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether to show invalid symbol borders for debugging.
-    /// </summary>
-    public bool ShowInvalidBorders { get; set; }
-
-    /// <summary>
     /// Gets or sets the time in milliseconds the zoom must stay constant
     /// before the placement pass starts. While the zoom keeps changing every
     /// pass would be cancelled by the next change anyway.

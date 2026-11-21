@@ -108,13 +108,6 @@ public partial class MainView : UserControl
         MapControl.Map.RefreshGraphics();
     }
 
-    private void CheckBoxInvalid_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
-    {
-        _tileLayer.ShowInvalidBorders = CheckBoxInvalidBorder.IsChecked ?? false;
-
-        MapControl.Map.RefreshGraphics();
-    }
-
     private void StyleCheckBox_Click(OMTLayerStyle style, CheckBox checkBox)
     {
         style.Layout.Visibility = checkBox.IsChecked == true ? "visible" : "none";

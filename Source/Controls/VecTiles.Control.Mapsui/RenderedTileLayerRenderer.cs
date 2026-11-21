@@ -62,7 +62,10 @@ public static class RenderedTileLayerRenderer
 
         if (!screenTileInfos.Any())
         {
-            // No tiles are visible on screen
+            // No tiles are visible on screen: keep the last fully drawn frame
+            // on the screen (not the cleared canvas), e.g. while zooming out
+            // and the bigger tiles of the new view have not arrived yet
+            renderedLayer.DrawRetainedFrame(canvas);
             return;
         }
 
@@ -120,12 +123,35 @@ public static class RenderedTileLayerRenderer
         var view = renderedLayer.Update(placementTileInfos, zoomLevel, placementWorldToScreen,
             (center.X, center.Y));
 
-        // Draws the style layers in the order the style file lists them: for
-        // every style layer at first its geometry over all tiles, afterwards
-        // the placed symbols of the same style layer (the placement result
-        // may be empty — then no symbols are drawn at all)
-        DrawInStyleLayerOrder(canvas, viewport, view, screenExtent, rotation, renderedLayer,
+        // The view may have no tile at all (the placement extent contains
+        // tile infos, but none of them has arrived yet): keep the last fully
+        // drawn frame on the screen instead of drawing an empty frame
+        if (!view.Tiles.Any(t => t.Info.Extent.Intersects(screenExtent)))
+        {
+            renderedLayer.DrawRetainedFrame(canvas);
+            return;
+        }
+
+        // The layer content is rasterized offscreen and drawn onto the screen
+        // canvas in one single blit, so the (slow) style layer drawing never
+        // leaves the screen in an intermediate (partly drawn or cleared)
+        // state: the screen keeps showing the previous frame until the new
+        // frame is complete
+        var width = (int)Math.Round(viewport.Width);
+        var height = (int)Math.Round(viewport.Height);
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        var surface = renderedLayer.GetFrameSurface(width, height);
+        surface.Canvas.Clear(SKColors.Transparent);
+        DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
             drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
+
+        var frame = surface.Snapshot();
+        canvas.DrawImage(frame, 0, 0);
+        renderedLayer.SetRetainedFrame(frame);
     }
 
     /// <summary>

@@ -5,6 +5,7 @@ using Mapsui.Rendering;
 using Mapsui.Rendering.Skia;
 using Mapsui.Extensions;
 using Mapsui.Tiling.Extensions;
+using SkiaSharp;
 using System.Linq;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Common.Primitives;
@@ -28,6 +29,17 @@ public class RenderedTileLayer : BaseLayer
 
     private readonly PlacementService _placementService;
     private readonly MRect? _extent;
+
+    // The offscreen surface the layer content is rasterized into before it
+    // is drawn onto the screen canvas (one blit, so a cleared screen is
+    // never visible while the layer draws), reused across frames. Rebuilt
+    // when the viewport size changes.
+    private SKSurface? _frameSurface;
+
+    // The last completely drawn frame; drawn when the view currently has no
+    // tiles (e.g. zooming out before the new bigger tiles have arrived), so
+    // the previous map content stays on the screen instead of a black screen
+    private SKImage? _retainedFrame;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderedTileLayer"/> class.
@@ -173,5 +185,64 @@ public class RenderedTileLayer : BaseLayer
     public override IEnumerable<IFeature> GetFeatures(MRect box, double resolution)
     {
         return Array.Empty<IFeature>();
+    }
+
+    /// <summary>
+    /// Returns the offscreen surface of the given size (in pixels) the layer
+    /// content can be rasterized into; reuses the existing surface whenever
+    /// the size has not changed.
+    /// </summary>
+    internal SKSurface GetFrameSurface(int width, int height)
+    {
+        if (_frameSurface == null || _frameSurface.Canvas.DeviceClipBounds.Width != width ||
+            _frameSurface.Canvas.DeviceClipBounds.Height != height)
+        {
+            _frameSurface?.Dispose();
+            _frameSurface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul));
+        }
+
+        return _frameSurface;
+    }
+
+    /// <summary>
+    /// Stores the given snapshot of a fully drawn frame as the retained
+    /// frame; disposes the previous one.
+    /// </summary>
+    internal void SetRetainedFrame(SKImage frame)
+    {
+        var old = _retainedFrame;
+        _retainedFrame = frame;
+        old?.Dispose();
+    }
+
+    /// <summary>
+    /// Draws the retained frame of the last fully drawn state onto the
+    /// canvas (used when the current view has no tiles at all, e.g. right
+    /// after zooming out, so the previous map content stays on the screen
+    /// instead of a cleared map). Returns false when no frame is retained.
+    /// </summary>
+    internal bool DrawRetainedFrame(SKCanvas canvas)
+    {
+        if (_retainedFrame == null)
+        {
+            return false;
+        }
+
+        canvas.DrawImage(_retainedFrame, 0, 0);
+        return true;
+    }
+
+    /// <inheritdoc />
+    protected override void Dispose(bool disposed)
+    {
+        base.Dispose(disposed);
+
+        if (disposed)
+        {
+            _frameSurface?.Dispose();
+            _frameSurface = null;
+            _retainedFrame?.Dispose();
+            _retainedFrame = null;
+        }
     }
 }

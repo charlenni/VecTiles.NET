@@ -58,6 +58,10 @@ public partial class MainView : UserControl
 
         MapControl.Map.Navigator.RotationLock = false;
 
+        // Restrict the zooming to the zoom range of the tile schema (Mapsui's
+        // default zoom bounds allow one level beyond the biggest resolution)
+        MapControl.Map.Navigator.OverrideZoomBounds = _tileLayer.ZoomBounds;
+
         // Create a checkbox for each style of the style file. Initial state is the visibility from the style file.
         foreach (var style in _tileSource.Styles)
         {

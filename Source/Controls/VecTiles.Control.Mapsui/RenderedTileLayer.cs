@@ -116,6 +116,24 @@ public class RenderedTileLayer : BaseLayer
     public override MRect? Extent => _extent;
 
     /// <summary>
+    /// The zoom bounds of the schema: the resolution of the smallest and the
+    /// resolution of the biggest zoom level. Set them on the navigator as
+    /// override zoom bounds (Mapsui's default zoom bounds allow one zoom
+    /// level beyond the biggest resolution of the layers), so the map cannot
+    /// zoom below or above the zoom range of the schema:
+    /// <c>mapControl.Map.Navigator.OverrideZoomBounds = layer.ZoomBounds;</c>
+    /// </summary>
+    public MMinMax ZoomBounds
+    {
+        get
+        {
+            var resolutions = TileSource.Schema.Resolutions;
+            return new MMinMax(resolutions[resolutions.Keys.Min()].UnitsPerPixel,
+                resolutions[resolutions.Keys.Max()].UnitsPerPixel);
+        }
+    }
+
+    /// <summary>
     /// Clears the placement caches of the layer, so everything is recomputed
     /// on the next frame. Background tasks that are still running discard
     /// their results. (The cache of the tile source must be cleared

@@ -68,7 +68,7 @@ public class RenderedTileLayer : BaseLayer
     // replaced by the finished placement of the new zoom, the old symbols
     // fade out while the new ones fade in, so no label set pops between the
     // two states
-    internal const int PlacementFadeMs = 100;
+    internal const int PlacementFadeMs = 200;
 
     // The placement the last frame drew its symbols from (reference only:
     // a reference change marks the switch between two symbol sets)
@@ -78,6 +78,11 @@ public class RenderedTileLayer : BaseLayer
     // The holdover that is currently fading out and when the fade started
     private PlacementResult? _fadingOutPlacement;
     private long _fadeStartTicks;
+
+    // The crossfade interpolates over wall time; when the placement
+    // finishes while the viewport stands still, nothing else invalidates
+    // the map, so a ticker requests redraws for the duration of the fade
+    private CancellationTokenSource? _fadeTickerCts;
 
     /// <summary>
     /// Computes the crossfade state of the symbol drawing for this frame:
@@ -98,10 +103,11 @@ public class RenderedTileLayer : BaseLayer
             {
                 _fadingOutPlacement = _lastDrawnPlacement;
                 _fadeStartTicks = Environment.TickCount64;
+                StartPlacementFadeTicker();
             }
             else
             {
-                _fadingOutPlacement = null;
+                StopPlacementFade();
             }
 
             _lastDrawnPlacement = placement;
@@ -116,11 +122,56 @@ public class RenderedTileLayer : BaseLayer
         var progress = (Environment.TickCount64 - _fadeStartTicks) / (double)PlacementFadeMs;
         if (progress >= 1)
         {
-            _fadingOutPlacement = null;
+            StopPlacementFade();
             return (null, 0f, 1f);
         }
 
         return (_fadingOutPlacement, 1f - (float)progress, (float)progress);
+    }
+
+    private void StartPlacementFadeTicker()
+    {
+        // Only the ticker of a previous fade is replaced here: the fade
+        // state itself (the placement under fade-out) was just set by the
+        // caller and must survive (StopPlacementFade would clear it)
+        _fadeTickerCts?.Cancel();
+        _fadeTickerCts?.Dispose();
+
+        // The ticker requests redraws until the fade is over (the draw
+        // that observes progress >= 1 stops it); one tick per third of the
+        // fade duration keeps the animation smooth enough without flooding
+        // the invalidation
+        var ticker = new CancellationTokenSource();
+        _fadeTickerCts = ticker;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (true)
+                {
+                    await Task.Delay(PlacementFadeMs / 3, ticker.Token).ConfigureAwait(false);
+                    DataHasChanged();
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+        }, CancellationToken.None);
+    }
+
+    private void StopPlacementFade()
+    {
+        _fadingOutPlacement = null;
+        _fadeTickerCts?.Cancel();
+        _fadeTickerCts?.Dispose();
+        _fadeTickerCts = null;
+    }
+
+    private void ResetPlacementFade()
+    {
+        _lastDrawnPlacement = null;
+        _lastDrawnWasHoldover = false;
+        StopPlacementFade();
     }
 
     /// <summary>
@@ -525,12 +576,5 @@ public class RenderedTileLayer : BaseLayer
             _lastViewportSignature = null;
             ResetPlacementFade();
         }
-    }
-
-    private void ResetPlacementFade()
-    {
-        _lastDrawnPlacement = null;
-        _lastDrawnWasHoldover = false;
-        _fadingOutPlacement = null;
     }
 }

@@ -59,7 +59,10 @@ public sealed class PlacementService
     /// Minimum time in milliseconds between two placement passes over the
     /// same tile set whose result is incomplete: as long as a tile stays
     /// unfetchable, the next frames must not start a new pass each
-    /// (retry spin against a permanently unavailable source).
+    /// (retry spin against a permanently unavailable source). New tiles
+    /// arriving for the same view bypass the cooldown: they make the next
+    /// pass meaningful (more data to place), so the result of the current
+    /// zoom replaces the holdover of the previous zoom as soon as possible.
     /// </summary>
     private const int IncompleteRetryCooldownMs = 2000;
 
@@ -71,7 +74,14 @@ public sealed class PlacementService
 
     private readonly Dictionary<(TilesKey Tiles, int Zoom), PlacementResult?> _placements = new();
     private readonly HashSet<(TilesKey Tiles, int Zoom)> _inFlight = new();
-    private readonly Dictionary<(TilesKey Tiles, int Zoom), long> _incompleteAttempts = new();
+
+    /// <summary>
+    /// The last attempt per view that produced an incomplete result: the
+    /// time it was stored and the number of view tiles it ran over. A new
+    /// attempt waits for the cooldown or for new tiles to arrive, whichever
+    /// comes first (see <see cref="IncompleteRetryCooldownMs"/>).
+    /// </summary>
+    private readonly Dictionary<(TilesKey Tiles, int Zoom), (long Tick, int TileCount)> _incompleteAttempts = new();
 
     /// <summary>
     /// The tiles fetched for the current view by tile id (renderer results
@@ -227,12 +237,15 @@ public sealed class PlacementService
             else if (_placements.TryGetValue(key, out var incompleteCached)
                 && incompleteCached is { Incomplete: true }
                 && _incompleteAttempts.TryGetValue(key, out var lastAttempt)
-                && Environment.TickCount64 - lastAttempt >= IncompleteRetryCooldownMs)
+                && (Environment.TickCount64 - lastAttempt.Tick >= IncompleteRetryCooldownMs
+                    || _viewTiles.Count > lastAttempt.TileCount))
             {
                 // The tile set stays incomplete (a tile cannot be fetched):
-                // a new attempt only after the cooldown, so a permanently
-                // unavailable tile does not cause a fetch attempt per frame
-                _incompleteAttempts[key] = Environment.TickCount64;
+                // a new attempt only after the cooldown — or as soon as new
+                // tiles have arrived since the last attempt, because then
+                // the next pass has more data and the result of the current
+                // zoom can replace the holdover of the previous zoom early
+                _incompleteAttempts[key] = (Environment.TickCount64, _viewTiles.Count);
 
                 if (SynchronousPlacement)
                 {
@@ -484,8 +497,10 @@ public sealed class PlacementService
                 if (result.Incomplete)
                 {
                     // The retry cooldown of an incomplete result starts when
-                    // the result is stored, not on the next call
-                    _incompleteAttempts[key] = Environment.TickCount64;
+                    // the result is stored, not on the next call; the tile
+                    // count lets a later retry start as soon as new tiles
+                    // have arrived
+                    _incompleteAttempts[key] = (Environment.TickCount64, _viewTiles.Count);
                 }
                 else
                 {
@@ -505,7 +520,57 @@ public sealed class PlacementService
             // Draw the newly placed symbols once, without the caller having
             // to move the viewport
             PlacementCompleted?.Invoke();
+
+            if (result.Incomplete)
+            {
+                // The pass ran over an incomplete tile set and the retained
+                // set belongs to another zoom (holdover on the screen). If
+                // the zooming has stopped and every tile is decided, no
+                // Update runs anymore and no new pass would ever start: the
+                // labels of the last placed view would stay on the screen
+                // until the user redraws. Schedule one retry after the
+                // cooldown, so the holdover is replaced on its own
+                ScheduleHoldoverRetry(key, token);
+            }
         }
+    }
+
+    /// <summary>
+    /// Requests a new placement pass for a view whose last pass ended with
+    /// an incomplete result while the symbols of another zoom are still on
+    /// the screen: after the cooldown the completion event triggers a redraw
+    /// whose <see cref="Update"/> call starts the pass (the cooldown has
+    /// elapsed by then). Repeats itself while the result stays incomplete,
+    /// stops as soon as the pass completes, the view changes or the cache is
+    /// cleared.
+    /// </summary>
+    private void ScheduleHoldoverRetry((TilesKey Tiles, int Zoom) key, CancellationToken token)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await Task.Delay(IncompleteRetryCooldownMs, token).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException)
+            {
+                return;
+            }
+
+            bool fire;
+
+            lock (_lock)
+            {
+                fire = key == _currentKey
+                    && _placements.TryGetValue(key, out var incomplete) && incomplete is { Incomplete: true }
+                    && _lastResult.ZoomLevel != key.Zoom;
+            }
+
+            if (fire)
+            {
+                PlacementCompleted?.Invoke();
+            }
+        });
     }
 
     /// <summary>
@@ -523,27 +588,32 @@ public sealed class PlacementService
 
             var result = ComputePlacement(fetch, key.Zoom, worldToScreen, token);
 
-            _placements[key] = result;
-            if (result.Incomplete)
+            lock (_lock)
             {
-                // The retry cooldown of an incomplete result starts when
-                // the result is stored, not on the next call
-                _incompleteAttempts[key] = Environment.TickCount64;
-            }
-            else
-            {
-                _incompleteAttempts.Remove(key);
-            }
+                _placements[key] = result;
+                if (result.Incomplete)
+                {
+                    // The retry cooldown of an incomplete result starts when
+                    // the result is stored, not on the next call; the tile
+                    // count lets a later retry start as soon as new tiles
+                    // have arrived
+                    _incompleteAttempts[key] = (Environment.TickCount64, _viewTiles.Count);
+                }
+                else
+                {
+                    _incompleteAttempts.Remove(key);
+                }
 
-            // Only a complete result replaces the retained set: an
-            // incomplete pass (fast zooming, so the pass ran over few or no
-            // arrived tiles) must not throw the holdover away, otherwise
-            // every symbol vanishes until a full pass finishes and the
-            // crossfade would never start
-            if (!result.Incomplete)
-            {
-                _lastResult = result;
-                _lastZoom = key.Zoom;
+                // Only a complete result replaces the retained set: an
+                // incomplete pass (fast zooming, so the pass ran over few or
+                // no arrived tiles) must not throw the holdover away,
+                // otherwise every symbol vanishes until a full pass finishes
+                // and the crossfade would never start
+                if (!result.Incomplete)
+                {
+                    _lastResult = result;
+                    _lastZoom = key.Zoom;
+                }
             }
         }
         catch

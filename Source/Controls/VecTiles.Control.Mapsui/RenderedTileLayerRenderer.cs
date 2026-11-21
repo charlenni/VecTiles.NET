@@ -173,11 +173,17 @@ public static class RenderedTileLayerRenderer
         }
 
         // The view may have no tile at all (the placement extent contains
-        // tile infos, but none of them has arrived yet): keep the last fully
-        // drawn frame on the screen instead of drawing an empty frame
+        // tile infos, but none of them has arrived yet): keep the last
+        // fully drawn geometry on the screen and draw the placed symbols on
+        // top of it, so the labels do not disappear at the start of a zoom
+        // change
         if (!view.Tiles.Any(t => t.Info.Extent.Intersects(screenExtent)))
         {
             renderedLayer.DrawRetainedGeometryFrame(canvas, viewport);
+            DrawInStyleLayerOrder(canvas, viewport, view, screenExtent, rotation, renderedLayer,
+                drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context,
+                fadeOutPlacement: placementFade.Old, fadeOutAlpha: placementFade.OldAlpha,
+                fadeInAlpha: placementFade.NewAlpha);
             return;
         }
 
@@ -334,7 +340,12 @@ public static class RenderedTileLayerRenderer
             .OrderBy(t => t.Tile.Tile.Id)
             .ToList();
 
-        if (tiles.Count == 0)
+        // With no intersecting tile there is no geometry to draw, but the
+        // geometry-only pass still stops here. The symbol pass continues:
+        // at the start of a zoom change no tile of the new zoom has arrived
+        // yet and the labels of the holdover/fade keep the map readable
+        // while the mapped geometry-only frame fills the background
+        if (tiles.Count == 0 && !drawSymbols)
         {
             return;
         }

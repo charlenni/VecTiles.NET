@@ -156,7 +156,10 @@ public class PlacementServiceTests
         // Zoom change: until the placement of the new zoom exists, the
         // retained set of the old zoom is handed out as a holdover, so the
         // labels stay on the screen. It is a rescaled copy (not the same
-        // instance), marked for the current zoom and incomplete
+        // instance), marked for the current zoom and incomplete. A new gate
+        // closes the source: the pass of the new zoom must not finish here,
+        // otherwise it replaces the holdover before the assertion
+        source.Gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var view = service.Update(keySameTilesHigherZoom, 9, (x, y) => (x, y));
         Assert.NotSame(resultZoom8, view.Placement);
         Assert.Equal(9, view.Placement.ZoomLevel);
@@ -291,6 +294,56 @@ public class PlacementServiceTests
         }
 
         Assert.Equal(2, source.Requests.Count);
+    }
+
+    [Fact]
+    public async Task IncompleteResult_SchedulesARetryWhileTheHoldoverIsOnScreen()
+    {
+        var source = new FakeRenderedTileSource
+        {
+            // One tile stays unavailable: the passes over this tile set
+            // never complete
+            MissingTiles = { 4 },
+        };
+        var service = new PlacementService(source) { PlacementDebounceMs = 0 };
+        var tileInfos = new[] { TileInfo(3, 2, 8), TileInfo(4, 2, 8) };
+
+        var completions = 0;
+        var secondCompletion = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        service.PlacementCompleted += () =>
+        {
+            if (Interlocked.Increment(ref completions) == 2)
+            {
+                secondCompletion.TrySetResult(true);
+            }
+        };
+
+        // First view: the pass runs over the missing tile and stays
+        // incomplete; the retained set is empty (first view), so the screen
+        // shows no symbols until the pass is retried
+        var first = service.Update(tileInfos, 8, (x, y) => (x, y));
+        Assert.True(first.Placement.Incomplete);
+
+        // When the zooming has stopped and all tiles are decided, nothing
+        // invalidates the map anymore: the service schedules a retry after
+        // the cooldown, which fires the completion event again without the
+        // user having to move the viewport
+        Assert.True(await secondCompletion.Task.WaitAsync(TimeSpan.FromSeconds(15)),
+            "the scheduled retry of an incomplete holdover view did not fire");
+
+        // The completion event leads to a redraw and its Update starts the
+        // retry pass (the cooldown has elapsed by then)
+        var requestsBeforeRetry = source.Requests.Count;
+        service.Update(tileInfos, 8, (x, y) => (x, y));
+
+        var deadline = Environment.TickCount64 + 10_000;
+        while (source.Requests.Count <= requestsBeforeRetry && Environment.TickCount64 < deadline)
+        {
+            await Task.Delay(50);
+        }
+
+        Assert.True(source.Requests.Count > requestsBeforeRetry,
+            "the scheduled retry did not start a new placement pass");
     }
 
     [Fact]

@@ -43,6 +43,16 @@ public sealed record PlacementResult
     public Quadtree<ISymbol> Tree { get; init; } = new();
 
     /// <summary>
+    /// Gets the canonical integer zoom level the placement was computed for.
+    /// A result of another (previous) zoom level that is still handed out
+    /// while the placement of the new zoom runs is only a holdover: the
+    /// drawing evaluates the style sizes at the current zoom, and the line
+    /// runs are rescaled into the current placement space
+    /// (<see cref="Rescaled"/>).
+    /// </summary>
+    public int ZoomLevel { get; init; }
+
+    /// <summary>
     /// True when at least one tile could not be fetched, so the placement may
     /// be missing symbols; the result should be recomputed when the tiles
     /// become available.
@@ -56,6 +66,70 @@ public sealed record PlacementResult
     {
         PlacedByLayer = new Dictionary<string, List<PlacementEntry>>(),
     };
+
+    /// <summary>
+    /// Returns a shallow copy whose line runs are rescaled from the
+    /// placement space of this result's zoom level into the placement space
+    /// of another zoom level. The along-path distances of the runs (anchor
+    /// position, draw start, path length) are proportional to
+    /// 1 / resolution(zoom), so they scale by 2^(sourceZoom - targetZoom);
+    /// shared symbols and point entries are carried over unchanged (point
+    /// anchors are world coordinates and the style sizes are evaluated
+    /// again at drawing time). Used when a placement of the previous zoom
+    /// keeps the labels on the screen while the placement of the new zoom
+    /// runs. The copy carries <paramref name="targetZoom"/> as its
+    /// <see cref="ZoomLevel"/>.
+    /// </summary>
+    /// <param name="targetZoom">The canonical zoom level to rescale into.</param>
+    public PlacementResult Rescaled(int targetZoom)
+    {
+        var factor = Math.Pow(2, ZoomLevel - targetZoom);
+        var rescaled = new Dictionary<string, List<PlacementEntry>>(PlacedByLayer.Count);
+
+        foreach (var (name, entries) in PlacedByLayer)
+        {
+            var list = new List<PlacementEntry>(entries.Count);
+            foreach (var entry in entries)
+            {
+                if (entry.Run is not { } run)
+                {
+                    list.Add(entry);
+                    continue;
+                }
+
+                list.Add(entry with { Run = RescaleRun(run, factor) });
+            }
+
+            rescaled.Add(name, list);
+        }
+
+        return this with { PlacedByLayer = rescaled, ZoomLevel = targetZoom };
+    }
+
+    private static LineSymbolPlacementRun RescaleRun(LineSymbolPlacementRun run, double factor)
+    {
+        var contours = new List<IReadOnlyList<LineSymbolAnchorPlacement>>(run.Contours.Count);
+        foreach (var contour in run.Contours)
+        {
+            var anchors = new List<LineSymbolAnchorPlacement>(contour.Count);
+            foreach (var anchor in contour)
+            {
+                var placement = anchor.Placement is null
+                    ? null
+                    : anchor.Placement with
+                    {
+                        DrawStart = (float)(anchor.Placement.DrawStart * factor),
+                        PathLength = (float)(anchor.Placement.PathLength * factor),
+                    };
+                anchors.Add(new LineSymbolAnchorPlacement((float)(anchor.Position * factor),
+                    anchor.Icon, anchor.Text, placement));
+            }
+
+            contours.Add(anchors);
+        }
+
+        return new LineSymbolPlacementRun(contours);
+    }
 }
 
 /// <summary>
@@ -272,6 +346,7 @@ public static class SymbolPlacementEngine
             PlacedByLayer = placedByLayer,
             Rejected = rejected,
             Tree = tree,
+            ZoomLevel = zoomLevel,
         };
     }
 

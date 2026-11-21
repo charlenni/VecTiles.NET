@@ -43,10 +43,12 @@ public sealed record TileInView(TileInfo Info, IRenderedTile Tile);
 /// change would cancel the previous pass anyway). Its tile fetching reuses
 /// the tiles of the fetch pass (cache hits). A finished pass raises
 /// <see cref="PlacementCompleted"/>, so the map redraws with the symbols.</item>
-/// <item>A zoom change cancels the running pass and clears the retained
-/// set: the old symbols belong to the old zoom and are not drawn anymore.
-/// At the same zoom (panning) the retained set stays on the screen until
-/// the new pass finishes, so the symbols never disappear in between.</item>
+/// <item>A zoom change cancels the running pass. The retained set of the
+/// previous zoom stays on the screen as a holdover: its symbols are drawn
+/// with the style of the current view (line runs rescaled into the current
+/// placement space) until the new pass finishes and replaces them. At the
+/// same zoom (panning) the retained set is handed out unchanged, so the
+/// symbols never disappear in between.</item>
 /// <item>Finished results are kept per tile set and zoom level, so
 /// returning to a recent viewport does not recompute.</item>
 /// </list>
@@ -93,7 +95,9 @@ public sealed class PlacementService
     /// symbols on the screen while a new placement is computed (for a
     /// changed tile set after panning, for example), so the symbols never
     /// disappear in between: the old set stays until the new set exists.
-    /// The result is bound to a zoom level: a zoom change clears it.
+    /// The result is bound to a zoom level (<see cref="PlacementResult.ZoomLevel"/>);
+    /// after a zoom change it is handed out as a rescaled holdover until
+    /// the placement of the new zoom replaces it.
     /// </summary>
     private PlacementResult _lastResult = PlacementResult.Empty();
 
@@ -146,9 +150,10 @@ public sealed class PlacementService
     /// changed view starts its fetch immediately) and returns the arrived
     /// tiles together with the placement result. The placement result is
     /// never null: until a new pass has finished for the current zoom, the
-    /// last handed-out result of the same zoom is returned (panning keeps
-    /// the symbols on the screen; a zoom change clears the retained set)
-    /// or an empty result, so no symbols are drawn.
+    /// retained set is handed out — the same zoom unchanged (panning keeps
+    /// the symbols on the screen), the previous zoom rescaled as a holdover
+    /// (the labels stay on the screen with the style of the current view)
+    /// — or an empty result, so no symbols are drawn.
     /// </summary>
     /// <param name="tileInfos">The tile infos of the current view.</param>
     /// <param name="zoomLevel">The canonical integer zoom level.</param>
@@ -173,9 +178,13 @@ public sealed class PlacementService
         {
             if (zoomLevel != _lastZoom)
             {
-                // The retained set belongs to the old zoom; until the
-                // placement of the new zoom exists, there are no symbols
-                _lastResult = PlacementResult.Empty();
+                // The retained set belongs to the old zoom, but it stays on
+                // the screen as a holdover: its symbols are drawn with the
+                // style and positions of the current view (CurrentPlacement
+                // rescales the line runs), until the placement of the new
+                // zoom replaces them. A brief overlap of the two symbol sets
+                // is far less noticeable than labels that vanish and come
+                // back
                 _lastZoom = zoomLevel;
             }
 
@@ -319,13 +328,18 @@ public sealed class PlacementService
             // clear (style reload) nothing obsolete is drawn anymore
             _lastResult = PlacementResult.Empty();
             _lastZoom = -1;
+            _holdoverSource = null;
+            _holdoverZoom = -1;
+            _holdoverResult = PlacementResult.Empty();
             _generation++;
         }
     }
 
     /// <summary>
     /// The placement result of the current call: a complete cached result,
-    /// otherwise the retained set of the same zoom, otherwise an empty
+    /// otherwise the retained set of the same zoom as holdover, otherwise
+    /// the retained set of the previous zoom (rescaled into the current
+    /// placement space, so labels stay on their lines), otherwise an empty
     /// result (the drawing needs no null check).
     /// </summary>
     private PlacementResult CurrentPlacement((TilesKey Tiles, int Zoom) key, int zoomLevel, PlacementResult? cached)
@@ -338,10 +352,36 @@ public sealed class PlacementService
             return cached;
         }
 
+        if (_lastResult.ZoomLevel != zoomLevel)
+        {
+            // Holdover of the previous zoom: hand out a rescaled copy marked
+            // for the current zoom (one copy per source result and target
+            // zoom, so the drawing phase receives a stable reference and the
+            // frame keys again). Incomplete keeps the retained frame
+            // underlay active while tiles of the new zoom are missing
+            if (!ReferenceEquals(_holdoverSource, _lastResult) || _holdoverZoom != zoomLevel)
+            {
+                _holdoverResult = _lastResult.Rescaled(zoomLevel) with
+                {
+                    Incomplete = true,
+                };
+                _holdoverSource = _lastResult;
+                _holdoverZoom = zoomLevel;
+            }
+
+            return _holdoverResult;
+        }
+
         // The result is being computed (or stayed incomplete): the retained
         // set of the same zoom keeps the symbols on the screen
         return _lastResult;
     }
+
+    // The holdover handed out while the placement of a new zoom runs: a
+    // rescaled copy of the retained set of the previous zoom
+    private PlacementResult? _holdoverSource;
+    private int _holdoverZoom = -1;
+    private PlacementResult _holdoverResult = PlacementResult.Empty();
 
     /// <summary>
     /// Fetches the tiles of the current view immediately (center first via
@@ -513,6 +553,7 @@ public sealed class PlacementService
             {
                 PlacedByLayer = new Dictionary<string, List<PlacementEntry>>(),
                 Incomplete = fetch.Incomplete,
+                ZoomLevel = zoomLevel,
             };
         }
 

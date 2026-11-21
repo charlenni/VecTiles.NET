@@ -1,5 +1,7 @@
 using BruTile;
 using BruTile.Predefined;
+using NetTopologySuite.Geometries;
+using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Controls.Mapsui;
@@ -71,8 +73,8 @@ internal static class PlacementServiceTestSupport
 
 /// <summary>
 /// Tests for the placement machinery: the retained set (latch) while a new
-/// pass runs, the reset of the latch on a zoom change and the incomplete
-/// retry cooldown.
+/// pass runs, the rescaled holdover of the previous zoom on a zoom change
+/// and the incomplete retry cooldown.
 /// </summary>
 public class PlacementServiceTests
 {
@@ -129,7 +131,7 @@ public class PlacementServiceTests
     }
 
     [Fact]
-    public void ZoomChange_ClearsTheRetainedSet()
+    public void ZoomChange_HandsOutTheRetainedSetAsRescaledHoldover()
     {
         var source = new GatedRenderedTileSource
         {
@@ -151,14 +153,60 @@ public class PlacementServiceTests
         Assert.True(firstPlacementDone.Task.Wait(TimeSpan.FromSeconds(30)), "first placement pass did not finish");
         var resultZoom8 = service.Update(keyA, 8, (x, y) => (x, y)).Placement;
 
-        // Zoom change: the retained set belongs to the old zoom; until the
-        // placement of the new zoom exists, the empty result must be handed
-        // out, not the symbols of the old zoom
+        // Zoom change: until the placement of the new zoom exists, the
+        // retained set of the old zoom is handed out as a holdover, so the
+        // labels stay on the screen. It is a rescaled copy (not the same
+        // instance), marked for the current zoom and incomplete
         var view = service.Update(keySameTilesHigherZoom, 9, (x, y) => (x, y));
-        Assert.Empty(view.Placement.PlacedByLayer);
         Assert.NotSame(resultZoom8, view.Placement);
+        Assert.Equal(9, view.Placement.ZoomLevel);
+        Assert.True(view.Placement.Incomplete);
+
+        // The holdover replaces itself only when a new pass finished; an
+        // identical call hands out the same stable instance again
+        Assert.Same(view.Placement, service.Update(keySameTilesHigherZoom, 9, (x, y) => (x, y)).Placement);
 
         source.Gate.TrySetResult(true);
+    }
+
+    [Fact]
+    public void Holdover_LineRunsAreRescaledIntoTheNewZoomSpace()
+    {
+        // Along-path distances live in the canonical placement space of the
+        // zoom the placement was computed for; the holdover of a previous
+        // zoom must scale them by resolution(old) / resolution(new) = 2^(old - new)
+        var run = new LineSymbolPlacementRun(
+        [
+            new[]
+            {
+                new LineSymbolAnchorPlacement(100f, true, true,
+                    new PathTextPlacement(false, 40f, 80f, [])),
+            },
+        ]);
+        var symbol = new LineSymbol(new Tile(1, 1, 8), 1,
+            new LineString(new[] { new Coordinate(0, 0), new Coordinate(1, 1) }), null, null);
+        var result = new PlacementResult
+        {
+            PlacedByLayer = new Dictionary<string, List<PlacementEntry>>
+            {
+                ["road_label"] = [new PlacementEntry(symbol, run)],
+            },
+            ZoomLevel = 8,
+        };
+
+        var rescaled = result.Rescaled(9);
+
+        var anchor = Assert.Single(Assert.Single(rescaled.PlacedByLayer["road_label"][0].Run!.Contours));
+        Assert.Equal(50f, anchor.Position);
+        Assert.Equal(20f, anchor.Placement!.DrawStart);
+        Assert.Equal(40f, anchor.Placement.PathLength);
+
+        // Rescaling back restores the original distances
+        var back = rescaled.Rescaled(8);
+        var anchorBack = Assert.Single(Assert.Single(back.PlacedByLayer["road_label"][0].Run!.Contours));
+        Assert.Equal(100f, anchorBack.Position);
+        Assert.Equal(40f, anchorBack.Placement!.DrawStart);
+        Assert.Equal(80f, anchorBack.Placement.PathLength);
     }
 
     [Fact]

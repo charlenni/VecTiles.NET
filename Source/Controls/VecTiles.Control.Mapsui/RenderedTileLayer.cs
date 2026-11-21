@@ -198,8 +198,9 @@ public class RenderedTileLayer : BaseLayer
     /// Updates the placement service with the current view and returns the
     /// snapshot for the drawing phase: the arrived tiles and the placement
     /// result of the view (never null; until a new placement exists for the
-    /// zoom, the retained set of the same zoom or an empty result, so no
-    /// symbols are drawn after a zoom change).
+    /// zoom, the retained set of the same zoom or the rescaled holdover of
+    /// the previous zoom is returned, so the symbols stay on the screen
+    /// until the placement of the new zoom replaces them).
     /// </summary>
     /// <param name="tileInfos">The tile infos of the current view.</param>
     /// <param name="zoomLevel">The canonical integer zoom level.</param>

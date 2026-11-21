@@ -33,8 +33,11 @@ public class RenderedTileLayer : BaseLayer
     // The offscreen surface the layer content is rasterized into before it
     // is drawn onto the screen canvas (one blit, so a cleared screen is
     // never visible while the layer draws), reused across frames. Rebuilt
-    // when the viewport size changes.
+    // when the viewport size changes. On a GPU-backed screen canvas it is a
+    // GPU surface of the same GRContext, so rasterizing and blitting stay
+    // on the GPU.
     private SKSurface? _frameSurface;
+    private GRContext? _frameGrContext;
 
     // The last completely drawn frame; drawn when the view currently has no
     // tiles (e.g. zooming out before the new bigger tiles have arrived), so
@@ -224,13 +227,25 @@ public class RenderedTileLayer : BaseLayer
     /// content can be rasterized into; reuses the existing surface whenever
     /// the size has not changed.
     /// </summary>
-    internal SKSurface GetFrameSurface(int width, int height)
+    internal SKSurface GetFrameSurface(int width, int height, GRContext? grContext)
     {
+        // The stored surface is invalid when the size changed, the GRContext
+        // was replaced by the platform (e.g. the window moved to another
+        // monitor) or the context was abandoned
+        var contextInvalid = grContext != _frameGrContext ||
+                             (grContext != null && (_frameGrContext == null || grContext.Handle != _frameGrContext.Handle));
         if (_frameSurface == null || _frameSurface.Canvas.DeviceClipBounds.Width != width ||
-            _frameSurface.Canvas.DeviceClipBounds.Height != height)
+            _frameSurface.Canvas.DeviceClipBounds.Height != height || contextInvalid ||
+            _frameGrContext is { IsAbandoned: true })
         {
             _frameSurface?.Dispose();
-            _frameSurface = SKSurface.Create(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul));
+            _frameSurface = null;
+
+            var info = new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Premul);
+            _frameSurface = grContext != null && !grContext.IsAbandoned
+                ? SKSurface.Create(grContext, true, info)
+                : SKSurface.Create(info);
+            _frameGrContext = grContext;
         }
 
         return _frameSurface;
@@ -300,6 +315,7 @@ public class RenderedTileLayer : BaseLayer
         {
             _frameSurface?.Dispose();
             _frameSurface = null;
+            _frameGrContext = null;
             _retainedFrame?.Dispose();
             _retainedFrame = null;
             _retainedFrameKey = null;

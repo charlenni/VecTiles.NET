@@ -191,7 +191,12 @@ public static class RenderedTileLayerRenderer
             var height = (int)Math.Round(viewport.Height * densityY);
             if (width > 0 && height > 0)
             {
-                var surface = renderedLayer.GetFrameSurface(width, height);
+                // When the screen canvas is GPU backed, create the offscreen
+                // surface in the same GRContext: the drawing and the blit
+                // then run on the GPU (the raster fallback keeps tests and
+                // non-GPU canvases working)
+                var grContext = canvas.Surface?.Context as GRContext;
+                var surface = renderedLayer.GetFrameSurface(width, height, grContext);
                 surface.Canvas.Clear(SKColors.Transparent);
                 surface.Canvas.Save();
                 surface.Canvas.Scale(densityX, densityY);

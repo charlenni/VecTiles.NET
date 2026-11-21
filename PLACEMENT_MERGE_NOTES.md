@@ -539,3 +539,51 @@ Umsetzung:
 - Density ausgeschlossen: neu CanoePoloHiDpiTests — echtes Pipeline-Draw mit canvas.Scale(1.5/2)
   (Device-Bitmap, Probe in device px) bei Z17 und Z17.6: beide Icons grün sichtbar (3/3 grün).
 - Suite: HiDpi 3/3; Kernel-Code unverändert seit 49ef940 (575 grün, 238 Skia).
+
+## Runde 2026-11-21w: Ursache gefunden und gefixt — Ablehnungen UND Baum-Spiegel
+
+Weiterer Befund (Runde 21v-Suspekte unrund): 676-Kamera-Scan (21t) hatte einen
+frischen Pass bei Z17 freigesprochen (immer 2 platz / 0 rejected). Neuer
+Scratch-Test mit reeller Pipeline, Tiles kommen einzeln an (wie in der App,
+"ring only"): ab Pass 10 canoe:1/1 — und es BLIEB 1/1 bis zum 20. Pass.
+
+Baum-Analyse (PlacementResult.Tree, exakte Schnittprüfung gegen den
+Rejected-Envelope): der Blocker ist ein LINE-Label (3 Path-Boxes, tile
+11743027575, road_label-Familie). Dessen Merged-Run ändert sich mit jedem
+ankommenden Tile (Merge skaliert die Konturen); die Alten Boxen blieben im
+grow-only Tree hängen, weil gepinnte Entscheidungen beim Pin-Hit NICHT mehr
+in den Baum eingesetzt wurden — der Baum war der einzige Träger der Alten
+Boxen. Ergebnis: eine Boxen-Landschaft, die es im deterministischen Volllauf
+nie gäbe, blockiert die canoe dauerhaft. Zusätzlich: Ablehnungen waren selbst
+gepinnt (Decide(symbol, null)), so dass das Symbol nach der ersten Ablehnung
+nicht einmal mehr geprüft wurde (Dirks "Z16→Z17 canoe:1/0").
+
+Fix (SymbolPlacement.cs, PlacementService.cs, IncrementalPlacementState):
+1. Rejections werden nicht mehr persistiert. `Decide(symbol, entry)` nimmt nur
+   noch Platzierungs-Entries (früher PlacementEntry?); `TryGetDecision` liefert
+   nur noch Platziertes. Ein abgelehntes Symbol wird in jedem Pass neu geprüft;
+   kollidiert es wieder, wird es wieder abgelehnt (deterministisch, kein Flackern).
+   DESIGN-ÄNDERUNG ggü. Runde 21r: "SecondPass_RejectedStaysRejected_
+   WhenSpaceFreesUp" ist ersetzt durch SecondPass_WhenBlockerVanishes_
+   RejectedSymbolIsPlaced + SecondPass_WithPersistentBlocker_StaysRejected.
+2. Der Kollisions-Baum gehört nicht mehr zum State (IncrementalPlacementState.Tree
+   entfernt) und wird pro Pass NEU aufgebaut. Gepinnte Entscheidungen werden
+   "re-affirmed": Pin-Hit → Kollisionscheck/Place läuft erneut auf der frischen
+   Instanz, die Boxen werden wieder eingesetzt, GEZEICHNET wird weiter die
+   gepinnte Entry (Label bewegt sich nicht; Boxen von verschwundenen Symbolen
+   geben ihren Platz frei).
+   Kosten: gepinnte Symbole werden pro Pass erneut kollisionsgeprueft (vorher
+   uebersprungen) — Getestet: keine nennenswerte Suite-Verlangsamung (73-76 s).
+3. Neue Regression: CanoePoloProgressiveArrivalTests — reelle Pipeline, Ring-Tiles
+   kommen einzeln, Endstand muss canoe=2 sein (vorher reproduzierbar 1/1).
+
+Verifikation: IncrementalPlacementStateTests 8/8, CanoePoloProgressiveArrivalTests 1/1,
+IconPointSymbolTests 56/56 (isoliert), Solution-Lauf: alle Suiten grün außer den
+bekannten Volllast-Flakes (CanoePoloHiDpiTests + IconPointSymbol — nachgewiesen
+auch auf HEAD ohne die Änderung, 3 FAIL). Goldens vor Commit zurückgesetzt.
+
+Dirk: bitte SampleApp neu bauen/starten und Z17-Szene nochmal fahren. Zu erwarten:
+Statuszeile bei Z17 nach einigen Frames `canoe:2/0`; die Icons bleiben sichtbar beim
+Hin- und Herschalten 16↔17↔18↔19. Falls ein Symbol je nach Blick möglich 1/1 zeigt:
+dann kollidiert es real mit einem sichtbaren Label (jetzt wieder re-prüfbar, kein
+Session-Lock mehr).

@@ -9,8 +9,9 @@ namespace VecTiles.Renderers.Skia.Test;
 /// <summary>
 /// Unit tests for the persistent placement decisions (IncrementalPlacementState):
 /// a pass with a state must place exactly like a pass without one, and the
-/// decisions (placed position, rejection) must survive the following passes,
-/// also when the tile set of the viewport changes.
+/// placed decisions must survive the following passes, also when the tile set
+/// of the viewport changes. Rejections are intra-pass decisions: they are not
+/// persisted, so a rejected symbol is re-examined in every pass.
 /// </summary>
 public class IncrementalPlacementStateTests
 {
@@ -105,11 +106,12 @@ public class IncrementalPlacementStateTests
     }
 
     /// <summary>
-    /// Verifies that a rejection survives a later pass in which the blocking
-    /// symbol no longer exists, so the label does not jump in afterwards.
+    /// Verifies that a rejection is not kept in the state: a later pass in
+    /// which the blocking symbol no longer exists re-examines the symbol and
+    /// places it.
     /// </summary>
     [Fact]
-    public void SecondPass_RejectedStaysRejected_WhenSpaceFreesUp()
+    public void SecondPass_WhenBlockerVanishes_RejectedSymbolIsPlaced()
     {
         var state = new IncrementalPlacementState();
         var low = TextSymbol(1, 100, 100, new Envelope(-10, 10, -10, 10));
@@ -123,13 +125,40 @@ public class IncrementalPlacementStateTests
         Assert.Contains(low, first.Rejected);
 
         // A later pass without the blocking symbol (its tile vanished): the
-        // rejection stands — the label does not jump in afterwards. The
-        // rejection is kept in the state; the per-pass rejected list follows
-        // the examined symbols of the pass, so the label simply stays absent
+        // symbol is re-examined and now placed — a rejection is only an
+        // intra-pass decision and must not be persisted
         var second = Compute(state, Layer(("place_low", [low])));
 
-        Assert.Empty(second.PlacedByLayer["place_low"]);
+        var entry = Assert.Single(second.PlacedByLayer["place_low"]);
+        Assert.Same(low, entry.Symbol);
         Assert.Empty(second.Rejected);
+    }
+
+    /// <summary>
+    /// Verifies that a rejection stays stable while the blocking symbol
+    /// remains: the collision tree is grow-only, so the symbol stays rejected
+    /// in every following pass and does not flicker.
+    /// </summary>
+    [Fact]
+    public void SecondPass_WithPersistentBlocker_StaysRejected()
+    {
+        var state = new IncrementalPlacementState();
+        var low = TextSymbol(1, 100, 100, new Envelope(-10, 10, -10, 10));
+        var high = TextSymbol(2, 100, 100, new Envelope(-10, 10, -10, 10));
+
+        var first = Compute(state,
+            Layer(("place_low", [low]), ("place_high", [high])));
+
+        Assert.Empty(first.PlacedByLayer["place_low"]);
+        Assert.Contains(low, first.Rejected);
+
+        // The blocking symbol is still there: the collision tree keeps its
+        // box, so the low symbol stays rejected in the second pass
+        var second = Compute(state,
+            Layer(("place_low", [low]), ("place_high", [high])));
+
+        Assert.Empty(second.PlacedByLayer["place_low"]);
+        Assert.Contains(low, second.Rejected);
     }
 
     /// <summary>

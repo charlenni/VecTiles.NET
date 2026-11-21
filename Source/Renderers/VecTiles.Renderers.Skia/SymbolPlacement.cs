@@ -161,14 +161,19 @@ public sealed record PlacementResult
 }
 
 /// <summary>
-/// The persistent placement decisions of one zoom level across passes. The
-/// collision tree only grows (a space once occupied stays occupied) and
-/// every examined symbol keeps its decision (placed entry or rejection), so
-/// labels never change their position when the tile set of the viewport
-/// changes — the placement is attached to the feature (its id) or, without
-/// a feature id, to the anchor of the symbol (point symbols; stable across
-/// re-renders) or to the symbol instance of the (cached) tile, not to the
-/// current tile set.
+/// The persistent placement decisions of one zoom level across passes. Every
+/// examined symbol keeps its placed decision, so labels never change their
+/// position when the tile set of the viewport changes — the placement is
+/// attached to the feature (its id) or, without a feature id, to the anchor
+/// of the symbol (point symbols; stable across re-renders) or to the symbol
+/// instance of the (cached) tile, not to the current tile set. Rejections
+/// are not kept: a rejected symbol is re-examined in every pass, so it can
+/// appear when the space was freed by other symbols vanishing (see
+/// <see cref="Decide"/>). The collision tree is rebuilt per pass: every
+/// still-existing placed symbol occupies its space again, the boxes of
+/// vanished symbols are gone (the old grow-only tree kept them forever and
+/// blocked other symbols that took the space meanwhile — the reported case
+/// of the canoe_polo icons remaining invisible at zoom 17).
 /// </summary>
 public sealed class IncrementalPlacementState
 {
@@ -179,15 +184,8 @@ public sealed class IncrementalPlacementState
     /// </summary>
     public const int MaxDecisions = 100_000;
 
-    /// <summary>
-    /// The collision boxes of every placed symbol of this zoom level; only
-    /// grows. New symbols are placed against it, so the result of a pass
-    /// depends no longer on the tile set of the current viewport.
-    /// </summary>
-    internal Quadtree<ISymbol> Tree { get; private set; } = new();
-
-    // Decisions by feature id (value null = symbol found no space and is
-    // skipped in the later passes as well); for symbols without feature id
+    // Decisions by feature id (value non-null = the placed entry that is
+    // kept in the following passes); for symbols without feature id
     // by the symbol instance (stable while the tile is in the tile cache),
     // or — for point symbols — by their anchor (stable across re-renders,
     // see <see cref="AnchorKey"/>)
@@ -197,7 +195,9 @@ public sealed class IncrementalPlacementState
 
     /// <summary>
     /// Gets the decision for the given symbol: true when the symbol was
-    /// examined in an earlier pass (as placed entry, or null when rejected).
+    /// placed in an earlier pass. Rejections are not kept (see Decide): the
+    /// symbol is examined again in every later pass, so it can appear when
+    /// the space was freed by other symbols leaving the view.
     /// </summary>
     internal bool TryGetDecision(ISymbol symbol, out PlacementEntry? entry)
     {
@@ -223,11 +223,16 @@ public sealed class IncrementalPlacementState
     }
 
     /// <summary>
-    /// Records the decision for the symbol: the placed entry, or null when
-    /// it found no space (the rejection also stands: the space the other
-    /// symbols took is not given back).
+    /// Gets the decision for the given symbol (the placed entry). Rejections
+    /// are NOT recorded: a symbol that found no space is examined again in
+    /// every later pass against the fresh collision tree of the pass, so it
+    /// appears when the space was freed — a pinned rejection would hide it
+    /// for the whole session at this zoom level (reported with the
+    /// canoe_polo icons: rejected once at zoom 17, never drawn again). A
+    /// re-examined symbol that still collides is rejected again
+    /// deterministically, so nothing flaps.
     /// </summary>
-    internal void Decide(ISymbol symbol, PlacementEntry? entry)
+    internal void Decide(ISymbol symbol, PlacementEntry entry)
     {
         if (symbol.Id != 0)
         {
@@ -271,7 +276,6 @@ public sealed class IncrementalPlacementState
         _decidedById.Clear();
         _decidedByReference.Clear();
         _decidedByAnchor.Clear();
-        Tree = new Quadtree<ISymbol>();
     }
 }
 
@@ -280,8 +284,10 @@ public sealed class IncrementalPlacementState
 /// where, as a background task before the next drawing. The collision check
 /// runs in the unrotated canonical screen space of the integer zoom level and
 /// processes the style layers in reverse (highest layer first), so an
-/// overlapping symbol of a higher style layer wins; the quadtree only grows
-/// (a symbol that finds its space occupied is dropped, nothing is removed).
+/// overlapping symbol of a higher style layer wins; during a pass the
+/// quadtree only grows (a symbol that finds its space occupied is dropped,
+/// nothing is removed), while across passes it is rebuilt from the pinned
+/// decisions of the <see cref="IncrementalPlacementState"/> (see there).
 /// </summary>
 public static class SymbolPlacementEngine
 {
@@ -313,17 +319,15 @@ public static class SymbolPlacementEngine
             new SKRect(-TestingCanvasHalfExtent, -TestingCanvasHalfExtent,
                 TestingCanvasHalfExtent, TestingCanvasHalfExtent));
 
-        // With a persistent state the collision tree survives the pass: every
-        // envelope ever placed keeps its space, so the placement decisions of
-        // earlier passes remain valid and labels never move when the tile set
-        // of the viewport changes
+        // The collision tree is always fresh (the decisions of the previous
+        // pass are pinned by value, not by the tree): during the pass it
+        // only grows (nothing is removed), so a symbol of a lower style
+        // layer never takes the space of an already placed one
         // Very long panning session at one zoom level: start the next pass
-        // with a clean state, so the memory stays bounded. The reset happens
-        // BEFORE the tree is taken: it replaces the tree instance, so the
-        // pass works against an empty collision tree
+        // with a clean state, so the memory stays bounded
         incremental?.ResetIfFull();
 
-        var tree = incremental?.Tree ?? new Quadtree<ISymbol>();
+        var tree = new Quadtree<ISymbol>();
         var context = new EvaluationContext(zoomLevel);
 
         var placedByLayer = new Dictionary<string, List<PlacementEntry>>();
@@ -443,19 +447,33 @@ public static class SymbolPlacementEngine
                     continue;
                 }
 
-                // A persistent state keeps every decision of an earlier pass:
-                // the symbol is neither placed again nor re-examined, its
-                // placed (or rejected) outcome stands — the label stays at
-                // the position of the pass that placed it, also when tiles
-                // appear or disappear
+                // A persistent state keeps the decision of an earlier pass:
+                // the label stays at the position of the pass that placed
+                // it, also when tiles appear or disappear. The collision
+                // check still runs again (the tree is fresh), so the space
+                // of the pinned symbol is re-affirmed in the current pass
+                // and the boxes of vanished symbols free their space
                 if (incremental is not null &&
-                    incremental.TryGetDecision(symbol, out var decided))
+                    incremental.TryGetDecision(symbol, out var decided) &&
+                    decided is not null)
                 {
-                    if (decided is not null)
+                    if (symbol is PointSymbol pinnedPoint)
                     {
-                        placements.Add(decided);
+                        var status = PointSymbolRenderer.CheckForSpace(canvas, context, pinnedPoint, tree,
+                            worldToScreen, 0, showUnvalidBorders: false);
+
+                        if (status == SymbolPlacementStatus.Success)
+                        {
+                            insertCollisionBoxes(pinnedPoint);
+                        }
+                    }
+                    else if (symbol is LineSymbol pinnedLine)
+                    {
+                        LineSymbolRenderer.Place(canvas, context, pinnedLine, tree, worldToScreen,
+                            showUnvalidBorders: false);
                     }
 
+                    placements.Add(decided);
                     continue;
                 }
 
@@ -470,8 +488,9 @@ public static class SymbolPlacementEngine
                     }
                     else
                     {
+                        // No persistent record: the symbol is re-examined in
+                        // the next pass (see Decide)
                         rejected.Add(symbol);
-                        incremental?.Decide(symbol, null);
                     }
                 }
                 else if (symbol is LineSymbol lineSymbol)
@@ -485,29 +504,35 @@ public static class SymbolPlacementEngine
                     }
                     else
                     {
+                        // No persistent record: the symbol's merged run is
+                        // re-examined in the next pass (see Decide)
                         rejected.Add(symbol);
-                        incremental?.Decide(symbol, null);
                     }
                 }
             }
 
             placesTopFirst.Add(name, placements);
 
+            void insertCollisionBoxes(PointSymbol point)
+            {
+                // The check set the draw flags and screen envelopes;
+                // insert the collision boxes like the drawing pass did
+                if (point.IconSymbol is not null && point.DrawIcon)
+                {
+                    tree.Insert(point.IconSymbol.ScreenEnvelope!, point.IconSymbol.Copy());
+                }
+
+                if (point.TextSymbol is not null && point.DrawText)
+                {
+                    tree.Insert(point.TextSymbol.ScreenEnvelope!, point.TextSymbol.Copy());
+                }
+            }
+
             void placedByLayerAdd(ISymbol symbol, LineSymbolPlacementRun? run)
             {
                 if (symbol is PointSymbol point)
                 {
-                    // The check set the draw flags and screen envelopes;
-                    // insert the collision boxes like the drawing pass did
-                    if (point.IconSymbol is not null && point.DrawIcon)
-                    {
-                        tree.Insert(point.IconSymbol.ScreenEnvelope!, point.IconSymbol.Copy());
-                    }
-
-                    if (point.TextSymbol is not null && point.DrawText)
-                    {
-                        tree.Insert(point.TextSymbol.ScreenEnvelope!, point.TextSymbol.Copy());
-                    }
+                    insertCollisionBoxes(point);
                 }
 
                 placements.Add(new PlacementEntry(symbol, run));

@@ -423,10 +423,10 @@ public sealed class PlacementService
     private PlacementResult _holdoverResult = PlacementResult.Empty();
 
     /// <summary>
-    /// The persistent placement decisions per zoom level: the collision tree
-    /// and the placed/rejected outcome of every examined symbol survive the
-    /// passes, so labels never move when tiles appear or disappear (see
-    /// <see cref="IncrementalPlacementState"/>).
+    /// The persistent placement decisions per zoom level: a placed symbol
+    /// keeps its placed entry across the passes, so labels never move when
+    /// tiles appear or disappear; rejections are re-examined in every pass
+    /// (see <see cref="IncrementalPlacementState"/>).
     /// </summary>
     private readonly Dictionary<int, IncrementalPlacementState> _incrementalStates = new();
 

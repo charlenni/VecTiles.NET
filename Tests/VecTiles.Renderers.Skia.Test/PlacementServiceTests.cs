@@ -163,6 +163,7 @@ public class PlacementServiceTests
         var view = service.Update(keySameTilesHigherZoom, 9, (x, y) => (x, y));
         Assert.NotSame(resultZoom8, view.Placement);
         Assert.Equal(9, view.Placement.ZoomLevel);
+        Assert.Equal(8, view.Placement.SourceZoomLevel);
         Assert.True(view.Placement.Incomplete);
 
         // The holdover replaces itself only when a new pass finished; an

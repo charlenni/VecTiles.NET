@@ -380,11 +380,47 @@ public static class RenderedTileLayerRenderer
 
         var names = layerIndex.OrderBy(pair => pair.Value.StyleIndex).Select(pair => pair.Key).ToList();
 
+        // Symbol-only style layers that no arrived tile carries: at the very
+        // start of a zoom change no tile of the new zoom has arrived yet, so
+        // the layer index is empty and the names would only come from the
+        // (holdover) placement. Its dictionary preserves the ascending style
+        // order, so the missing keys are appended in that order
+        if (drawSymbols)
+        {
+            foreach (var extra in view.Placement.PlacedByLayer.Keys)
+            {
+                if (!layerIndex.ContainsKey(extra))
+                {
+                    names.Add(extra);
+                }
+            }
+
+            if (fadeOutPlacement != null)
+            {
+                foreach (var extra in fadeOutPlacement.PlacedByLayer.Keys)
+                {
+                    if (!layerIndex.ContainsKey(extra) && !names.Contains(extra))
+                    {
+                        names.Add(extra);
+                    }
+                }
+            }
+        }
+
         var tree = new Quadtree<ISymbol>();
+
+        // The layout of the symbols of a placement result was measured in the
+        // canonical space of the zoom the result was computed for; normally
+        // that is the integer zoom of the view (the passed context), but the
+        // holdover of a zoom change was measured in the space of its source
+        // zoom, and drawing it with the view context would scale the glyphs
+        // by the wrong ratio (one step too small)
+        var newLayoutContext = LayoutContextOf(view.Placement, context);
+        var oldLayoutContext = fadeOutPlacement is null ? null : LayoutContextOf(fadeOutPlacement, context);
 
         foreach (var name in names)
         {
-            if (layerIndex[name].IsGeometry)
+            if (layerIndex.TryGetValue(name, out var layerMeta) && layerMeta.IsGeometry)
             {
                 // The geometry of the style layer across all screen tiles
                 foreach (var tileInView in tiles)
@@ -447,7 +483,7 @@ public static class RenderedTileLayerRenderer
                 canvas.SaveLayer(oldLayerPaint);
                 foreach (var entry in oldPlaced)
                 {
-                    DrawPlacementEntry(canvas, viewport, rotation, renderedLayer, drawContext, context,
+                    DrawPlacementEntry(canvas, viewport, rotation, renderedLayer, drawContext, oldLayoutContext,
                         placementWorldToScreen, drawWorldToScreen, entry, ref tree);
                 }
 
@@ -466,7 +502,7 @@ public static class RenderedTileLayerRenderer
 
                 foreach (var entry in newPlaced)
                 {
-                    DrawPlacementEntry(canvas, viewport, rotation, renderedLayer, drawContext, context,
+                    DrawPlacementEntry(canvas, viewport, rotation, renderedLayer, drawContext, newLayoutContext,
                         placementWorldToScreen, drawWorldToScreen, entry, ref tree);
                 }
 
@@ -485,9 +521,32 @@ public static class RenderedTileLayerRenderer
     }
 
     /// <summary>
+    /// The evaluation context the layout measurements of the symbols of a
+    /// placement result are read with (the font size ratio towards the
+    /// drawn font size): normally the integer zoom of the view — the layout
+    /// was measured in the canonical space of that zoom — but the holdover
+    /// of a zoom change was measured in the canonical space of its source
+    /// zoom, so it scales by the ratio towards that zoom (with the view
+    /// context the glyphs would render at the layout size: one zoom step
+    /// too small).
+    /// </summary>
+    private static EvaluationContext LayoutContextOf(PlacementResult placement, EvaluationContext viewContext)
+    {
+        if (placement.IsHoldover && placement.SourceZoomLevel > 0 &&
+            placement.SourceZoomLevel != placement.ZoomLevel)
+        {
+            return new EvaluationContext(placement.SourceZoomLevel);
+        }
+
+        return viewContext;
+    }
+
+    /// <summary>
     /// Draws one placed entry (point or line symbol) of a placement result
     /// with the drawing settings of the current view; runs no collision
-    /// checks and inserts nothing into the tree.
+    /// checks and inserts nothing into the tree. The layout context is the
+    /// evaluation context of the zoom the layout of the placement result was
+    /// measured in (<see cref="LayoutContextOf"/>).
     /// </summary>
     private static void DrawPlacementEntry(SKCanvas canvas, Viewport viewport, double rotation,
         RenderedTileLayer renderedLayer, EvaluationContext drawContext, EvaluationContext context,

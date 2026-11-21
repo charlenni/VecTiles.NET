@@ -53,6 +53,17 @@ public sealed record PlacementResult
     public int ZoomLevel { get; init; }
 
     /// <summary>
+    /// Gets the zoom level whose canonical space the layout measurements of
+    /// the entries (glyph spacing, along-path run distances) were made in.
+    /// Normally this is <see cref="ZoomLevel"/>; only on a holdover copy
+    /// (<see cref="Rescaled"/>) the two differ: the copy reports the target
+    /// zoom as its <see cref="ZoomLevel"/>, but the layout was measured in
+    /// the space of the source zoom, so the drawing must scale it with the
+    /// font size ratio towards that zoom.
+    /// </summary>
+    public int SourceZoomLevel { get; init; }
+
+    /// <summary>
     /// True when this result is the holdover of the previous zoom (see
     /// <see cref="ZoomLevel"/>): the drawing fades it out and the finished
     /// placement of the current zoom in, so no label set pops between the
@@ -86,7 +97,8 @@ public sealed record PlacementResult
     /// again at drawing time). Used when a placement of the previous zoom
     /// keeps the labels on the screen while the placement of the new zoom
     /// runs. The copy carries <paramref name="targetZoom"/> as its
-    /// <see cref="ZoomLevel"/>.
+    /// <see cref="ZoomLevel"/> and this result's zoom level as its
+    /// <see cref="SourceZoomLevel"/> (the zoom the layout was measured in).
     /// </summary>
     /// <param name="targetZoom">The canonical zoom level to rescale into.</param>
     public PlacementResult Rescaled(int targetZoom)
@@ -111,7 +123,15 @@ public sealed record PlacementResult
             rescaled.Add(name, list);
         }
 
-        return this with { PlacedByLayer = rescaled, ZoomLevel = targetZoom };
+        return this with
+        {
+            PlacedByLayer = rescaled,
+            ZoomLevel = targetZoom,
+            // The layout measurements of the entries stay in the canonical
+            // space of this (source) zoom; the drawing reads them for the
+            // font size ratio
+            SourceZoomLevel = ZoomLevel,
+        };
     }
 
     private static LineSymbolPlacementRun RescaleRun(LineSymbolPlacementRun run, double factor)

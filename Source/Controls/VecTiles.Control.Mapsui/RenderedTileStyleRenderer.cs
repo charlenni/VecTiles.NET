@@ -7,6 +7,7 @@ using Mapsui.Rendering;
 using Mapsui.Rendering.Skia.SkiaStyles;
 using Mapsui.Styles;
 using SkiaSharp;
+using VecTiles.Renderers.Common;
 
 namespace VecTiles.Controls.Mapsui;
 
@@ -41,9 +42,12 @@ public class RenderedTileStyleRenderer : ISkiaStyleRenderer
 
             canvas.ClipRect(_tileRect);
 
-            foreach (var pair in renderedTile.RenderedLayers)
+            foreach (var entry in renderedTile.Layers)
             {
-                pair.Value.Draw(canvas, context);
+                if (entry is RenderedGeometryLayer geometryLayer)
+                {
+                    geometryLayer.Renderer.Draw(canvas, context);
+                }
             }
 
             canvas.Restore();

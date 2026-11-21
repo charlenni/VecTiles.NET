@@ -17,7 +17,7 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class StrehlgasseFrameRenderTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
     
     private readonly ITestOutputHelper _output;
 
@@ -57,8 +57,7 @@ public class StrehlgasseFrameRenderTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        var tree = new NetTopologySuite.Index.Quadtree.Quadtree<ISymbol>();
-        var examined = new HashSet<ulong>();
+        symbolsLayer.SynchronousPlacement = true;
 
         // Placement converter (canonical placement space of the integer zoom)
         Func<double, double, (double, double)> toScreen = (x, y) =>
@@ -74,60 +73,66 @@ public class StrehlgasseFrameRenderTests
             return (p.X, p.Y);
         };
 
-        var symbols = symbolsLayer.GetOrCreateSymbols(
+        var result = symbolsLayer.GetPlacementResult(
             tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-            zoomLevel).ToArray();
+            zoomLevel, toScreen);
 
+        var tree = result!.Tree;
         var order = 0;
 
-        foreach (var symbol in symbols)
+        foreach (var layerPair in result.PlacedByLayer)
         {
-            if (!examined.Add(symbol.Id))
+            foreach (var entry in layerPair.Value)
             {
-                continue;
-            }
-
-            if (symbol is PointSymbol pointSymbol)
-            {
-                var name = pointSymbol.TextSymbol?.Text ?? pointSymbol.Name ?? "?";
-                var status = PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, toScreen, 0, false);
-
-                if (name.Contains("Beldona"))
+                if (entry.Symbol is PointSymbol pointSymbol)
                 {
-                    _output.WriteLine($"#{order} POINT '{name}' status={status} " +
-                        $"iconEnv={pointSymbol.IconSymbol?.ScreenEnvelope} textEnv={pointSymbol.TextSymbol?.ScreenEnvelope}");
-                }
+                    var name = pointSymbol.TextSymbol?.Text ?? pointSymbol.Name ?? "?";
 
-                if (status == SymbolPlacementStatus.Success)
-                {
+                    if (name.Contains("Beldona"))
+                    {
+                        _output.WriteLine($"#{order} POINT '{name}' placed " +
+                            $"iconEnv={pointSymbol.IconSymbol?.ScreenEnvelope} textEnv={pointSymbol.TextSymbol?.ScreenEnvelope}");
+                    }
+
                     PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false,
-                        drawContext, toDraw);
+                        drawContext, toDraw, checkForSpace: false);
                 }
-            }
-            else if (symbol is LineSymbol lineSymbol)
-            {
-                var text = lineSymbol.TextSymbol?.Text ?? "?";
-                var status = LineSymbolRenderer.CheckForSpace(canvas, context, lineSymbol, tree, toScreen, 0, false);
-
-                if (text.Contains("Strehl"))
+                else if (entry.Symbol is LineSymbol lineSymbol)
                 {
-                    _output.WriteLine($"#{order} LINE '{text}' status={status}");
+                    var text = lineSymbol.TextSymbol?.Text ?? "?";
 
-                    var lineText = (RenderedText)lineSymbol.TextSymbol!.Native!;
-                    _output.WriteLine($"    measured W={lineText.MeasuredWidth:F1} H={lineText.MeasuredHeight:F1} " +
-                        $"env={lineSymbol.TextSymbol.Envelope} fontSize={lineSymbol.TextSymbol.FontSize.Invoke(context):F1} " +
-                        $"anchor=({lineSymbol.TextSymbol.Anchor.X},{lineSymbol.TextSymbol.Anchor.Y}) " +
-                        $"padding={lineSymbol.TextSymbol.Padding}");
-                }
+                    if (text.Contains("Strehl"))
+                    {
+                        _output.WriteLine($"#{order} LINE '{text}' placed");
 
-                if (status == SymbolPlacementStatus.Success)
-                {
+                        var lineText = (RenderedText)lineSymbol.TextSymbol!.Native!;
+                        _output.WriteLine($"    measured W={lineText.MeasuredWidth:F1} H={lineText.MeasuredHeight:F1} " +
+                            $"env={lineSymbol.TextSymbol.Envelope} fontSize={lineSymbol.TextSymbol.FontSize.Invoke(context):F1} " +
+                            $"anchor=({lineSymbol.TextSymbol.Anchor.X},{lineSymbol.TextSymbol.Anchor.Y}) " +
+                            $"padding={lineSymbol.TextSymbol.Padding}");
+                    }
+
                     LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, true,
-                        drawContext, toDraw);
+                        drawContext, toDraw, entry.Run!);
                 }
-            }
 
-            order++;
+                order++;
+            }
+        }
+
+        foreach (var symbol in result.Rejected)
+        {
+            var name = symbol switch
+            {
+                PointSymbol p => p.TextSymbol?.Text ?? p.Name ?? "?",
+                LineSymbol l => l.TextSymbol?.Text ?? "?",
+                _ => "?",
+            };
+
+            if (name.Contains("Beldona") || name.Contains("Strehl"))
+            {
+                _output.WriteLine($"#{order} REJECTED '{name}'");
+            }
         }
 
         canvas.Flush();
@@ -148,7 +153,7 @@ public class StrehlgasseFrameRenderTests
             _output.WriteLine($"BOX screenEnv={s.ScreenEnvelope}");
         }
 
-        var path = Path.Combine(_path, "Results", "strehlgasse-frame.png");
+        var path = Path.Combine(Utilities.TestFiles, "Results", "strehlgasse-frame.png");
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = File.OpenWrite(path);
@@ -206,10 +211,8 @@ public class StrehlgasseFrameRenderTests
 
         var context = new EvaluationContext(zoomLevel, 1f, 0f);
 
-        var symbols = symbolsLayer.GetOrCreateSymbols(tileInfos, zoomLevel).ToArray();
+        symbolsLayer.SynchronousPlacement = true;
 
-        var tree = new NetTopologySuite.Index.Quadtree.Quadtree<ISymbol>();
-        var examined = new HashSet<ulong>();
         var toScreen = new Func<double, double, (double, double)>((x, y) =>
         {
             var p = viewport.WorldToScreen(x, y);
@@ -221,37 +224,29 @@ public class StrehlgasseFrameRenderTests
         canvas.Clear(SKColors.White);
         canvas.Scale(placementScale, placementScale);
 
+        var result = symbolsLayer.GetPlacementResult(tileInfos, zoomLevel, toScreen);
+        var tree = result!.Tree;
+
         double? anchorX = null, anchorY = null;
 
-        foreach (var symbol in symbols)
+        foreach (var layerPair in result.PlacedByLayer)
         {
-            if (!examined.Add(symbol.Id))
+            foreach (var entry in layerPair.Value)
             {
-                continue;
-            }
-
-            if (symbol is PointSymbol pointSymbol)
-            {
-                var status = PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, toScreen, 0, false);
-
-                if (status == SymbolPlacementStatus.Success)
+                if (entry.Symbol is PointSymbol pointSymbol)
                 {
                     PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false);
                 }
-            }
-            else if (symbol is LineSymbol lineSymbol)
-            {
-                var status = LineSymbolRenderer.CheckForSpace(canvas, context, lineSymbol, tree, toScreen, 0, false);
-
-                if (lineSymbol.TextSymbol?.Text == "Strehlgasse")
+                else if (entry.Symbol is LineSymbol lineSymbol)
                 {
-                    _output.WriteLine($"[{fractionalZoom}] LINE status={status} geomType={lineSymbol.Geometry.GeometryType} " +
-                        $"env={lineSymbol.TextSymbol?.ScreenEnvelope}");
-                }
+                    if (lineSymbol.TextSymbol?.Text == "Strehlgasse")
+                    {
+                        _output.WriteLine($"[{fractionalZoom}] LINE placed geomType={lineSymbol.Geometry.GeometryType} " +
+                            $"env={lineSymbol.TextSymbol?.ScreenEnvelope}");
+                    }
 
-                if (status == SymbolPlacementStatus.Success)
-                {
-                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, false);
+                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, false,
+                        placementRun: entry.Run!);
                 }
             }
         }

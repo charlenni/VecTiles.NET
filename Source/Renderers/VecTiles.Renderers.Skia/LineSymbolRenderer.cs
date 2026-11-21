@@ -82,6 +82,104 @@ public class LineSymbolRenderer : ISymbolRenderer
     }
 
     /// <summary>
+    /// Runs the placement of a line symbol against the quadtree and records the
+    /// result: every anchor position where icon and/or text find space is
+    /// recorded with the exact path placement and the collision boxes of the
+    /// label are inserted into the tree. Called by the placement pass before
+    /// drawing; <see cref="Draw"/> consumes the returned run without running
+    /// the collision checks again.
+    /// </summary>
+    /// <param name="canvas">Canvas for the collision checks (debug borders only).</param>
+    /// <param name="context">The evaluation context for styling.</param>
+    /// <param name="sym">The symbol to place.</param>
+    /// <param name="tree">The quadtree of already placed symbols; receives the placed labels.</param>
+    /// <param name="worldToScreenConverter">Function to convert world coordinates to screen coordinates.</param>
+    /// <param name="showUnvalidBorders">Whether to draw debug borders for collisions.</param>
+    /// <returns>The placement run with the recorded anchors per geometry contour.</returns>
+    public static LineSymbolPlacementRun Place(SKCanvas canvas, EvaluationContext context, ISymbol sym,
+        Quadtree<ISymbol> tree, Func<double, double, (double, double)> worldToScreenConverter,
+        bool showUnvalidBorders = false)
+    {
+        if (sym is not LineSymbol symbol)
+        {
+            return LineSymbolPlacementRun.Empty;
+        }
+
+        var contours = CreateContourPaths(symbol, worldToScreenConverter);
+        var result = new List<IReadOnlyList<LineSymbolAnchorPlacement>>(contours.Count);
+
+        for (var contourIndex = 0; contourIndex < contours.Count; contourIndex++)
+        {
+            var (path, part) = contours[contourIndex];
+            var anchors = new List<LineSymbolAnchorPlacement>();
+
+            using (path)
+            using (var pathMeasure = new SKPathMeasure(path))
+            {
+                foreach (var pos in GetAnchorPositions(symbol, pathMeasure.Length, context, part))
+                {
+                    pathMeasure.GetPositionAndTangent(pos, out var nextPosition, out _);
+
+                    var spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
+
+                    if (symbol.IconSymbol is not null)
+                    {
+                        spaceForIconAvailable = IconLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                            path, pos,
+                            symbol.IconSymbol!,
+                            tree, nextPosition.X, nextPosition.Y, showUnvalidBorders);
+                    }
+
+                    var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
+                    PathTextPlacement? textPlacement = null;
+
+                    if (symbol.TextSymbol is not null)
+                    {
+                        spaceForTextAvailable = TextLineSymbolRenderer.CheckForSingleSpace(canvas, context,
+                            path, pos,
+                            symbol.TextSymbol!, tree, showUnvalidBorders, out textPlacement);
+                    }
+
+                    var iconPlaced = symbol.HasIcon && spaceForIconAvailable == SymbolPlacementStatus.Success &&
+                        (spaceForTextAvailable == SymbolPlacementStatus.Success || symbol.DrawIconWithoutText);
+
+                    var textPlaced = symbol.HasText && spaceForTextAvailable == SymbolPlacementStatus.Success &&
+                        (spaceForIconAvailable == SymbolPlacementStatus.Success || symbol.DrawTextWithoutIcon);
+
+                    if (!iconPlaced && !textPlaced)
+                    {
+                        continue;
+                    }
+
+                    if (iconPlaced)
+                    {
+                        tree.Insert(symbol.IconSymbol!.ScreenEnvelope!, symbol.IconSymbol.Copy());
+                    }
+
+                    if (textPlaced)
+                    {
+                        // Insert one copy per collision box of the label, so other
+                        // symbols collide with the label along the whole path
+                        foreach (var box in textPlacement!.Boxes)
+                        {
+                            var copy = symbol.TextSymbol!.Copy();
+                            copy.ScreenEnvelope = box;
+
+                            tree.Insert(box, copy);
+                        }
+                    }
+
+                    anchors.Add(new LineSymbolAnchorPlacement(pos, iconPlaced, textPlaced, textPlacement!));
+                }
+            }
+
+            result.Add(anchors);
+        }
+
+        return new LineSymbolPlacementRun(result);
+    }
+
+    /// <summary>
     /// Draws the line symbol (icons and/or text) along its path on the specified canvas.
     /// All contours of the (possibly merged) geometry are drawn.
     /// </summary>
@@ -96,7 +194,8 @@ public class LineSymbolRenderer : ISymbolRenderer
     /// <param name="drawWorldToScreenConverter">Optional converter into the screen space used for drawing; falls back to <paramref name="worldToScreenConverter"/>.</param>
     public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree,
         Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false,
-        EvaluationContext? drawContext = null, Func<double, double, (double, double)>? drawWorldToScreenConverter = null)
+        EvaluationContext? drawContext = null, Func<double, double, (double, double)>? drawWorldToScreenConverter = null,
+        LineSymbolPlacementRun? placementRun = null)
     {
         var drawCtx = drawContext ?? context;
         var toDraw = drawWorldToScreenConverter ?? worldToScreenConverter;
@@ -129,6 +228,23 @@ public class LineSymbolRenderer : ISymbolRenderer
                 var drawScale = pathMeasure.Length > 0 && drawPathMeasure.Length > 0
                     ? (float)(drawPathMeasure.Length / pathMeasure.Length)
                     : 1f;
+
+                if (placementRun != null)
+                {
+                    // The placement pass has already decided which anchors and
+                    // parts (icon/text) of this contour are drawn; honor the
+                    // decisions exactly, run no checks and insert nothing
+                    if (contourIndex < placementRun.Contours.Count)
+                    {
+                        foreach (var placedAnchor in placementRun.Contours[contourIndex])
+                        {
+                            DrawPlacedAnchor(canvas, context, symbol, drawContour, pathMeasure,
+                                drawScale, placedAnchor, showValidBorders, drawCtx);
+                        }
+                    }
+
+                    continue;
+                }
 
                 foreach (var pos in GetAnchorPositions(symbol, pathMeasure.Length, context, contours[contourIndex].Part))
                 {
@@ -227,6 +343,60 @@ public class LineSymbolRenderer : ISymbolRenderer
                     }
                 }
             }
+        }
+    }
+
+    /// <summary>
+    /// Draws the recorded parts (icon and/or text) of one placed anchor of a
+    /// line symbol. Runs no collision checks and inserts nothing into the
+    /// tree: the placement pass already decided both.
+    /// </summary>
+    private static void DrawPlacedAnchor(SKCanvas canvas, EvaluationContext context, LineSymbol symbol,
+        SKPath drawContour, SKPathMeasure pathMeasure, float drawScale,
+        LineSymbolAnchorPlacement placed, bool showValidBorders, EvaluationContext drawCtx)
+    {
+        pathMeasure.GetPositionAndTangent(placed.Position, out var nextPosition, out var tangentVec);
+
+        var tangent = 360f - Math.Atan2(tangentVec.Y, tangentVec.X) * 180 / Math.PI;
+
+        if (placed.Icon && symbol.HasIcon)
+        {
+            var iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment,
+                tangent, symbol.IconSymbol.KeepUpright);
+
+            IconLineSymbolRenderer.DrawIcon(canvas, drawCtx, symbol.IconSymbol!, nextPosition.X * drawScale,
+                nextPosition.Y * drawScale, iconRotation, showValidBorders);
+        }
+
+        if (placed.Text && symbol.HasText)
+        {
+            // The glyphs are drawn at the style size of the current
+            // fractional zoom, so the run of the label around the
+            // anchor has the width of the drawn text, not the width
+            // of the canonical placement envelope. The draw start is
+            // shifted accordingly, so the label stays centered on
+            // its anchor while zooming.
+            var textSymbol = symbol.TextSymbol!;
+            var fontSizePlacement = textSymbol.FontSize.Invoke(context);
+            var fontSizeDraw = textSymbol.FontSize.Invoke(drawCtx);
+            var fontSizeRatio = fontSizePlacement > 0 ? fontSizeDraw / fontSizePlacement : 1f;
+            var measuredWidth = ((RenderedText)textSymbol.Native).MeasuredWidth;
+            var leadPlacement = -textSymbol.Anchor.X * measuredWidth + textSymbol.Offset.X;
+            var leadDraw = (float)(-textSymbol.Anchor.X * measuredWidth * fontSizeRatio + textSymbol.Offset.X);
+
+            // The placement (draw start and path length) is scaled
+            // from the placement space to the draw space, plus the
+            // lead correction of the drawn text size
+            var textPlacement = placed.Placement;
+            var drawPlacement = textPlacement == null
+                ? null
+                : new PathTextPlacement(textPlacement.Reversed,
+                    (float)(textPlacement.DrawStart * drawScale) + leadDraw - (float)(leadPlacement * drawScale),
+                    (float)(textPlacement.PathLength * drawScale),
+                    textPlacement.Boxes);
+
+            TextLineSymbolRenderer.DrawTextOnPath(canvas, drawCtx, textSymbol, drawContour,
+                drawPlacement!, showValidBorders, fontSizeRatio);
         }
     }
 

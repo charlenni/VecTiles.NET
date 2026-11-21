@@ -11,7 +11,7 @@ namespace VecTiles.Renderers.Skia.Test;
 
 public class LineAndFillTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
     private readonly string _dataFile = Path.Combine(_path, "zurich.mbtiles");
     private readonly string _styleFile = Path.Combine(_path, "osm-liberty.json");
     private readonly Renderer _renderer;
@@ -70,7 +70,7 @@ public class LineAndFillTests
                 renderedTile?.Draw(canvas, renderContext);
             }
 
-            Utilities.SaveAndDestroyBitmap(bitmap, Path.Combine(_path, $"Tile-{x}x-{y}y-{zoom}z.png"));
+            Utilities.SaveAndDestroyBitmap(bitmap, Path.Combine(Utilities.TestFiles, $"Tile-{x}x-{y}y-{zoom}z.png"));
         }
         catch (Exception e)
         {

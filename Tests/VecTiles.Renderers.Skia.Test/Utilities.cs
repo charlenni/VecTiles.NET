@@ -5,6 +5,48 @@ namespace VecTiles.Renderers.Skia.Test;
 
 public static class Utilities
 {
+    private static readonly Lazy<(string RepoRoot, string ProjectDir)> _folders = new(() =>
+    {
+        // The test host runs with the bin/<configuration>/<tfm> folder as its
+        // working directory. msbuild copies the Files folders into the output,
+        // but those copies go stale (goldens are only overwritten on rebuild),
+        // so always use the real folders of the repository instead.
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "VecTiles.NET.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        var repoRoot = directory?.FullName
+            ?? throw new InvalidOperationException(
+                $"Repository root (VecTiles.NET.sln) not found walking up from '{AppContext.BaseDirectory}' " +
+                $"(cwd: '{Directory.GetCurrentDirectory()}').");
+
+        var projectDir = Path.Combine(repoRoot, "Tests", "VecTiles.Renderers.Skia.Test");
+
+        if (!File.Exists(Path.Combine(repoRoot, "Files", "osm-liberty.json")) ||
+            !Directory.Exists(Path.Combine(projectDir, "Files", "Originals")))
+        {
+            throw new InvalidOperationException(
+                $"Data or goldens folder not found in '{repoRoot}'. " +
+                $"Expected '{Path.Combine(repoRoot, "Files", "osm-liberty.json")}' and " +
+                $"'{Path.Combine(projectDir, "Files", "Originals")}'.");
+        }
+
+        return (repoRoot, projectDir);
+    });
+
+    /// <summary>
+    /// The data Files folder of the repository (styles, mbtiles, fonts, sprites).
+    /// </summary>
+    public static string DataFiles => Path.Combine(_folders.Value.RepoRoot, "Files");
+
+    /// <summary>
+    /// The Files folder of the test project (golden images and test results).
+    /// </summary>
+    public static string TestFiles => Path.Combine(_folders.Value.ProjectDir, "Files");
+
     public static SKBitmap CreateBitmap(int width, int height)
     {
         var imageInfo = new SKImageInfo 

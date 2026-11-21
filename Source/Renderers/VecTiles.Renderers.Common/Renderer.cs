@@ -130,6 +130,16 @@ public class Renderer
                     }
                     break;
                 case LayerStyleType.Symbol:
+                    if (rawTiles.TryGetValue(style.Source.ToLower(CultureInfo.InvariantCulture), out var symbolData))
+                    {
+                        if (symbolData is null)
+                        {
+                            continue;
+                        }
+                        RenderTilePartAsSymbol(renderedTile, tile, context, (VectorTile)symbolData, style, _renderFactory);
+                        hasContent = true;
+                    }
+                    break;
                 case LayerStyleType.FillExtrusion:
                 case LayerStyleType.Unknown:
                     break;
@@ -138,39 +148,13 @@ public class Renderer
             }
         }
 
-        // Draw symbols in revers order, because last style layer is the top most layer
-        for (var i = visibleStyles.Count - 1; i >= 0; i--)
-        {
-            var style = visibleStyles[i];
-            
-            if (style.StyleType != LayerStyleType.Symbol)
-            {
-                continue;
-            }
-
-            if (!IsVisible(tile.Zoom, style))
-            {
-                continue;
-            }
-
-            if (rawTiles.TryGetValue(style.Source, out var symbolData))
-            {
-                if (symbolData is null)
-                {
-                    continue;
-                }
-                RenderTilePartAsSymbol(renderedTile, tile, context, (VectorTile)symbolData, style, _renderFactory);
-                hasContent = true;
-            }
-        }
-        
         // Only return rendered tile when it contains more than background
         return hasContent ? renderedTile : null;
     }
 
     private static void RenderAsBackground(IRenderedTile renderedTile, EvaluationContext context, ILayerStyle style, IRenderFactory renderFactory)
     {
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateBackgroundLayer(style));
+        renderedTile.Layers.Add(new RenderedGeometryLayer(style.Name, renderFactory.CreateBackgroundLayer(style)));
     }
 
     private static void RenderTileAsRaster(IRenderedTile renderedTile, EvaluationContext context, byte[] data, ILayerStyle style, IRenderFactory renderFactory)
@@ -180,7 +164,7 @@ public class Renderer
             throw new ArgumentException("Image data is empty", nameof(data));
         }
 
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateRasterLayer(style, data));
+        renderedTile.Layers.Add(new RenderedGeometryLayer(style.Name, renderFactory.CreateRasterLayer(style, data)));
     }
 
     private static void RenderTilePartAsVectorFill(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
@@ -190,7 +174,7 @@ public class Renderer
             return;
         }
 
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorFillLayer(style, context, features!));
+        renderedTile.Layers.Add(new RenderedGeometryLayer(style.Name, renderFactory.CreateVectorFillLayer(style, context, features!)));
     }
 
     private static void RenderTilePartAsVectorLine(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
@@ -200,7 +184,7 @@ public class Renderer
             return;
         }
 
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorLineLayer(style, context, features!));
+        renderedTile.Layers.Add(new RenderedGeometryLayer(style.Name, renderFactory.CreateVectorLineLayer(style, context, features!)));
     }
 
     private static void RenderTilePartAsVectorCircle(IRenderedTile renderedTile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
@@ -210,7 +194,7 @@ public class Renderer
             return;
         }
 
-        renderedTile.RenderedLayers.Add(style.Name, renderFactory.CreateVectorCircleLayer(style, context, features!));
+        renderedTile.Layers.Add(new RenderedGeometryLayer(style.Name, renderFactory.CreateVectorCircleLayer(style, context, features!)));
     }
 
     private static void RenderTilePartAsSymbol(IRenderedTile renderedTile, Tile tile, EvaluationContext context, VectorTile data, ILayerStyle style, IRenderFactory renderFactory)
@@ -220,7 +204,7 @@ public class Renderer
         if (!ExtractFeatures(data, style, context, out var features))
         {
             // Add SymbolLayer, even if it contains no symbols
-            renderedTile.RenderedSymbols.Add(style.Name, new SymbolLayer(symbols));
+            renderedTile.Layers.Add(new RenderedSymbolLayer(style.Name, new SymbolLayer(symbols)));
             return;
         }
 
@@ -239,7 +223,7 @@ public class Renderer
             }
         }
 
-        renderedTile.RenderedSymbols.Add(style.Name, new SymbolLayer(symbols));
+        renderedTile.Layers.Add(new RenderedSymbolLayer(style.Name, new SymbolLayer(symbols)));
     }
 
     private static bool IsVisible(int zoom, ILayerStyle style)

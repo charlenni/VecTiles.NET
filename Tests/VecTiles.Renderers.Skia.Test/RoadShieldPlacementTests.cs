@@ -14,7 +14,7 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class RoadShieldPlacementTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
 
     private readonly ITestOutputHelper _output;
 

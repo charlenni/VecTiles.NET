@@ -16,7 +16,7 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class SchanzengrabenOverlapScanTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
 
     private readonly ITestOutputHelper _output;
 
@@ -33,7 +33,7 @@ public class SchanzengrabenOverlapScanTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();
         const int width = 1024, height = 768;
@@ -71,36 +71,25 @@ public class SchanzengrabenOverlapScanTests
                     return (p.X, p.Y);
                 };
 
-                var symbols = symbolsLayer.GetOrCreateSymbols(
+                var result = symbolsLayer.GetPlacementResult(
                     tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-                    zoomLevel).ToArray();
+                    zoomLevel, toScreen);
 
-                var tree = new NetTopologySuite.Index.Quadtree.Quadtree<ISymbol>();
-                var examined = new HashSet<ulong>();
+                var tree = result!.Tree;
 
-                foreach (var symbol in symbols.OfType<Symbol>())
+                foreach (var layerPair in result.PlacedByLayer)
                 {
-                    if (symbol.Id != 0 && !examined.Add(symbol.Id))
+                    foreach (var entry in layerPair.Value)
                     {
-                        continue;
-                    }
-
-                    if (symbol is PointSymbol pointSymbol)
-                    {
-                        var status = PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, toScreen, 0, false);
-                        if (status == SymbolPlacementStatus.Success)
+                        if (entry.Symbol is PointSymbol pointSymbol)
                         {
                             PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false,
-                                drawContext, toDraw);
+                                drawContext, toDraw, checkForSpace: false);
                         }
-                    }
-                    else if (symbol is LineSymbol lineSymbol)
-                    {
-                        var status = LineSymbolRenderer.CheckForSpace(canvas, context, lineSymbol, tree, toScreen, 0, false);
-                        if (status == SymbolPlacementStatus.Success)
+                        else if (entry.Symbol is LineSymbol lineSymbol)
                         {
                             LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, false,
-                                drawContext, toDraw);
+                                drawContext, toDraw, entry.Run!);
                         }
                     }
                 }

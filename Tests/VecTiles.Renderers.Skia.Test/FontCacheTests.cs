@@ -120,6 +120,6 @@ public class FontCacheTests : IDisposable
 
     private static string GetFontPath(string fileName)
     {
-        return Path.Combine("Files", "Fonts", fileName);
+        return Path.Combine(Utilities.DataFiles, "Fonts", fileName);
     }
 }

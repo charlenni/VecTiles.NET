@@ -51,9 +51,20 @@ public class VectorTileDataSource : IVectorTileDataSource
             return null;
         }
 
-        var providedTile = requestedTile;
-        var data = await _dataSource.GetTileAsync(requestedTile);
+        // Overzoom: above the max zoom of the source no further data can be
+        // loaded; the data comes from the ancestor tile at the source's max
+        // zoom and the style layers re-evaluate it for the requested zoom.
+        // Seeking directly to that ancestor avoids one failed data request
+        // per zoom level in between.
+        var maxZoom = _dataSource.MaxZoom;
+        var providedTile = requestedTile.Zoom > maxZoom
+            ? requestedTile.GetAncestor(maxZoom)
+            : requestedTile;
 
+        var data = await _dataSource.GetTileAsync(providedTile);
+
+        // Tiles can be sparse: fall back to parent tiles until the data
+        // is found or the root tile is reached.
         while (data == null && providedTile.Zoom > 0)
         {
             providedTile = providedTile.Parent;

@@ -16,7 +16,7 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class SchanzengrabenAppPipelineTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
 
     private readonly ITestOutputHelper _output;
 
@@ -38,6 +38,7 @@ public class SchanzengrabenAppPipelineTests
         {
             ShowValidBorders = true,
             ShowInvalidBorders = true,
+            SynchronousPlacement = true,
         };
 
         var zoomLevel = (int)Math.Floor(fractionalZoom + 1e-6);
@@ -57,8 +58,8 @@ public class SchanzengrabenAppPipelineTests
 
         canvas.Flush();
 
-        var path = Path.Combine(_path, "Results", $"schanzengraben-app-pipeline-{fractionalZoom:F1}.png");
-        Directory.CreateDirectory(Path.Combine(_path, "Results"));
+        var path = Path.Combine(Utilities.TestFiles, "Results", $"schanzengraben-app-pipeline-{fractionalZoom:F1}.png");
+        Directory.CreateDirectory(Path.Combine(Utilities.TestFiles, "Results"));
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = File.OpenWrite(path);

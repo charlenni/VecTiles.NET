@@ -14,8 +14,8 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class LineShaderPatternTests
 {
-    private readonly string OriginalsFolder = Path.Combine("Files", "Originals");
-    private readonly string ResultsFolder = Path.Combine("Files", "Results");
+    private readonly string OriginalsFolder = Path.Combine(Utilities.TestFiles, "Originals");
+    private readonly string ResultsFolder = Path.Combine(Utilities.TestFiles, "Results");
 
     private const float MaxHalfWidth = 8f;
     private const float StrokeWidth = 8f;

@@ -9,9 +9,9 @@ namespace VecTiles.Renderers.Skia.Test;
 
 public class IconPointSymbolTests
 {
-    private readonly string Folder = Path.Combine("Files");
-    private readonly string OriginalsFolder = Path.Combine("Files", "Originals");
-    private readonly string ResultsFolder = Path.Combine("Files", "Results");
+    private readonly string Folder = Path.Combine(Utilities.DataFiles);
+    private readonly string OriginalsFolder = Path.Combine(Utilities.TestFiles, "Originals");
+    private readonly string ResultsFolder = Path.Combine(Utilities.TestFiles, "Results");
     private SKBitmap _bitmap;
     private SKCanvas _canvas;
     private SKPaint _paint = new SKPaint();

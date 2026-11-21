@@ -60,6 +60,9 @@ public class PointSymbolRenderer : ISymbolRenderer
 
     /// <summary>
     /// Draws the point symbol (icon and/or text) on the specified canvas.
+    /// With <paramref name="checkForSpace"/> = false the placement decisions are taken from the
+    /// flags on the symbol (set by a previous placement pass) and no collision checks or tree
+    /// inserts happen.
     /// </summary>
     /// <param name="canvas">The Skia canvas to draw on.</param>
     /// <param name="context">The evaluation context for placement checks.</param>
@@ -72,7 +75,8 @@ public class PointSymbolRenderer : ISymbolRenderer
     /// <param name="drawWorldToScreenConverter">Optional converter into the screen space used for drawing; falls back to <paramref name="worldToScreenConverter"/>.</param>
     public static void Draw(SKCanvas canvas, EvaluationContext context, ISymbol sym, ref Quadtree<ISymbol> tree,
         Func<double, double, (double, double)> worldToScreenConverter, double rotation, bool showValidBorders = false,
-        EvaluationContext? drawContext = null, Func<double, double, (double, double)>? drawWorldToScreenConverter = null)
+        EvaluationContext? drawContext = null, Func<double, double, (double, double)>? drawWorldToScreenConverter = null,
+        bool checkForSpace = true)
     {
         var drawCtx = drawContext ?? context;
         var toDraw = drawWorldToScreenConverter ?? worldToScreenConverter;
@@ -96,8 +100,9 @@ public class PointSymbolRenderer : ISymbolRenderer
             iconRotation = CalcRotation(symbol.IconSymbol!.Rotation, symbol.IconSymbol!.RotationAlignment,
                 rotation, symbol.IconSymbol.KeepUpright);
 
-            spaceForIconAvailable = IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol!,
-                tree, screenX, screenY, false);
+            spaceForIconAvailable = checkForSpace
+                ? IconPointSymbolRenderer.CheckForSpace(canvas, context, symbol.IconSymbol!, tree, screenX, screenY, false)
+                : (symbol.DrawIcon ? SymbolPlacementStatus.Success : SymbolPlacementStatus.NotInitialized);
         }
 
         var spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
@@ -116,8 +121,9 @@ public class PointSymbolRenderer : ISymbolRenderer
             var fontSizeDraw = symbol.TextSymbol!.FontSize.Invoke(drawCtx);
             fontSizeRatio = fontSizePlacement > 0 ? fontSizeDraw / fontSizePlacement : 1f;
 
-            spaceForTextAvailable = TextPointSymbolRenderer.CheckForSpace(canvas, context, symbol.TextSymbol!,
-                tree, screenX, screenY, textRotation, false);
+            spaceForTextAvailable = checkForSpace
+                ? TextPointSymbolRenderer.CheckForSpace(canvas, context, symbol.TextSymbol!, tree, screenX, screenY, textRotation, false)
+                : (symbol.DrawText ? SymbolPlacementStatus.Success : SymbolPlacementStatus.NotInitialized);
         }
 
         if (spaceForIconAvailable == SymbolPlacementStatus.Success && symbol.HasIcon &&
@@ -138,12 +144,12 @@ public class PointSymbolRenderer : ISymbolRenderer
             textDrawn = true;
         }
 
-        if (iconDrawn)
+        if (checkForSpace && iconDrawn)
         {
             tree.Insert(symbol.IconSymbol!.ScreenEnvelope, symbol.IconSymbol.Copy());
         }
 
-        if (textDrawn)
+        if (checkForSpace && textDrawn)
         {
             tree.Insert(symbol.TextSymbol!.ScreenEnvelope, symbol.TextSymbol.Copy());
         }

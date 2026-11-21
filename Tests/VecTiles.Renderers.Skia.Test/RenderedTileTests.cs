@@ -17,10 +17,10 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </remarks>
 public class RenderedTileTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
 
-    private readonly string OriginalsFolder = Path.Combine(_path, "Originals");
-    private readonly string ResultsFolder = Path.Combine(_path, "Results");
+    private readonly string OriginalsFolder = Path.Combine(Utilities.TestFiles, "Originals");
+    private readonly string ResultsFolder = Path.Combine(Utilities.TestFiles, "Results");
 
     private const int Zoom = 19;
     private const int CenterX = 274582;
@@ -90,7 +90,7 @@ public class RenderedTileTests
 
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 
         using var full = new SKBitmap(size, size);

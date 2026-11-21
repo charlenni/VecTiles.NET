@@ -17,7 +17,7 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class SchanzengrabenFrameRenderTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
 
     private readonly ITestOutputHelper _output;
 
@@ -45,7 +45,7 @@ public class SchanzengrabenFrameRenderTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();
         double heightTiles = height / 512, widthTiles = width / 512;
@@ -66,8 +66,7 @@ public class SchanzengrabenFrameRenderTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        var tree = new NetTopologySuite.Index.Quadtree.Quadtree<ISymbol>();
-        var examined = new HashSet<ulong>();
+        symbolsLayer.SynchronousPlacement = true;
 
         Func<double, double, (double, double)> toScreen = (x, y) =>
         {
@@ -81,64 +80,76 @@ public class SchanzengrabenFrameRenderTests
             return (p.X, p.Y);
         };
 
-        var symbols = symbolsLayer.GetOrCreateSymbols(
+        var result = symbolsLayer.GetPlacementResult(
             tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-            zoomLevel).ToArray();
+            zoomLevel, toScreen);
 
+        var tree = result!.Tree;
         var order = 0;
 
-        foreach (var symbol in symbols.OfType<Symbol>())
+        foreach (var layerPair in result.PlacedByLayer)
         {
-            var name = symbol.Name;
-            var styleName = symbol.StyleName;
-            var text = symbol switch
+            foreach (var entry in layerPair.Value)
             {
-                LineSymbol l => l.TextSymbol?.Text ?? "?",
-                PointSymbol p => p.TextSymbol?.Text ?? "?",
-                _ => "?",
-            };
-            var isWaterName = LinqContains(styleName, "water_name");
-            var isPoi = symbol.Id == 4127302961UL || LinqContains(styleName, "poi_z16");
-
-            if (isWaterName || isPoi)
-            {
-                _output.WriteLine($"""## {order} id={symbol.Id} style='{symbol.StyleName}' geo='{name}' text='{text}' sort={symbol.SortOrder}""");
-            }
-
-            if (symbol is PointSymbol pointSymbol)
-            {
-                var status = PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, toScreen, 0, false);
-
-                if (isPoi)
+                var symbol = (Symbol)entry.Symbol;
+                var name = symbol.Name;
+                var styleName = symbol.StyleName;
+                var text = symbol switch
                 {
-                    _output.WriteLine($"   POINT status={status} iconEnv={pointSymbol.IconSymbol?.ScreenEnvelope} " +
-                        $"textEnv={pointSymbol.TextSymbol?.ScreenEnvelope} allowOthers={pointSymbol.AllowOthers}");
+                    LineSymbol l => l.TextSymbol?.Text ?? "?",
+                    PointSymbol p => p.TextSymbol?.Text ?? "?",
+                    _ => "?",
+                };
+                var isWaterName = LinqContains(styleName, "water_name");
+                var isPoi = symbol.Id == 4127302961UL || LinqContains(styleName, "poi_z16");
+
+                if (isWaterName || isPoi)
+                {
+                    _output.WriteLine($"""## {order} id={symbol.Id} style='{symbol.StyleName}' geo='{name}' text='{text}' sort={symbol.SortOrder}""");
                 }
 
-                if (status == SymbolPlacementStatus.Success)
+                if (symbol is PointSymbol pointSymbol)
                 {
+                    if (isPoi)
+                    {
+                        _output.WriteLine($"   POINT placed iconEnv={pointSymbol.IconSymbol?.ScreenEnvelope} " +
+                            $"textEnv={pointSymbol.TextSymbol?.ScreenEnvelope} allowOthers={pointSymbol.AllowOthers}");
+                    }
+
                     PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false,
-                        drawContext, toDraw);
+                        drawContext, toDraw, checkForSpace: false);
                 }
-            }
-            else if (symbol is LineSymbol lineSymbol)
-            {
-                var status = LineSymbolRenderer.CheckForSpace(canvas, context, lineSymbol, tree, toScreen, 0, false);
-
-                if (isWaterName)
+                else if (symbol is LineSymbol lineSymbol)
                 {
-                    _output.WriteLine($"   LINE status={status} geom={lineSymbol.Geometry.GeometryType} " +
-                        $"env={lineSymbol.TextSymbol?.ScreenEnvelope}");
-                }
+                    if (isWaterName)
+                    {
+                        _output.WriteLine($"   LINE placed geom={lineSymbol.Geometry.GeometryType} " +
+                            $"env={lineSymbol.TextSymbol?.ScreenEnvelope}");
+                    }
 
-                if (status == SymbolPlacementStatus.Success)
-                {
                     LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, true,
-                        drawContext, toDraw);
+                        drawContext, toDraw, entry.Run!);
                 }
-            }
 
-            order++;
+                order++;
+            }
+        }
+
+        foreach (var symbol in result.Rejected.OfType<Symbol>())
+        {
+            var styleName = symbol.StyleName;
+
+            if (LinqContains(styleName, "water_name") || symbol.Id == 4127302961UL || LinqContains(styleName, "poi_z16"))
+            {
+                var text = symbol switch
+                {
+                    LineSymbol l => l.TextSymbol?.Text ?? "?",
+                    PointSymbol p => p.TextSymbol?.Text ?? "?",
+                    _ => "?",
+                };
+                _output.WriteLine($"   REJECTED style='{symbol.StyleName}' text='{text}' " +
+                    $"iconEnv={(symbol is PointSymbol ps ? ps.IconSymbol?.ScreenEnvelope : null)}");
+            }
         }
 
         canvas.Flush();
@@ -173,7 +184,7 @@ public class SchanzengrabenFrameRenderTests
             }
         }
 
-        var path = Path.Combine(_path, "Results", $"schanzengraben-frame-{fractionalZoom:F1}-{width:F0}x{height:F0}.png");
+        var path = Path.Combine(Utilities.TestFiles, "Results", $"schanzengraben-frame-{fractionalZoom:F1}-{width:F0}x{height:F0}.png");
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = File.OpenWrite(path);

@@ -49,10 +49,11 @@ public static class IconLineSymbolRenderer
     {
         _paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
 
-        if (symbol.ColorFilter != null)
-        {
-            _paint.ColorFilter = SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context));
-        }
+        // The paint is shared between all icon drawings: the color filter of
+        // the previous symbol must not leak into this one
+        _paint.ColorFilter = symbol.ColorFilter != null
+            ? SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context))
+            : null;
 
         var image = (SKImage)symbol.Icon.Native!;
         var imgWidth = image.Width;

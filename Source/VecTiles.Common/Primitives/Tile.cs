@@ -83,6 +83,29 @@ public class Tile
     public Tile Parent => new Tile(this.X / 2, this.Y / 2, this.Zoom - 1);
 
     /// <summary>
+    /// Returns the ancestor of this tile at the given zoom level.
+    /// </summary>
+    /// <param name="zoom">The zoom level of the ancestor, lower or equal to the zoom of this tile.</param>
+    /// <returns>The ancestor tile at the given zoom level.</returns>
+    public Tile GetAncestor(int zoom)
+    {
+        if (this.Zoom < zoom)
+        {
+            throw new ArgumentOutOfRangeException(nameof(zoom),
+                "Ancestors can only be calculated for lower or equal zooms.");
+        }
+
+        if (this.Zoom == zoom)
+        {
+            return this;
+        }
+
+        int factor = 1 << (this.Zoom - zoom);
+
+        return new Tile(this.X / factor, this.Y / factor, zoom);
+    }
+
+    /// <summary>
     /// Returns a hashcode for this tile position.
     /// </summary>
     /// <returns></returns>

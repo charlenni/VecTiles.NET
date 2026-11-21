@@ -4,10 +4,8 @@ using Mapsui.Layers;
 using Mapsui.Rendering.Skia;
 using Mapsui.Tiling.Extensions;
 using System.Linq;
-using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui.Extensions;
-using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Primitives;
 
@@ -20,14 +18,37 @@ public class RenderedSymbolsLayer : BaseLayer
 {
     private const string _customLayerRendererName = "rendered-symbols-layer";
 
-    /// <summary>
-    /// An empty dictionary of symbol layers for cases where no symbols are available.
-    /// </summary>
-    public static Dictionary<string, ISymbolLayer> Empty => new();
+    private const int MaxCachedPlacements = 128;
 
-    private TilesKey _lastKey;
-    private ISymbol[] _lastSymbols = Array.Empty<ISymbol>();
+    /// <summary>
+    /// Minimum time in milliseconds between two placement passes over the
+    /// same tile set whose result is incomplete: as long as a tile stays
+    /// unfetchable, the next frames must not start a new pass each
+    /// (retry spin against a permanently unavailable source).
+    /// </summary>
+    private const int IncompleteRetryCooldownMs = 2000;
+
     private readonly MRect? _extent;
+
+    private readonly object _placementLock = new();
+    private readonly Dictionary<(TilesKey Tiles, int ZoomLevel), PlacementResult?> _placements = new();
+    private readonly HashSet<(TilesKey Tiles, int ZoomLevel)> _inFlight = new();
+    private readonly Dictionary<(TilesKey Tiles, int ZoomLevel), long> _incompleteAttempts = new();
+    private readonly TileFetchScheduler _fetchScheduler;
+
+    /// <summary>
+    /// The last placement result that was handed out. It keeps the current
+    /// symbols on the screen while a new placement is computed (for a
+    /// changed tile set after panning, for example), so the symbols never
+    /// disappear in between: the old set stays until the new set exists.
+    /// </summary>
+    private PlacementResult? _lastResult;
+
+    /// <summary>
+    /// Incremented by <see cref="ClearCache"/>; results of background tasks
+    /// started before a clear are no longer stored.
+    /// </summary>
+    private int _generation;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderedSymbolsLayer"/> class.
@@ -49,6 +70,7 @@ public class RenderedSymbolsLayer : BaseLayer
 
         TileSource = tileSource;
         CustomLayerRendererName = _customLayerRendererName;
+        _fetchScheduler = new TileFetchScheduler(tileSource);
 
         FontSourceResolver = fontSourceResolver;
         if (fontSourceResolver != null)
@@ -88,38 +110,216 @@ public class RenderedSymbolsLayer : BaseLayer
     public bool ShowInvalidBorders { get; set; }
 
     /// <summary>
-    /// Clears the cached symbols, so they are recreated on next access.
+    /// Gets or sets a value indicating whether the placement pass runs
+    /// synchronously and blocking inside <see cref="GetPlacementResult"/>
+    /// instead of in a background task. Used by tests and tooling.
+    /// </summary>
+    public bool SynchronousPlacement { get; set; }
+
+    /// <summary>
+    /// Clears the cached placements, so they are recomputed on next access.
+    /// Background tasks that are still running discard their results.
     /// </summary>
     public void ClearCache()
     {
-        _lastKey = default;
-        _lastSymbols = Array.Empty<ISymbol>();
+        lock (_placementLock)
+        {
+            _placements.Clear();
+            _inFlight.Clear();
+            _incompleteAttempts.Clear();
+            // The retired symbol set is invalidated too: after an explicit
+            // clear (style reload) nothing obsolete is drawn anymore
+            _lastResult = null;
+            _generation++;
+        }
     }
 
     /// <summary>
-    /// Gets or creates symbols for the specified tile information and zoom level.
-    /// Uses caching to avoid recreating symbols for the same tile set and zoom level.
+    /// Gets the placement result for the specified tile set and zoom level.
+    /// The placement is computed at most once per key: on the first call the
+    /// computation starts as a background task and the last handed-out
+    /// result is returned (so the symbols stay on the screen until the new
+    /// set exists); when the task finished, the (cached) new result is
+    /// returned and the drawing phase is triggered again via
+    /// <see cref="IDynamic.DataHasChanged"/>. Incomplete results (a tile
+    /// could not be fetched) are returned as well, but a new computation is
+    /// only started after the retry cooldown, so a permanently unavailable
+    /// tile does not cause a fetch attempt per frame. With
+    /// <see cref="SynchronousPlacement"/> the computation blocks until done.
     /// </summary>
     /// <param name="tileInfos">The tile information collection.</param>
-    /// <param name="zoomLevel">The zoom level.</param>
-    /// <returns>The collection of symbols for the specified tiles and zoom level.</returns>
-    public IEnumerable<ISymbol> GetOrCreateSymbols(IEnumerable<TileInfo> tileInfos, int zoomLevel)
+    /// <param name="zoomLevel">The canonical integer zoom level.</param>
+    /// <param name="worldToScreen">
+    /// Converts world coordinates into the unrotated canonical placement space
+    /// the collision checks and placements are evaluated in.
+    /// </param>
+    /// <param name="centerWorld">
+    /// The center of the viewport in world coordinates; tiles near the center
+    /// are fetched first. Null keeps the order of the input.
+    /// </param>
+    /// <returns>The placement result, or null while the placement is computed.</returns>
+    public PlacementResult? GetPlacementResult(IEnumerable<TileInfo> tileInfos, int zoomLevel,
+        Func<double, double, (double, double)> worldToScreen, MPoint? centerWorld = null)
     {
         var tileInfoArray = tileInfos as TileInfo[] ?? tileInfos.ToArray();
-        var key = new TilesKey(tileInfoArray.ToTile());
+        var key = (new TilesKey(tileInfoArray.ToTile()), zoomLevel);
 
-        if (_lastKey.Equals(key))
+        lock (_placementLock)
         {
-            return _lastSymbols;
+            _placements.TryGetValue(key, out var cached);
+
+            // Complete results are returned directly; they also become the
+            // retained set for the time of the next computation
+            if (cached is { Incomplete: false })
+            {
+                _lastResult = cached;
+                return cached;
+            }
+
+            if (_inFlight.Contains(key))
+            {
+                if (cached is not null)
+                {
+                    _lastResult = cached;
+                    return cached;
+                }
+
+                // The current set is computed for the first time: keep the
+                // previously handed-out set on the screen instead of letting
+                // the symbols disappear
+                return _lastResult;
+            }
+
+            // No retry spin on incomplete results: the same tile set within
+            // the cooldown returns the last (incomplete) result without
+            // starting a new fetch pass
+            if (cached is not null && cached.Incomplete)
+            {
+                var now = Environment.TickCount64;
+                if (_incompleteAttempts.TryGetValue(key, out var lastAttempt)
+                    && now - lastAttempt < IncompleteRetryCooldownMs)
+                {
+                    _lastResult = cached;
+                    return cached;
+                }
+
+                _incompleteAttempts[key] = now;
+            }
+
+            if (SynchronousPlacement)
+            {
+                var result = ComputePlacement(tileInfoArray, zoomLevel, worldToScreen, centerWorld).GetAwaiter().GetResult();
+                _placements[key] = result;
+                if (result.Incomplete)
+                {
+                    _incompleteAttempts[key] = Environment.TickCount64;
+                }
+                else
+                {
+                    _incompleteAttempts.Remove(key);
+                }
+                _lastResult = result;
+                return result;
+            }
+
+            var generation = _generation;
+            _placements[key] = cached is null ? null : cached;
+            _inFlight.Add(key);
+
+            var capturedScreen = worldToScreen;
+            var capturedCenter = centerWorld;
+
+            _ = Task.Run(async () =>
+            {
+                PlacementResult? result = null;
+
+                try
+                {
+                    result = await ComputePlacement(tileInfoArray, zoomLevel, capturedScreen, capturedCenter).ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Leave the last result in place; the placement is
+                    // recomputed on the next viewport change
+                }
+
+                var fire = false;
+
+                // Remove the key from the in-flight set and store the result
+                // in the same locked section: a call in between saw no
+                // in-flight entry and would have started a second pass
+                lock (_placementLock)
+                {
+                    _inFlight.Remove(key);
+
+                    if (_generation == generation && result is not null)
+                    {
+                        _placements[key] = result;
+                        if (result.Incomplete)
+                        {
+                            // The retry cooldown of an incomplete result starts
+                            // when the result is stored, not on the next call
+                            _incompleteAttempts[key] = Environment.TickCount64;
+                        }
+                        else
+                        {
+                            // A complete result clears the cooldown history
+                            _incompleteAttempts.Remove(key);
+                        }
+                        fire = true;
+                    }
+                }
+
+                if (fire)
+                {
+                    // Draw the newly placed symbols once, without the caller
+                    // having to move the viewport
+                    DataHasChanged();
+                }
+            });
+
+            TrimPlacementCache();
+
+            // A new pass over this tile set started. Until it is finished,
+            // the last handed-out result keeps the symbols on the screen
+            if (cached is not null)
+            {
+                _lastResult = cached;
+                return cached;
+            }
+
+            return _lastResult;
         }
 
-        var symbolLayers = GetSymbolLayers(tileInfoArray, zoomLevel);
-        var symbols = GetSymbols(symbolLayers.Where(kv => kv.Value.MinZoom <= zoomLevel && kv.Value.MaxZoom >= zoomLevel)).ToArray();
+        void TrimPlacementCache()
+        {
+            if (_placements.Count <= MaxCachedPlacements)
+            {
+                return;
+            }
 
-        _lastKey = key;
-        _lastSymbols = symbols;
+            foreach (var cacheKey in _placements.Keys.ToList())
+            {
+                if (_placements.Count <= MaxCachedPlacements)
+                {
+                    return;
+                }
 
-        return symbols;
+                if (!_inFlight.Contains(cacheKey))
+                {
+                    _placements.Remove(cacheKey);
+                }
+            }
+
+            // Keep the cooldown history aligned with the placement cache
+            foreach (var cacheKey in _incompleteAttempts.Keys.ToList())
+            {
+                if (!_placements.ContainsKey(cacheKey))
+                {
+                    _incompleteAttempts.Remove(cacheKey);
+                }
+            }
+        }
     }
 
     /// <inheritdoc />
@@ -129,76 +329,35 @@ public class RenderedSymbolsLayer : BaseLayer
     }
 
     /// <summary>
-    /// Retrieves symbol layers from the tile source for the specified tile information and zoom level.
+    /// Fetches the tiles (via the fetch scheduler, in parallel and center
+    /// first) and runs the placement pass over them.
     /// </summary>
-    /// <param name="tileInfos">The tile information collection.</param>
-    /// <param name="zoomLevel">The zoom level (unused but kept for interface consistency).</param>
-    /// <returns>A dictionary mapping layer names to symbol layers.</returns>
-    private Dictionary<string, ISymbolLayer> GetSymbolLayers(IEnumerable<TileInfo> tileInfos, int zoomLevel)
+    /// <param name="tileInfoArray">The tile information collection.</param>
+    /// <param name="zoomLevel">The canonical integer zoom level.</param>
+    /// <param name="worldToScreen">
+    /// Converts world coordinates into the unrotated canonical placement space.
+    /// </param>
+    /// <param name="centerWorld">
+    /// The center of the viewport in world coordinates; tiles near the center
+    /// are fetched first. Null keeps the order of the input.
+    /// </param>
+    /// <returns>The placement result for all tiles.</returns>
+    private async Task<PlacementResult> ComputePlacement(TileInfo[] tileInfoArray, int zoomLevel,
+        Func<double, double, (double, double)> worldToScreen, MPoint? centerWorld)
     {
-        var tileInfoArray = tileInfos as TileInfo[] ?? tileInfos.ToArray();
-        var tiles = new List<RenderedTileFeature>(tileInfoArray.Length);
+        var fetch = await _fetchScheduler.FetchAsync(tileInfoArray, centerWorld).ConfigureAwait(false);
 
-        foreach (var tileInfo in tileInfoArray)
-        {
-            var tile = TileSource.GetTileAsync(tileInfo).Result;
-            if (tile != null)
-            {
-                tiles.Add((RenderedTileFeature)tile);
-            }
-        }
-
-        if (tiles.Count == 0)
+        if (fetch.Features is null || fetch.Features.Count == 0)
         {
             // Viewport contains no tiles or there is no information for these tiles
-            return Empty;
-        }
-
-        // Merge symbols of all tiles and style layers into a single dictionary
-        var layers = new Dictionary<string, ISymbolLayer>();
-
-        foreach (var tile in tiles)
-        {
-            if (tile.RenderedTile?.RenderedSymbols is null)
+            return new PlacementResult
             {
-                continue;
-            }
-
-            foreach (var layer in tile.RenderedTile.RenderedSymbols)
-            {
-                if (!layers.ContainsKey(layer.Key))
-                {
-                    layers.Add(layer.Key, new SymbolLayer(layer.Value, layer.Value.MinZoom, layer.Value.MaxZoom));
-                }
-                else
-                {
-                    layers[layer.Key].Symbols.AddRange(layer.Value.Symbols);
-                }
-            }
+                PlacedByLayer = new Dictionary<string, List<PlacementEntry>>(),
+                Incomplete = fetch.Incomplete,
+            };
         }
 
-        return layers;
-    }
-
-    /// <summary>
-    /// Retrieves and sorts symbols from the specified symbol layers.
-    /// Symbols are ordered by SortOrder first, then by Rank.
-    /// LineSymbols of the same feature split across multiple tiles are merged
-    /// into one continuous symbol, so they can be treated uniformly.
-    /// </summary>
-    /// <param name="symbolLayers">The symbol layers to process.</param>
-    /// <returns>An enumerable of sorted symbols.</returns>
-    private IEnumerable<ISymbol> GetSymbols(IEnumerable<KeyValuePair<string, ISymbolLayer>> symbolLayers)
-    {
-        var symbols = new List<ISymbol>();
-
-        foreach (var symbolLayer in symbolLayers)
-        {
-            symbols.AddRange(
-                LineSymbolMerger.MergeById(
-                    symbolLayer.Value.Symbols.OrderBy(s => s.SortOrder).ThenBy(s => s.Rank)));
-        }
-
-        return symbols;
+        var placed = SymbolPlacementEngine.Compute(fetch.Features, zoomLevel, worldToScreen);
+        return fetch.Incomplete ? placed with { Incomplete = true } : placed;
     }
 }

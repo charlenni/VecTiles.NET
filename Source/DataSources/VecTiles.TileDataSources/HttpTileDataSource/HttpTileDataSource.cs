@@ -13,12 +13,16 @@ public class HttpTileDataSource : ITileDataSource
     HttpClientHandler _httpHandler;
     HttpClient _httpClient;
 
-    public HttpTileDataSource(string[] sources, int minZoom, int maxZoom) 
+    public HttpTileDataSource(string[] sources, int minZoom, int maxZoom)
     {
         _httpTileSource = new HttpTileSource(new GlobalSphericalMercator(minZoom, maxZoom), sources[0]);
         _httpHandler = new HttpClientHandler { AllowAutoRedirect = true };
         _httpClient = new HttpClient(_httpHandler);
         _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", $"user-agent-of-{Path.GetFileNameWithoutExtension(System.AppDomain.CurrentDomain.FriendlyName)}");
+        // Expose the zoom range of the source: the overzoom fallback of the
+        // VectorTileDataSource relies on it
+        MinZoom = minZoom;
+        MaxZoom = maxZoom;
     }
 
     /// <inheritdoc/>

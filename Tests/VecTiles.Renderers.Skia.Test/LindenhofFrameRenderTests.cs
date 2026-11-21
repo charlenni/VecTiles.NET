@@ -18,7 +18,7 @@ namespace VecTiles.Renderers.Skia.Test;
 /// </summary>
 public class LindenhofFrameRenderTests
 {
-    private const string _path = "Files";
+    private static readonly string _path = Utilities.DataFiles;
 
     private readonly ITestOutputHelper _output;
 
@@ -36,7 +36,7 @@ public class LindenhofFrameRenderTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution();
         double topRow = withTileAbove ? 91802.5 : 91803.5;
@@ -54,52 +54,52 @@ public class LindenhofFrameRenderTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        var tree = new NetTopologySuite.Index.Quadtree.Quadtree<ISymbol>();
-        var examined = new HashSet<ulong>();
+        symbolsLayer.SynchronousPlacement = true;
+
         Func<double, double, (double, double)> toScreen = (x, y) =>
         {
             var p = viewport.WorldToScreen(x, y);
             return (p.X, p.Y);
         };
 
-        var symbols = symbolsLayer.GetOrCreateSymbols(
+        var result = symbolsLayer.GetPlacementResult(
             tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-            zoomLevel).ToArray();
+            zoomLevel, toScreen);
 
-        foreach (var symbol in symbols)
+        var tree = result!.Tree;
+
+        foreach (var layerPair in result.PlacedByLayer)
         {
-            if (!examined.Add(symbol.Id))
+            foreach (var entry in layerPair.Value)
             {
-                continue;
-            }
-
-            if (symbol is PointSymbol pointSymbol)
-            {
-                var status = PointSymbolRenderer.CheckForSpace(canvas, context, symbol, tree, toScreen, 0, false);
-                if (status == SymbolPlacementStatus.Success)
+                if (entry.Symbol is PointSymbol pointSymbol)
                 {
                     PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree, toScreen, 0, false);
                 }
+                else if (entry.Symbol is LineSymbol lineSymbol)
+                {
+                    if (lineSymbol.TextSymbol?.Text == "Lindenhof")
+                    {
+                        LogAngles(lineSymbol, toScreen, placed: true);
+                    }
+
+                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, false,
+                        placementRun: entry.Run!);
+                }
             }
-            else if (symbol is LineSymbol lineSymbol)
+        }
+
+        foreach (var symbol in result.Rejected)
+        {
+            if (symbol is LineSymbol rejectedLine && rejectedLine.TextSymbol?.Text == "Lindenhof")
             {
-                var status = LineSymbolRenderer.CheckForSpace(canvas, context, lineSymbol, tree, toScreen, 0, false);
-
-                if (lineSymbol.TextSymbol?.Text == "Lindenhof")
-                {
-                    LogAngles(lineSymbol, toScreen, status);
-                }
-
-                if (status == SymbolPlacementStatus.Success)
-                {
-                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree, toScreen, 0, false);
-                }
+                LogAngles(rejectedLine, toScreen, placed: false);
             }
         }
 
         canvas.Flush();
 
-        var path = Path.Combine(_path, "Results", fileName);
+        var path = Path.Combine(Utilities.TestFiles, "Results", fileName);
         using var image = SKImage.FromBitmap(bitmap);
         using var data = image.Encode(SKEncodedImageFormat.Png, 100);
         using var stream = File.OpenWrite(path);
@@ -109,7 +109,7 @@ public class LindenhofFrameRenderTests
     }
 
     private void LogAngles(VecTiles.Common.Primitives.LineSymbol symbol,
-        Func<double, double, (double, double)> toScreen, SymbolPlacementStatus status)
+        Func<double, double, (double, double)> toScreen, bool placed)
     {
         var part = symbol.Geometry switch
         {
@@ -133,7 +133,7 @@ public class LindenhofFrameRenderTests
         }
 
         using var measure = new SKPathMeasure(path);
-        _output.WriteLine($"Lindenhof contour len={measure.Length:F0} status={status}");
+        _output.WriteLine($"Lindenhof contour len={measure.Length:F0} placed={placed}");
 
         double last = double.NaN;
         for (var s = 0f; s < measure.Length; s += 2f)

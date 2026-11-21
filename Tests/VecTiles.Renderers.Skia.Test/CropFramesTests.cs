@@ -19,7 +19,7 @@ public class CropFramesTests
     [InlineData("17,8", 800, 30, 320, 250)]
     public void CropLabelRegion(string frame, int x, int y, int width, int height)
     {
-        var results = Path.Combine("Files", "Results");
+        var results = Path.Combine(Utilities.TestFiles, "Results");
         var sourcePath = Path.Combine(results, $"schanzengraben-app-pipeline-{frame}.png");
 
         if (!File.Exists(sourcePath))

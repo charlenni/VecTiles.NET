@@ -192,6 +192,22 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         // Move symbol's envelope to the screen position
         screenEnvelope.Translate(screenX, screenY);
 
+        if (symbol.RotationAlignment != MapAlignment.Map)
+        {
+            // Viewport-oriented symbols rotate with the viewport. To keep the placement
+            // decision independent of the map rotation, use a conservative square around
+            // the anchor that covers the envelope in any orientation.
+            var halfSide = Math.Max(
+                Math.Max(Math.Abs(screenEnvelope.MinX - screenX), Math.Abs(screenEnvelope.MaxX - screenX)),
+                Math.Max(Math.Abs(screenEnvelope.MinY - screenY), Math.Abs(screenEnvelope.MaxY - screenY)));
+            screenEnvelope = new Envelope(screenX - halfSide, screenX + halfSide,
+                screenY - halfSide, screenY + halfSide);
+        }
+
+        // Save for later use, also when the symbol is rejected: the rejected
+        // envelope is drawn as debug border in the drawing phase
+        symbol.ScreenEnvelope = screenEnvelope;
+
         var symbols = tree.Query(screenEnvelope);
 
         foreach (var other in symbols)
@@ -225,8 +241,6 @@ public class TextPointSymbolRenderer : ISymbolRenderer
 
             return SymbolPlacementStatus.Collision;
         }
-
-        symbol.ScreenEnvelope = screenEnvelope;
 
         return SymbolPlacementStatus.Success;
     }

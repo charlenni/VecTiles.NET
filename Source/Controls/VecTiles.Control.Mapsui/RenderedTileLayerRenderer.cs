@@ -175,32 +175,43 @@ public static class RenderedTileLayerRenderer
             return;
         }
 
-        // The layer content is rasterized offscreen and drawn onto the screen
-        // canvas in one single blit, so the (slow) style layer drawing never
-        // leaves the screen in an intermediate (partly drawn or cleared)
-        // state: the screen keeps showing the previous frame until the new
-        // frame is complete
-        var width = (int)Math.Round(viewport.Width * densityX);
-        var height = (int)Math.Round(viewport.Height * densityY);
-        if (width <= 0 || height <= 0)
+        // A pan or zoom is running (the viewport changed since the previous
+        // draw): draw directly onto the screen canvas, which is fast. One
+        // Skia paint is presented atomically, so no intermediate state of
+        // this single draw is visible — and the CPU-rasterized offscreen
+        // frame of an interactive draw would fall far behind the frame rate
+        // of the direct draw. A stable viewport with new content (the
+        // placement completed, a tile arrived, only the widgets repainted)
+        // is rasterized offscreen instead: the map content switch happens in
+        // one atomic blit and the frame is retained afterwards.
+        if (renderedLayer.ViewportEqualsLastDraw((viewport.CenterX, viewport.CenterY,
+                viewport.Resolution, viewport.Rotation, viewport.Width, viewport.Height, destRect)))
         {
+            var width = (int)Math.Round(viewport.Width * densityX);
+            var height = (int)Math.Round(viewport.Height * densityY);
+            if (width > 0 && height > 0)
+            {
+                var surface = renderedLayer.GetFrameSurface(width, height);
+                surface.Canvas.Clear(SKColors.Transparent);
+                surface.Canvas.Save();
+                surface.Canvas.Scale(densityX, densityY);
+                DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
+                    drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
+                surface.Canvas.Restore();
+
+                var frame = surface.Snapshot();
+                canvas.Save();
+                canvas.ResetMatrix();
+                canvas.DrawImage(frame, new SKRect(0, 0, frame.Width, frame.Height), destRect);
+                canvas.Restore();
+                renderedLayer.SetRetainedFrame(frame, destRect, frameKey);
+            }
+
             return;
         }
 
-        var surface = renderedLayer.GetFrameSurface(width, height);
-        surface.Canvas.Clear(SKColors.Transparent);
-        surface.Canvas.Save();
-        surface.Canvas.Scale(densityX, densityY);
-        DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
+        DrawInStyleLayerOrder(canvas, viewport, view, screenExtent, rotation, renderedLayer,
             drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
-        surface.Canvas.Restore();
-
-        var frame = surface.Snapshot();
-        canvas.Save();
-        canvas.ResetMatrix();
-        canvas.DrawImage(frame, new SKRect(0, 0, frame.Width, frame.Height), destRect);
-        canvas.Restore();
-        renderedLayer.SetRetainedFrame(frame, destRect, frameKey);
     }
 
     /// <summary>

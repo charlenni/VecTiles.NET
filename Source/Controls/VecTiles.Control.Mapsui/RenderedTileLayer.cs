@@ -43,6 +43,12 @@ public class RenderedTileLayer : BaseLayer
     private SKRect _retainedFrameRect;
     private object? _retainedFrameKey;
 
+    // The viewport of the previous draw; equal viewports in consecutive draws
+    // mean the map stands still (only the content changed, e.g. the
+    // placement completed), so those frames are rasterized offscreen and
+    // blitted atomically instead of drawn directly
+    private object? _lastViewportSignature;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderedTileLayer"/> class.
     /// </summary>
@@ -198,6 +204,22 @@ public class RenderedTileLayer : BaseLayer
     }
 
     /// <summary>
+    /// Compares the current viewport (including the device rect it maps to)
+    /// with the one of the previous draw and stores it: an equal viewport in
+    /// consecutive draws means the map stands still and only the content
+    /// changed (e.g. the placement completed), so the frame can be drawn
+    /// offscreen once and then blitted (fast and atomic). A changed viewport
+    /// means a pan or zoom is running and the frame is drawn directly.
+    /// Returns true when the viewport is unchanged.
+    /// </summary>
+    internal bool ViewportEqualsLastDraw(object viewportSignature)
+    {
+        var unchanged = Equals(_lastViewportSignature, viewportSignature);
+        _lastViewportSignature = viewportSignature;
+        return unchanged;
+    }
+
+    /// <summary>
     /// Returns the offscreen surface of the given size (in pixels) the layer
     /// content can be rasterized into; reuses the existing surface whenever
     /// the size has not changed.
@@ -280,6 +302,8 @@ public class RenderedTileLayer : BaseLayer
             _frameSurface = null;
             _retainedFrame?.Dispose();
             _retainedFrame = null;
+            _retainedFrameKey = null;
+            _lastViewportSignature = null;
         }
     }
 }

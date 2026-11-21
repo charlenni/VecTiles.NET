@@ -181,6 +181,7 @@ public sealed class PlacementService
 
             if (key != _currentKey)
             {
+                var previousKey = _currentKey;
                 _currentKey = key;
 
                 // A change of the view stops the debounce timer, the fetch
@@ -195,7 +196,7 @@ public sealed class PlacementService
                 _runCts = new CancellationTokenSource();
                 _debounceCts = new CancellationTokenSource();
 
-                _viewTiles.Clear();
+                RetainTilesOnViewChange(previousKey, key, infoArray);
 
                 if (SynchronousPlacement)
                 {
@@ -268,6 +269,37 @@ public sealed class PlacementService
             TrimPlacementCache();
 
             return new PlacementView(tiles, placement);
+        }
+    }
+
+    /// <summary>
+    /// Rebuilds the arrived tiles of the view after a view change: a pan
+    /// keeps the tiles that still belong to the new tile set, so they draw
+    /// immediately without waiting for the fetch pass (the map does not
+    /// flicker while panning). A zoom change keeps nothing: tiles of another
+    /// zoom level are not drawn.
+    /// </summary>
+    private void RetainTilesOnViewChange((TilesKey Tiles, int Zoom)? previousKey, (TilesKey Tiles, int Zoom) key,
+        IReadOnlyList<TileInfo> tileInfos)
+    {
+        if (_viewTiles.Count == 0)
+        {
+            return;
+        }
+
+        if (previousKey is null || previousKey.Value.Zoom != key.Zoom)
+        {
+            _viewTiles.Clear();
+            return;
+        }
+
+        var keep = new HashSet<TileIndex>(tileInfos.Select(info => info.Index));
+        var retained = _viewTiles.Values.Where(tileInView => keep.Contains(tileInView.Info.Index)).ToList();
+
+        _viewTiles.Clear();
+        foreach (var tileInView in retained)
+        {
+            _viewTiles[tileInView.Tile.Tile.Id] = tileInView;
         }
     }
 

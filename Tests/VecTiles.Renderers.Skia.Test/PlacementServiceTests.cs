@@ -4,21 +4,20 @@ using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Renderers.Skia;
+using static VecTiles.Renderers.Skia.Test.PlacementServiceTestSupport;
 
 namespace VecTiles.Renderers.Skia.Test;
 
 /// <summary>
-/// Tests for the placement machinery: the retained set (latch) while a new
-/// pass runs, the reset of the latch on a zoom change and the incomplete
-/// retry cooldown.
+/// Shared helpers for the placement service test classes.
 /// </summary>
-public class PlacementServiceTests
+internal static class PlacementServiceTestSupport
 {
     /// <summary>
     /// A fake rendered tile source whose fetches block on a gate, so the test
     /// decides when a placement pass completes.
     /// </summary>
-    private sealed class GatedRenderedTileSource : IRenderedTileSource
+    public sealed class GatedRenderedTileSource : IRenderedTileSource
     {
         public TaskCompletionSource<bool> Gate { get; set; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -40,7 +39,7 @@ public class PlacementServiceTests
     /// rendered tile (and one tile per key in <see cref="MissingTiles"/>
     /// with null, so a pass stays incomplete).
     /// </summary>
-    private sealed class FakeRenderedTileSource : IRenderedTileSource
+    public sealed class FakeRenderedTileSource : IRenderedTileSource
     {
         public List<(int X, int Y, int Zoom)> Requests { get; } = [];
 
@@ -60,7 +59,7 @@ public class PlacementServiceTests
         }
     }
 
-    private static TileInfo TileInfo(int x, int y, int zoom)
+    public static TileInfo TileInfo(int x, int y, int zoom)
     {
         return new TileInfo
         {
@@ -68,7 +67,15 @@ public class PlacementServiceTests
             Extent = new Extent(x * 512, -(y + 1) * 512, (x + 1) * 512, -y * 512),
         };
     }
+}
 
+/// <summary>
+/// Tests for the placement machinery: the retained set (latch) while a new
+/// pass runs, the reset of the latch on a zoom change and the incomplete
+/// retry cooldown.
+/// </summary>
+public class PlacementServiceTests
+{
     [Fact]
     public void RetainedSet_KeepsSymbolsWhileNewPassRuns()
     {
@@ -202,5 +209,70 @@ public class PlacementServiceTests
         service.Update(tileInfos, 8, (x, y) => (x, y));
 
         Assert.Single(arrived);
+    }
+}
+
+/// <summary>
+/// Tests that a pan keeps the tiles of the old view that still belong to the
+/// new tile set: they draw immediately, so the map does not flicker while
+/// panning (no empty frames until the fetch pass delivers).
+/// </summary>
+public class PlacementServiceTileRetentionTests
+{
+    [Fact]
+    public void Pan_KeepsOverlappingTilesOfThePreviousView()
+    {
+        var source = new FakeRenderedTileSource();
+        var service = new PlacementService(source) { SynchronousPlacement = true };
+
+        var setA = new[] { TileInfo(3, 2, 8), TileInfo(4, 2, 8) };
+        service.Update(setA, 8, (x, y) => (x, y));
+        Assert.Equal(2, source.Requests.Count);
+
+        // Pan: the new tile set shifts by one tile, tile 5/2 is new and
+        // tile 3/2 falls out of the view. Tile 4/2 must still be in the view
+        // snapshot immediately (before any fetch of the new set arrives)
+        var setB = new[] { TileInfo(4, 2, 8), TileInfo(5, 2, 8) };
+        var view = service.Update(setB, 8, (x, y) => (x, y));
+
+        var ids = view.Tiles.Select(t => (t.Info.Index.Col, t.Info.Index.Row, t.Info.Index.Level)).ToList();
+        Assert.Contains((4, 2, 8), ids);
+        Assert.DoesNotContain((3, 2, 8), ids);
+        Assert.Equal(2, ids.Count);
+    }
+
+    [Fact]
+    public void PanOfTheWholeView_TileSetUntouched_KeepsAllTiles()
+    {
+        var source = new FakeRenderedTileSource();
+        var service = new PlacementService(source) { SynchronousPlacement = true };
+
+        var setA = new[] { TileInfo(3, 2, 8), TileInfo(4, 2, 8) };
+        service.Update(setA, 8, (x, y) => (x, y));
+        var countAfterFirstUpdate = source.Requests.Count;
+
+        // Same tile set, different key (the tiles key contains the tile ids,
+        // so the key would differ only for a different set) — pass the same
+        // infos again: no change at all, no new fetches
+        service.Update(setA, 8, (x, y) => (x, y));
+        Assert.Equal(countAfterFirstUpdate, source.Requests.Count);
+        Assert.Equal(2, source.Requests.Count);
+    }
+
+    [Fact]
+    public void ZoomChange_DropsAllTiles()
+    {
+        var source = new FakeRenderedTileSource();
+        var service = new PlacementService(source) { SynchronousPlacement = true };
+
+        var setA = new[] { TileInfo(3, 2, 8) };
+        service.Update(setA, 8, (x, y) => (x, y));
+
+        var setB = new[] { TileInfo(3, 2, 9) };
+        var view = service.Update(setB, 9, (x, y) => (x, y));
+
+        // Synchronous pass with a fake source filling the view again; the
+        // retained (wrong level) tile must not appear
+        Assert.All(view.Tiles, t => Assert.Equal(9, t.Info.Index.Level));
     }
 }

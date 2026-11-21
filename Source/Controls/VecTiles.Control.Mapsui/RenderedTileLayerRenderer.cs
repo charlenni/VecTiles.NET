@@ -243,6 +243,8 @@ public static class RenderedTileLayerRenderer
 
                     DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
                 }
+
+                continue;
             }
 
             // The placed symbols of the same style layer; the layer metadata

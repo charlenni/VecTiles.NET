@@ -124,8 +124,18 @@ public partial class MainView : UserControl
             .Where(pair => pair.Value.Count > 0)
             .Select(pair => $"{pair.Key}:{pair.Value.Count}"));
 
+        // Counts of the diagnostic symbol subclass: separates a placement
+        // that rejected the symbol (placed 0, rejected > 0) from a drawing
+        // problem (placed > 0, but the symbol is missing on the map)
+        var placedCanoe = placement.PlacedByLayer
+            .SelectMany(pair => pair.Value)
+            .Count(entry => entry.Symbol is VecTiles.Common.Primitives.Symbol { Subclass: "canoe_polo" });
+        var rejectedCanoe = placement.Rejected
+            .OfType<VecTiles.Common.Primitives.Symbol>()
+            .Count(symbol => symbol.Subclass == "canoe_polo");
+
         var status = $"z{placement.ZoomLevel} holdover={(placement.IsHoldover ? placement.SourceZoomLevel.ToString() : "-")} " +
-            $"incomplete={placement.Incomplete} {layers}";
+            $"incomplete={placement.Incomplete} {layers} canoe:{placedCanoe}/{rejectedCanoe}";
 
         if (status == _lastPlacementStatus)
         {

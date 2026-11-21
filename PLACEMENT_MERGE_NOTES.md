@@ -487,3 +487,55 @@ Zoom-Anfang (lastDrawn null).
 Tests: PlacementFade_StartsWhenHoldoverIsReplaced erweitert (layer2-Szenario:
 gezeichnetes Set Zoom 9 → Cache-Sprung Zoom 10 → Fade; gleicher Zoom →
 instant). Skia-Suite 207/207 gruen.
+
+## Runde 2026-11-21u: canoe_polo@Z17 — WIP abgesichert, App-Diagnose eingebaut
+
+Ausgangslage: Working Tree enthielt den uncommitteten WIP einer abgebrochenen Session:
+(a) `TileFetchScheduler.FetchAsync` liefert jetzt `MissingTiles` (die Kacheln, die die Quelle
+verweigert), (b) `PlacementService.Update(..., screenTileInfos)`: fehlt nur eine Kachel des
+Padding-Rings (Quelle mit begrenzter Coverage), bleibt das Ergebnis VOLLSTAENDIG (published);
+eine fehlende SCREEN-Kachel blockiert weiter (Holdover). Ohne screenTileInfos: altes Verhalten.
+
+Verifikation dieser Session:
+- Ring-Abdeckung der canoe_polo-Szene (17/68642/45902, Z16-Z19): ALLE Kacheln ladbar
+  (CanoePoloTileFetchDiagnosticsTests) → Coverage-Löcher sind in DIESER Szene nicht der
+  Auslöser; der WIP-Fix ist trotzdem richtig (generell für begrenzte Quellen).
+- TEMP-DIAG-Logging (renderer + icon renderer, /tmp/vt-draw.log) ENTFERNT. Der alte Log
+  (= Testlauf der vorigen Session, NICHT die App) zeigte Z17 korrekt.
+- Diagnostic-Tests zu Regressionstests gehaertet: CanoePoloPlacementRingTests (beide Icons
+  platziert, Z16-19, incomplete=false), CanoePoloTileFetchDiagnosticsTests (assert alle
+  Ring-Kacheln OK), CanoePoloZoomScanTests (assert beide platziert), CanoePoloZoomInPipelineTests
+  (assert Icon-Pixel + Hit-Test nach dem Settlen bei Z17/18/19). Neu: PlacementScreenTilePublicationTests
+  (fehlender Ring-Kachel published, fehlende Screen-Kachel incomplete, ohne Screen-Set blockiert alles).
+- Skia-Suite 238/238 gruen (zweimal; einmaliger Doppel-Flake IconPointSymbolTests unter
+  Volllast, isoliert 56/56 gruen, bekannt). GESAMT-Suite 575 gruen.
+- SampleApp-Diagnose: `RenderedTileLayer.CurrentPlacement` (letzter Update-Snapshot) +
+  Statuszeile "Placement" im linken Panel (DispatcherTimer 500 ms): z/holdover/incomplete +
+  Counts jeStyle-Layer. Erlaubt Dirks Klassifizierung bei fehlendem Icon: Count 0 = nicht
+  platziert, Count > 0 = platziert-aber-nicht-gezeichnet (Zeichner-Bug), keine Aktualisierung
+  = stale Frame.
+- SampleApp neu gebaut (Debug), enthaelt den Fix.
+
+OFFEN: Der app-seitige Repro (Dirk sieht Z17 leer) ist in der Test-Pipeline (CPU, 1024x768,
+density 1) nicht reproduzierbar. Naechste Session: App laufen lassen, Statuszeile bei Z17
+ablesen und Screenshots/Statuszeile melden. Falls Count > 0 bei fehlendem Icon: Zeichner
+(GPU-Pfad, density<>1) untersuchen. Positionen der canoe Icons im Test: (543,396)/(481,372)
+bei 1024x768 und Z17 (Mitte!), Dirk nennt "rechts unten" — andere Kamera verwenden, wenn
+nötig Mitte-vs-Ecke ausprobieren.
+
+## Runde 2026-11-21v: App-Statuszeile gelesen → Entscheidungs-Diagnose eingebaut
+
+Dirk (App-Statuszeile bei Z17): "z17 holdover=- incomplete=false road_one_way_arrow:69,
+water_name_line:2, poi_z16:209, poi_z15:14, poi_z14:10, road_label:55, road_shield:5"
+→ Placement WIRD veröffentlicht, komplett, nicht Holdover. Und: "Icons nicht sichtbar".
+
+Umsetzung:
+- Statuszeile erweitert: `canoe:platziert/abgelehnt` (Counts der canoe_polo-Entries in
+  PlacedByLayer bzw. Rejected). Liest sich beim nächsten Lauf so:
+  canoe:2/0 + unsichtbar → Zeichner-App-Unterschied (Verdacht: GPU-Canvas-Pfad; Density
+  ist ausgeschlossen, s. u.). canoe:0/2 → Kollision/Rejektion im Placement bei Z17.
+  canoe:0/0 → Symbole gar nicht in den Kandidaten (Daten/Tiles). POI_z16-Zähler allein
+  reicht nicht, die canoe sind evtl. NICHT unter den 209!
+- Density ausgeschlossen: neu CanoePoloHiDpiTests — echtes Pipeline-Draw mit canvas.Scale(1.5/2)
+  (Device-Bitmap, Probe in device px) bei Z17 und Z17.6: beide Icons grün sichtbar (3/3 grün).
+- Suite: HiDpi 3/3; Kernel-Code unverändert seit 49ef940 (575 grün, 238 Skia).

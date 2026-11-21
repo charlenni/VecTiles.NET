@@ -465,3 +465,25 @@ Runde 21s — Valid Borders + Invalid Borders + canoe_polo-Bildung
 Status Runde 21s: Skia-Suite 232/232 gruen. Ergebnisbilder refreshet
 (border-flag im frameKey → Frames mit sichtbaren Valid-Border-Boxen).
 NICHT commitet bis hierher; Commit folgt (Borders-Fix + Invalid-Borders-Entfernung).
+
+Runde 21t — Crossfade auch beim Cache-Sprung an der Zoomgrenze
+
+Dirk: "Nach einem Zoom auf den naechst hoeheren Level erscheinen die Symbole
+abbrupt. Besser langsam einblenden."
+
+Ursache: GetPlacementFade startete den Crossfade nur, wenn das zuletzt
+GEZEICHNETE Set ein Holdover war (Holdover → fertiges Ergebnis des neuen
+Zooms). War das neue Level aber bereits berechnet (Placement-Cache), liefert
+Update beim Ueberqueren der Zoomgrenze das fertige Ergebnis SOFORT — ohne
+Holdover-Phase, ohne Fade: die Symbole des Levels knallen rein.
+
+Fix (RenderedTileLayer.GetPlacementFade): Crossfade jetzt auch wenn
+  !placement.IsHoldover && lastDrawn != null && ZoomLevel unterschiedlich
+(unabhaengig vom Holdover-Flag des zuletzt Gezeichneten). Sofort-Wechsel
+bleiben: neues Holdover (selbe Labels, nur neu verankert), eigener Lauf
+fertig bei gleichem Zoom, Pan (Tileset-Aenderung bei gleichem Zoom),
+Zoom-Anfang (lastDrawn null).
+
+Tests: PlacementFade_StartsWhenHoldoverIsReplaced erweitert (layer2-Szenario:
+gezeichnetes Set Zoom 9 → Cache-Sprung Zoom 10 → Fade; gleicher Zoom →
+instant). Skia-Suite 207/207 gruen.

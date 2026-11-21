@@ -96,10 +96,17 @@ public class RenderedTileLayer : BaseLayer
     {
         if (!ReferenceEquals(placement, _lastDrawnPlacement))
         {
-            // A finished placement replaces the holdover -> crossfade; any
-            // other switch (pan at the same zoom, a new holdover after
-            // another zoom change) swaps the sets immediately
-            if (_lastDrawnWasHoldover && !placement.IsHoldover)
+            // Crossfade whenever the symbol set of another zoom replaces the
+            // drawn set: a finished placement replaces the holdover of a zoom
+            // change (the original case), and the cached result of a visited
+            // zoom replaces the drawn set of the previous zoom immediately at
+            // the zoom border, where there is no holdover phase in between —
+            // without the fade the symbols of the new level pop in abruptly.
+            // A new holdover and same-zoom replacements (the own placement of
+            // the current zoom finished, the tile set changed on a pan) draw
+            // instantly: the sets carry essentially the same labels
+            if (_lastDrawnPlacement != null && !placement.IsHoldover &&
+                (_lastDrawnWasHoldover || placement.ZoomLevel != _lastDrawnPlacement.ZoomLevel))
             {
                 _fadingOutPlacement = _lastDrawnPlacement;
                 _fadeStartTicks = Environment.TickCount64;

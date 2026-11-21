@@ -264,6 +264,26 @@ public class PlacementServiceTests
         Assert.Null(old);
         Assert.Equal(0f, oldAlpha);
         Assert.Equal(1f, newAlpha);
+
+        // The complete set drawn before a zoom border is crossed is replaced
+        // by the (cached) complete set of the new zoom without a holdover
+        // phase in between: the two sets crossfade instead of popping
+        var layer2 = new RenderedTileLayer(new FakeRenderedTileSource());
+        var drawnZ9 = PlacementResult.Empty() with { ZoomLevel = 9 };
+        layer2.GetPlacementFade(drawnZ9); // first draw: no fade
+        var cachedZ10 = PlacementResult.Empty() with { ZoomLevel = 10 };
+        (old, oldAlpha, newAlpha) = layer2.GetPlacementFade(cachedZ10);
+        Assert.Same(drawnZ9, old);
+        Assert.InRange(oldAlpha, 0f, 1f);
+        Assert.InRange(newAlpha, 0f, 1f);
+
+        // A replacement at the same zoom (the own placement finished, or the
+        // tile set changed while panning) draws instantly, no fade
+        var sameZoom = cachedZ10 with { IsHoldover = false };
+        (old, oldAlpha, newAlpha) = layer2.GetPlacementFade(sameZoom);
+        Assert.Null(old);
+        Assert.Equal(0f, oldAlpha);
+        Assert.Equal(1f, newAlpha);
     }
 
     [Fact]

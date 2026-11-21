@@ -40,6 +40,8 @@ public class RenderedTileLayer : BaseLayer
     // tiles (e.g. zooming out before the new bigger tiles have arrived), so
     // the previous map content stays on the screen instead of a black screen
     private SKImage? _retainedFrame;
+    private SKRect _retainedFrameRect;
+    private object? _retainedFrameKey;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderedTileLayer"/> class.
@@ -155,6 +157,14 @@ public class RenderedTileLayer : BaseLayer
     public void ClearCache()
     {
         _placementService.ClearCache();
+
+        // The retained frame shows the content of the old styles; drop it so
+        // an empty view does not draw stale content
+        var oldFrame = _retainedFrame;
+        _retainedFrame = null;
+        _retainedFrameKey = null;
+        oldFrame?.Dispose();
+
         DataHasChanged();
     }
 
@@ -205,17 +215,6 @@ public class RenderedTileLayer : BaseLayer
     }
 
     /// <summary>
-    /// Stores the given snapshot of a fully drawn frame as the retained
-    /// frame; disposes the previous one.
-    /// </summary>
-    internal void SetRetainedFrame(SKImage frame)
-    {
-        var old = _retainedFrame;
-        _retainedFrame = frame;
-        old?.Dispose();
-    }
-
-    /// <summary>
     /// Draws the retained frame of the last fully drawn state onto the
     /// canvas (used when the current view has no tiles at all, e.g. right
     /// after zooming out, so the previous map content stays on the screen
@@ -228,8 +227,46 @@ public class RenderedTileLayer : BaseLayer
             return false;
         }
 
-        canvas.DrawImage(_retainedFrame, 0, 0);
+        canvas.Save();
+        canvas.ResetMatrix();
+        canvas.DrawImage(_retainedFrame, new SKRect(0, 0, _retainedFrame.Width, _retainedFrame.Height),
+            _retainedFrameRect);
+        canvas.Restore();
         return true;
+    }
+
+    /// <summary>
+    /// Draws the retained frame when the given key matches the key the
+    /// current frame was drawn with (unchanged viewport and view). The
+    /// expensive style layer rasterization is then skipped completely.
+    /// </summary>
+    internal bool TryReuseFrame(object key, SKCanvas canvas)
+    {
+        if (_retainedFrame == null || !Equals(_retainedFrameKey, key))
+        {
+            return false;
+        }
+
+        canvas.Save();
+        canvas.ResetMatrix();
+        canvas.DrawImage(_retainedFrame, new SKRect(0, 0, _retainedFrame.Width, _retainedFrame.Height),
+            _retainedFrameRect);
+        canvas.Restore();
+        return true;
+    }
+
+    /// <summary>
+    /// Stores the given snapshot of a fully drawn frame as the retained
+    /// frame (with the dest rect and the frame key of the draw); disposes
+    /// the previous one.
+    /// </summary>
+    internal void SetRetainedFrame(SKImage frame, SKRect destRect, object key)
+    {
+        var old = _retainedFrame;
+        _retainedFrame = frame;
+        _retainedFrameRect = destRect;
+        _retainedFrameKey = key;
+        old?.Dispose();
     }
 
     /// <inheritdoc />

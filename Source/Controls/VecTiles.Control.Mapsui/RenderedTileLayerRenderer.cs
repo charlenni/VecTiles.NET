@@ -123,6 +123,49 @@ public static class RenderedTileLayerRenderer
         var view = renderedLayer.Update(placementTileInfos, zoomLevel, placementWorldToScreen,
             (center.X, center.Y));
 
+        // Mapsui scales the screen canvas by the pixel density (logical px *
+        // density = device px). The offscreen frame must be rasterized in
+        // device pixels at the same scale, so the blit is 1:1 in device
+        // pixels and the content is not resampled (resampling would blur it)
+        var matrix = canvas.TotalMatrix;
+        var densityX = matrix.ScaleX;
+        var densityY = matrix.ScaleY;
+        if (densityX <= 0 || densityY <= 0 || float.IsNaN(densityX) || float.IsNaN(densityY))
+        {
+            densityX = 1;
+            densityY = 1;
+        }
+
+        // The device space rect the viewport maps to: the blit target of the
+        // offscreen frame (the canvas matrix is reset for the blit, so it is
+        // not applied twice)
+        var topLeft = matrix.MapPoint(0, 0);
+        var bottomRight = matrix.MapPoint((float)viewport.Width, (float)viewport.Height);
+        var destRect = new SKRect(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y);
+
+        // Fast path for unchanged frames: when the viewport, the tile set and
+        // the placement result are the same as in the last drawn frame (e.g.
+        // another layer has triggered a redraw, or the widgets draw again),
+        // the retained frame is blitted instead of rasterizing the whole
+        // style layer drawing again (this also makes the frame stable while
+        // the placement runs). Update always returns a new PlacementView, so
+        // the key is built from its content: the placement result reference
+        // (the placement service hands out the same instance while nothing
+        // changed) and a hash over the tile ids of the view.
+        ulong tilesKey = 14695981039346656037;
+        foreach (var tileInView in view.Tiles)
+        {
+            tilesKey = (tilesKey ^ tileInView.Tile.Tile.Id) * 1099511628211;
+        }
+
+        object frameKey = (view.Placement, tilesKey, viewport.CenterX, viewport.CenterY,
+            viewport.Resolution, viewport.Rotation, viewport.Width, viewport.Height,
+            destRect, zoomLevel);
+        if (renderedLayer.TryReuseFrame(frameKey, canvas))
+        {
+            return;
+        }
+
         // The view may have no tile at all (the placement extent contains
         // tile infos, but none of them has arrived yet): keep the last fully
         // drawn frame on the screen instead of drawing an empty frame
@@ -137,8 +180,8 @@ public static class RenderedTileLayerRenderer
         // leaves the screen in an intermediate (partly drawn or cleared)
         // state: the screen keeps showing the previous frame until the new
         // frame is complete
-        var width = (int)Math.Round(viewport.Width);
-        var height = (int)Math.Round(viewport.Height);
+        var width = (int)Math.Round(viewport.Width * densityX);
+        var height = (int)Math.Round(viewport.Height * densityY);
         if (width <= 0 || height <= 0)
         {
             return;
@@ -146,12 +189,18 @@ public static class RenderedTileLayerRenderer
 
         var surface = renderedLayer.GetFrameSurface(width, height);
         surface.Canvas.Clear(SKColors.Transparent);
+        surface.Canvas.Save();
+        surface.Canvas.Scale(densityX, densityY);
         DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
             drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
+        surface.Canvas.Restore();
 
         var frame = surface.Snapshot();
-        canvas.DrawImage(frame, 0, 0);
-        renderedLayer.SetRetainedFrame(frame);
+        canvas.Save();
+        canvas.ResetMatrix();
+        canvas.DrawImage(frame, new SKRect(0, 0, frame.Width, frame.Height), destRect);
+        canvas.Restore();
+        renderedLayer.SetRetainedFrame(frame, destRect, frameKey);
     }
 
     /// <summary>

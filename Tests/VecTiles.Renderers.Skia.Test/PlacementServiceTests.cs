@@ -385,6 +385,28 @@ public class PlacementServiceTests
 
         Assert.Single(arrived);
     }
+
+    [Fact]
+    public void ClearCache_RestartsTheFetchPassForAnUnchangedView()
+    {
+        var source = new FakeRenderedTileSource();
+        var service = new PlacementService(source) { SynchronousPlacement = true };
+        var tileInfos = new[] { TileInfo(3, 2, 8), TileInfo(4, 2, 8) };
+
+        service.Update(tileInfos, 8, (x, y) => (x, y));
+        Assert.Equal(2, source.Requests.Count);
+
+        // ClearCache (e.g. after a style change in the sample app) drops the
+        // arrived tiles of the view: the next Update for the same view must
+        // start a new fetch pass, otherwise no tile is fetched or drawn at
+        // all until the user moves the map
+        service.ClearCache();
+
+        var view = service.Update(tileInfos, 8, (x, y) => (x, y));
+
+        Assert.Equal(4, source.Requests.Count);
+        Assert.Equal(2, view.Tiles.Count);
+    }
 }
 
 /// <summary>

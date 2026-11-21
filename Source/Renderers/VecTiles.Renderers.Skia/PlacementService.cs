@@ -349,6 +349,12 @@ public sealed class PlacementService
             _holdoverResult = PlacementResult.Empty();
             // The persistent decisions belong to the old content as well
             _incrementalStates.Clear();
+            // Reset the current view: the next Update must start a new fetch
+            // pass over the (cleared) view tiles even when the tile set has
+            // not changed — otherwise a style change clears the tiles from
+            // the view and nothing would be fetched or drawn until the user
+            // moves the map
+            _currentKey = null;
             _generation++;
         }
     }

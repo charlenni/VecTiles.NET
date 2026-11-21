@@ -36,7 +36,7 @@ public class LindenhofFrameRenderTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution();
         double topRow = withTileAbove ? 91802.5 : 91803.5;
@@ -54,19 +54,17 @@ public class LindenhofFrameRenderTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        symbolsLayer.SynchronousPlacement = true;
-
         Func<double, double, (double, double)> toScreen = (x, y) =>
         {
             var p = viewport.WorldToScreen(x, y);
             return (p.X, p.Y);
         };
 
-        var result = symbolsLayer.GetPlacementResult(
+        var result = service.Update(
             tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-            zoomLevel, toScreen);
+            zoomLevel, toScreen).Placement;
 
-        var tree = result!.Tree;
+        var tree = result.Tree;
 
         foreach (var layerPair in result.PlacedByLayer)
         {

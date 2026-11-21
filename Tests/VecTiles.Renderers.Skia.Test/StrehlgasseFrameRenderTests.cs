@@ -33,7 +33,7 @@ public class StrehlgasseFrameRenderTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution();
         double heightTiles = 2.0, widthTiles = 2.0;
@@ -57,7 +57,7 @@ public class StrehlgasseFrameRenderTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        symbolsLayer.SynchronousPlacement = true;
+
 
         // Placement converter (canonical placement space of the integer zoom)
         Func<double, double, (double, double)> toScreen = (x, y) =>
@@ -73,11 +73,11 @@ public class StrehlgasseFrameRenderTests
             return (p.X, p.Y);
         };
 
-        var result = symbolsLayer.GetPlacementResult(
+        var result = service.Update(
             tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-            zoomLevel, toScreen);
+            zoomLevel, toScreen).Placement;
 
-        var tree = result!.Tree;
+        var tree = result.Tree;
         var order = 0;
 
         foreach (var layerPair in result.PlacedByLayer)
@@ -194,7 +194,7 @@ public class StrehlgasseFrameRenderTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource);
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();
         double heightTiles = 2.0, widthTiles = 2.0;
@@ -211,7 +211,7 @@ public class StrehlgasseFrameRenderTests
 
         var context = new EvaluationContext(zoomLevel, 1f, 0f);
 
-        symbolsLayer.SynchronousPlacement = true;
+
 
         var toScreen = new Func<double, double, (double, double)>((x, y) =>
         {
@@ -224,8 +224,8 @@ public class StrehlgasseFrameRenderTests
         canvas.Clear(SKColors.White);
         canvas.Scale(placementScale, placementScale);
 
-        var result = symbolsLayer.GetPlacementResult(tileInfos, zoomLevel, toScreen);
-        var tree = result!.Tree;
+        var result = service.Update(tileInfos, zoomLevel, toScreen).Placement;
+        var tree = result.Tree;
 
         double? anchorX = null, anchorY = null;
 

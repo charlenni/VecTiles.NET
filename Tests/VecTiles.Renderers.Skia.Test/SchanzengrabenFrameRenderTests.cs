@@ -6,6 +6,7 @@ using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
+using VecTiles.Renderers.Skia;
 using Xunit.Abstractions;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -45,7 +46,7 @@ public class SchanzengrabenFrameRenderTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();
         double heightTiles = height / 512, widthTiles = width / 512;
@@ -66,8 +67,6 @@ public class SchanzengrabenFrameRenderTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        symbolsLayer.SynchronousPlacement = true;
-
         Func<double, double, (double, double)> toScreen = (x, y) =>
         {
             var p = viewport.WorldToScreen(x, y);
@@ -80,9 +79,9 @@ public class SchanzengrabenFrameRenderTests
             return (p.X, p.Y);
         };
 
-        var result = symbolsLayer.GetPlacementResult(
+        var result = service.Update(
             tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-            zoomLevel, toScreen);
+            zoomLevel, toScreen).Placement;
 
         var tree = result!.Tree;
         var order = 0;

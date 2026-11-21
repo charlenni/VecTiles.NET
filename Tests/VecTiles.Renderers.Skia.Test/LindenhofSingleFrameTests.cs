@@ -42,7 +42,7 @@ public class LindenhofSingleFrameTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution(); // like the app: map starts at zoom 17.9
         double topRow = withTileAbove ? 91802.5 : 91803.5;
@@ -61,7 +61,7 @@ public class LindenhofSingleFrameTests
         var zoomLevel = (int)Math.Floor(viewport.Resolution.ToZoomLevel());
         var context = new EvaluationContext(zoomLevel, 1f, 0f);
 
-        symbolsLayer.SynchronousPlacement = true;
+
 
         Func<double, double, (double, double)> toScreen = (x, y) =>
         {
@@ -71,8 +71,8 @@ public class LindenhofSingleFrameTests
 
         using var canvas = new SKCanvas(new SKBitmap(4096, 4096));
 
-        var result = symbolsLayer.GetPlacementResult(tileInfos, zoomLevel, toScreen);
-        var tree = result!.Tree;
+        var result = service.Update(tileInfos, zoomLevel, toScreen).Placement;
+        var tree = result.Tree;
 
         foreach (var layerPair in result.PlacedByLayer)
         {

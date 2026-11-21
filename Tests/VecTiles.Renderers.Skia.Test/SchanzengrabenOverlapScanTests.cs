@@ -6,6 +6,8 @@ using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
+using VecTiles.Renderers.Common;
+using VecTiles.Renderers.Skia;
 using Xunit.Abstractions;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -33,7 +35,7 @@ public class SchanzengrabenOverlapScanTests
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();
         const int width = 1024, height = 768;
@@ -71,11 +73,11 @@ public class SchanzengrabenOverlapScanTests
                     return (p.X, p.Y);
                 };
 
-                var result = symbolsLayer.GetPlacementResult(
+                var result = service.Update(
                     tileSource.Schema.GetTileInfos(RendererExtent(viewport, tileSource.Schema), viewport.Resolution).ToArray(),
-                    zoomLevel, toScreen);
+                    zoomLevel, toScreen).Placement;
 
-                var tree = result!.Tree;
+                var tree = result.Tree;
 
                 foreach (var layerPair in result.PlacedByLayer)
                 {

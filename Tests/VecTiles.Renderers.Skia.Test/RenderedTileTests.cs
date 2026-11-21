@@ -2,7 +2,6 @@ using BruTile;
 using VecTiles.Controls.Mapsui;
 using SkiaSharp;
 using VecTiles.Renderers.Skia.Test;
-using MapRenderer = Mapsui.Rendering.Skia.MapRenderer;
 using Viewport = Mapsui.Viewport;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -32,11 +31,6 @@ public class RenderedTileTests
     private readonly string _goldenFile;
     private readonly string _resultFile;
     private readonly string _diffFile;
-
-    static RenderedTileTests()
-    {
-        MapRenderer.RegisterStyleRenderer(typeof(RenderedTileStyle), new RenderedTileStyleRenderer());
-    }
 
     public RenderedTileTests()
     {
@@ -74,9 +68,11 @@ public class RenderedTileTests
     }
 
     /// <summary>
-    /// Renders the given tile on a canvas, surrounded by a ring of neighboring
-    /// tiles (3x3), so that geometry and line symbols crossing the tile border
-    /// are drawn correctly. Returns the cropped center tile.
+    /// Renders the given tile with the unified tile layer renderer on a canvas,
+    /// surrounded by a ring of neighboring tiles (3x3), so that geometry and
+    /// line symbols crossing the tile border are drawn correctly. The renderer
+    /// draws style layer by style layer across all tiles and the placed symbols
+    /// of the synchronous placement pass. Returns the cropped center tile.
     /// </summary>
     private static SKBitmap RenderTileWithSurroundings(int zoom, int centerX, int centerY)
     {
@@ -90,7 +86,7 @@ public class RenderedTileTests
 
         var styleSource = $"file://{_path}/osm-liberty.json";
         var tileSource = new OMTRenderedTileSource(styleSource);
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource) { SynchronousPlacement = true };
+        var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 
         using var full = new SKBitmap(size, size);
@@ -98,29 +94,7 @@ public class RenderedTileTests
         {
             canvas.Clear(SKColors.Beige);
 
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                for (int dx = -1; dx <= 1; dx++)
-                {
-                    int tileX = centerX + dx, tileY = centerY + dy;
-                    double west = -WorldHalf + tileX * tileSpan;
-                    double north = WorldHalf - tileY * tileSpan;
-                    var info = new TileInfo
-                    {
-                        Index = new TileIndex(tileX, tileY, zoom),
-                        Extent = new Extent(west, north - tileSpan, west + tileSpan, north)
-                    };
-
-                    if (tileSource.GetTileAsync(info).Result is RenderedTileFeature feature)
-                    {
-                        new RenderedTileStyleRenderer().Draw(
-                            canvas, viewport, new Mapsui.Layers.MemoryLayer(), feature,
-                            new RenderedTileStyle(), renderService, 0);
-                    }
-                }
-            }
-
-            RenderedSymbolsLayerRenderer.Draw(canvas, viewport, symbolsLayer, renderService);
+            RenderedTileLayerRenderer.Draw(canvas, viewport, tileLayer, renderService);
         }
 
         var cropped = new SKBitmap(TileSize, TileSize);

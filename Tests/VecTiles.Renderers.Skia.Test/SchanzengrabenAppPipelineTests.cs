@@ -34,7 +34,7 @@ public class SchanzengrabenAppPipelineTests
     public void RenderAppPipelineFrame(double fractionalZoom)
     {
         var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
-        using var layer = new RenderedSymbolsLayer(tileSource)
+        using var layer = new RenderedTileLayer(tileSource)
         {
             ShowValidBorders = true,
             ShowInvalidBorders = true,
@@ -54,7 +54,7 @@ public class SchanzengrabenAppPipelineTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        RenderedSymbolsLayerRenderer.Draw(canvas, viewport, layer, new Mapsui.Rendering.RenderService());
+        RenderedTileLayerRenderer.Draw(canvas, viewport, layer, new Mapsui.Rendering.RenderService());
 
         canvas.Flush();
 

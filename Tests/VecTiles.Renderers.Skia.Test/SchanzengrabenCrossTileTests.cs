@@ -7,6 +7,8 @@ using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
+using VecTiles.Renderers.Common;
+using VecTiles.Renderers.Skia;
 using Xunit.Abstractions;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -40,12 +42,7 @@ public class SchanzengrabenCrossTileTests
     public void RenderCrossTileVariants(string mode)
     {
         var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
-        var symbolsLayer = new RenderedSymbolsLayer(tileSource)
-        {
-            ShowValidBorders = true,
-            ShowInvalidBorders = true,
-            SynchronousPlacement = true,
-        };
+        var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = Zoom.ToResolution();
         const int width = 1024, height = 768;
@@ -106,9 +103,8 @@ public class SchanzengrabenCrossTileTests
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.White);
 
-        symbolsLayer.SynchronousPlacement = true;
-        var result = symbolsLayer.GetPlacementResult(tileInfos, zoomLevel, toScreen);
-        var tree = result!.Tree;
+        var result = service.Update(tileInfos, zoomLevel, toScreen).Placement;
+        var tree = result.Tree;
 
         var allSymbols = result.PlacedByLayer.SelectMany(p => p.Value.Select(e => e.Symbol))
             .Concat(result.Rejected).ToList();

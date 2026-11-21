@@ -167,6 +167,8 @@ public sealed class PlacementService
         var infoArray = tileInfos as TileInfo[] ?? [.. tileInfos];
         var key = (new TilesKey(infoArray.ToTile()), zoomLevel);
 
+        var runSynchronously = false;
+
         lock (_lock)
         {
             if (zoomLevel != _lastZoom)
@@ -197,11 +199,9 @@ public sealed class PlacementService
 
                 if (SynchronousPlacement)
                 {
-                    // Blocks until the pass over the current view has
-                    // finished; used by tests and tooling
-                    _viewCts?.Dispose();
-                    _viewCts = null;
-                    RunPass(infoArray, key, zoomLevel, worldToScreen, centerWorld, CancellationToken.None).GetAwaiter().GetResult();
+                    // The blocking pass must run outside the lock: its fetch
+                    // callbacks store arrived tiles under the lock again
+                    runSynchronously = true;
                 }
                 else
                 {
@@ -224,20 +224,38 @@ public sealed class PlacementService
                 // unavailable tile does not cause a fetch attempt per frame
                 _incompleteAttempts[key] = Environment.TickCount64;
 
-                _runCts?.Cancel();
-                _runCts?.Dispose();
-                _runCts = new CancellationTokenSource();
-
                 if (SynchronousPlacement)
                 {
-                    RunPass(infoArray, key, zoomLevel, worldToScreen, centerWorld, CancellationToken.None).GetAwaiter().GetResult();
+                    runSynchronously = true;
                 }
                 else
                 {
+                    _runCts?.Cancel();
+                    _runCts?.Dispose();
+                    _runCts = new CancellationTokenSource();
+
                     StartRun(infoArray, key, zoomLevel, worldToScreen, centerWorld, _runCts.Token, _generation);
                 }
             }
 
+            if (runSynchronously)
+            {
+                // Blocks until the pass over the current view has finished;
+                // used by tests and tooling
+                _viewCts?.Dispose();
+                _viewCts = null;
+            }
+        }
+
+        if (runSynchronously)
+        {
+            // Outside the lock: callbacks of the pass (AddTileToView) take
+            // the lock themselves
+            RunPass(infoArray, key, zoomLevel, worldToScreen, centerWorld, CancellationToken.None).GetAwaiter().GetResult();
+        }
+
+        lock (_lock)
+        {
             // Snapshot for the drawing phase: the arrived tiles of the
             // current view and the placement result
             _placements.TryGetValue(key, out var cached);

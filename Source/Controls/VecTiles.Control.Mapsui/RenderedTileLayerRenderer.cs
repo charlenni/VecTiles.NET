@@ -196,40 +196,53 @@ public static class RenderedTileLayerRenderer
         // still draws its labels at the screen edge). Not every tile carries
         // an entry for every style layer (styles without data produce no
         // entry), so the style file order is taken from the StyleIndex of the
-        // entries, not from the first occurrence across the tiles.
-        var layerIndex = new Dictionary<string, int>();
+        // entries, not from the first occurrence across the tiles. A style
+        // layer is either a geometry or a symbol layer; the kind is recorded
+        // alongside, so the drawing skips the pass that has nothing to draw.
+        var layerIndex = new Dictionary<string, (int StyleIndex, bool IsGeometry)>();
         foreach (var tileInView in view.Tiles)
         {
             foreach (var entry in tileInView.Tile.Layers)
             {
-                if (!layerIndex.TryGetValue(entry.Name, out var index) || entry.StyleIndex < index)
+                var isGeometry = entry is RenderedGeometryLayer;
+                if (layerIndex.TryGetValue(entry.Name, out var existing))
                 {
-                    layerIndex[entry.Name] = entry.StyleIndex;
+                    if (entry.StyleIndex < existing.StyleIndex)
+                    {
+                        layerIndex[entry.Name] = (entry.StyleIndex, isGeometry || existing.IsGeometry);
+                    }
+                }
+                else
+                {
+                    layerIndex[entry.Name] = (entry.StyleIndex, isGeometry);
                 }
             }
         }
 
-        var names = layerIndex.OrderBy(pair => pair.Value).Select(pair => pair.Key).ToList();
+        var names = layerIndex.OrderBy(pair => pair.Value.StyleIndex).Select(pair => pair.Key).ToList();
 
         var tree = new Quadtree<ISymbol>();
 
         foreach (var name in names)
         {
-            // The geometry of the style layer across all screen tiles
-            foreach (var tileInView in tiles)
+            if (layerIndex[name].IsGeometry)
             {
-                if (tileInView.Tile.Layers.FirstOrDefault(e => e is RenderedGeometryLayer && e.Name == name)
-                    is not RenderedGeometryLayer geometryLayer)
+                // The geometry of the style layer across all screen tiles
+                foreach (var tileInView in tiles)
                 {
-                    continue;
-                }
+                    if (tileInView.Tile.Layers.FirstOrDefault(e => e is RenderedGeometryLayer && e.Name == name)
+                        is not RenderedGeometryLayer geometryLayer)
+                    {
+                        continue;
+                    }
 
-                if (!SymbolPlacementEngine.IsVisibleAtZoom((geometryLayer.MinZoom, geometryLayer.MaxZoom), drawZoom))
-                {
-                    continue;
-                }
+                    if (!SymbolPlacementEngine.IsVisibleAtZoom((geometryLayer.MinZoom, geometryLayer.MaxZoom), drawZoom))
+                    {
+                        continue;
+                    }
 
-                DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
+                    DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
+                }
             }
 
             // The placed symbols of the same style layer; the layer metadata

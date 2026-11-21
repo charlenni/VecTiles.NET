@@ -1,14 +1,12 @@
 ﻿using System.Text.RegularExpressions;
 using BruTile;
 using BruTile.Cache;
-using Mapsui;
 using VecTiles.Common.Interfaces;
-using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Renderers.Common;
+using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia;
 using VecTiles.Renderers.Skia.Primitives;
 using VecTiles.Styles.OpenMapTiles;
-
 using MapsuiLogger = Mapsui.Logging.Logger;
 
 namespace VecTiles.Controls.Mapsui;
@@ -16,7 +14,7 @@ namespace VecTiles.Controls.Mapsui;
 public class OMTRenderedTileSource : IRenderedTileSource
 {
     private readonly Renderer _renderer;
-    private readonly MemoryCache<RenderedTileFeature> _cache;
+    private readonly MemoryCache<IRenderedTile> _cache;
     private readonly OMTStyleFile _styleFile;
 
     public OMTRenderedTileSource(string source)
@@ -28,7 +26,7 @@ public class OMTRenderedTileSource : IRenderedTileSource
         var maxZoom = 24;
 
         _renderer = new Renderer(omtStyleFile.Sources.Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, (ITileDataSource)s.Value.DataSource)), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new OMTPaintFactory(omtStyleFile.Sprites), new OMTSymbolFactory(omtStyleFile.Sprites)));
-        _cache = new MemoryCache<RenderedTileFeature>(200, 300);
+        _cache = new MemoryCache<IRenderedTile>(200, 300);
 
         ReportMissingFonts(omtStyleFile);
 
@@ -77,22 +75,21 @@ public class OMTRenderedTileSource : IRenderedTileSource
         _cache.Clear();
     }
 
-    public async Task<IFeature?> GetTileAsync(TileInfo tileInfo)
+    public async Task<IRenderedTile?> GetTileAsync(TileInfo tileInfo)
     {
-        var feature = _cache.Find(tileInfo.Index);
+        var tile = _cache.Find(tileInfo.Index);
 
-        if (feature != null)
+        if (tile != null)
         {
-            return (IFeature?)feature;
+            return tile;
         }
 
-        var renderedTile = await _renderer.Render(tileInfo.ToTile());
-        if (renderedTile == null)
+        tile = await _renderer.Render(tileInfo.ToTile());
+        if (tile == null)
             return null;
-        feature = new RenderedTileFeature(renderedTile, tileInfo.Extent.MinX, tileInfo.Extent.MinY, tileInfo.Extent.MaxX, tileInfo.Extent.MaxY);
-        _cache.Add(tileInfo.Index, feature);
+        _cache.Add(tileInfo.Index, tile);
 
-        return feature;
+        return tile;
     }
     
     private static void ReportMissingFonts(OMTStyleFile styleFile)

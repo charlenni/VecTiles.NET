@@ -1,44 +1,159 @@
-﻿using BruTile;
+using BruTile;
 using Mapsui;
-using Mapsui.Tiling.Fetcher;
-using Mapsui.Tiling.Layers;
-using Mapsui.Tiling.Rendering;
+using Mapsui.Layers;
+using Mapsui.Rendering;
+using Mapsui.Rendering.Skia;
+using Mapsui.Extensions;
+using Mapsui.Tiling.Extensions;
+using System.Linq;
+using VecTiles.Controls.Mapsui.Extensions;
+using VecTiles.Common.Primitives;
+using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia;
+using VecTiles.Renderers.Skia.Primitives;
 
 namespace VecTiles.Controls.Mapsui;
 
 /// <summary>
-/// Layer, which displays a map consisting of individual tiles
+/// The map layer for rendered tiles: it displays the geometry and the
+/// symbols of all style layers of the rendered tiles. The geometry of the
+/// tiles is drawn immediately (stile layer by style layer across all visible
+/// tiles); the symbols are only drawn when a placement result exists — the
+/// placement pass runs in the background (see <see cref="PlacementService"/>)
+/// and the layer redraws once the new symbol set is ready.
 /// </summary>
-public class RenderedTileLayer : TileLayer
+public class RenderedTileLayer : BaseLayer
 {
-    private readonly IRenderedTileSource _renderedTileSource;
-    
+    private const string _customLayerRendererName = "rendered-tile-layer";
+
+    private readonly PlacementService _placementService;
+    private readonly MRect? _extent;
+
     /// <summary>
-    /// Create tile layer for given rendered tile source
+    /// Initializes a new instance of the <see cref="RenderedTileLayer"/> class.
     /// </summary>
-    /// <param name="tileSource">Tile source to use for this layer</param>
-    /// <param name="minTiles">Minimum number of tiles to cache</param>
-    /// <param name="maxTiles">Maximum number of tiles to cache</param>
-    /// <param name="dataFetchStrategy">Strategy to get list of tiles for given extent</param>
-    /// <param name="renderFetchStrategy"></param>
-    /// <param name="minExtraTiles">Number of minimum extra tiles for memory cache</param>
-    /// <param name="maxExtraTiles">Number of maximum extra tiles for memory cache</param>
-    /// <param name="fetchTileAsFeature">Fetch tile as feature</param>
-    /// <param name="httpClient">HttpClient to use</param>
-    public RenderedTileLayer(IRenderedTileSource tileSource, int minTiles = 200, int maxTiles = 300,
-        IDataFetchStrategy? dataFetchStrategy = null, IRenderFetchStrategy? renderFetchStrategy = null,
-        int minExtraTiles = -1, int maxExtraTiles = -1, Func<TileInfo, Task<IFeature?>>? fetchTileAsFeature = null, HttpClient? httpClient = null)
-    : base(tileSource, minTiles, maxTiles, dataFetchStrategy, renderFetchStrategy, minExtraTiles, maxExtraTiles, fetchTileAsFeature ?? CreateFetchDelegate(tileSource), httpClient)
+    /// <param name="tileSource">The rendered tile source to display.</param>
+    /// <param name="fontSourceResolver">
+    /// Optional resolver that maps a font name (as in the style file, e.g.
+    /// "Noto Sans Bold") to a source in URL notation (file://, https://,
+    /// embedded://, ...), from which the font file is loaded via
+    /// <see cref="VecTiles.DataSources.ByteDataSource.GetBytesAsync"/> when
+    /// the font is neither registered nor installed on the system. Returning
+    /// null or an empty string leaves the font to the usual resolution order.
+    /// The resolver is held globally by <see cref="FontCache"/>; the resolver
+    /// of the last created layer wins.
+    /// </param>
+    public RenderedTileLayer(IRenderedTileSource tileSource, Func<string, string?>? fontSourceResolver = null)
     {
-        // Save for later use, so that not always has to be converted
-        _renderedTileSource = tileSource;
-        // Set style of this layer
-        Style = new RenderedTileStyle();
+        MapRenderer.RegisterLayerRenderer(_customLayerRendererName, RenderedTileLayerRenderer.Draw);
+
+        TileSource = tileSource;
+        CustomLayerRendererName = _customLayerRendererName;
+        _placementService = new PlacementService(tileSource);
+
+        // The arrived tiles and the placement steps redraw the map without
+        // the map having to move
+        _placementService.TileArrived += _ => DataHasChanged();
+        _placementService.PlacementCompleted += DataHasChanged;
+
+        FontSourceResolver = fontSourceResolver;
+        if (fontSourceResolver != null)
+        {
+            FontCache.SetFontSourceResolver(fontSourceResolver);
+        }
+
+        _extent = TileSource.Schema.Extent.ToMRect();
     }
-    
-    private static Func<TileInfo, Task<IFeature?>> CreateFetchDelegate(
-        IRenderedTileSource source)
+
+    /// <summary>
+    /// Gets the tile source of this layer.
+    /// </summary>
+    public IRenderedTileSource TileSource { get; private set; }
+
+    /// <summary>
+    /// Gets the optional resolver that maps a font name to a source from
+    /// which the font file is loaded when the font is missing. Null if no
+    /// resolver was passed to the constructor.
+    /// </summary>
+    public Func<string, string?>? FontSourceResolver { get; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to show valid symbol borders for debugging.
+    /// </summary>
+    public bool ShowValidBorders { get; set; }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to show invalid symbol borders for debugging.
+    /// </summary>
+    public bool ShowInvalidBorders { get; set; }
+
+    /// <summary>
+    /// Gets or sets the time in milliseconds the zoom must stay constant
+    /// before the placement pass starts. While the zoom keeps changing every
+    /// pass would be cancelled by the next change anyway.
+    /// </summary>
+    public int PlacementDebounceMs
     {
-        return source.GetTileAsync;
+        get => _placementService.PlacementDebounceMs;
+        set => _placementService.PlacementDebounceMs = value;
+    }
+
+    /// <summary>
+    /// Gets or sets a value indicating whether the placement pass runs
+    /// synchronously and blocking inside the update instead of in a
+    /// background task. Used by tests and tooling.
+    /// </summary>
+    public bool SynchronousPlacement
+    {
+        get => _placementService.SynchronousPlacement;
+        set => _placementService.SynchronousPlacement = value;
+    }
+
+    /// <inheritdoc />
+    public override IReadOnlyList<double> Resolutions => TileSource.Schema.Resolutions.Select(r => r.Value.UnitsPerPixel).ToList();
+
+    /// <inheritdoc />
+    public override MRect? Extent => _extent;
+
+    /// <summary>
+    /// Clears the placement caches of the layer, so everything is recomputed
+    /// on the next frame. Background tasks that are still running discard
+    /// their results. (The cache of the tile source must be cleared
+    /// separately: <c>tileSource.ClearCache()</c>, so the tiles are rendered
+    /// again.)
+    /// </summary>
+    public void ClearCache()
+    {
+        _placementService.ClearCache();
+        DataHasChanged();
+    }
+
+    /// <summary>
+    /// Updates the placement service with the current view and returns the
+    /// snapshot for the drawing phase: the arrived tiles and the placement
+    /// result of the view (never null; until a new placement exists for the
+    /// zoom, the retained set of the same zoom or an empty result, so no
+    /// symbols are drawn after a zoom change).
+    /// </summary>
+    /// <param name="tileInfos">The tile infos of the current view.</param>
+    /// <param name="zoomLevel">The canonical integer zoom level.</param>
+    /// <param name="worldToScreen">
+    /// Converts world coordinates into the unrotated canonical placement
+    /// space the collision checks and placements are evaluated in.
+    /// </param>
+    /// <param name="centerWorld">
+    /// The center of the viewport in world coordinates; tiles near the
+    /// center are fetched first. Null keeps the order of the input.
+    /// </param>
+    public PlacementView Update(IReadOnlyList<TileInfo> tileInfos, int zoomLevel,
+        Func<double, double, (double, double)> worldToScreen, (double X, double Y)? centerWorld = null)
+    {
+        return _placementService.Update(tileInfos, zoomLevel, worldToScreen, centerWorld);
+    }
+
+    /// <inheritdoc />
+    public override IEnumerable<IFeature> GetFeatures(MRect box, double resolution)
+    {
+        return Array.Empty<IFeature>();
     }
 }

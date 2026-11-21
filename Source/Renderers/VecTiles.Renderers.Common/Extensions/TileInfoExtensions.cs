@@ -1,7 +1,7 @@
 using BruTile;
 using VecTiles.Common.Primitives;
 
-namespace VecTiles.Controls.Mapsui.Extensions;
+namespace VecTiles.Renderers.Common;
 
 /// <summary>
 /// Extension methods for converting <see cref="TileInfo"/> to <see cref="Tile"/>.

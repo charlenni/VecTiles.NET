@@ -98,4 +98,8 @@ public readonly struct TilesKey : IEquatable<TilesKey>
     /// <returns>A string containing the rotation and tile count.</returns>
     public override string ToString() =>
         $"TilesKey(Rotation={Rotation}, Count={_indices.Length})";
+
+    public static bool operator ==(TilesKey left, TilesKey right) => left.Equals(right);
+
+    public static bool operator !=(TilesKey left, TilesKey right) => !left.Equals(right);
 }

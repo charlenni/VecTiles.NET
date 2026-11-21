@@ -39,19 +39,24 @@ public class RenderedTileLayer : BaseLayer
     private SKSurface? _frameSurface;
     private GRContext? _frameGrContext;
 
-    // The last completely drawn frame; drawn when the view currently has no
-    // tiles (e.g. zooming out before the new bigger tiles have arrived), so
-    // the previous map content stays on the screen instead of a black screen
+    // The last completely drawn frame; drawn 1:1 when nothing changed, so
+    // the expensive style rasterization is skipped completely
     private SKImage? _retainedFrame;
     private SKRect _retainedFrameRect;
     private object? _retainedFrameKey;
 
-    // The viewport the retained frame was drawn for; the frame is mapped
-    // from this viewport into the current viewport when it is drawn (so
-    // after a zoom the retained frame shows the old content in the new
-    // scale instead of frozen pixels of the old scale)
+    // The geometry-only frame of the last fully drawn state (same raster
+    // pass, but drawn without the placed symbols): it is mapped into
+    // changed viewports while tiles are missing. The symbols of the old
+    // zoom would show scaled (double size when zooming in) inside such
+    // an image, so the mapped draws use the geometry-only frame instead;
+    // symbols are only ever drawn from a placement of the current zoom
+    private SKImage? _retainedGeometryFrame;
+    private SKRect _retainedGeometryFrameRect;
+
+    // The viewport the geometry-only frame was drawn for (same mechanism)
     private (double CenterX, double CenterY, double Resolution, double Rotation,
-        double Width, double Height)? _retainedFrameViewport;
+        double Width, double Height)? _retainedGeometryFrameViewport;
 
     // The viewport of the previous draw; equal viewports in consecutive draws
     // mean the map stands still (only the content changed, e.g. the
@@ -174,13 +179,17 @@ public class RenderedTileLayer : BaseLayer
     {
         _placementService.ClearCache();
 
-        // The retained frame shows the content of the old styles; drop it so
-        // an empty view does not draw stale content
+        // The retained frames show the content of the old styles; drop them
+        // so an empty view does not draw stale content
         var oldFrame = _retainedFrame;
         _retainedFrame = null;
         _retainedFrameKey = null;
-        _retainedFrameViewport = null;
         oldFrame?.Dispose();
+
+        var oldGeometryFrame = _retainedGeometryFrame;
+        _retainedGeometryFrame = null;
+        _retainedGeometryFrameViewport = null;
+        oldGeometryFrame?.Dispose();
 
         DataHasChanged();
     }
@@ -260,20 +269,24 @@ public class RenderedTileLayer : BaseLayer
     }
 
     /// <summary>
-    /// Draws the retained frame of the last fully drawn state onto the
-    /// canvas (used when the current view has no tiles at all, e.g. right
-    /// after zooming out, so the previous map content stays on the screen
-    /// instead of a cleared map). Returns false when no frame is retained.
+    /// Draws the geometry-only frame of the last fully drawn state onto the
+    /// canvas, mapped into the current viewport (used when the current view
+    /// has no arrived tiles or while tiles are still missing, e.g. right
+    /// after a zoom change, so the previous map content stays on the screen
+    /// instead of a cleared map). The frame is drawn WITHOUT symbols: after
+    /// a zoom change the labels of the old zoom are invalid, and inside a
+    /// mapped image they would show scaled to the new resolution. Returns
+    /// false when no frame is retained.
     /// </summary>
-    internal bool DrawRetainedFrame(SKCanvas canvas, Viewport current)
+    internal bool DrawRetainedGeometryFrame(SKCanvas canvas, Viewport current)
     {
-        if (_retainedFrame == null || _retainedFrameViewport is not { } old)
+        if (_retainedGeometryFrame == null || _retainedGeometryFrameViewport is not { } old)
         {
             return false;
         }
 
         var matrix = CreateRetainedFrameMatrix(
-            old, _retainedFrameRect, _retainedFrame.Width, _retainedFrame.Height,
+            old, _retainedGeometryFrameRect, _retainedGeometryFrame.Width, _retainedGeometryFrame.Height,
             current, canvas.TotalMatrix);
 
         if (matrix == null)
@@ -283,7 +296,7 @@ public class RenderedTileLayer : BaseLayer
 
         canvas.Save();
         canvas.SetMatrix(matrix.Value);
-        canvas.DrawImage(_retainedFrame, 0, 0);
+        canvas.DrawImage(_retainedGeometryFrame, 0, 0);
         canvas.Restore();
         return true;
     }
@@ -379,6 +392,8 @@ public class RenderedTileLayer : BaseLayer
     /// </summary>
     internal bool HasRetainedFrame => _retainedFrame != null;
 
+    internal bool HasRetainedGeometryFrame => _retainedGeometryFrame != null;
+
     /// <summary>
     /// Draws the retained frame when the given key matches the key the
     /// current frame was drawn with (unchanged viewport and view). The
@@ -404,13 +419,27 @@ public class RenderedTileLayer : BaseLayer
     /// frame (with the dest rect and the frame key of the draw); disposes
     /// the previous one.
     /// </summary>
-    internal void SetRetainedFrame(SKImage frame, SKRect destRect, object key, Viewport viewport)
+    internal void SetRetainedFrame(SKImage frame, SKRect destRect, object key)
     {
         var old = _retainedFrame;
         _retainedFrame = frame;
         _retainedFrameRect = destRect;
         _retainedFrameKey = key;
-        _retainedFrameViewport = (viewport.CenterX, viewport.CenterY, viewport.Resolution,
+        old?.Dispose();
+    }
+
+    /// <summary>
+    /// Stores the given snapshot of a geometry-only frame (same draw, but
+    /// without the placed symbols) as the retained geometry frame; it is
+    /// mapped into changed viewports while tiles are missing. Disposes the
+    /// previous one.
+    /// </summary>
+    internal void SetRetainedGeometryFrame(SKImage frame, SKRect destRect, Viewport viewport)
+    {
+        var old = _retainedGeometryFrame;
+        _retainedGeometryFrame = frame;
+        _retainedGeometryFrameRect = destRect;
+        _retainedGeometryFrameViewport = (viewport.CenterX, viewport.CenterY, viewport.Resolution,
             viewport.Rotation, viewport.Width, viewport.Height);
         old?.Dispose();
     }
@@ -428,7 +457,9 @@ public class RenderedTileLayer : BaseLayer
             _retainedFrame?.Dispose();
             _retainedFrame = null;
             _retainedFrameKey = null;
-            _retainedFrameViewport = null;
+            _retainedGeometryFrame?.Dispose();
+            _retainedGeometryFrame = null;
+            _retainedGeometryFrameViewport = null;
             _lastViewportSignature = null;
         }
     }

@@ -65,7 +65,7 @@ public static class RenderedTileLayerRenderer
             // No tiles are visible on screen: keep the last fully drawn frame
             // on the screen (not the cleared canvas), e.g. while zooming out
             // and the bigger tiles of the new view have not arrived yet
-            renderedLayer.DrawRetainedFrame(canvas, viewport);
+            renderedLayer.DrawRetainedGeometryFrame(canvas, viewport);
             return;
         }
 
@@ -171,7 +171,7 @@ public static class RenderedTileLayerRenderer
         // drawn frame on the screen instead of drawing an empty frame
         if (!view.Tiles.Any(t => t.Info.Extent.Intersects(screenExtent)))
         {
-            renderedLayer.DrawRetainedFrame(canvas, viewport);
+            renderedLayer.DrawRetainedGeometryFrame(canvas, viewport);
             return;
         }
 
@@ -210,7 +210,26 @@ public static class RenderedTileLayerRenderer
                 canvas.ResetMatrix();
                 canvas.DrawImage(frame, new SKRect(0, 0, frame.Width, frame.Height), destRect);
                 canvas.Restore();
-                renderedLayer.SetRetainedFrame(frame, destRect, frameKey, viewport);
+                renderedLayer.SetRetainedFrame(frame, destRect, frameKey);
+
+                // Second raster pass without symbols: the geometry-only
+                // frame is what later fills changed viewports while tiles
+                // are missing. The symbols of the current draw belong only
+                // to this viewport — inside a mapped image they would show
+                // at the scale of the target viewport (double size after a
+                // zoom step), so the symbol pixels must not be retained for
+                // that purpose
+                surface.Canvas.Clear(SKColors.Transparent);
+                surface.Canvas.Save();
+                surface.Canvas.Scale(densityX, densityY);
+                DrawRetainedFrameUnderlay(renderedLayer, surface.Canvas, viewport, view.Placement.Incomplete);
+                DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
+                    drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context,
+                    drawSymbols: false);
+                surface.Canvas.Restore();
+
+                var geometryFrame = surface.Snapshot();
+                renderedLayer.SetRetainedGeometryFrame(geometryFrame, destRect, viewport);
             }
 
             return;
@@ -229,17 +248,19 @@ public static class RenderedTileLayerRenderer
     }
 
     /// <summary>
-    /// Draws the retained frame of the previous view as the underlay of the
-    /// current draw, but only while the placement of the current view is
+    /// Draws the geometry-only frame of the previous view as the underlay of
+    /// the current draw, but only while the placement of the current view is
     /// still incomplete (tiles missing); with a complete view the tiles
     /// cover the whole screen and the underlay would only be overdrawn.
+    /// No symbols: the labels of the old zoom are invalid after a zoom
+    /// change and would show scaled inside the mapped image.
     /// </summary>
     private static void DrawRetainedFrameUnderlay(RenderedTileLayer renderedLayer, SKCanvas canvas,
         Viewport viewport, bool incomplete)
     {
-        if (incomplete && renderedLayer.HasRetainedFrame)
+        if (incomplete && renderedLayer.HasRetainedGeometryFrame)
         {
-            renderedLayer.DrawRetainedFrame(canvas, viewport);
+            renderedLayer.DrawRetainedGeometryFrame(canvas, viewport);
         }
     }
 
@@ -284,7 +305,7 @@ public static class RenderedTileLayerRenderer
         EvaluationContext drawContext,
         Func<double, double, (double, double)> placementWorldToScreen,
         Func<double, double, (double, double)> drawWorldToScreen, float placementScale,
-        EvaluationContext context)
+        EvaluationContext context, bool drawSymbols = true)
     {
         // The actually drawn zoom: the style file zoom entries (minzoom /
         // maxzoom) must be checked against this fractional zoom, not against
@@ -365,8 +386,11 @@ public static class RenderedTileLayerRenderer
             // The placed symbols of the same style layer; the layer metadata
             // comes from the tiles the placement read its symbols from, so a
             // layer invisible at the drawn zoom draws no symbols even when
-            // the placement placed them at the canonical zoom
-            if (view.Placement.PlacedByLayer.TryGetValue(name, out var placed) == false || placed.Count == 0)
+            // the placement placed them at the canonical zoom.
+            // Skipped entirely for the geometry-only frame: symbols of an
+            // old zoom must never end up inside a frame that is later mapped
+            // into a changed viewport (there they would show scaled)
+            if (!drawSymbols || view.Placement.PlacedByLayer.TryGetValue(name, out var placed) == false || placed.Count == 0)
             {
                 continue;
             }
@@ -394,7 +418,7 @@ public static class RenderedTileLayerRenderer
             }
         }
 
-        if (renderedLayer.ShowInvalidBorders)
+        if (renderedLayer.ShowInvalidBorders && drawSymbols)
         {
             DrawInvalidBorders(canvas, view.Placement.Rejected, placementWorldToScreen, placementScale, drawWorldToScreen);
         }

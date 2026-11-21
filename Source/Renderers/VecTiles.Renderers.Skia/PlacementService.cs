@@ -489,12 +489,13 @@ public sealed class PlacementService
                 }
                 else
                 {
-                    // A complete result clears the cooldown history
+                    // A complete result clears the cooldown history and
+                    // becomes the retained set
                     _incompleteAttempts.Remove(key);
+                    _lastResult = result;
+                    _lastZoom = key.Zoom;
                 }
 
-                _lastResult = result;
-                _lastZoom = key.Zoom;
                 fire = true;
             }
         }
@@ -525,6 +526,8 @@ public sealed class PlacementService
             _placements[key] = result;
             if (result.Incomplete)
             {
+                // The retry cooldown of an incomplete result starts when
+                // the result is stored, not on the next call
                 _incompleteAttempts[key] = Environment.TickCount64;
             }
             else
@@ -532,8 +535,16 @@ public sealed class PlacementService
                 _incompleteAttempts.Remove(key);
             }
 
-            _lastResult = result;
-            _lastZoom = key.Zoom;
+            // Only a complete result replaces the retained set: an
+            // incomplete pass (fast zooming, so the pass ran over few or no
+            // arrived tiles) must not throw the holdover away, otherwise
+            // every symbol vanishes until a full pass finishes and the
+            // crossfade would never start
+            if (!result.Incomplete)
+            {
+                _lastResult = result;
+                _lastZoom = key.Zoom;
+            }
         }
         catch
         {

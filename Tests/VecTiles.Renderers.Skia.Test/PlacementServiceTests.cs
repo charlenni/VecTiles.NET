@@ -210,6 +210,25 @@ public class PlacementServiceTests
     }
 
     [Fact]
+    public void IncompletePass_DoesNotReplaceTheRetainedSet()
+    {
+        var source = new FakeRenderedTileSource();
+        var service = new PlacementService(source) { PlacementDebounceMs = 0, SynchronousPlacement = true };
+
+        // A complete pass at zoom 8 becomes the retained set
+        var keyA = new[] { TileInfo(3, 2, 8) };
+        var resultA = service.Update(keyA, 8, (x, y) => (x, y)).Placement;
+
+        // The next pass runs over a tile set whose tile is missing: an
+        // incomplete (possibly empty) result must NOT replace the retained
+        // set, otherwise all symbols vanish while fast zooming and the
+        // crossfade of the finished placement never starts
+        source.MissingTiles.Add(7);
+        var keyB = new[] { TileInfo(7, 2, 8) };
+        Assert.Same(resultA, service.Update(keyB, 8, (x, y) => (x, y)).Placement);
+    }
+
+    [Fact]
     public void PlacementFade_StartsWhenHoldoverIsReplaced()
     {
         var layer = new RenderedTileLayer(new FakeRenderedTileSource());

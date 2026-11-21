@@ -509,7 +509,7 @@ public class IconPointSymbolTests
             true);
 
         Utilities.SaveAndDestroyBitmap(_bitmap, Path.Combine(ResultsFolder, filename));
-        
+
         return Utilities.CompareBitmaps(Path.Combine(ResultsFolder, filename), Path.Combine(OriginalsFolder, filename));
     }
 }

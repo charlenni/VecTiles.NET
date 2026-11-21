@@ -14,7 +14,6 @@ namespace VecTiles.Renderers.Skia;
 /// </summary>
 public static class IconLineSymbolRenderer
 {
-    private static readonly SKPaint _paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Aqua, StrokeWidth = 1, IsStroke = true };
 
     // Linear sampling for drawing the icon to screen: at fractional scales and sub pixel
@@ -47,11 +46,13 @@ public static class IconLineSymbolRenderer
     public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconLineSymbol symbol, double screenX,
         double screenY, float iconRotation, bool showValidBorders = false)
     {
-        _paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
-
-        // The paint is shared between all icon drawings: the color filter of
-        // the previous symbol must not leak into this one
-        _paint.ColorFilter = symbol.ColorFilter != null
+        // Local paint: the color and the color filter depend on the symbol,
+        // and icon drawings run concurrently (parallel style layers, parallel
+        // test collections) — a shared paint was mutated in between and the
+        // icon blended with the alpha of another concurrently drawn symbol
+        using var paint = new SKPaint { IsAntialias = true };
+        paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
+        paint.ColorFilter = symbol.ColorFilter != null
             ? SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context))
             : null;
 
@@ -104,7 +105,7 @@ public static class IconLineSymbolRenderer
             -anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
             -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio,
             ScreenSampling,
-            _paint);
+            paint);
 
         canvas.Restore();
 

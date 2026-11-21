@@ -47,13 +47,29 @@ public class CanoePoloHiDpiTests
         canvas.Clear(SKColors.White);
         canvas.Scale((float)density);
 
-        // let the placement settle at this zoom (idle frames like the app)
-        for (var frame = 0; frame < 6; frame++)
+        // let the placement settle at this zoom (idle frames like the app).
+        // The pipeline is asynchronous (tile fetch and placement run on the
+        // thread pool): under load one frame may lag behind the placement
+        // that just completed, so poll until the handed-out result is
+        // complete and no holdover instead of a fixed frame budget
+        var settled = false;
+        for (var frame = 0; frame < 300 && !settled; frame++)
         {
             await Task.Delay(150);
+
             RenderedTileLayerRenderer.Draw(canvas, viewport, layer, new Mapsui.Rendering.RenderService());
+
+            var diag = layer.CurrentPlacement?.Placement;
+            settled = diag is { Incomplete: false, IsHoldover: false };
         }
 
+        Assert.True(settled, $"placement of zoom {zoom} did not settle");
+
+        // One more idle frame with the settled placement, so the icon of the
+        // final result is on the canvas even when the last draw raced the
+        // placement completion
+        await Task.Delay(150);
+        RenderedTileLayerRenderer.Draw(canvas, viewport, layer, new Mapsui.Rendering.RenderService());
         canvas.Flush();
 
         // icon screen positions (logical px) at this zoom

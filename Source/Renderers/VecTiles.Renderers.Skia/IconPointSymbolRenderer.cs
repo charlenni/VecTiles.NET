@@ -14,7 +14,6 @@ namespace VecTiles.Renderers.Skia;
 /// </summary>
 public class IconPointSymbolRenderer : ISymbolRenderer
 {
-    private static readonly SKPaint Paint = new SKPaint { IsAntialias = true, Color = SKColors.White };
     private static readonly SKSamplingOptions SamplingOptions = new SKSamplingOptions(new SKCubicResampler(0.5f, 0.5f));
 
     // Linear sampling for drawing the icon to screen: at fractional scales and sub pixel
@@ -34,11 +33,13 @@ public class IconPointSymbolRenderer : ISymbolRenderer
     /// <param name="showValidBorders">Whether to draw debug borders around the symbol.</param>
     public static void DrawIcon(SKCanvas canvas, EvaluationContext context, IconPointSymbol symbol, double screenX, double screenY, bool showValidBorders = false)
     {
-        Paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
-
-        // The paint is shared between all icon drawings: the color filter of
-        // the previous symbol must not leak into this one
-        Paint.ColorFilter = symbol.ColorFilter != null
+        // Local paint: the color and the color filter depend on the symbol,
+        // and icon drawings run concurrently (parallel style layers, parallel
+        // test collections) — a shared paint was mutated in between and the
+        // icon blended with the alpha of another concurrently drawn symbol
+        using var paint = new SKPaint { IsAntialias = true };
+        paint.Color = SKColors.White.WithAlpha((byte)(symbol.Opacity?.Invoke(context) * 255 ?? 255));
+        paint.ColorFilter = symbol.ColorFilter != null
             ? SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context))
             : null;
 
@@ -98,7 +99,7 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             -anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
             -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio,
             ScreenSampling,
-            Paint);
+            paint);
 
         canvas.Restore();
 

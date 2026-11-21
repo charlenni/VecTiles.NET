@@ -198,9 +198,28 @@ public static class RenderedTileLayerRenderer
                     continue;
                 }
 
-                DrawGeometryTile(canvas, viewport, tileInView.Info, tileInView.Tile);
+                DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
             }
         }
+    }
+
+    /// <summary>
+    /// Draws one single geometry layer of a rendered tile with the per-tile
+    /// transform, without the other layers of the tile (the style layer by
+    /// style layer pass across all tiles calls this per layer).
+    /// </summary>
+    private static void DrawGeometryLayer(SKCanvas canvas, Viewport viewport, TileInfo tileInfo,
+        RenderedGeometryLayer geometryLayer)
+    {
+        canvas.Save();
+
+        var scale = CreateMatrix(canvas, viewport, ToMRect(tileInfo.Extent));
+        var drawContext = new EvaluationContext(ResolutionToZoomLevel(viewport.Resolution), 1f / scale, (float)viewport.Rotation);
+
+        canvas.ClipRect(TileRect);
+        geometryLayer.Renderer.Draw(canvas, drawContext);
+
+        canvas.Restore();
     }
 
     /// <summary>

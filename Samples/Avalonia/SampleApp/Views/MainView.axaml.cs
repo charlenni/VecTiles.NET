@@ -19,7 +19,6 @@ namespace SampleApp.Views;
 public partial class MainView : UserControl
 {
     private readonly string _path = "Files";
-    private readonly RenderedSymbolsLayer _symbolsLayer;
     private readonly TileGridDebugLayer _debugLayer;
     private readonly OMTRenderedTileSource _tileSource;
     private readonly RenderedTileLayer _tileLayer;
@@ -28,8 +27,6 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        MapRenderer.RegisterStyleRenderer(typeof(RenderedTileStyle), new RenderedTileStyleRenderer());
-
         var styleSource = $"file://{_path}/osm-liberty.json";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
@@ -37,16 +34,13 @@ public partial class MainView : UserControl
 
         _tileLayer = new RenderedTileLayer(_tileSource);
         MapControl.Map.Layers.Add(_tileLayer);
-        
+
         _debugLayer = new TileGridDebugLayer(_tileLayer.TileSource.Schema)
         {
             Enabled = CheckBoxDebugLayer.IsChecked ?? false
         };
         MapControl.Map.Layers.Add(_debugLayer);
 
-        _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
-        MapControl.Map.Layers.Add(_symbolsLayer);
-        
         // The PerformanceWidget is created as part of the map.
         var performanceWidget = MapControl.Map.Widgets.OfType<PerformanceWidget>().First();
         performanceWidget.Performance.IsActive = Mapsui.Widgets.ActiveMode.Yes; // The default in ActiveMode.OnlyInDebugMode which is usually the best option. This is just to show how to change it.
@@ -105,14 +99,14 @@ public partial class MainView : UserControl
 
     private void CheckBoxValid_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        _symbolsLayer.ShowValidBorders = CheckBoxValidBorder.IsChecked ?? false;
+        _tileLayer.ShowValidBorders = CheckBoxValidBorder.IsChecked ?? false;
 
         MapControl.Map.RefreshGraphics();
     }
 
     private void CheckBoxInvalid_Click(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        _symbolsLayer.ShowInvalidBorders = CheckBoxInvalidBorder.IsChecked ?? false;
+        _tileLayer.ShowInvalidBorders = CheckBoxInvalidBorder.IsChecked ?? false;
 
         MapControl.Map.RefreshGraphics();
     }
@@ -124,7 +118,6 @@ public partial class MainView : UserControl
         // Styles are baked into the rendered tiles, so all caches have to be cleared, before redrawing the map
         _tileSource.ClearCache();
         _tileLayer.ClearCache();
-        _symbolsLayer.ClearCache();
 
         MapControl.Map.RefreshData(Mapsui.ChangeType.Discrete);
     }

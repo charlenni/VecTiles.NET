@@ -11,9 +11,10 @@ namespace VecTiles.OpenMapTiles.Benchmarks;
 /// <summary>
 /// Measures the drawing speed of the tile rendering used by
 /// <c>VecTiles.Renderers.Skia.Test.RenderedTileTests</c>: the center tile
-/// (Z19, X274582, Y183615) is drawn on a canvas together with its surrounding
-/// tiles (3x3), afterwards the symbol layer is drawn on top. The vector tiles
-/// are rendered once in the setup, so the benchmarks measure only the drawing.
+/// (Z19, X274582, Y183615) is drawn on a canvas, its surrounding tiles (3x3)
+/// and finally the full layer path with the placed symbols. The vector tiles
+/// are rendered once in the setup and the placement pass is run once
+/// synchronously, so the benchmarks measure only the drawing.
 /// </summary>
 [MemoryDiagnoser]
 public class OMTDrawTileBenchmarks
@@ -27,14 +28,14 @@ public class OMTDrawTileBenchmarks
     private const double WorldHalf = WorldWidth / 2;
 
     private OMTRenderedTileSource _tileSource = null!;
-    private RenderedSymbolsLayer _symbolsLayer = null!;
+    private RenderedTileLayer _tileLayer = null!;
     private Mapsui.Rendering.RenderService _renderService = null!;
     private Viewport _viewport = new();
     private TileInfo[] _tileInfos = null!;
 
     static OMTDrawTileBenchmarks()
     {
-        MapRenderer.RegisterStyleRenderer(typeof(RenderedTileStyle), new RenderedTileStyleRenderer());
+        MapRenderer.RegisterLayerRenderer("rendered-tile-layer", RenderedTileLayerRenderer.Draw);
     }
 
     [GlobalSetup]
@@ -42,7 +43,10 @@ public class OMTDrawTileBenchmarks
     {
         var styleSource = $"file://{_path}osm-liberty.json";
         _tileSource = new OMTRenderedTileSource(styleSource);
-        _symbolsLayer = new RenderedSymbolsLayer(_tileSource);
+        _tileLayer = new RenderedTileLayer(_tileSource)
+        {
+            SynchronousPlacement = true
+        };
         _renderService = new Mapsui.Rendering.RenderService();
 
         const int size = 3 * TileSize;
@@ -63,11 +67,16 @@ public class OMTDrawTileBenchmarks
             }
         }
 
-        // Render all tiles once, so the benchmarks only measure the drawing
+        // Render all tiles once and run the synchronous placement pass once,
+        // so the benchmarks only measure the drawing
         foreach (var tileInfo in _tileInfos)
         {
             await _tileSource.GetTileAsync(tileInfo);
         }
+
+        using var warmup = new SKBitmap(3 * TileSize, 3 * TileSize);
+        using var warmupCanvas = new SKCanvas(warmup);
+        RenderedTileLayerRenderer.Draw(warmupCanvas, _viewport, _tileLayer, _renderService);
     }
 
     /// <summary>Draws one single rendered tile, without neighbors and symbols.</summary>
@@ -78,11 +87,11 @@ public class OMTDrawTileBenchmarks
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.Beige);
 
-        if (_tileSource.GetTileAsync(_tileInfos[4]).Result is RenderedTileFeature feature)
+        var tile = _tileSource.GetTileAsync(_tileInfos[4]).Result;
+
+        if (tile != null)
         {
-            new RenderedTileStyleRenderer().Draw(
-                canvas, _viewport, new Mapsui.Layers.MemoryLayer(), feature,
-                new RenderedTileStyle(), _renderService, 0);
+            RenderedTileLayerRenderer.DrawGeometryTile(canvas, _viewport, _tileInfos[4], tile);
         }
     }
 
@@ -96,16 +105,16 @@ public class OMTDrawTileBenchmarks
 
         foreach (var tileInfo in _tileInfos)
         {
-            if (_tileSource.GetTileAsync(tileInfo).Result is RenderedTileFeature feature)
+            var tile = _tileSource.GetTileAsync(tileInfo).Result;
+
+            if (tile != null)
             {
-                new RenderedTileStyleRenderer().Draw(
-                    canvas, _viewport, new Mapsui.Layers.MemoryLayer(), feature,
-                    new RenderedTileStyle(), _renderService, 0);
+                RenderedTileLayerRenderer.DrawGeometryTile(canvas, _viewport, tileInfo, tile);
             }
         }
     }
 
-    /// <summary>Draws the full path of <c>RenderedTileTests</c>: 3x3 tiles plus the symbol layer.</summary>
+    /// <summary>Draws the full path of <c>RenderedTileTests</c>: 3x3 tiles plus the placed symbols of the placement run.</summary>
     [Benchmark]
     public void DrawTileWithSymbols3x3()
     {
@@ -113,17 +122,7 @@ public class OMTDrawTileBenchmarks
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.Beige);
 
-        foreach (var tileInfo in _tileInfos)
-        {
-            if (_tileSource.GetTileAsync(tileInfo).Result is RenderedTileFeature feature)
-            {
-                new RenderedTileStyleRenderer().Draw(
-                    canvas, _viewport, new Mapsui.Layers.MemoryLayer(), feature,
-                    new RenderedTileStyle(), _renderService, 0);
-            }
-        }
-
-        RenderedSymbolsLayerRenderer.Draw(canvas, _viewport, _symbolsLayer, _renderService);
+        RenderedTileLayerRenderer.Draw(canvas, _viewport, _tileLayer, _renderService);
     }
 
     private static TileInfo CreateTileInfo(int tileX, int tileY)

@@ -66,7 +66,7 @@ public class OMTSymbolFactory : ISymbolFactory
         return !iconAlongLine || !textAlongLine;
     }
 
-    // RenderedTiles are created in parallel (see RenderedSymbolsLayer/GetTileAsync),
+    // RenderedTiles are created in parallel (see OMTRenderedTileSource/GetTileAsync),
     // so access to the cached builders must be thread-safe
     ConcurrentDictionary<(string, int), OMTIconBuilder> _iconBuilders = new();
     ConcurrentDictionary<(string, int), OMTTextBuilder> _textBuilders = new();

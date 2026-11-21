@@ -364,6 +364,7 @@ public sealed class PlacementService
                 _holdoverResult = _lastResult.Rescaled(zoomLevel) with
                 {
                     Incomplete = true,
+                    IsHoldover = true,
                 };
                 _holdoverSource = _lastResult;
                 _holdoverZoom = zoomLevel;

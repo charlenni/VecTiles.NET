@@ -210,6 +210,40 @@ public class PlacementServiceTests
     }
 
     [Fact]
+    public void PlacementFade_StartsWhenHoldoverIsReplaced()
+    {
+        var layer = new RenderedTileLayer(new FakeRenderedTileSource());
+
+        var holdover = PlacementResult.Empty() with
+        {
+            ZoomLevel = 8,
+            Incomplete = true,
+            IsHoldover = true,
+        };
+
+        // First draw of a view: there is nothing to fade
+        var (old, oldAlpha, newAlpha) = layer.GetPlacementFade(holdover);
+        Assert.Null(old);
+        Assert.Equal(0f, oldAlpha);
+        Assert.Equal(1f, newAlpha);
+
+        // The holdover is replaced by the finished placement: the fade runs
+        // (the holdover fades out, the new set fades in)
+        var finished = PlacementResult.Empty() with { ZoomLevel = 9 };
+        (old, oldAlpha, newAlpha) = layer.GetPlacementFade(finished);
+        Assert.Same(holdover, old);
+        Assert.InRange(oldAlpha, 0f, 1f);
+        Assert.InRange(newAlpha, 0f, 1f);
+
+        // A new holdover (another zoom change) swaps instantly, no fade
+        var holdover2 = holdover with { ZoomLevel = 10 };
+        (old, oldAlpha, newAlpha) = layer.GetPlacementFade(holdover2);
+        Assert.Null(old);
+        Assert.Equal(0f, oldAlpha);
+        Assert.Equal(1f, newAlpha);
+    }
+
+    [Fact]
     public void IncompleteResult_NoNewFetchAttemptsWithinCooldown()
     {
         var (x0, y0) = (3, 2);

@@ -123,6 +123,12 @@ public static class RenderedTileLayerRenderer
         var view = renderedLayer.Update(placementTileInfos, zoomLevel, placementWorldToScreen,
             (center.X, center.Y));
 
+        // Symbol crossfade: when the holdover of the previous zoom was
+        // replaced by the finished placement of this zoom, the old symbols
+        // fade out while the new ones fade in (frame key and drawing below
+        // depend on the fade state, so every fade frame rasterizes fresh)
+        var placementFade = renderedLayer.GetPlacementFade(view.Placement);
+
         // Mapsui scales the screen canvas by the pixel density (logical px *
         // density = device px). The offscreen frame must be rasterized in
         // device pixels at the same scale, so the blit is 1:1 in device
@@ -160,7 +166,7 @@ public static class RenderedTileLayerRenderer
 
         object frameKey = (view.Placement, tilesKey, viewport.CenterX, viewport.CenterY,
             viewport.Resolution, viewport.Rotation, viewport.Width, viewport.Height,
-            destRect, zoomLevel);
+            destRect, zoomLevel, placementFade.Old, (byte)Math.Round(placementFade.OldAlpha * 255));
         if (renderedLayer.TryReuseFrame(frameKey, canvas))
         {
             return;
@@ -202,7 +208,9 @@ public static class RenderedTileLayerRenderer
                 surface.Canvas.Scale(densityX, densityY);
                 DrawRetainedFrameUnderlay(renderedLayer, surface.Canvas, viewport, view.Placement.Incomplete);
                 DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
-                    drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
+                    drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context,
+                    fadeOutPlacement: placementFade.Old, fadeOutAlpha: placementFade.OldAlpha,
+                    fadeInAlpha: placementFade.NewAlpha);
                 surface.Canvas.Restore();
 
                 var frame = surface.Snapshot();
@@ -214,22 +222,23 @@ public static class RenderedTileLayerRenderer
 
                 // Second raster pass without symbols: the geometry-only
                 // frame is what later fills changed viewports while tiles
-                // are missing. The symbols of the current draw belong only
-                // to this viewport — inside a mapped image they would show
-                // at the scale of the target viewport (double size after a
-                // zoom step), so the symbol pixels must not be retained for
-                // that purpose
-                surface.Canvas.Clear(SKColors.Transparent);
-                surface.Canvas.Save();
-                surface.Canvas.Scale(densityX, densityY);
-                DrawRetainedFrameUnderlay(renderedLayer, surface.Canvas, viewport, view.Placement.Incomplete);
-                DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
-                    drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context,
-                    drawSymbols: false);
-                surface.Canvas.Restore();
+                // are missing. Not refreshed while the crossfade runs: the
+                // geometry does not depend on the fade state and the frame
+                // of the last stable state is still valid
+                if (placementFade.Old == null)
+                {
+                    surface.Canvas.Clear(SKColors.Transparent);
+                    surface.Canvas.Save();
+                    surface.Canvas.Scale(densityX, densityY);
+                    DrawRetainedFrameUnderlay(renderedLayer, surface.Canvas, viewport, view.Placement.Incomplete);
+                    DrawInStyleLayerOrder(surface.Canvas, viewport, view, screenExtent, rotation, renderedLayer,
+                        drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context,
+                        drawSymbols: false);
+                    surface.Canvas.Restore();
 
-                var geometryFrame = surface.Snapshot();
-                renderedLayer.SetRetainedGeometryFrame(geometryFrame, destRect, viewport);
+                    var geometryFrame = surface.Snapshot();
+                    renderedLayer.SetRetainedGeometryFrame(geometryFrame, destRect, viewport);
+                }
             }
 
             return;
@@ -244,7 +253,9 @@ public static class RenderedTileLayerRenderer
         DrawRetainedFrameUnderlay(renderedLayer, canvas, viewport, view.Placement.Incomplete);
 
         DrawInStyleLayerOrder(canvas, viewport, view, screenExtent, rotation, renderedLayer,
-            drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
+            drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context,
+            fadeOutPlacement: placementFade.Old, fadeOutAlpha: placementFade.OldAlpha,
+            fadeInAlpha: placementFade.NewAlpha);
     }
 
     /// <summary>
@@ -305,7 +316,8 @@ public static class RenderedTileLayerRenderer
         EvaluationContext drawContext,
         Func<double, double, (double, double)> placementWorldToScreen,
         Func<double, double, (double, double)> drawWorldToScreen, float placementScale,
-        EvaluationContext context, bool drawSymbols = true)
+        EvaluationContext context, bool drawSymbols = true,
+        PlacementResult? fadeOutPlacement = null, float fadeOutAlpha = 0f, float fadeInAlpha = 1f)
     {
         // The actually drawn zoom: the style file zoom entries (minzoom /
         // maxzoom) must be checked against this fractional zoom, not against
@@ -389,8 +401,22 @@ public static class RenderedTileLayerRenderer
             // the placement placed them at the canonical zoom.
             // Skipped entirely for the geometry-only frame: symbols of an
             // old zoom must never end up inside a frame that is later mapped
-            // into a changed viewport (there they would show scaled)
-            if (!drawSymbols || view.Placement.PlacedByLayer.TryGetValue(name, out var placed) == false || placed.Count == 0)
+            // into a changed viewport (there they would show scaled).
+            // While the crossfade runs, the fading-out holdover draws its
+            // entries of the same style layer before the current placement,
+            // both wrapped in alpha layers
+            if (!drawSymbols)
+            {
+                continue;
+            }
+
+            var newPlaced = view.Placement.PlacedByLayer.TryGetValue(name, out var list) &&
+                list.Count > 0 ? list : null;
+            var oldPlaced = fadeOutPlacement is not null && fadeOutAlpha > 0 &&
+                fadeOutPlacement.PlacedByLayer.TryGetValue(name, out var oldList) &&
+                oldList.Count > 0 ? oldList : null;
+
+            if (newPlaced == null && oldPlaced == null)
             {
                 continue;
             }
@@ -401,19 +427,42 @@ public static class RenderedTileLayerRenderer
                 continue;
             }
 
-            foreach (var entry in placed)
+            if (oldPlaced != null)
             {
-                if (entry.Symbol is PointSymbol pointSymbol)
+                using var oldLayerPaint = new SKPaint
                 {
-                    PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree,
-                        placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
-                        drawContext, drawWorldToScreen, checkForSpace: false);
+                    Color = SKColors.White.WithAlpha((byte)Math.Round(255 * fadeOutAlpha)),
+                };
+                canvas.SaveLayer(oldLayerPaint);
+                foreach (var entry in oldPlaced)
+                {
+                    DrawPlacementEntry(canvas, viewport, rotation, renderedLayer, drawContext, context,
+                        placementWorldToScreen, drawWorldToScreen, entry, ref tree);
                 }
-                else if (entry.Symbol is LineSymbol lineSymbol)
+
+                canvas.Restore();
+            }
+
+            if (newPlaced != null && fadeInAlpha > 0)
+            {
+                SKPaint? newLayerPaint = fadeInAlpha < 1
+                    ? new SKPaint { Color = SKColors.White.WithAlpha((byte)Math.Round(255 * fadeInAlpha)) }
+                    : null;
+                if (newLayerPaint != null)
                 {
-                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree,
-                        placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
-                        drawContext, drawWorldToScreen, entry.Run!);
+                    canvas.SaveLayer(newLayerPaint);
+                }
+
+                foreach (var entry in newPlaced)
+                {
+                    DrawPlacementEntry(canvas, viewport, rotation, renderedLayer, drawContext, context,
+                        placementWorldToScreen, drawWorldToScreen, entry, ref tree);
+                }
+
+                if (newLayerPaint != null)
+                {
+                    canvas.Restore();
+                    newLayerPaint.Dispose();
                 }
             }
         }
@@ -421,6 +470,30 @@ public static class RenderedTileLayerRenderer
         if (renderedLayer.ShowInvalidBorders && drawSymbols)
         {
             DrawInvalidBorders(canvas, view.Placement.Rejected, placementWorldToScreen, placementScale, drawWorldToScreen);
+        }
+    }
+
+    /// <summary>
+    /// Draws one placed entry (point or line symbol) of a placement result
+    /// with the drawing settings of the current view; runs no collision
+    /// checks and inserts nothing into the tree.
+    /// </summary>
+    private static void DrawPlacementEntry(SKCanvas canvas, Viewport viewport, double rotation,
+        RenderedTileLayer renderedLayer, EvaluationContext drawContext, EvaluationContext context,
+        Func<double, double, (double, double)> placementWorldToScreen,
+        Func<double, double, (double, double)> drawWorldToScreen, PlacementEntry entry, ref Quadtree<ISymbol> tree)
+    {
+        if (entry.Symbol is PointSymbol pointSymbol)
+        {
+            PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree,
+                placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
+                drawContext, drawWorldToScreen, checkForSpace: false);
+        }
+        else if (entry.Symbol is LineSymbol lineSymbol)
+        {
+            LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree,
+                placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
+                drawContext, drawWorldToScreen, entry.Run!);
         }
     }
 

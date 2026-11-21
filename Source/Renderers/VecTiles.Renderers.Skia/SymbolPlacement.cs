@@ -53,6 +53,14 @@ public sealed record PlacementResult
     public int ZoomLevel { get; init; }
 
     /// <summary>
+    /// True when this result is the holdover of the previous zoom (see
+    /// <see cref="ZoomLevel"/>): the drawing fades it out and the finished
+    /// placement of the current zoom in, so no label set pops between the
+    /// two states.
+    /// </summary>
+    public bool IsHoldover { get; init; }
+
+    /// <summary>
     /// True when at least one tile could not be fetched, so the placement may
     /// be missing symbols; the result should be recomputed when the tiles
     /// become available.

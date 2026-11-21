@@ -64,6 +64,65 @@ public class RenderedTileLayer : BaseLayer
     // blitted atomically instead of drawn directly
     private object? _lastViewportSignature;
 
+    // Placement crossfade: when the holdover of the previous zoom is
+    // replaced by the finished placement of the new zoom, the old symbols
+    // fade out while the new ones fade in, so no label set pops between the
+    // two states
+    internal const int PlacementFadeMs = 100;
+
+    // The placement the last frame drew its symbols from (reference only:
+    // a reference change marks the switch between two symbol sets)
+    private PlacementResult? _lastDrawnPlacement;
+    private bool _lastDrawnWasHoldover;
+
+    // The holdover that is currently fading out and when the fade started
+    private PlacementResult? _fadingOutPlacement;
+    private long _fadeStartTicks;
+
+    /// <summary>
+    /// Computes the crossfade state of the symbol drawing for this frame:
+    /// the holdover that still fades out (null when no fade is running),
+    /// its remaining opacity and the growing opacity of the current
+    /// placement. Must be called once per draw with the placement the frame
+    /// will use; a reference change from the holdover of the previous zoom
+    /// to the finished placement starts the fade.
+    /// </summary>
+    internal (PlacementResult? Old, float OldAlpha, float NewAlpha) GetPlacementFade(PlacementResult placement)
+    {
+        if (!ReferenceEquals(placement, _lastDrawnPlacement))
+        {
+            // A finished placement replaces the holdover -> crossfade; any
+            // other switch (pan at the same zoom, a new holdover after
+            // another zoom change) swaps the sets immediately
+            if (_lastDrawnWasHoldover && !placement.IsHoldover)
+            {
+                _fadingOutPlacement = _lastDrawnPlacement;
+                _fadeStartTicks = Environment.TickCount64;
+            }
+            else
+            {
+                _fadingOutPlacement = null;
+            }
+
+            _lastDrawnPlacement = placement;
+            _lastDrawnWasHoldover = placement.IsHoldover;
+        }
+
+        if (_fadingOutPlacement == null)
+        {
+            return (null, 0f, 1f);
+        }
+
+        var progress = (Environment.TickCount64 - _fadeStartTicks) / (double)PlacementFadeMs;
+        if (progress >= 1)
+        {
+            _fadingOutPlacement = null;
+            return (null, 0f, 1f);
+        }
+
+        return (_fadingOutPlacement, 1f - (float)progress, (float)progress);
+    }
+
     /// <summary>
     /// Initializes a new instance of the <see cref="RenderedTileLayer"/> class.
     /// </summary>
@@ -190,6 +249,8 @@ public class RenderedTileLayer : BaseLayer
         _retainedGeometryFrame = null;
         _retainedGeometryFrameViewport = null;
         oldGeometryFrame?.Dispose();
+
+        ResetPlacementFade();
 
         DataHasChanged();
     }
@@ -462,6 +523,14 @@ public class RenderedTileLayer : BaseLayer
             _retainedGeometryFrame = null;
             _retainedGeometryFrameViewport = null;
             _lastViewportSignature = null;
+            ResetPlacementFade();
         }
+    }
+
+    private void ResetPlacementFade()
+    {
+        _lastDrawnPlacement = null;
+        _lastDrawnWasHoldover = false;
+        _fadingOutPlacement = null;
     }
 }

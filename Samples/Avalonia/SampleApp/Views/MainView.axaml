@@ -17,14 +17,18 @@
 	<Grid>
 		<Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">
 			<Grid.ColumnDefinitions>
+				<ColumnDefinition Width="220" MinWidth="140" MaxWidth="600"/>
+				<ColumnDefinition Width="Auto"/>
 				<ColumnDefinition Width="*"/>
-				<ColumnDefinition Width="5*"/>
 			</Grid.ColumnDefinitions>
 			<Grid.RowDefinitions>
 				<RowDefinition Height="*"/>
 				<RowDefinition Height="Auto"/>
 			</Grid.RowDefinitions>
-			<avalonia:MapControl Grid.Column="1" x:Name="MapControl" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+			<GridSplitter Grid.Column="1" VerticalAlignment="Stretch" HorizontalAlignment="Center"
+			              Width="5" Background="LightGray"
+			              ResizeDirection="Columns" ResizeBehavior="PreviousAndNext" />
+			<avalonia:MapControl Grid.Column="2" x:Name="MapControl" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
 			<Border Grid.Column="0" BorderBrush="White" Opacity="0.65" BorderThickness="6" MinWidth="140"
                     MinHeight="30" HorizontalAlignment="Stretch">
 				<Grid VerticalAlignment="Stretch" HorizontalAlignment="Stretch">

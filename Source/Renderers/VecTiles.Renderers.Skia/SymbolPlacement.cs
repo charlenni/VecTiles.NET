@@ -122,10 +122,19 @@ public static class SymbolPlacementEngine
         var orderedTiles = tiles.OrderBy(t => t.Tile.Id);
 
         // Merge the symbol layers of all tiles into a single dictionary.
-        // Every tile lists its layers in ascending style order (see
-        // IRenderedTile.Layers), so the merged dictionary iteration order is
-        // the ascending style order as well.
+        // Not every tile carries an entry for every style layer (styles
+        // without data in the tile produce no entry), so the style file order
+        // is taken from the StyleIndex of the entries and not from the first
+        // occurrence across the tiles. The minzoom/maxzoom of the style layer
+        // is kept alongside (every tile carries the same values).
         var layers = new Dictionary<string, ISymbolLayer>();
+        var layerZooms = new Dictionary<string, (float MinZoom, float MaxZoom)>();
+        var layerOrder = new Dictionary<string, int>();
+        // First occurrence order (the position at which a layer name appeared
+        // first while merging); used as tie breaker for entries without a
+        // meaningful StyleIndex (later in the list = higher layer)
+        var layerPositions = new List<string>();
+        var seenNames = new HashSet<string>();
 
         foreach (var tile in orderedTiles)
         {
@@ -140,32 +149,47 @@ public static class SymbolPlacementEngine
                 {
                     symbolLayer = new SymbolLayer(symbolEntry.Symbols.Symbols, symbolEntry.Symbols.MinZoom, symbolEntry.Symbols.MaxZoom);
                     layers.Add(entry.Name, symbolLayer);
+                    layerZooms.Add(entry.Name, (symbolEntry.MinZoom, symbolEntry.MaxZoom));
+                    layerOrder.Add(entry.Name, symbolEntry.StyleIndex);
                 }
                 else
                 {
                     symbolLayer.Symbols.AddRange(symbolEntry.Symbols.Symbols);
                 }
+
+                if (seenNames.Add(entry.Name))
+                {
+                    layerPositions.Add(entry.Name);
+                }
             }
         }
 
-        // The highest style layer wins: process the layers in reverse (top
-        // layer first) so its symbols occupy the quadtree first; symbols of
-        // lower layers that collide are dropped and nothing is removed later.
-        foreach (var layerEntry in layers.Reverse())
+        // The highest style layer wins: process the layers top first (highest
+        // style index; equal indices order by list position, later entry
+        // first) so its symbols occupy the quadtree first; symbols of lower
+        // layers that collide are dropped and nothing is removed later
+        var merged = layerPositions.Select((name, position) => (name, position));
+        var topFirst = merged
+            .OrderByDescending(pair => layerOrder[pair.name])
+            .ThenByDescending(pair => pair.position)
+            .Select(pair => pair.name)
+            .ToList();
+
+        foreach (var name in topFirst)
         {
             token.ThrowIfCancellationRequested();
 
-            if (layerEntry.Value.MinZoom > zoomLevel || layerEntry.Value.MaxZoom < zoomLevel)
+            if (IsVisibleAtZoom(layerZooms[name], zoomLevel) == false)
             {
                 // Invisible at this zoom level, but keep the layer order
-                placesTopFirst.Add(layerEntry.Key, new List<PlacementEntry>());
+                placesTopFirst.Add(name, new List<PlacementEntry>());
                 continue;
             }
 
             // Names in the same style layer are ordered by SortOrder and then
             // by Rank; line symbols of the same feature split across tiles are
             // merged into one continuous symbol
-            var symbols = LineSymbolMerger.MergeById(layerEntry.Value.Symbols
+            var symbols = LineSymbolMerger.MergeById(layers[name].Symbols
                 .OrderBy(s => s.SortOrder).ThenBy(s => s.Rank));
 
             var placements = new List<PlacementEntry>();
@@ -209,7 +233,7 @@ public static class SymbolPlacementEngine
                 }
             }
 
-            placesTopFirst.Add(layerEntry.Key, placements);
+            placesTopFirst.Add(name, placements);
 
             void placedByLayerAdd(ISymbol symbol, LineSymbolPlacementRun? run)
             {
@@ -235,9 +259,12 @@ public static class SymbolPlacementEngine
         // Copy the placements into the result dictionary in the ascending
         // style order, so drawing in dictionary order draws the layers from
         // bottom (first style layer) to top (last style layer)
-        foreach (var layerEntry in layers)
+        foreach (var (name, _) in layerPositions
+            .Select((name, position) => (name, position))
+            .OrderBy(pair => layerOrder[pair.name])
+            .ThenBy(pair => pair.position))
         {
-            placedByLayer.Add(layerEntry.Key, placesTopFirst[layerEntry.Key]);
+            placedByLayer.Add(name, placesTopFirst[name]);
         }
 
         return new PlacementResult
@@ -246,5 +273,25 @@ public static class SymbolPlacementEngine
             Rejected = rejected,
             Tree = tree,
         };
+    }
+
+    /// <summary>
+    /// Style layer visibility semantics (see Renderer.IsVisible): a layer is
+    /// visible when the zoom lies within [minzoom, maxzoom); -1 marks an
+    /// unset zoom value in the style file.
+    /// </summary>
+    public static bool IsVisibleAtZoom((float MinZoom, float MaxZoom) zooms, float zoom)
+    {
+        if (zooms.MinZoom > -1 && zooms.MinZoom > zoom)
+        {
+            return false;
+        }
+
+        if (zooms.MaxZoom > -1 && zooms.MaxZoom <= zoom)
+        {
+            return false;
+        }
+
+        return true;
     }
 }

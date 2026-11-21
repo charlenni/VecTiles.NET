@@ -11,4 +11,12 @@ public interface IRenderedLayerEntry
     /// Gets the name of the style layer.
     /// </summary>
     public string Name { get; }
+
+    /// <summary>
+    /// Gets the position of the style layer in the style file (the index in
+    /// the unfiltered style list). Not every tile carries an entry for every
+    /// style layer (missing data), so the merged order of the tiles must be
+    /// built from this index, not from the first occurrence across the tiles.
+    /// </summary>
+    public int StyleIndex { get; }
 }

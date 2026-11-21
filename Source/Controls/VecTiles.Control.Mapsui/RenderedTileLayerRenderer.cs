@@ -17,11 +17,14 @@ using VecTiles.Renderers.Skia.Primitives;
 namespace VecTiles.Controls.Mapsui;
 
 /// <summary>
-/// Draws a <see cref="RenderedTileLayer"/>: first the geometry of all visible
-/// tiles (style layer by style layer across all tiles, so the background of
-/// one tile cannot overpaint the lines of the neighboring tile), afterwards
-/// the placed symbols in style layer order. The symbols are only drawn when
-/// a placement result exists (the placement runs in the background and
+/// Draws a <see cref="RenderedTileLayer"/>: style layer by style layer, in
+/// the order the style file lists them — for every style layer at first its
+/// geometry over all visible tiles, right afterwards its placed symbols (so
+/// the background of one tile cannot overpaint the lines of the neighboring
+/// tile, and a symbol of a style layer never lands on top of the geometry of
+/// a later style layer). Layers with visibility none or outside
+/// minzoom/maxzoom of the drawn zoom are skipped. The symbols are only drawn
+/// when a placement result exists (the placement runs in the background and
 /// triggers a redraw when its result is ready).
 /// </summary>
 public static class RenderedTileLayerRenderer
@@ -117,10 +120,12 @@ public static class RenderedTileLayerRenderer
         var view = renderedLayer.Update(placementTileInfos, zoomLevel, placementWorldToScreen,
             (center.X, center.Y));
 
-        DrawGeometry(canvas, viewport, view, screenExtent);
-
-        DrawSymbols(canvas, view.Placement, rotation, renderedLayer, drawContext,
-            placementWorldToScreen, drawWorldToScreen, placementScale, context);
+        // Draws the style layers in the order the style file lists them: for
+        // every style layer at first its geometry over all tiles, afterwards
+        // the placed symbols of the same style layer (the placement result
+        // may be empty — then no symbols are drawn at all)
+        DrawInStyleLayerOrder(canvas, viewport, view, screenExtent, rotation, renderedLayer,
+            drawContext, placementWorldToScreen, drawWorldToScreen, placementScale, context);
     }
 
     /// <summary>
@@ -150,15 +155,28 @@ public static class RenderedTileLayerRenderer
     }
 
     /// <summary>
-    /// Draws the geometry of the arrived tiles of the view: for every style
-    /// layer (in the order the tiles list them, merged across the tiles) the
-    /// entries of all visible tiles, so an entry of a later style layer never
-    /// overpaints the entries of the earlier style layers of the neighboring
-    /// tiles (the drawback of drawing tile by tile).
+    /// Draws the arrived tiles in the order the style file lists the style
+    /// layers: for every style layer at first its geometry is drawn over all
+    /// visible tiles (so an entry of a later style layer never overpaints the
+    /// entries of the earlier style layers of the neighboring tiles), right
+    /// afterwards the placed symbols of the same style layer. The symbols are
+    /// only drawn when the placement result contains entries for the layer
+    /// (the placement runs in the background and triggers a redraw when its
+    /// result is ready).
     /// </summary>
-    private static void DrawGeometry(SKCanvas canvas, Viewport viewport, PlacementView view,
-        BruTile.Extent screenExtent)
+    private static void DrawInStyleLayerOrder(SKCanvas canvas, Viewport viewport, PlacementView view,
+        BruTile.Extent screenExtent, double rotation, RenderedTileLayer renderedLayer,
+        EvaluationContext drawContext,
+        Func<double, double, (double, double)> placementWorldToScreen,
+        Func<double, double, (double, double)> drawWorldToScreen, float placementScale,
+        EvaluationContext context)
     {
+        // The actually drawn zoom: the style file zoom entries (minzoom /
+        // maxzoom) must be checked against this fractional zoom, not against
+        // the tile zoom they were baked at (the tile of a fractional zoom is
+        // the nearest neighbor level, which may lie one level above)
+        var drawZoom = (float)viewport.Resolution.ToZoomLevel();
+
         // The tiles of the view that really intersect the screen: the
         // placement runs over the padded tile set, the drawing does not have
         // to draw the tiles of the padding ring (their geometry is off screen)
@@ -173,23 +191,31 @@ public static class RenderedTileLayerRenderer
             return;
         }
 
-        // The merged style layer order: the first occurrence of a geometry
-        // layer name over all tiles (the tiles all list their layers in
-        // ascending style order, see IRenderedTile.Layers)
-        var names = new List<string>();
-        foreach (var tileInView in tiles)
+        // The merged style layer order over all tiles of the view (including
+        // the padded ring: a symbol-only layer present in a padding tile
+        // still draws its labels at the screen edge). Not every tile carries
+        // an entry for every style layer (styles without data produce no
+        // entry), so the style file order is taken from the StyleIndex of the
+        // entries, not from the first occurrence across the tiles.
+        var layerIndex = new Dictionary<string, int>();
+        foreach (var tileInView in view.Tiles)
         {
             foreach (var entry in tileInView.Tile.Layers)
             {
-                if (entry is RenderedGeometryLayer && !names.Contains(entry.Name))
+                if (!layerIndex.TryGetValue(entry.Name, out var index) || entry.StyleIndex < index)
                 {
-                    names.Add(entry.Name);
+                    layerIndex[entry.Name] = entry.StyleIndex;
                 }
             }
         }
 
+        var names = layerIndex.OrderBy(pair => pair.Value).Select(pair => pair.Key).ToList();
+
+        var tree = new Quadtree<ISymbol>();
+
         foreach (var name in names)
         {
+            // The geometry of the style layer across all screen tiles
             foreach (var tileInView in tiles)
             {
                 if (tileInView.Tile.Layers.FirstOrDefault(e => e is RenderedGeometryLayer && e.Name == name)
@@ -198,9 +224,70 @@ public static class RenderedTileLayerRenderer
                     continue;
                 }
 
+                if (!SymbolPlacementEngine.IsVisibleAtZoom((geometryLayer.MinZoom, geometryLayer.MaxZoom), drawZoom))
+                {
+                    continue;
+                }
+
                 DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
             }
+
+            // The placed symbols of the same style layer; the layer metadata
+            // comes from the tiles the placement read its symbols from, so a
+            // layer invisible at the drawn zoom draws no symbols even when
+            // the placement placed them at the canonical zoom
+            if (view.Placement.PlacedByLayer.TryGetValue(name, out var placed) == false || placed.Count == 0)
+            {
+                continue;
+            }
+
+            if (FindSymbolLayer(view, name) is { } symbolLayer &&
+                !SymbolPlacementEngine.IsVisibleAtZoom((symbolLayer.MinZoom, symbolLayer.MaxZoom), drawZoom))
+            {
+                continue;
+            }
+
+            foreach (var entry in placed)
+            {
+                if (entry.Symbol is PointSymbol pointSymbol)
+                {
+                    PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree,
+                        placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
+                        drawContext, drawWorldToScreen, checkForSpace: false);
+                }
+                else if (entry.Symbol is LineSymbol lineSymbol)
+                {
+                    LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree,
+                        placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
+                        drawContext, drawWorldToScreen, entry.Run!);
+                }
+            }
         }
+
+        if (renderedLayer.ShowInvalidBorders)
+        {
+            DrawInvalidBorders(canvas, view.Placement.Rejected, placementWorldToScreen, placementScale, drawWorldToScreen);
+        }
+    }
+
+    /// <summary>
+    /// The first symbol layer entry with the given name over all tiles of the
+    /// view (all tiles carry the same minzoom/maxzoom for a style layer);
+    /// null when no tile has such an entry (then the drawing applies no zoom
+    /// filter of its own — the placement pass already filtered).
+    /// </summary>
+    private static RenderedSymbolLayer? FindSymbolLayer(PlacementView view, string name)
+    {
+        foreach (var tileInView in view.Tiles)
+        {
+            if (tileInView.Tile.Layers.FirstOrDefault(e => e is RenderedSymbolLayer && e.Name == name)
+                is RenderedSymbolLayer symbolLayer)
+            {
+                return symbolLayer;
+            }
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -220,50 +307,6 @@ public static class RenderedTileLayerRenderer
         geometryLayer.Renderer.Draw(canvas, drawContext);
 
         canvas.Restore();
-    }
-
-    /// <summary>
-    /// Draws the placed symbols of the placement result in style layer order.
-    /// Empty results (no placement yet, zoom changed) draw nothing; the
-    /// collision checks and tree inserts already happened in the placement
-    /// pass, drawing consumes the decisions only.
-    /// </summary>
-    private static void DrawSymbols(SKCanvas canvas, PlacementResult result, double rotation,
-        RenderedTileLayer renderedLayer, EvaluationContext drawContext,
-        Func<double, double, (double, double)> placementWorldToScreen,
-        Func<double, double, (double, double)> drawWorldToScreen, float placementScale,
-        EvaluationContext context)
-    {
-        if (result.PlacedByLayer.Count > 0)
-        {
-            var tree = new Quadtree<ISymbol>();
-
-            // Layers in dictionary order = ascending style order: draw the
-            // layers like the style file orders them
-            foreach (var layerPair in result.PlacedByLayer)
-            {
-                foreach (var entry in layerPair.Value)
-                {
-                    if (entry.Symbol is PointSymbol pointSymbol)
-                    {
-                        PointSymbolRenderer.Draw(canvas, context, pointSymbol, ref tree,
-                            placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
-                            drawContext, drawWorldToScreen, checkForSpace: false);
-                    }
-                    else if (entry.Symbol is LineSymbol lineSymbol)
-                    {
-                        LineSymbolRenderer.Draw(canvas, context, lineSymbol, ref tree,
-                            placementWorldToScreen, rotation, renderedLayer.ShowValidBorders,
-                            drawContext, drawWorldToScreen, entry.Run!);
-                    }
-                }
-            }
-        }
-
-        if (renderedLayer.ShowInvalidBorders)
-        {
-            DrawInvalidBorders(canvas, result.Rejected, placementWorldToScreen, placementScale, drawWorldToScreen);
-        }
     }
 
     /// <summary>

@@ -9,4 +9,8 @@ namespace VecTiles.Renderers.Common;
 /// </summary>
 /// <param name="Name">The name of the style layer.</param>
 /// <param name="Symbols">The symbol layer with the symbols of the tile.</param>
-public sealed record RenderedSymbolLayer(string Name, ISymbolLayer Symbols) : IRenderedLayerEntry;
+/// <param name="MinZoom">The style layer minzoom (-1 when not set in the style file).</param>
+/// <param name="MaxZoom">The style layer maxzoom (-1 when not set in the style file).</param>
+/// <param name="StyleIndex">The position of the style layer in the style file.</param>
+public sealed record RenderedSymbolLayer(string Name, ISymbolLayer Symbols,
+    float MinZoom = -1, float MaxZoom = -1, int StyleIndex = 0) : IRenderedLayerEntry;

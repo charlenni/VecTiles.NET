@@ -68,7 +68,7 @@ public class RenderedTileLayer : BaseLayer
     // replaced by the finished placement of the new zoom, the old symbols
     // fade out while the new ones fade in, so no label set pops between the
     // two states
-    internal const int PlacementFadeMs = 200;
+    internal const int PlacementFadeMs = 300;
 
     // The placement the last frame drew its symbols from (reference only:
     // a reference change marks the switch between two symbol sets)

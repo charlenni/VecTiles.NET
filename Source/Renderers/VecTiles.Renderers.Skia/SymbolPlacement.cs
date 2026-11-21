@@ -161,6 +161,86 @@ public sealed record PlacementResult
 }
 
 /// <summary>
+/// The persistent placement decisions of one zoom level across passes. The
+/// collision tree only grows (a space once occupied stays occupied) and
+/// every examined symbol keeps its decision (placed entry or rejection), so
+/// labels never change their position when the tile set of the viewport
+/// changes — the placement is attached to the feature (its id) or, without
+/// a feature id, to the symbol instance of the (cached) tile, not to the
+/// current tile set.
+/// </summary>
+public sealed class IncrementalPlacementState
+{
+    /// <summary>
+    /// The maximum number of decisions kept per zoom level; beyond that the
+    /// state is reset (labels are placed again, a rare event after very
+    /// long panning sessions).
+    /// </summary>
+    public const int MaxDecisions = 100_000;
+
+    /// <summary>
+    /// The collision boxes of every placed symbol of this zoom level; only
+    /// grows. New symbols are placed against it, so the result of a pass
+    /// depends no longer on the tile set of the current viewport.
+    /// </summary>
+    internal Quadtree<ISymbol> Tree { get; private set; } = new();
+
+    // Decisions by feature id (value null = symbol found no space and is
+    // skipped in the later passes as well); for symbols without feature id
+    // by the symbol instance (stable while the tile is in the tile cache)
+    private readonly Dictionary<ulong, PlacementEntry?> _decidedById = new();
+    private readonly Dictionary<ISymbol, PlacementEntry?> _decidedByReference = new();
+
+    /// <summary>
+    /// Gets the decision for the given symbol: true when the symbol was
+    /// examined in an earlier pass (as placed entry, or null when rejected).
+    /// </summary>
+    internal bool TryGetDecision(ISymbol symbol, out PlacementEntry? entry)
+    {
+        if (symbol.Id != 0)
+        {
+            return _decidedById.TryGetValue(symbol.Id, out entry);
+        }
+
+        return _decidedByReference.TryGetValue(symbol, out entry);
+    }
+
+    /// <summary>
+    /// Records the decision for the symbol: the placed entry, or null when
+    /// it found no space (the rejection also stands: the space the other
+    /// symbols took is not given back).
+    /// </summary>
+    internal void Decide(ISymbol symbol, PlacementEntry? entry)
+    {
+        if (symbol.Id != 0)
+        {
+            _decidedById[symbol.Id] = entry;
+        }
+        else
+        {
+            _decidedByReference[symbol] = entry;
+        }
+    }
+
+    /// <summary>
+    /// Resets the state when the maximum number of decisions is reached, at
+    /// the beginning of the next pass (labels are placed again, a rare event
+    /// after very long panning sessions; the memory stays bounded).
+    /// </summary>
+    internal void ResetIfFull()
+    {
+        if (_decidedById.Count + _decidedByReference.Count < MaxDecisions)
+        {
+            return;
+        }
+
+        _decidedById.Clear();
+        _decidedByReference.Clear();
+        Tree = new Quadtree<ISymbol>();
+    }
+}
+
+/// <summary>
 /// The placement pass: computes for all visible tiles which symbols are drawn
 /// where, as a background task before the next drawing. The collision check
 /// runs in the unrotated canonical screen space of the integer zoom level and
@@ -177,7 +257,7 @@ public static class SymbolPlacementEngine
     private const float TestingCanvasHalfExtent = 32768f;
 
     /// <summary>
-    /// Computes the placement for the given tiles and zoom level.
+    /// Gets the placement for the given tiles and zoom level.
     /// </summary>
     /// <param name="tiles">The rendered tiles visible on screen.</param>
     /// <param name="zoomLevel">The canonical integer zoom level.</param>
@@ -190,14 +270,25 @@ public static class SymbolPlacementEngine
     /// </param>
     /// <returns>The placement result for all tiles.</returns>
     public static PlacementResult Compute(IReadOnlyList<IRenderedTile> tiles, int zoomLevel,
-        Func<double, double, (double, double)> worldToScreen, CancellationToken token = default)
+        Func<double, double, (double, double)> worldToScreen, CancellationToken token = default,
+        IncrementalPlacementState? incremental = null)
     {
         using var recorder = new SKPictureRecorder();
         var canvas = recorder.BeginRecording(
             new SKRect(-TestingCanvasHalfExtent, -TestingCanvasHalfExtent,
                 TestingCanvasHalfExtent, TestingCanvasHalfExtent));
 
-        var tree = new Quadtree<ISymbol>();
+        // With a persistent state the collision tree survives the pass: every
+        // envelope ever placed keeps its space, so the placement decisions of
+        // earlier passes remain valid and labels never move when the tile set
+        // of the viewport changes
+        // Very long panning session at one zoom level: start the next pass
+        // with a clean state, so the memory stays bounded. The reset happens
+        // BEFORE the tree is taken: it replaces the tree instance, so the
+        // pass works against an empty collision tree
+        incremental?.ResetIfFull();
+
+        var tree = incremental?.Tree ?? new Quadtree<ISymbol>();
         var context = new EvaluationContext(zoomLevel);
 
         var placedByLayer = new Dictionary<string, List<PlacementEntry>>();
@@ -215,6 +306,10 @@ public static class SymbolPlacementEngine
         // always examined; duplicate placement is prevented by the collision
         // detection instead.
         var examinedIds = new HashSet<ulong>();
+
+        // With a persistent state every decision is one per pass; see the
+        // first occurrence rule in the loop below
+        var seenSymbols = incremental is null ? null : new HashSet<ISymbol>();
 
         // The tiles are processed in tile id order (zoom, x, y), independent
         // of the order they were fetched in: symbols with equal SortOrder and
@@ -300,8 +395,32 @@ public static class SymbolPlacementEngine
             {
                 token.ThrowIfCancellationRequested();
 
+                if (incremental is not null &&
+                    !seenSymbols!.Add(symbol))
+                {
+                    // A later occurrence of the same feature: decided or
+                    // rejected already in this very pass
+                    continue;
+                }
+
                 if (symbol.Id != 0 && !examinedIds.Add(symbol.Id))
                 {
+                    continue;
+                }
+
+                // A persistent state keeps every decision of an earlier pass:
+                // the symbol is neither placed again nor re-examined, its
+                // placed (or rejected) outcome stands — the label stays at
+                // the position of the pass that placed it, also when tiles
+                // appear or disappear
+                if (incremental is not null &&
+                    incremental.TryGetDecision(symbol, out var decided))
+                {
+                    if (decided is not null)
+                    {
+                        placements.Add(decided);
+                    }
+
                     continue;
                 }
 
@@ -317,6 +436,7 @@ public static class SymbolPlacementEngine
                     else
                     {
                         rejected.Add(symbol);
+                        incremental?.Decide(symbol, null);
                     }
                 }
                 else if (symbol is LineSymbol lineSymbol)
@@ -331,6 +451,7 @@ public static class SymbolPlacementEngine
                     else
                     {
                         rejected.Add(symbol);
+                        incremental?.Decide(symbol, null);
                     }
                 }
             }
@@ -355,6 +476,7 @@ public static class SymbolPlacementEngine
                 }
 
                 placements.Add(new PlacementEntry(symbol, run));
+                incremental?.Decide(symbol, placements[^1]);
             }
         }
 

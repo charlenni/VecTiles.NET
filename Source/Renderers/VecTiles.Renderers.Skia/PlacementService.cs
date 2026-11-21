@@ -51,6 +51,9 @@ public sealed record TileInView(TileInfo Info, IRenderedTile Tile);
 /// symbols never disappear in between.</item>
 /// <item>Finished results are kept per tile set and zoom level, so
 /// returning to a recent viewport does not recompute.</item>
+/// <item>The placement decisions are persistent per zoom level (see
+/// <see cref="IncrementalPlacementState"/>): once placed, a label keeps
+/// its position, also when tiles of the viewport change.</item>
 /// </list>
 /// </remarks>
 public sealed class PlacementService
@@ -344,6 +347,8 @@ public sealed class PlacementService
             _holdoverSource = null;
             _holdoverZoom = -1;
             _holdoverResult = PlacementResult.Empty();
+            // The persistent decisions belong to the old content as well
+            _incrementalStates.Clear();
             _generation++;
         }
     }
@@ -396,6 +401,28 @@ public sealed class PlacementService
     private PlacementResult? _holdoverSource;
     private int _holdoverZoom = -1;
     private PlacementResult _holdoverResult = PlacementResult.Empty();
+
+    /// <summary>
+    /// The persistent placement decisions per zoom level: the collision tree
+    /// and the placed/rejected outcome of every examined symbol survive the
+    /// passes, so labels never move when tiles appear or disappear (see
+    /// <see cref="IncrementalPlacementState"/>).
+    /// </summary>
+    private readonly Dictionary<int, IncrementalPlacementState> _incrementalStates = new();
+
+    private IncrementalPlacementState StateFor(int zoomLevel)
+    {
+        lock (_lock)
+        {
+            if (!_incrementalStates.TryGetValue(zoomLevel, out var state))
+            {
+                state = new IncrementalPlacementState();
+                _incrementalStates[zoomLevel] = state;
+            }
+
+            return state;
+        }
+    }
 
     /// <summary>
     /// Fetches the tiles of the current view immediately (center first via
@@ -469,7 +496,7 @@ public sealed class PlacementService
             var fetch = await _fetchScheduler.FetchAsync(tileInfos, centerWorld, token,
                 (info, tile) => AddTileToView(key, info, tile)).ConfigureAwait(false);
 
-            result = ComputePlacement(fetch, key.Zoom, worldToScreen, token);
+            result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom));
         }
         catch (OperationCanceledException)
         {
@@ -586,7 +613,7 @@ public sealed class PlacementService
             var fetch = await _fetchScheduler.FetchAsync(tileInfos, centerWorld, token,
                 (info, tile) => AddTileToView(key, info, tile)).ConfigureAwait(false);
 
-            var result = ComputePlacement(fetch, key.Zoom, worldToScreen, token);
+            var result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom));
 
             lock (_lock)
             {
@@ -623,10 +650,14 @@ public sealed class PlacementService
     }
 
     /// <summary>
-    /// Runs the placement engine over the fetched tiles of the pass.
+    /// Runs the placement engine over the fetched tiles of the pass. With an
+    /// incremental state the decisions of earlier passes (per zoom) persist:
+    /// labels stay where the pass that first placed them put them, also when
+    /// the tile set of the viewport changes.
     /// </summary>
     private static PlacementResult ComputePlacement(TileFetchResult fetch, int zoomLevel,
-        Func<double, double, (double, double)> worldToScreen, CancellationToken token)
+        Func<double, double, (double, double)> worldToScreen, CancellationToken token,
+        IncrementalPlacementState incremental)
     {
         if (fetch.Tiles is null || fetch.Tiles.Count == 0)
         {
@@ -639,7 +670,12 @@ public sealed class PlacementService
             };
         }
 
-        var placed = SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token);
+        // An incomplete pass sees only part of the tiles of the viewport; its
+        // result is not published (see the latch), so its decisions must not
+        // enter the persistent state either — the pass that sees the complete
+        // tile set decides and pins the labels
+        var placed = SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token,
+            fetch.Incomplete ? null : incremental);
 
         return fetch.Incomplete ? placed with { Incomplete = true } : placed;
     }

@@ -166,7 +166,8 @@ public sealed record PlacementResult
 /// every examined symbol keeps its decision (placed entry or rejection), so
 /// labels never change their position when the tile set of the viewport
 /// changes — the placement is attached to the feature (its id) or, without
-/// a feature id, to the symbol instance of the (cached) tile, not to the
+/// a feature id, to the anchor of the symbol (point symbols; stable across
+/// re-renders) or to the symbol instance of the (cached) tile, not to the
 /// current tile set.
 /// </summary>
 public sealed class IncrementalPlacementState
@@ -187,9 +188,12 @@ public sealed class IncrementalPlacementState
 
     // Decisions by feature id (value null = symbol found no space and is
     // skipped in the later passes as well); for symbols without feature id
-    // by the symbol instance (stable while the tile is in the tile cache)
+    // by the symbol instance (stable while the tile is in the tile cache),
+    // or — for point symbols — by their anchor (stable across re-renders,
+    // see <see cref="AnchorKey"/>)
     private readonly Dictionary<ulong, PlacementEntry?> _decidedById = new();
     private readonly Dictionary<ISymbol, PlacementEntry?> _decidedByReference = new();
+    private readonly Dictionary<(ulong TileId, double X, double Y, string? Text), PlacementEntry?> _decidedByAnchor = new();
 
     /// <summary>
     /// Gets the decision for the given symbol: true when the symbol was
@@ -200,6 +204,19 @@ public sealed class IncrementalPlacementState
         if (symbol.Id != 0)
         {
             return _decidedById.TryGetValue(symbol.Id, out entry);
+        }
+
+        if (symbol is PointSymbol point)
+        {
+            // Point symbols without a feature id (MVT data sources often
+            // carry no id attribute): their anchor is stable across re-renders
+            // of the same tile, so a fresh instance finds the decision of the
+            // first pass. Without this every return to a visited view would
+            // re-examine the new instances against the collision boxes of
+            // the first pass — they collide with the boxes of their own
+            // earlier placement and are rejected ("labels disappear when you
+            // come back")
+            return _decidedByAnchor.TryGetValue(AnchorKey(point), out entry);
         }
 
         return _decidedByReference.TryGetValue(symbol, out entry);
@@ -216,10 +233,27 @@ public sealed class IncrementalPlacementState
         {
             _decidedById[symbol.Id] = entry;
         }
+        else if (symbol is PointSymbol point)
+        {
+            _decidedByAnchor[AnchorKey(point)] = entry;
+        }
         else
         {
             _decidedByReference[symbol] = entry;
         }
+    }
+
+    /// <summary>
+    /// The anchor key of a point symbol: the tile the feature came from, the
+    /// exact tile coordinates of the anchor and the label text. Two re-renders
+    /// of the same tile produce identical values (the pipeline is
+    /// deterministic), so this identifies "the same label" without a feature
+    /// id. Line symbols are not covered: their merged geometry changes with
+    /// the tile set, there the instance reference stays the key.
+    /// </summary>
+    private static (ulong TileId, double X, double Y, string? Text) AnchorKey(PointSymbol point)
+    {
+        return (point.Tile.Id, point.Point.X, point.Point.Y, point.TextSymbol?.Text);
     }
 
     /// <summary>
@@ -229,13 +263,14 @@ public sealed class IncrementalPlacementState
     /// </summary>
     internal void ResetIfFull()
     {
-        if (_decidedById.Count + _decidedByReference.Count < MaxDecisions)
+        if (_decidedById.Count + _decidedByReference.Count + _decidedByAnchor.Count < MaxDecisions)
         {
             return;
         }
 
         _decidedById.Clear();
         _decidedByReference.Clear();
+        _decidedByAnchor.Clear();
         Tree = new Quadtree<ISymbol>();
     }
 }

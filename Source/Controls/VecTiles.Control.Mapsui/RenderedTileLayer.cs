@@ -272,36 +272,66 @@ public class RenderedTileLayer : BaseLayer
             return false;
         }
 
-        // Reconstruct the viewport the frame was drawn for, so the world
-        // positions of its corners are known
+        var matrix = CreateRetainedFrameMatrix(
+            old, _retainedFrameRect, _retainedFrame.Width, _retainedFrame.Height,
+            current, canvas.TotalMatrix);
+
+        if (matrix == null)
+        {
+            return false;
+        }
+
+        canvas.Save();
+        canvas.SetMatrix(matrix.Value);
+        canvas.DrawImage(_retainedFrame, 0, 0);
+        canvas.Restore();
+        return true;
+    }
+
+    /// <summary>
+    /// Builds the affine transform that maps an image of the given pixel
+    /// size (drawn for the stored viewport, covering the stored device
+    /// rect) so that its content is at the correct world position and in
+    /// the correct scale of the current viewport. Internal for tests;
+    /// returns null when the transform is degenerate.
+    /// </summary>
+    internal static SKMatrix? CreateRetainedFrameMatrix(
+        (double CenterX, double CenterY, double Resolution, double Rotation,
+            double Width, double Height) old, SKRect oldDestRect,
+        float imageWidth, float imageHeight, Viewport current, SKMatrix canvasMatrix)
+    {
+        // The image covers the old viewport in DEVICE pixels: its pixel size
+        // is the logical viewport size times the pixel density of the old
+        // draw. The corners must be converted back to the old LOGICAL
+        // pixels before they are mapped to world positions, otherwise the
+        // frame is drawn with a wrong scale and offset (visible on HiDPI
+        // screens).
+        var densityX = oldDestRect.Width / (float)old.Width;
+        var densityY = oldDestRect.Height / (float)old.Height;
+        if (densityX <= 0 || densityY <= 0)
+        {
+            return null;
+        }
+
         var oldViewport = new Viewport(old.CenterX, old.CenterY, old.Resolution, old.Rotation,
             old.Width, old.Height);
 
-        // The image covers the old viewport (in device pixels); its corners
-        // are mapped to their device positions in the CURRENT viewport, so
-        // the retained content shows at the correct world position and in
-        // the correct scale of the new view (e.g. the old content zoomed
-        // while the tiles of the new zoom level arrive)
         var imageCornerToWorld = new MPoint[3];
         imageCornerToWorld[0] = oldViewport.ScreenToWorld(0, 0);
-        imageCornerToWorld[1] = oldViewport.ScreenToWorld(_retainedFrame.Width, 0);
-        imageCornerToWorld[2] = oldViewport.ScreenToWorld(0, _retainedFrame.Height);
+        imageCornerToWorld[1] = oldViewport.ScreenToWorld(imageWidth / densityX, 0);
+        imageCornerToWorld[2] = oldViewport.ScreenToWorld(0, imageHeight / densityY);
 
         var imageToDevice = new SKPoint[3];
         for (var i = 0; i < 3; i++)
         {
             var logical = current.WorldToScreen(imageCornerToWorld[i].X, imageCornerToWorld[i].Y);
-            imageToDevice[i] = canvas.TotalMatrix.MapPoint((float)logical.X, (float)logical.Y);
+            imageToDevice[i] = canvasMatrix.MapPoint((float)logical.X, (float)logical.Y);
         }
 
-        canvas.Save();
-        canvas.SetMatrix(CreateAffine(
+        return CreateAffine(
             new SKPoint(0, 0), imageToDevice[0],
-            new SKPoint(_retainedFrame.Width, 0), imageToDevice[1],
-            new SKPoint(0, _retainedFrame.Height), imageToDevice[2]));
-        canvas.DrawImage(_retainedFrame, 0, 0);
-        canvas.Restore();
-        return true;
+            new SKPoint(imageWidth, 0), imageToDevice[1],
+            new SKPoint(0, imageHeight), imageToDevice[2]);
     }
 
     /// <summary>

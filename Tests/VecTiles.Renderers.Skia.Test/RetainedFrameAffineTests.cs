@@ -7,10 +7,10 @@ using VecTiles.Controls.Mapsui;
 namespace VecTiles.Renderers.Skia.Test;
 
 /// <summary>
-/// Tests the affine image -> device transform used by DrawRetainedFrame:
-/// the frame of a previous viewport must be mapped so its world content
-/// stays at the correct world position and in the correct scale of the
-/// new view (zoom boundary flash fix).
+/// Tests the affine transform that maps the retained frame of a previous
+/// viewport into the current viewport: its world content must stay at the
+/// correct world position and in the correct scale of the new view (zoom
+/// boundary flash fix), including on HiDPI canvases.
 /// </summary>
 public class RetainedFrameAffineTests
 {
@@ -24,41 +24,24 @@ public class RetainedFrameAffineTests
             $"{label}: ({sx},{sy}) mapped to ({result.X},{result.Y}) instead of ({expectedX},{expectedY})");
     }
 
-    private static SKCanvas CreateCanvas()
+    private static SKMatrix MatrixFor((double CX, double CY, double Res, double Rotation, double W, double H) old,
+        double oldDensity, Viewport current, float density = 1)
     {
-        return SKSurface.Create(CanvasInfo).Canvas;
-    }
+        var canvas = SKSurface.Create(CanvasInfo).Canvas;
+        canvas.Scale(density, density);
 
-    /// <summary>
-    /// Rebuilds the affine the layer's DrawRetainedFrame builds: maps the
-    /// corners of the old image (in old device pixels) to their device
-    /// positions in the current view.
-    /// </summary>
-    private static SKMatrix CreateAffineForViewportChange(Viewport oldViewport, SKCanvas canvas,
-        Viewport current, float imageWidth, float imageHeight)
-    {
-        var corner0 = oldViewport.ScreenToWorld(0, 0);
-        var corner1 = oldViewport.ScreenToWorld(imageWidth, 0);
-        var corner2 = oldViewport.ScreenToWorld(0, imageHeight);
-        return RenderedTileLayer.CreateAffine(
-            new SKPoint(0, 0), DevicePosition(canvas, current, corner0.X, corner0.Y),
-            new SKPoint(imageWidth, 0), DevicePosition(canvas, current, corner1.X, corner1.Y),
-            new SKPoint(0, imageHeight), DevicePosition(canvas, current, corner2.X, corner2.Y));
-    }
-
-    private static SKPoint DevicePosition(SKCanvas canvas, Viewport viewport, double worldX, double worldY)
-    {
-        var logical = viewport.WorldToScreen(worldX, worldY);
-        return canvas.TotalMatrix.MapPoint((float)logical.X, (float)logical.Y);
+        return RenderedTileLayer.CreateRetainedFrameMatrix(old,
+            new SKRect(0, 0, (float)(old.W * oldDensity), (float)(old.H * oldDensity)),
+            (float)(old.W * oldDensity), (float)(old.H * oldDensity), current, canvas.TotalMatrix)!.Value;
     }
 
     [Fact]
     public void SameViewport_MapsTheImageOneToOne()
     {
-        var viewport = new Viewport(1000, 1000, 10, 0, 800, 600);
-        var canvas = CreateCanvas();
+        var old = (CX: 1000.0, CY: 1000.0, Res: 10.0, Rotation: 0.0, W: 800.0, H: 600.0);
+        var current = new Viewport(1000, 1000, 10, 0, 800, 600);
 
-        var matrix = CreateAffineForViewportChange(viewport, canvas, viewport, 800, 600);
+        var matrix = MatrixFor(old, 1, current);
 
         AssertPointNear(matrix, 0, 0, 0, 0, "top-left");
         AssertPointNear(matrix, 800, 0, 800, 0, "top-right");
@@ -67,31 +50,44 @@ public class RetainedFrameAffineTests
     }
 
     [Fact]
+    public void SameViewport_HighDpi_MapsTheImageOneToOneInDevicePixels()
+    {
+        // Density 2: the image has 1600x1200 device pixels for a 800x600
+        // logical viewport; the map starts at logical scale as if density
+        // was 1, so the image must be drawn in double logical size, i.e.
+        // 1:1 in device pixels — this guards against the frozen-pixel
+        // mapping, which scaled the image a second time by the density
+        var old = (CX: 1000.0, CY: 1000.0, Res: 10.0, Rotation: 0.0, W: 800.0, H: 600.0);
+        var current = new Viewport(1000, 1000, 10, 0, 800, 600);
+
+        var matrix = MatrixFor(old, 2, current, density: 2);
+
+        // device = change of scale: the logical point p is at image pixel 2p;
+        // the image pixel 2p must land at device 2p (the device transform of
+        // the logical point p under the density 2 canvas matrix)
+        AssertPointNear(matrix, 0, 0, 0, 0, "top-left");
+        AssertPointNear(matrix, 1600, 0, 1600, 0, "top-right");
+        AssertPointNear(matrix, 0, 1200, 0, 1200, "bottom-left");
+        AssertPointNear(matrix, 800, 600, 800, 600, "center");
+    }
+
+    [Fact]
     public void ZoomedIn_MapsTheWorldPointsToTheNewScale()
     {
         // The frame was drawn for resolution 10, the current view has
         // resolution 5 (one zoom level in, around the same center)
-        var oldViewport = new Viewport(1000, 1000, 10, 0, 800, 600);
-        var newViewport = new Viewport(1000, 1000, 5, 0, 800, 600);
-        var canvas = CreateCanvas();
+        var old = (CX: 1000.0, CY: 1000.0, Res: 10.0, Rotation: 0.0, W: 800.0, H: 600.0);
+        var current = new Viewport(1000, 1000, 5, 0, 800, 600);
 
-        var matrix = CreateAffineForViewportChange(oldViewport, canvas, newViewport, 800, 600);
+        var matrix = MatrixFor(old, 1, current);
 
         // The world center of the frame stays at the screen center
-        var worldCenter = oldViewport.ScreenToWorld(400, 300);
-        var worldCenterOnScreen = newViewport.WorldToScreen(worldCenter.X, worldCenter.Y);
-        AssertPointNear(matrix, 400, 300, (float)worldCenterOnScreen.X, (float)worldCenterOnScreen.Y, "world center");
+        AssertPointNear(matrix, 400, 300, 400, 300, "world center");
 
-        // The image is drawn in double size (resolution halved): the corner
-        // 300 px left of the center ends up 600 px left of the center
-        AssertPointNear(matrix, 100, 300, (float)(400 - 2 * 300), 300, "x-scale");
-        AssertPointNear(matrix, 400, 100, 400, (float)(300 - 2 * 200), "y-scale");
-
-        // The world position of the top-left corner is where the new view
-        // puts it (independent check against the WorldToScreen transform)
-        var worldTopLeft = oldViewport.ScreenToWorld(0, 0);
-        var device = DevicePosition(canvas, newViewport, worldTopLeft.X, worldTopLeft.Y);
-        AssertPointNear(matrix, 0, 0, device.X, device.Y, "top-left");
+        // The image is drawn in double size (resolution halved): the image
+        // point 300 px left of the center ends up 600 px left of the center
+        AssertPointNear(matrix, 100, 300, -200, 300, "x-scale");
+        AssertPointNear(matrix, 400, 100, 400, -100, "y-scale");
     }
 
     [Fact]
@@ -99,11 +95,10 @@ public class RetainedFrameAffineTests
     {
         // Same resolution, the viewport moved right by 200 px: the frame
         // content moves left by 200 px on the screen
-        var oldViewport = new Viewport(1000, 1000, 10, 0, 800, 600);
-        var newViewport = new Viewport(1000 + 200 * 10, 1000, 10, 0, 800, 600);
-        var canvas = CreateCanvas();
+        var old = (CX: 1000.0, CY: 1000.0, Res: 10.0, Rotation: 0.0, W: 800.0, H: 600.0);
+        var current = new Viewport(1000 + 200 * 10, 1000, 10, 0, 800, 600);
 
-        var matrix = CreateAffineForViewportChange(oldViewport, canvas, newViewport, 800, 600);
+        var matrix = MatrixFor(old, 1, current);
 
         AssertPointNear(matrix, 0, 0, -200, 0, "top-left");
         AssertPointNear(matrix, 400, 300, 200, 300, "center");

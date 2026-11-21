@@ -1,6 +1,6 @@
 using NetTopologySuite.Geometries;
 using VecTiles.Common.Primitives;
-using VecTiles.Controls.Mapsui;
+using VecTiles.Renderers.Skia;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
 
@@ -44,9 +44,7 @@ public class SymbolPlacementEngineTests
 
     private static PlacementResult Compute(IRenderedTile tile)
     {
-        var feature = new RenderedTileFeature(tile, 0, 0, 1000, 1000);
-
-        return SymbolPlacementEngine.Compute([feature], ZoomLevel, WorldToScreen);
+        return SymbolPlacementEngine.Compute([tile], ZoomLevel, WorldToScreen);
     }
 
     [Fact]

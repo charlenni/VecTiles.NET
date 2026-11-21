@@ -5,9 +5,8 @@ using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
-using VecTiles.Renderers.Skia;
 
-namespace VecTiles.Controls.Mapsui;
+namespace VecTiles.Renderers.Skia;
 
 /// <summary>
 /// A symbol processed by the placement pass. For line symbols the run holds
@@ -83,9 +82,13 @@ public static class SymbolPlacementEngine
     /// <param name="worldToScreen">
     /// Converts world coordinates into the unrotated canonical placement space.
     /// </param>
+    /// <param name="token">
+    /// Cancels the pass; the exception is thrown between two symbols or
+    /// layers, so a partially computed result is discarded as a whole.
+    /// </param>
     /// <returns>The placement result for all tiles.</returns>
-    public static PlacementResult Compute(IReadOnlyList<RenderedTileFeature> tiles, int zoomLevel,
-        Func<double, double, (double, double)> worldToScreen)
+    public static PlacementResult Compute(IReadOnlyList<IRenderedTile> tiles, int zoomLevel,
+        Func<double, double, (double, double)> worldToScreen, CancellationToken token = default)
     {
         using var recorder = new SKPictureRecorder();
         var canvas = recorder.BeginRecording(
@@ -111,20 +114,22 @@ public static class SymbolPlacementEngine
         // detection instead.
         var examinedIds = new HashSet<ulong>();
 
+        // The tiles are processed in tile id order (zoom, x, y), independent
+        // of the order they were fetched in: symbols with equal SortOrder and
+        // Rank then always win their collision in the same tile order, so the
+        // result does not change when the fetch order or the tile set of the
+        // viewport changes.
+        var orderedTiles = tiles.OrderBy(t => t.Tile.Id);
+
         // Merge the symbol layers of all tiles into a single dictionary.
         // Every tile lists its layers in ascending style order (see
         // IRenderedTile.Layers), so the merged dictionary iteration order is
         // the ascending style order as well.
         var layers = new Dictionary<string, ISymbolLayer>();
 
-        foreach (var tile in tiles)
+        foreach (var tile in orderedTiles)
         {
-            if (tile.RenderedTile is null)
-            {
-                continue;
-            }
-
-            foreach (var entry in tile.RenderedTile.Layers)
+            foreach (var entry in tile.Layers)
             {
                 if (entry is not RenderedSymbolLayer symbolEntry)
                 {
@@ -148,6 +153,8 @@ public static class SymbolPlacementEngine
         // lower layers that collide are dropped and nothing is removed later.
         foreach (var layerEntry in layers.Reverse())
         {
+            token.ThrowIfCancellationRequested();
+
             if (layerEntry.Value.MinZoom > zoomLevel || layerEntry.Value.MaxZoom < zoomLevel)
             {
                 // Invisible at this zoom level, but keep the layer order
@@ -165,6 +172,8 @@ public static class SymbolPlacementEngine
 
             foreach (var symbol in symbols)
             {
+                token.ThrowIfCancellationRequested();
+
                 if (symbol.Id != 0 && !examinedIds.Add(symbol.Id))
                 {
                     continue;

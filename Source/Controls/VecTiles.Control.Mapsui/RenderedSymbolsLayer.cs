@@ -7,6 +7,7 @@ using System.Linq;
 using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia;
 using VecTiles.Renderers.Skia.Primitives;
 
 namespace VecTiles.Controls.Mapsui;
@@ -357,7 +358,7 @@ public class RenderedSymbolsLayer : BaseLayer
             };
         }
 
-        var placed = SymbolPlacementEngine.Compute(fetch.Features, zoomLevel, worldToScreen);
+        var placed = SymbolPlacementEngine.Compute(fetch.Features!.Select(f => f.RenderedTile).ToList(), zoomLevel, worldToScreen);
         return fetch.Incomplete ? placed with { Incomplete = true } : placed;
     }
 }

@@ -65,7 +65,7 @@ public static class RenderedTileLayerRenderer
             // No tiles are visible on screen: keep the last fully drawn frame
             // on the screen (not the cleared canvas), e.g. while zooming out
             // and the bigger tiles of the new view have not arrived yet
-            renderedLayer.DrawRetainedFrame(canvas);
+            renderedLayer.DrawRetainedFrame(canvas, viewport);
             return;
         }
 
@@ -171,7 +171,7 @@ public static class RenderedTileLayerRenderer
         // drawn frame on the screen instead of drawing an empty frame
         if (!view.Tiles.Any(t => t.Info.Extent.Intersects(screenExtent)))
         {
-            renderedLayer.DrawRetainedFrame(canvas);
+            renderedLayer.DrawRetainedFrame(canvas, viewport);
             return;
         }
 
@@ -209,7 +209,7 @@ public static class RenderedTileLayerRenderer
                 canvas.ResetMatrix();
                 canvas.DrawImage(frame, new SKRect(0, 0, frame.Width, frame.Height), destRect);
                 canvas.Restore();
-                renderedLayer.SetRetainedFrame(frame, destRect, frameKey);
+                renderedLayer.SetRetainedFrame(frame, destRect, frameKey, viewport);
             }
 
             return;

@@ -7,6 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="VecTiles.Renderers.Skia.Test" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Mapsui" Version="5.2.0" />
     <PackageReference Include="Mapsui.Rendering.Skia" Version="5.2.0" />
     <PackageReference Include="Mapsui.Tiling" Version="5.2.0" />

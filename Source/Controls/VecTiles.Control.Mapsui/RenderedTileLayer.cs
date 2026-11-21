@@ -46,6 +46,13 @@ public class RenderedTileLayer : BaseLayer
     private SKRect _retainedFrameRect;
     private object? _retainedFrameKey;
 
+    // The viewport the retained frame was drawn for; the frame is mapped
+    // from this viewport into the current viewport when it is drawn (so
+    // after a zoom the retained frame shows the old content in the new
+    // scale instead of frozen pixels of the old scale)
+    private (double CenterX, double CenterY, double Resolution, double Rotation,
+        double Width, double Height)? _retainedFrameViewport;
+
     // The viewport of the previous draw; equal viewports in consecutive draws
     // mean the map stands still (only the content changed, e.g. the
     // placement completed), so those frames are rasterized offscreen and
@@ -172,6 +179,7 @@ public class RenderedTileLayer : BaseLayer
         var oldFrame = _retainedFrame;
         _retainedFrame = null;
         _retainedFrameKey = null;
+        _retainedFrameViewport = null;
         oldFrame?.Dispose();
 
         DataHasChanged();
@@ -257,19 +265,83 @@ public class RenderedTileLayer : BaseLayer
     /// after zooming out, so the previous map content stays on the screen
     /// instead of a cleared map). Returns false when no frame is retained.
     /// </summary>
-    internal bool DrawRetainedFrame(SKCanvas canvas)
+    internal bool DrawRetainedFrame(SKCanvas canvas, Viewport current)
     {
-        if (_retainedFrame == null)
+        if (_retainedFrame == null || _retainedFrameViewport is not { } old)
         {
             return false;
         }
 
+        // Reconstruct the viewport the frame was drawn for, so the world
+        // positions of its corners are known
+        var oldViewport = new Viewport(old.CenterX, old.CenterY, old.Resolution, old.Rotation,
+            old.Width, old.Height);
+
+        // The image covers the old viewport (in device pixels); its corners
+        // are mapped to their device positions in the CURRENT viewport, so
+        // the retained content shows at the correct world position and in
+        // the correct scale of the new view (e.g. the old content zoomed
+        // while the tiles of the new zoom level arrive)
+        var imageCornerToWorld = new MPoint[3];
+        imageCornerToWorld[0] = oldViewport.ScreenToWorld(0, 0);
+        imageCornerToWorld[1] = oldViewport.ScreenToWorld(_retainedFrame.Width, 0);
+        imageCornerToWorld[2] = oldViewport.ScreenToWorld(0, _retainedFrame.Height);
+
+        var imageToDevice = new SKPoint[3];
+        for (var i = 0; i < 3; i++)
+        {
+            var logical = current.WorldToScreen(imageCornerToWorld[i].X, imageCornerToWorld[i].Y);
+            imageToDevice[i] = canvas.TotalMatrix.MapPoint((float)logical.X, (float)logical.Y);
+        }
+
         canvas.Save();
-        canvas.ResetMatrix();
-        canvas.DrawImage(_retainedFrame, new SKRect(0, 0, _retainedFrame.Width, _retainedFrame.Height),
-            _retainedFrameRect);
+        canvas.SetMatrix(CreateAffine(
+            new SKPoint(0, 0), imageToDevice[0],
+            new SKPoint(_retainedFrame.Width, 0), imageToDevice[1],
+            new SKPoint(0, _retainedFrame.Height), imageToDevice[2]));
+        canvas.DrawImage(_retainedFrame, 0, 0);
         canvas.Restore();
         return true;
+    }
+
+    /// <summary>
+    /// Solves the affine image -> device transform from three point pairs:
+    /// x' = a*x + c*y + tx, y' = b*x + d*y + ty. Internal for tests.
+    /// </summary>
+    internal static SKMatrix CreateAffine(SKPoint s0, SKPoint d0, SKPoint s1, SKPoint d1, SKPoint s2, SKPoint d2)
+    {
+        var dsx = d1.X - d0.X;
+        var dsy = d1.Y - d0.Y;
+        var dtx = d2.X - d0.X;
+        var dty = d2.Y - d0.Y;
+        var ssx = s1.X - s0.X;
+        var ssy = s1.Y - s0.Y;
+        var stx = s2.X - s0.X;
+        var sty = s2.Y - s0.Y;
+
+        var det = ssx * sty - ssy * stx;
+        if (Math.Abs(det) < 1e-12)
+        {
+            return SKMatrix.Identity;
+        }
+
+        var a = (dsx * sty - stx * dtx) / det;
+        var c = (ssx * dtx - dsx * ssy) / det;
+        var b = (dsy * sty - stx * dty) / det;
+        var d = (ssx * dty - dsy * ssy) / det;
+
+        return new SKMatrix
+        {
+            ScaleX = a,
+            SkewY = b,
+            SkewX = c,
+            ScaleY = d,
+            TransX = d0.X - a * s0.X - c * s0.Y,
+            TransY = d0.Y - b * s0.X - d * s0.Y,
+            Persp0 = 0,
+            Persp1 = 0,
+            Persp2 = 1,
+        };
     }
 
     /// <summary>
@@ -297,12 +369,14 @@ public class RenderedTileLayer : BaseLayer
     /// frame (with the dest rect and the frame key of the draw); disposes
     /// the previous one.
     /// </summary>
-    internal void SetRetainedFrame(SKImage frame, SKRect destRect, object key)
+    internal void SetRetainedFrame(SKImage frame, SKRect destRect, object key, Viewport viewport)
     {
         var old = _retainedFrame;
         _retainedFrame = frame;
         _retainedFrameRect = destRect;
         _retainedFrameKey = key;
+        _retainedFrameViewport = (viewport.CenterX, viewport.CenterY, viewport.Resolution,
+            viewport.Rotation, viewport.Width, viewport.Height);
         old?.Dispose();
     }
 
@@ -319,6 +393,7 @@ public class RenderedTileLayer : BaseLayer
             _retainedFrame?.Dispose();
             _retainedFrame = null;
             _retainedFrameKey = null;
+            _retainedFrameViewport = null;
             _lastViewportSignature = null;
         }
     }

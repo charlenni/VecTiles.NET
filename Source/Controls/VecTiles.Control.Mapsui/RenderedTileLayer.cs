@@ -8,6 +8,7 @@ using Mapsui.Extensions;
 using Mapsui.Tiling.Extensions;
 using SkiaSharp;
 using System.Linq;
+using Mapsui.Widgets.ButtonWidgets;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
@@ -201,6 +202,11 @@ public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
         MapRenderer.RegisterLayerRenderer(_customLayerRendererName, RenderedTileLayerRenderer.Draw);
 
         TileSource = tileSource;
+
+        // Set Attribution to most used Attribution of TileSource
+        Attribution.Text = TileSource.Attribution.Text;
+        Attribution.Url = TileSource.Attribution.Url;
+        
         CustomLayerRendererName = _customLayerRendererName;
         _placementService = new PlacementService(tileSource);
 

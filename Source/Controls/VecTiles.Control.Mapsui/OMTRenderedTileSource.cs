@@ -48,9 +48,15 @@ public class OMTRenderedTileSource : IRenderedTileSource
             var name = RemoveHtmlTags(s.Value.Attribution);
             var url =  ExtractHtmlUrl(s.Value.Attribution) ?? (s.Value.Url ?? string.Empty);
             var attribution = new Attribution(name, url);
-            Attribution = attribution;
+            _attributions.Add(s.Value.Name, attribution);
             break;
         }
+
+        var mostUsedAttributionName = omtStyleFile.Layers.Select(l => l.Source)
+                .GroupBy(s => s)
+                .MaxBy(s => s.Count())?.Key;
+        
+        Attribution = _attributions[mostUsedAttributionName];
     }
 
     /// <summary>
@@ -64,9 +70,16 @@ public class OMTRenderedTileSource : IRenderedTileSource
     public string Name { get; private set; }
 
     /// <summary>
-    /// Attribution of the first data source in the style file that provides one.
+    /// Attribution of the most used data source in the style file that provides one.
     /// </summary>
     public Attribution Attribution { get; private set; }
+
+    private Dictionary<string, Attribution> _attributions = new ();
+    
+    /// <summary>
+    /// Attributions of the style file.
+    /// </summary>
+    public IDictionary<string, Attribution> Attributions => _attributions;
 
     /// <summary>
     /// Styles of the loaded style file

@@ -1,62 +1,126 @@
-## VectTiles.NET
+<h1 style="display: flex; align-items: center; gap: 12px;"><img src="Logos/Logo-512.png" width="64" height="64" alt="VecTiles.NET logo"> VecTiles.NET</h1>
 
-VecTiles.NET is another try to bring vector map data from different services to C#.
+VecTiles.NET is a .NET library suite that makes vector map data (vector tiles) usable in C#
+applications. It covers the full pipeline:
 
-### Details
+- loading tile bytes from different sources (HTTP(S) tile servers, MBTiles/SQLite files),
+- converting Mapbox/OpenMapTiles vector tiles (MVT, PBF optionally zipped) into feature objects,
+- styling them with map styles in the [Mapbox style format](https://docs.mapbox.com/mapbox-gl-js/style-spec/),
+  and
+- rendering the styled map — fills, lines and symbols (with placed and HarfBuzz shaped text) — to
+  bitmaps using SkiaSharp.
 
-#### Sources
+A ready-to-use Mapsui layer displays the rendered tiles inside a Mapsui map, and an Avalonia
+sample app demonstrates the entire stack on top of it.
 
-In the beginning each tile comes as a byte array. This could be read from different data sources. 
-For tiles VecTiles.NET has two possible sources: HTTP and MBTiles files (SQLite files in Mapbox format). It should be no 
-problem to add later data files in a folder structure.
+If a tile is not available at the requested zoom level, VecTiles.NET falls back to a tile of a
+lower zoom level, fetches it and clips it to the requested tile (overzoom), so maps keep working
+where data ends.
 
-All of them implement the ITileDataSource interface. With this it is possible to get a byte array with vector data for a 
-given tile.
+## Installation
 
-#### Converters
+VecTiles.NET targets `net10.0` and is available as four NuGet packages:
 
-Converters take a given tile as byte array and convert this to a VectorTile (see NTS for this). In the moment there is 
-only one converter implemented. It could convert Mapbox/OpenMapTiles Vector Tiles (MVT) in PBF or zipped PBF format to VectorTile 
-objects. 
+| Package | Content |
+| --- | --- |
+| [VecTiles.Common](https://www.nuget.org/packages/VecTiles.Common) | Core types and interfaces, common renderer abstractions and tile data sources (HTTP(S), MBTiles) |
+| [VecTiles.OpenMapTiles](https://www.nuget.org/packages/VecTiles.OpenMapTiles) | Mapbox/OpenMapTiles (MVT) tile converter and Mapbox style support |
+| [VecTiles.Skia](https://www.nuget.org/packages/VecTiles.Skia) | SkiaSharp based renderer for styled vector tiles |
+| [VecTiles.Mapsui](https://www.nuget.org/packages/VecTiles.Mapsui) | Mapsui integration: the `RenderedTileLayer` for Mapsui map controls |
 
-It is possible to add other converters for other vector tile formats later, e.g. Mapsforge.
+The easiest way to get started with Mapsui is to install `VecTiles.Mapsui`, which brings the other
+packages along:
 
-A VectorTile consists of different layers. Each layer has a name and contains a list of features. Each feature has 
-one or more geometries and some attributes.
+```sh
+dotnet add package VecTiles.Mapsui
+```
 
-#### VectorTileDataSource
+## Displaying a styled vector map in Mapsui
 
-A VectorTileDataSource combines a TileDataSource (which delivers tile data) with a Converter (converts the delivered 
-tile data to a VectorTile). 
+Add a Mapsui map control to your view (e.g. [`Mapsui.Avalonia`](https://www.nuget.org/packages/Mapsui.Avalonia))
+and set up the rendered tile layer:
 
-With this it is possible to get a VectorTile for a given tile coordinate (x, y, zoom). If a tile is not available, 
-a tile of a lower zoom level is retrieved and clipped to the requested tile.
+```csharp
+using Mapsui;
+using Mapsui.Projections;
+using VecTiles.Controls.Mapsui;
+using VecTiles.Controls.Mapsui.Extensions;
 
-#### Styles
+// Source of the style file in URL notation (see "Loading styles and tile data" below)
+var styleSource = "file://Files/osm-liberty.json";
+// ... or from a tile server:
+//var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
-There are different styles for styling vector maps out there. At the moment there is only one style implemented:
-Mapbox style format (https://docs.mapbox.com/mapbox-gl-js/style-spec/).
+// Loads the style file, its data sources and its sprites
+var tileSource = new OMTRenderedTileSource(styleSource);
 
-#### Mapbox Style
+// The layer renders the styled vector tiles and shows them in the map.
+// The geometry of the tiles is drawn immediately; symbols are placed in a
+// background pass and fade in when it finishes.
+var tileLayer = new RenderedTileLayer(tileSource);
 
-A style file contains the sources to use (background, raster and vector), additionally files (sprites and glyphs) and 
-a list of style layers. Each layer has a name, a source layer (the vector tile layer it is based on) and a filter to 
-select the features that should be styled with this style layer. The style contains a name, type (fill, line or symbol), 
-visibility and min/max zoom for this layer. The layout array is fixed for a given zoom level, while the paint part is 
-zoom dependent.
+MapControl.Map.Layers.Add(tileLayer);
 
-#### Renderer
+// Zoom range of the tile schema, center and zoom from the style file
+MapControl.Map.Navigator.OverrideZoomBounds = tileLayer.ZoomBounds;
 
-The renderer now should be able to render a map with vector tiles. It needs a VectorTileDataSource (to get the vector 
-tiles) and a Style (to style the features). The renderer can render a map for a given bounding box and zoom level to a 
-bitmap. The rendering is zoom dependent.
+var (center, zoom) = (tileSource.Center, tileSource.Zoom);
+if (center.Length >= 2 && zoom is { } zoomLevel)
+{
+    var centerPoint = SphericalMercator.FromLonLat(center[0], center[1]);
+    MapControl.Map.Navigator.CenterOnAndZoomTo(centerPoint, zoomLevel.ToResolution());
+}
+```
 
-#### Symbols
+Attributions of the tile data declared in the style file are exposed by the tile source
+(`Attribution` / `Attributions`), e.g. to show them as a widget below the map.
 
-There are different types of symbols: point, line and polygon symbols. 
+Optionally, a `RenderedTileLayer` accepts a `fontSourceResolver` that maps a font name from the
+style file to a font file source, which is loaded when the font is neither registered nor
+installed on the system.
 
-A point symbol (e.g. city name) consists of a sprite and a text (one or both). Both could be placed around the given 
-point with different anchor points. There are more than one possible place to show text or sprite, depending on, if the 
-place on the map is already occupied by another symbol.
+## Loading styles and tile data
 
-Line symbols are placed along a line (e.g. street names). Polygon symbols are placed in the center of the polygon.
+VecTiles.NET addresses everything in URL notation. The `OMTStyleFileLoader` (used by
+`OMTRenderedTileSource`) loads the style file itself via `ByteDataSource`, which supports:
+
+| Scheme | Meaning |
+| --- | --- |
+| `file://` | File in the file system |
+| `http://` / `https://` | Resource on a web server |
+| `embedded://` | Embedded manifest resource |
+| `svg-content://` | Source is the raw SVG content itself |
+| `base64-content://` | Source is the base64 encoded content itself |
+
+The tile sources referenced by the style file are created automatically:
+
+| `url` / `tiles` entry | Data source |
+| --- | --- |
+| `http(s)://…/{z}/{x}/{y}.pbf` (`pbf` or `.pbf.gz`) | Tile server; also works with a TileJSON (`…​.json`), from which tile URLs, zoom range and attribution are resolved |
+| `mbtiles://path/to/file.mbtiles` | MBTiles file (SQLite in Mapbox format) |
+
+Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the
+OpenMapTiles converter and applies the overzoom fallback described above.
+
+## How it fits together
+
+`TileDataSource` → `TileConverter` → `VectorTileDataSource` → `Style` → `Renderer`
+→ `RenderedTileLayer`
+
+All of these are built around interfaces (`ITileDataSource`, `ITileConverter`,
+`IVectorTileDataSource`, `IExpression`, `ILayerStyle`, `ISymbol`, `IPaint`, `IBitmap`), so single
+parts can be replaced: e.g. a new tile source for another service or a renderer for another
+graphics library.
+
+## Sample application
+
+[`Samples/Avalonia`](Samples/Avalonia) contains a desktop sample app that loads a local
+[OSM Liberty](https://github.com/maputnik/osm-liberty) style (and works with online styles as
+well), lets you toggle the visibility of individual style layers, shows the feature info of the
+tapped position, the mouse coordinates and a tile grid debug layer.
+
+## Credits
+
+VecTiles.NET builds on great open source projects. See [CREDITS.md](CREDITS.md) for the complete
+list — many thanks to all their contributors! The licenses of the parts of those projects included
+in VecTiles are collected in [LICENSE.md](LICENSE.md).

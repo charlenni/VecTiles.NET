@@ -11,7 +11,7 @@
     <PackageReference Include="protobuf-net" Version="3.4.40" />
     <PackageReference Include="SkiaSharp" Version="4.157.0" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="4.157.0" />
-    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
     <PackageReference Include="Topten.RichTextKit" Version="0.6.174" />
   </ItemGroup>
 

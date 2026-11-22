@@ -1,0 +1,21 @@
+<Project>
+
+  <!-- SkiaSharp native library on Linux.
+
+       Third-party dependencies (Topten.RichTextKit, Mapsui, Avalonia.Skia) pull in the
+       fontconfig-linked SkiaSharp.NativeAssets.Linux, which on older patch versions is
+       incompatible with the managed SkiaSharp packages used here and requires system
+       libfontconfig at runtime. All VecTiles projects therefore reference
+       SkiaSharp.NativeAssets.Linux.NoDependencies and the fontconfig-linked package's
+       native assets are removed below, so only the NoDependencies libSkiaSharp remains
+       in the output and deps.json. -->
+  <Target Name="RemoveFontconfigSkiaNativeAssets" AfterTargets="ResolvePackageAssets">
+    <ItemGroup>
+      <RuntimeTargetsCopyLocalItems Remove="@(RuntimeTargetsCopyLocalItems)"
+        Condition="'%(RuntimeTargetsCopyLocalItems.NuGetPackageId)' == 'SkiaSharp.NativeAssets.Linux'" />
+      <NativeCopyLocalItems Remove="@(NativeCopyLocalItems)"
+        Condition="'%(NativeCopyLocalItems.NuGetPackageId)' == 'SkiaSharp.NativeAssets.Linux'" />
+    </ItemGroup>
+  </Target>
+
+</Project>

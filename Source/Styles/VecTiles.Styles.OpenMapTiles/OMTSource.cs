@@ -4,6 +4,7 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Converters.OpenMapTiles;
 using VecTiles.DataSources;
+using VecTiles.DataSources.MbTiles;
 using VecTiles.Styles.OpenMapTiles.Enums;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Json;
@@ -178,6 +179,22 @@ public class OMTSource
     public ITileDataSource? DataSource { get; internal set; }
 
     /// <summary>
+    /// Center of the underlying tile data source as longitude/latitude, e.g. read
+    /// from the metadata of an MBTiles file, empty if the data source provides none.
+    /// Not part of the style source specification.
+    /// </summary>
+    [JsonIgnore]
+    public float[] Center { get; internal set; } = [];
+
+    /// <summary>
+    /// Zoom level of the underlying tile data source, e.g. read from the metadata
+    /// of an MBTiles file, null if the data source provides none.
+    /// Not part of the style source specification.
+    /// </summary>
+    [JsonIgnore]
+    public float? Zoom { get; internal set; }
+
+    /// <summary>
     /// Creates the actual tile data source from the source description, resolving a
     /// TileJSON reference if necessary and wrapping vector data with the
     /// OpenMapTiles tile converter.
@@ -203,6 +220,12 @@ public class OMTSource
 
         if (dataSource == null)
             return;
+
+        if (dataSource is MbTilesTileDataSource mbTiles)
+        {
+            Center = mbTiles.Center;
+            Zoom ??= mbTiles.CenterZoom;
+        }
 
         if (dataSource.Attribution is not null)
             Attribution = dataSource.Attribution;

@@ -1,5 +1,6 @@
 ﻿using VecTiles.Common.Primitives;
 using VecTiles.DataSources.MbTiles;
+using SQLite;
 
 namespace VecTiles.DataSources.Tests;
 
@@ -24,6 +25,59 @@ public class MBTilesDataSourceTests
         Assert.True(dataSource.Type == MbTilesType.BaseLayer);
         Assert.True(dataSource.Compression == "gzip");
         Assert.True(dataSource.Json == "{\"vector_layers\":[{\"id\":\"aerodrome_label\",\"fields\":{\"class\":\"String\",\"ele\":\"Number\",\"ele_ft\":\"Number\",\"iata\":\"String\",\"icao\":\"String\",\"name\":\"String\",\"name:ar\":\"String\",\"name:ca\":\"String\",\"name:cs\":\"String\",\"name:da\":\"String\",\"name:de\":\"String\",\"name:en\":\"String\",\"name:eo\":\"String\",\"name:es\":\"String\",\"name:et\":\"String\",\"name:eu\":\"String\",\"name:fa\":\"String\",\"name:fi\":\"String\",\"name:fr\":\"String\",\"name:he\":\"String\",\"name:hr\":\"String\",\"name:hu\":\"String\",\"name:id\":\"String\",\"name:it\":\"String\",\"name:ja\":\"String\",\"name:ko\":\"String\",\"name:latin\":\"String\",\"name:lt\":\"String\",\"name:mk\":\"String\",\"name:nl\":\"String\",\"name:pl\":\"String\",\"name:pt\":\"String\",\"name:rm\":\"String\",\"name:sk\":\"String\",\"name:sr\":\"String\",\"name:sv\":\"String\",\"name:tr\":\"String\",\"name:vi\":\"String\",\"name:zh\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\"},\"minzoom\":8,\"maxzoom\":14},{\"id\":\"aeroway\",\"fields\":{\"class\":\"String\",\"ref\":\"String\"},\"minzoom\":10,\"maxzoom\":14},{\"id\":\"boundary\",\"fields\":{\"adm0_l\":\"String\",\"adm0_r\":\"String\",\"admin_level\":\"Number\",\"disputed\":\"Number\",\"maritime\":\"Number\"},\"minzoom\":5,\"maxzoom\":14},{\"id\":\"building\",\"fields\":{\"colour\":\"String\",\"hide_3d\":\"Boolean\",\"render_height\":\"Number\",\"render_min_height\":\"Number\"},\"minzoom\":13,\"maxzoom\":14},{\"id\":\"housenumber\",\"fields\":{\"housenumber\":\"String\"},\"minzoom\":14,\"maxzoom\":14},{\"id\":\"landcover\",\"fields\":{\"class\":\"String\",\"subclass\":\"String\"},\"minzoom\":7,\"maxzoom\":14},{\"id\":\"landuse\",\"fields\":{\"class\":\"String\"},\"minzoom\":5,\"maxzoom\":14},{\"id\":\"mountain_peak\",\"fields\":{\"class\":\"String\",\"ele\":\"Number\",\"ele_ft\":\"Number\",\"name\":\"String\",\"name:de\":\"String\",\"name:en\":\"String\",\"name:fr\":\"String\",\"name:latin\":\"String\",\"name:rm\":\"String\",\"name:ru\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\",\"rank\":\"Number\"},\"minzoom\":7,\"maxzoom\":14},{\"id\":\"park\",\"fields\":{\"class\":\"String\",\"name\":\"String\",\"name:de\":\"String\",\"name:en\":\"String\",\"name:es\":\"String\",\"name:fr\":\"String\",\"name:it\":\"String\",\"name:latin\":\"String\",\"name:pt\":\"String\",\"name:rm\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\",\"rank\":\"Number\"},\"minzoom\":4,\"maxzoom\":14},{\"id\":\"place\",\"fields\":{\"capital\":\"Number\",\"class\":\"String\",\"iso_a2\":\"String\",\"name\":\"String\",\"name:af\":\"String\",\"name:am\":\"String\",\"name:ar\":\"String\",\"name:az\":\"String\",\"name:be\":\"String\",\"name:bg\":\"String\",\"name:bn\":\"String\",\"name:br\":\"String\",\"name:bs\":\"String\",\"name:ca\":\"String\",\"name:co\":\"String\",\"name:cs\":\"String\",\"name:cy\":\"String\",\"name:da\":\"String\",\"name:de\":\"String\",\"name:el\":\"String\",\"name:en\":\"String\",\"name:eo\":\"String\",\"name:es\":\"String\",\"name:et\":\"String\",\"name:eu\":\"String\",\"name:fa\":\"String\",\"name:fi\":\"String\",\"name:fr\":\"String\",\"name:fy\":\"String\",\"name:ga\":\"String\",\"name:gd\":\"String\",\"name:he\":\"String\",\"name:hi\":\"String\",\"name:hr\":\"String\",\"name:hu\":\"String\",\"name:hy\":\"String\",\"name:id\":\"String\",\"name:is\":\"String\",\"name:it\":\"String\",\"name:ja\":\"String\",\"name:ka\":\"String\",\"name:kk\":\"String\",\"name:kn\":\"String\",\"name:ko\":\"String\",\"name:ku\":\"String\",\"name:la\":\"String\",\"name:latin\":\"String\",\"name:lb\":\"String\",\"name:lt\":\"String\",\"name:lv\":\"String\",\"name:mk\":\"String\",\"name:ml\":\"String\",\"name:mt\":\"String\",\"name:nl\":\"String\",\"name:no\":\"String\",\"name:oc\":\"String\",\"name:pa\":\"String\",\"name:pl\":\"String\",\"name:pnb\":\"String\",\"name:pt\":\"String\",\"name:rm\":\"String\",\"name:ro\":\"String\",\"name:ru\":\"String\",\"name:sk\":\"String\",\"name:sl\":\"String\",\"name:sq\":\"String\",\"name:sr\":\"String\",\"name:sv\":\"String\",\"name:ta\":\"String\",\"name:te\":\"String\",\"name:th\":\"String\",\"name:tok\":\"String\",\"name:tr\":\"String\",\"name:uk\":\"String\",\"name:ur\":\"String\",\"name:vi\":\"String\",\"name:zh\":\"String\",\"name:zh-Hans\":\"String\",\"name:zh-Hant\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\",\"rank\":\"Number\"},\"minzoom\":1,\"maxzoom\":14},{\"id\":\"poi\",\"fields\":{\"agg_stop\":\"Number\",\"class\":\"String\",\"indoor\":\"Number\",\"layer\":\"Number\",\"level\":\"Number\",\"name\":\"String\",\"name:cs\":\"String\",\"name:de\":\"String\",\"name:el\":\"String\",\"name:en\":\"String\",\"name:es\":\"String\",\"name:fr\":\"String\",\"name:he\":\"String\",\"name:hu\":\"String\",\"name:it\":\"String\",\"name:ja\":\"String\",\"name:ko\":\"String\",\"name:la\":\"String\",\"name:latin\":\"String\",\"name:nonlatin\":\"String\",\"name:pl\":\"String\",\"name:pt\":\"String\",\"name:ro\":\"String\",\"name:ru\":\"String\",\"name:sk\":\"String\",\"name:sl\":\"String\",\"name:sq\":\"String\",\"name:tr\":\"String\",\"name:uk\":\"String\",\"name:ur\":\"String\",\"name:zh\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\",\"rank\":\"Number\",\"subclass\":\"String\"},\"minzoom\":12,\"maxzoom\":14},{\"id\":\"transportation\",\"fields\":{\"access\":\"String\",\"bicycle\":\"String\",\"brunnel\":\"String\",\"class\":\"String\",\"foot\":\"String\",\"horse\":\"String\",\"indoor\":\"Number\",\"layer\":\"Number\",\"level\":\"Number\",\"mtb_scale\":\"String\",\"official\":\"Number\",\"oneway\":\"Number\",\"ramp\":\"Number\",\"service\":\"String\",\"subclass\":\"String\",\"surface\":\"String\",\"toll\":\"Number\"},\"minzoom\":4,\"maxzoom\":14},{\"id\":\"transportation_name\",\"fields\":{\"class\":\"String\",\"indoor\":\"Number\",\"layer\":\"Number\",\"level\":\"Number\",\"name\":\"String\",\"name:cs\":\"String\",\"name:de\":\"String\",\"name:en\":\"String\",\"name:ja\":\"String\",\"name:ko\":\"String\",\"name:latin\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\",\"network\":\"String\",\"ref\":\"String\",\"ref_length\":\"Number\",\"route_1_name\":\"String\",\"route_1_network\":\"String\",\"route_1_ref\":\"String\",\"route_2_name\":\"String\",\"route_2_network\":\"String\",\"route_2_ref\":\"String\",\"route_3_name\":\"String\",\"route_3_network\":\"String\",\"route_3_ref\":\"String\",\"route_4_name\":\"String\",\"route_4_network\":\"String\",\"route_4_ref\":\"String\",\"route_5_name\":\"String\",\"route_5_network\":\"String\",\"route_5_ref\":\"String\",\"route_6_name\":\"String\",\"route_6_network\":\"String\",\"route_6_ref\":\"String\",\"route_7_name\":\"String\",\"route_7_network\":\"String\",\"route_7_ref\":\"String\",\"route_8_name\":\"String\",\"route_8_network\":\"String\",\"route_8_ref\":\"String\",\"subclass\":\"String\"},\"minzoom\":6,\"maxzoom\":14},{\"id\":\"water\",\"fields\":{\"brunnel\":\"String\",\"class\":\"String\",\"id\":\"Number\",\"intermittent\":\"Number\"},\"minzoom\":0,\"maxzoom\":14},{\"id\":\"water_name\",\"fields\":{\"class\":\"String\",\"intermittent\":\"Number\",\"name\":\"String\",\"name:ca\":\"String\",\"name:cs\":\"String\",\"name:da\":\"String\",\"name:de\":\"String\",\"name:el\":\"String\",\"name:en\":\"String\",\"name:es\":\"String\",\"name:et\":\"String\",\"name:fr\":\"String\",\"name:he\":\"String\",\"name:hr\":\"String\",\"name:is\":\"String\",\"name:it\":\"String\",\"name:ka\":\"String\",\"name:ko\":\"String\",\"name:latin\":\"String\",\"name:lt\":\"String\",\"name:nl\":\"String\",\"name:pl\":\"String\",\"name:pt\":\"String\",\"name:rm\":\"String\",\"name:ru\":\"String\",\"name:sk\":\"String\",\"name:sl\":\"String\",\"name:sv\":\"String\",\"name:uk\":\"String\",\"name:zh\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\"},\"minzoom\":8,\"maxzoom\":14},{\"id\":\"waterway\",\"fields\":{\"brunnel\":\"String\",\"class\":\"String\",\"intermittent\":\"Number\",\"name\":\"String\",\"name:am\":\"String\",\"name:ar\":\"String\",\"name:be\":\"String\",\"name:bg\":\"String\",\"name:bn\":\"String\",\"name:br\":\"String\",\"name:ca\":\"String\",\"name:cs\":\"String\",\"name:cy\":\"String\",\"name:de\":\"String\",\"name:el\":\"String\",\"name:en\":\"String\",\"name:eo\":\"String\",\"name:es\":\"String\",\"name:et\":\"String\",\"name:eu\":\"String\",\"name:fr\":\"String\",\"name:hi\":\"String\",\"name:hy\":\"String\",\"name:id\":\"String\",\"name:is\":\"String\",\"name:it\":\"String\",\"name:ja\":\"String\",\"name:ka\":\"String\",\"name:kk\":\"String\",\"name:kn\":\"String\",\"name:ko\":\"String\",\"name:ku\":\"String\",\"name:la\":\"String\",\"name:latin\":\"String\",\"name:lb\":\"String\",\"name:lt\":\"String\",\"name:nl\":\"String\",\"name:oc\":\"String\",\"name:pl\":\"String\",\"name:pt\":\"String\",\"name:rm\":\"String\",\"name:ro\":\"String\",\"name:ru\":\"String\",\"name:sk\":\"String\",\"name:th\":\"String\",\"name:tr\":\"String\",\"name:uk\":\"String\",\"name:zh\":\"String\",\"name_de\":\"String\",\"name_en\":\"String\",\"name_int\":\"String\"},\"minzoom\":3,\"maxzoom\":14}]}");
+    }
+
+    ///  <summary>
+    ///  Verifies that the center and center zoom are read from the 'center' metadata entry.
+    ///  </summary>
+    [Fact]
+    public void CheckCenterTest()
+    {
+        var dataSource = new MbTilesTileDataSource(_path);
+
+        Assert.Equal(new[] { 8.5618f, 47.37565f }, dataSource.Center);
+        Assert.Equal(10f, dataSource.CenterZoom);
+    }
+
+    ///  <summary>
+    ///  Verifies that without a 'center' metadata entry the center is derived from
+    ///  the midpoint of the 'bounds' metadata entry and the center zoom stays null.
+    ///  </summary>
+    [Fact]
+    public void CheckCenterFromBoundsFallbackTest()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"vec-tiles-bounds-fallback-{Guid.NewGuid():N}.mbtiles");
+        try
+        {
+            using (var connection = new SQLiteConnection(new SQLiteConnectionString(path, SQLiteOpenFlags.ReadWrite | SQLiteOpenFlags.Create, false)))
+            {
+                connection.CreateTable<MetadataRow>();
+                connection.RunInTransaction(() =>
+                {
+                    connection.Insert(new MetadataRow { Name = "bounds", Value = "-180,-85.0511,180,85.0511" });
+                });
+            }
+
+            var dataSource = new MbTilesTileDataSource(path);
+
+            Assert.Equal(new[] { 0f, 0f }, dataSource.Center);
+            Assert.Null(dataSource.CenterZoom);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [SQLite.Table("metadata")]
+    private class MetadataRow
+    {
+        [SQLite.PrimaryKey]
+        [SQLite.Column("name")]
+        public string Name { get; set; } = string.Empty;
+
+        [SQLite.Column("value")]
+        public string Value { get; set; } = string.Empty;
     }
 
     /// <summary>

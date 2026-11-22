@@ -68,6 +68,8 @@ public class MbTilesTileDataSource : ITileDataSource
         Name = ReadString(connection, "name");
         Json = ReadString(connection, "json");
         Compression = ReadString(connection, "compression");
+        Center = ReadCenter(connection, out var centerZoom);
+        CenterZoom = centerZoom;
 
         if (determineTileRangeFromTilesTable)
         {
@@ -152,6 +154,19 @@ public class MbTilesTileDataSource : ITileDataSource
     ///  Maximum zoom level of the MBTiles file content
     ///  </summary>
     public int MaxZoom { get; private set; }
+
+    ///  <summary>
+    ///  Center of the MBTiles file content as longitude/latitude, read from the
+    ///  'center' metadata entry or, if absent, derived from the 'bounds' metadata
+    ///  entry. Empty if neither is available.
+    ///  </summary>
+    public float[] Center { get; private set; } = [];
+
+    ///  <summary>
+    ///  Zoom level of the MBTiles file content, read from the 'center' metadata
+    ///  entry, null if not specified there.
+    ///  </summary>
+    public float? CenterZoom { get; private set; }
 
     ///  <summary>
     ///  Source type of the MBTiles file content, vector for Pbf format, raster otherwise
@@ -294,6 +309,42 @@ public class MbTilesTileDataSource : ITileDataSource
         {
             return new Extent(-20037508.342789, -20037508.342789, 20037508.342789, 20037508.342789);
         }
+    }
+
+    private static float[] ReadCenter(SQLiteConnection connection, out float? centerZoom)
+    {
+        centerZoom = null;
+
+        var centerString = ReadString(connection, "center");
+        if (!string.IsNullOrEmpty(centerString))
+        {
+            var components = centerString.Split(',');
+            if (components.Length >= 2)
+            {
+                if (components.Length >= 3 && float.TryParse(components[2], NumberStyles.Float, NumberFormatInfo.InvariantInfo, out var zoom))
+                    centerZoom = zoom;
+
+                if (TryParseCoordinate(components[0], out var lon) && TryParseCoordinate(components[1], out var lat))
+                    return [lon, lat];
+            }
+        }
+
+        // No or unusable center: derive it from the midpoint of the bounds
+        var boundsString = ReadString(connection, "bounds");
+        var bounds = boundsString.Split(',');
+        if (bounds.Length == 4 &&
+            TryParseCoordinate(bounds[0], out var minX) && TryParseCoordinate(bounds[1], out var minY) &&
+            TryParseCoordinate(bounds[2], out var maxX) && TryParseCoordinate(bounds[3], out var maxY))
+        {
+            return [(minX + maxX) / 2f, (minY + maxY) / 2f];
+        }
+
+        return [];
+    }
+
+    private static bool TryParseCoordinate(string component, out float value)
+    {
+        return float.TryParse(component.Trim(), NumberStyles.Float, NumberFormatInfo.InvariantInfo, out value);
     }
 
     private static int[] ReadZoomLevelsFromTilesTable(SQLiteConnection connection)

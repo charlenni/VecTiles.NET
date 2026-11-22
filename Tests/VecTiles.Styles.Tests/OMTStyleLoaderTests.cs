@@ -36,7 +36,22 @@ namespace VecTiles.Styles.MapboxTests
 
             Assert.True(mapboxStyleFile.Version >= 8);
             Assert.NotNull(mapboxStyleFile.Center);
-            Assert.Empty(mapboxStyleFile.Center);
+        }
+
+        /// <summary>
+        /// Checks that Center and Zoom, which the style file doesn't set itself, are
+        /// taken from the metadata of its MBTiles source (osm-liberty.json has neither,
+        /// zurich.mbtiles has center "8.5618,47.37565,10").
+        /// </summary>
+        [Fact]
+        public async Task CheckStyleFileCenterAndZoomFromMbTilesTest()
+        {
+            var styleSource = $"file://{_path}/osm-liberty.json";
+
+            var styleFile = await OMTStyleFileLoader.Load(styleSource);
+
+            Assert.Equal(new[] { 8.5618f, 47.37565f }, styleFile.Center);
+            Assert.Equal(10f, styleFile.Zoom);
         }
 
         /// <summary>

@@ -32,6 +32,8 @@ public class OMTStyleFileLoader
 
         await CreateSources(omtStyleFile.Sources).ConfigureAwait(false);
 
+        ApplySourceCenterAndZoom(omtStyleFile);
+
         omtStyleFile.Sprites = await LoadSprites(omtStyleFile.spriteFile).ConfigureAwait(false);
 
         return omtStyleFile;
@@ -49,6 +51,28 @@ public class OMTStyleFileLoader
             source.Value.Name = source.Key;
             await source.Value.CreateAsync().ConfigureAwait(false);
         }
+    }
+
+    /// <summary>
+    /// Fills Center and Zoom of the style file from the first data source that
+    /// provides them (e.g. the metadata of an MBTiles file), for entries the
+    /// style file doesn't set itself.
+    /// </summary>
+    /// <param name="styleFile">The loaded style file.</param>
+    private static void ApplySourceCenterAndZoom(OMTStyleFile styleFile)
+    {
+        if (styleFile.Center.Length >= 2 && styleFile.Zoom.HasValue)
+            return;
+
+        var source = styleFile.Sources.Values.FirstOrDefault(s => s.Center.Length >= 2);
+        if (source == null)
+            return;
+
+        if (styleFile.Center.Length < 2)
+            styleFile.Center = source.Center;
+
+        if (!styleFile.Zoom.HasValue)
+            styleFile.Zoom = source.Zoom;
     }
 
     /// <summary>

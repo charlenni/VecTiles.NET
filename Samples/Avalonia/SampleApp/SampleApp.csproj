@@ -13,6 +13,9 @@
     <Content Include="..\..\..\Files\osm-liberty.json" Link="Files\osm-liberty.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\..\..\Files\zuerich.map">
+      <Link>Files\zuerich.map</Link>
+    </Content>
     <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty.json" Link="Files\Sprites\osm-liberty.json" />
     <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty.png" Link="Files\Sprites\osm-liberty.png" />
     <EmbeddedResource Include="..\..\..\Files\Sprites\osm-liberty@2x.json" Link="Files\Sprites\osm-liberty%402x.json" />

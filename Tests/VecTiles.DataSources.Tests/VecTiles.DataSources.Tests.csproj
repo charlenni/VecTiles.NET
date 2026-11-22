@@ -42,6 +42,9 @@
     <None Include="..\..\Files\zurich.mbtiles" Link="Files\zurich.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\Files\zuerich.map" Link="Files\zuerich.map">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

@@ -98,6 +98,7 @@ The tile sources referenced by the style file are created automatically:
 | --- | --- |
 | `http(s)://…/{z}/{x}/{y}.pbf` (`pbf` or `.pbf.gz`) | Tile server; also works with a TileJSON (`…​.json`), from which tile URLs, zoom range and attribution are resolved |
 | `mbtiles://path/to/file.mbtiles` | MBTiles file (SQLite in Mapbox format) |
+| `mapsforge://path/to/file.map` | Mapsforge map file (binary MAP format) |
 
 Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the
 OpenMapTiles converter and applies the overzoom fallback described above.

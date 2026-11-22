@@ -27,6 +27,10 @@ public static class DefaultTileDataSourceFactory
     /// Scheme of a source URI that identifies tiles on an HTTPS server.
     /// </summary>
     public const string HttpsScheme = "https";
+    /// <summary>
+    /// Scheme of a source URI that identifies tiles in a Mapsforge map file.
+    /// </summary>
+    public const string MapsforgeScheme = "mapsforge";
 
     /// <summary>
     /// Create a ITileDataSource from provided source list
@@ -51,6 +55,7 @@ public static class DefaultTileDataSourceFactory
         {
             MbTilesScheme => CreateMbTilesSource(source.Substring(MbTilesScheme.Length + 3)),
             HttpScheme or HttpsScheme => CreateHttpSource(sources, minZoom, maxZoom),
+            MapsforgeScheme => CreateMapsforgeSource(sources, minZoom, maxZoom),
             _ => throw new ArgumentException($"Scheme '{scheme}' of '{source}' is not supported"),
         };
     }
@@ -63,5 +68,10 @@ public static class DefaultTileDataSourceFactory
     private static ITileDataSource CreateHttpSource(string[] sources, int minZoom, int maxZoom)
     {
         return new HttpTileDataSource.HttpTileDataSource(sources, minZoom, maxZoom);
+    }
+    
+    private static ITileDataSource CreateMapsforgeSource(string[] sources, int minZoom, int maxZoom)
+    {
+        return new Mapsforge.MapsforgeTileDataSource(sources, minZoom, maxZoom);
     }
 }

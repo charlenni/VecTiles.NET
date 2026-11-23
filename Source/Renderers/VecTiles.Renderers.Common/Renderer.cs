@@ -232,16 +232,21 @@ public class Renderer
 
         foreach (var feature in features!)
         {
-            // TODO
-            // Remove. Only for testing
-            //if (feature.Attributes.Exists("name") && feature.Attributes.GetOptionalValue("name").ToString() == "Bürkliplatz" && tile.Y == 5738)
-            //    System.Diagnostics.Debug.WriteLine($"Name: {feature.Attributes.GetOptionalValue("name")} at {tile}");
-
-            var symbol = renderFactory.CreateSymbol(tile, style, context, feature);
-
-            if (symbol != null)
+            try
             {
-                symbols.Add(symbol);
+                var symbol = renderFactory.CreateSymbol(tile, style, context, feature);
+
+                if (symbol != null)
+                {
+                    symbols.Add(symbol);
+                }
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                // A symbol feature with attributes the style cannot consume (e.g. a missing
+                // attribute the style references) must not prevent the rendering of the whole
+                // tile: the feature is skipped
+                Debug.WriteLine($"Skipping symbol feature of style '{style.Name}' at tile {tile}: {exception.Message}");
             }
         }
 

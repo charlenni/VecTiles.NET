@@ -153,7 +153,7 @@ namespace VecTiles.Styles.OpenMapTiles
                 return null;
             }
 
-            var id = (ulong)feature.Attributes["id"];
+            var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
 
             var symbol = new IconLineSymbol(tile, id, geometry, sprite!)
             {

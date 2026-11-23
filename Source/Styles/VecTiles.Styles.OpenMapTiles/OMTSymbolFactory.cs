@@ -85,6 +85,14 @@ public class OMTSymbolFactory : ISymbolFactory
 
     private PointSymbol? CreatePointSymbol(Tile tile, OMTLayerStyle style, Func<string, ISprite?> spriteFactory, EvaluationContext context, IFeature feature)
     {
+        // An empty geometry has no centroid or interior point: NetTopologySuite returns a
+        // POINT EMPTY with NaN coordinates, which later crashes the placement of the symbol
+        // (e.g. a road shield of a road that was clipped away at a high overzoom level)
+        if (feature.Geometry.IsEmpty)
+        {
+            return null;
+        }
+
         var geometryPoint = feature.Geometry.Centroid;
 
         if (feature.Geometry.GeometryType != "Point" || feature.Geometry.Coordinates.Length != 1)
@@ -104,6 +112,12 @@ public class OMTSymbolFactory : ISymbolFactory
         }*/
 
         var point = ConvertFrom(tile, geometryPoint);
+        if (!double.IsFinite(point.X) || !double.IsFinite(point.Y))
+        {
+            // A non-finite symbol position must not enter the placement: the placement
+            // engine would fail on it and the whole tile would stay incomplete
+            return null;
+        }
         var builderKey = (style.Name, (int)context.Zoom);
 
         var icon = _iconBuilders.GetOrAdd(builderKey,
@@ -167,6 +181,13 @@ public class OMTSymbolFactory : ISymbolFactory
         // Convert path to world coordiantes
 
         var geometry = ConvertToWorldCoordinates(tile, feature.Geometry);
+
+        if (!IsFinite(geometry))
+        {
+            // Features with coordinates outside the tile (e.g. clipped away paths at a high
+            // overzoom level) would produce artifacts in the line symbol placement
+            return null;
+        }
 
         var builderKey = (style.Name, (int)context.Zoom);
         IconLineSymbol? icon = null;
@@ -244,6 +265,19 @@ public class OMTSymbolFactory : ISymbolFactory
         result.Apply(new CoordinateTransformer(tile));
 
         return result;
+    }
+
+    private static bool IsFinite(Geometry geometry)
+    {
+        foreach (var coordinate in geometry.Coordinates)
+        {
+            if (!double.IsFinite(coordinate.X) || !double.IsFinite(coordinate.Y))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static Point ConvertFrom(Tile tile, Point point)

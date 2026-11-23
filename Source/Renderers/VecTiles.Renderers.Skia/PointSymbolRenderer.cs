@@ -34,6 +34,14 @@ public class PointSymbolRenderer : ISymbolRenderer
 
         var (screenX, screenY) = worldToScreenConverter(symbol.Point.X, symbol.Point.Y);
 
+        if (!double.IsFinite(screenX) || !double.IsFinite(screenY))
+        {
+            // A symbol without a valid position (e.g. the centroid of an empty geometry)
+            // cannot be placed; placing it would produce NaN envelopes and later kill
+            // the whole placement pass of the view
+            return SymbolPlacementStatus.NotInitialized;
+        }
+
         SymbolPlacementStatus spaceForIconAvailable = SymbolPlacementStatus.NotInitialized;
         SymbolPlacementStatus spaceForTextAvailable = SymbolPlacementStatus.NotInitialized;
 

@@ -890,6 +890,14 @@ public class MapsforgeTileConverter : ITileConverter
     private static void AddConvertedFeature(Dictionary<string, Layer> layers, ITagsConverter? tagsConverter,
         Geometry geometry, string sourceLayer, IAttributesTable attributes)
     {
+        // An empty geometry (e.g. a way that completely falls outside of the clip rectangle
+        // of an overzoom tile) carries no drawable data; passing it through would also
+        // produce NaN centroids in the symbol building of the styles
+        if (geometry.IsEmpty)
+        {
+            return;
+        }
+
         var conversions = tagsConverter != null
             ? tagsConverter.ConvertTags(geometry, sourceLayer, attributes)
             : MapsforgeTagsConverter.ConvertTags(geometry, sourceLayer, attributes);

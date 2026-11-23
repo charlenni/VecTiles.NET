@@ -193,6 +193,47 @@ public class MapsforgeTileConverterTests
     }
 
     /// <summary>
+    /// A way crossing the corner of an overzoom tile (two adjacent clip rectangle edges, e.g.
+    /// from north of the tile to west of it) must produce a run in that tile even though no
+    /// vertex lies inside it: such a segment spans only one edge of each axis of the clip
+    /// rectangle, a side-spanning pre-filter would reject it.
+    /// </summary>
+    [Fact]
+    public async Task WayCrossingTileCornerContinuesTest()
+    {
+        const int baseZoom = 4;
+
+        // A diagonal way passing the north-west corner of the overzoom tile (16, 10, 5), which
+        // the base tile (8, 5) covers: the first node lies north of the tile top border, the
+        // second west of the tile left border; both keep the same distance from the corner, so
+        // the way crosses the clip rectangle through its top and left edge near the corner
+        // without any vertex inside the rectangle.
+        var wayData = new List<byte>();
+        AddWay(wayData, [(790_000, 1_318_400), (-940_000, -1_230_500)], [0]);
+        var envelope = BuildEnvelope(baseZoom, baseZoom, baseZoom, 8, 5, 1, [], ["highway=residential"],
+            [(false, TileData([(0, 1)], 0, [], [.. wayData]))]);
+
+        var tile = await new MapsforgeTileConverter().Convert(Tile(16, 10, 5), Tile(8, 5, baseZoom), envelope);
+
+        Assert.NotNull(tile);
+        var line = tile.Layers.SelectMany(l => l.Features)
+            .Single(f => f.Geometry is LineString or MultiLineString);
+
+        var envelopeInternal = line.Geometry.EnvelopeInternal;
+        // The run crosses the tile corner region (with a margin against the exact corner so it
+        // also survives setup coordinate rounding)
+        Assert.True(envelopeInternal.Intersects(new Envelope(0, 512, 0, 512)),
+            $"The way does not pass the tile corner: {envelopeInternal}");
+
+        // The run points carry valid coordinates
+        foreach (var coordinate in line.Geometry.Coordinates)
+        {
+            Assert.True(double.IsFinite(coordinate.X) && double.IsFinite(coordinate.Y),
+                $"Non-finite coordinate of a corner-crossing way: {coordinate}");
+        }
+    }
+
+    /// <summary>
     /// An injected ITagsConverter decides the source layer and the tags of the features.
     /// </summary>
     [Fact]

@@ -532,11 +532,14 @@ public class MapsforgeTileConverter : ITileConverter
                 run = [a];
                 run.Add(b);
             }
-            else if (SegmentCrossesRectangle(a, b) && RectangleIntersection(a, b) is { } crossing)
+            else if (SegmentBoundingBoxIntersectsRectangle(a, b) && RectangleIntersection(a, b) is { } crossing)
             {
-                // Both endpoints outside, but the segment crosses the rectangle: an isolated
-                // run between the two rectangle intersections; null when the cheap crossing
-                // check produced a false positive and the segment misses the rectangle
+                // Both endpoints outside, but the segment passes the rectangle: an isolated
+                // run between the two rectangle boundary crossings. The bounding box check is
+                // only a pre-filter: a segment can cross the rectangle through two adjacent
+                // edges (e.g. a far tile corner at a high overzoom level), so it needs not
+                // span a full axis of the rectangle; segments that miss the rectangle are
+                // rejected by the boundary intersection search
                 runs.Add(crossing);
             }
         }
@@ -568,35 +571,23 @@ public class MapsforgeTileConverter : ITileConverter
     }
 
     /// <summary>
-    /// Cheap check, if a segment with both endpoints outside the <see cref="ClipRectangle"/>
-    /// switches sides of the rectangle (over-crosses it): the rectangle spans the coordinate
-    /// ranges where such a crossing can take place.
+    /// Check, if the bounding box of a segment (with both endpoints outside the
+    /// <see cref="ClipRectangle"/>) reaches the rectangle: the pre-filter of the boundary
+    /// intersection search. A diagonal segment can also cross the rectangle through two
+    /// adjacent edges, so spanning a full axis of the rectangle is not required.
     /// </summary>
-    private static bool SegmentCrossesRectangle(Coordinate a, Coordinate b)
+    private static bool SegmentBoundingBoxIntersectsRectangle(Coordinate a, Coordinate b)
     {
-        return SegmentCrossesVertical(a, b, ClipRectangle.MinX) &&
-            SegmentCrossesVertical(a, b, ClipRectangle.MaxX) ||
-            SegmentCrossesHorizontal(a, b, ClipRectangle.MinY) &&
-            SegmentCrossesHorizontal(a, b, ClipRectangle.MaxY);
-    }
-
-    private static bool SegmentCrossesVertical(Coordinate a, Coordinate b, double x)
-    {
-        return (a.X <= x) != (b.X <= x);
-    }
-
-    private static bool SegmentCrossesHorizontal(Coordinate a, Coordinate b, double y)
-    {
-        return (a.Y <= y) != (b.Y <= y);
+        return !(Math.Max(a.X, b.X) < ClipRectangle.MinX || Math.Min(a.X, b.X) > ClipRectangle.MaxX ||
+            Math.Max(a.Y, b.Y) < ClipRectangle.MinY || Math.Min(a.Y, b.Y) > ClipRectangle.MaxY);
     }
 
     /// <summary>
     /// Find the boundary crossings of the segment from a to b: the smallest positive
     /// parameter t whose interpolated point lies inside the rectangle. Returns
     /// <see cref="double.MaxValue"/> when no boundary is crossed with a valid intersection
-    /// (the cheap crossing check can produce false positives).
+    /// (the bounding box pre-filter can produce false positives).
     /// </summary>
-
     private static double FindFirstBoundaryCross(Coordinate a, Coordinate b)
     {
         var dx = b.X - a.X;

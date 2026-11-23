@@ -231,7 +231,15 @@ public class OMTSource
             Attribution = dataSource.Attribution;
         
         if (SourceType == SourceType.Vector)
-            dataSource = new VectorTileDataSource(dataSource, new OMTTileConverter());
+        {
+            // The tiles of a mapsforge file are raw mapsforge data, their source layers and
+            // tags follow the OpenMapTiles schema only after the conversion of the mapsforge
+            // tile converter; OpenMapTiles data is converted by the OpenMapTiles converter
+            ITileConverter converter = dataSource is VecTiles.DataSources.Mapsforge.MapsforgeTileDataSource
+                ? new VecTiles.Converters.Mapsforge.MapsforgeTileConverter()
+                : new OMTTileConverter();
+            dataSource = new VectorTileDataSource(dataSource, converter);
+        }
         
         DataSource = dataSource;
     }

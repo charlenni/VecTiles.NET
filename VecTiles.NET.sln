@@ -79,6 +79,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Skia.Package", "So
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Mapsui.Package", "Source\Packages\VecTiles.Mapsui.Package\VecTiles.Mapsui.Package.csproj", "{3042D385-1FFC-40FB-903E-1CDEF58700D5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Mapsforge", "Source\Converters\VecTiles.Converters.Mapsforge\VecTiles.Converters.Mapsforge.csproj", "{B9B3E45E-3D03-4C74-8E82-E29777D0E929}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,6 +175,10 @@ Global
 		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3042D385-1FFC-40FB-903E-1CDEF58700D5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B9B3E45E-3D03-4C74-8E82-E29777D0E929}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B9B3E45E-3D03-4C74-8E82-E29777D0E929}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B9B3E45E-3D03-4C74-8E82-E29777D0E929}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B9B3E45E-3D03-4C74-8E82-E29777D0E929}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -202,6 +208,7 @@ Global
 		{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
 		{896DAC03-E2DF-439F-97B9-41F078F4799F} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
 		{3042D385-1FFC-40FB-903E-1CDEF58700D5} = {7D9862DE-0950-4FC6-BFB0-940FBEC36D82}
+		{B9B3E45E-3D03-4C74-8E82-E29777D0E929} = {B12671CC-7A17-4A76-BF16-42FBF260E973}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {F45A2AA7-DCD5-4D17-81AC-3622204FAFAE}

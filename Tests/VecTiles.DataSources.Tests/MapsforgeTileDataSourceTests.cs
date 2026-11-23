@@ -507,7 +507,8 @@ public class MapsforgeTileDataSourceTests
         public override int GetHashCode() => HashCode.Combine(IsWater, Data.Length);
     }
 
-    private sealed record Envelope(byte Flags, int BaseZoom, int FirstTileX, int FirstTileY, int Columns, List<EnvelopeTile> Tiles);
+    private sealed record Envelope(byte Flags, int BaseZoom, int SubFileMinZoom, int SubFileMaxZoom,
+        int FirstTileX, int FirstTileY, int Columns, string[] PoiTags, string[] WayTags, List<EnvelopeTile> Tiles);
 
     /// <summary>
     /// Decodes the envelope with the tile data of the covered base zoom tiles that is returned
@@ -518,13 +519,17 @@ public class MapsforgeTileDataSourceTests
         var pos = 0;
         var flags = envelope[pos++];
         if (flags != 0)
-            return new Envelope(flags, -1, -1, -1, -1, []);
+            return new Envelope(flags, -1, -1, -1, -1, -1, -1, [], [], []);
 
         var baseZoom = (int)ReadVbeu(envelope, ref pos);
+        var subFileMinZoom = (int)ReadVbeu(envelope, ref pos);
+        var subFileMaxZoom = (int)ReadVbeu(envelope, ref pos);
         var firstTileX = (int)ReadVbeu(envelope, ref pos);
         var firstTileY = (int)ReadVbeu(envelope, ref pos);
         var columns = (int)ReadVbeu(envelope, ref pos);
         var count = (int)ReadVbeu(envelope, ref pos);
+        var poiTags = ReadStringTable(envelope, ref pos);
+        var wayTags = ReadStringTable(envelope, ref pos);
         var tiles = new List<EnvelopeTile>(count);
         for (var i = 0; i < count; i++)
         {
@@ -536,7 +541,22 @@ public class MapsforgeTileDataSourceTests
             tiles.Add(new EnvelopeTile((tileFlags & 0x01) != 0, data));
         }
 
-        return new Envelope(flags, baseZoom, firstTileX, firstTileY, columns, tiles);
+        return new Envelope(flags, baseZoom, subFileMinZoom, subFileMaxZoom, firstTileX, firstTileY, columns,
+            poiTags, wayTags, tiles);
+    }
+
+    private static string[] ReadStringTable(byte[] data, ref int pos)
+    {
+        var count = (int)ReadVbeu(data, ref pos);
+        var strings = new string[count];
+        for (var i = 0; i < count; i++)
+        {
+            var length = (int)ReadVbeu(data, ref pos);
+            strings[i] = Encoding.UTF8.GetString(data, pos, length);
+            pos += length;
+        }
+
+        return strings;
     }
 
     private static long ReadVbeu(byte[] data, ref int pos)

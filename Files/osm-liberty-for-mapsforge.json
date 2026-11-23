@@ -9,7 +9,7 @@
   "sources": {
     "openmaptiles": {
       "type": "vector",
-      "url": "mapsforge://Files/zurich.map"
+      "url": "mapsforge://Files/zuerich.map"
     },
     "natural_earth_shaded_relief": {
       "maxzoom": 6,

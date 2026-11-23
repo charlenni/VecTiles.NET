@@ -29,11 +29,18 @@ namespace VecTiles.DataSources.Mapsforge;
 ///     no further bytes follow in this case. Otherwise 0x00.</item>
 ///   <item>VBE-U INT: base zoom level of the sub-file; the tile data refers to the tile grid
 ///     of this zoom level and a converter scales it to the zoom of the requested tile.</item>
+///   <item>VBE-U INT: minimum zoom level of the sub-file (first row of the zoom table).</item>
+///   <item>VBE-U INT: maximum zoom level of the sub-file (number of rows of the zoom table is
+///     maxZoom - minZoom + 1).</item>
 ///   <item>VBE-U INT: X tile number of the first covered base zoom tile, in the tile grid of
 ///     the map file (which covers its bounding box, row-wise from the top-left tile).</item>
 ///   <item>VBE-U INT: Y tile number of the first covered base zoom tile.</item>
 ///   <item>VBE-U INT: number of covered tile columns per row.</item>
 ///   <item>VBE-U INT: number of covered tiles, row-wise in the order of the tile index.</item>
+///   <item>POI tag string table of the file header: VBE-U INT number of tags, followed by the
+///     tags in the same order and encoding as in the file header (VBE-U INT length + UTF-8). The
+///     tag id values in the tile payload refer to these strings by index.</item>
+///   <item>Way tag string table of the file header: encoded like the POI tag string table.</item>
 ///   <item>per covered tile: 1 byte meta flags (0x01 = water tile, the flag comes from the
 ///     tile index entry and is not part of the tile data itself), VBE-U INT length of the
 ///     tile data, followed by the tile data exactly as stored in the tile data segment: the
@@ -41,9 +48,10 @@ namespace VecTiles.DataSources.Mapsforge;
 ///     preceded by its 32-byte debug signature when the file contains debug information
 ///     (see <see cref="IsDebugInfoAvailable"/>).</item>
 /// </list>
-/// The tag id values in the tile payload refer to the POI and way tag string tables of the
-/// file header; a converter resolves them via the <see cref="PoiTags"/> and <see cref="WayTags"/>
-/// properties of this data source.
+/// The tile payload is passed through to the converter uninterpreted; carrying the sub-file
+/// zoom range (needed to address the rows of the per-tile zoom table) and the tag string tables
+/// (needed to resolve the tag id values of POIs and ways) in the envelope keeps the tile payload
+/// free from any interpretation by this data source.
 /// </remarks>
 public class MapsforgeTileDataSource : ITileDataSource, IDisposable
 {
@@ -57,6 +65,7 @@ public class MapsforgeTileDataSource : ITileDataSource, IDisposable
 
     private readonly List<MapsforgeSubFile> _subFiles = [];
     private readonly SafeFileHandle _fileHandle;
+    private readonly EnvelopeCache _envelopeCache = new(4);
     private bool _disposed;
 
     ///  <summary>
@@ -270,6 +279,13 @@ public class MapsforgeTileDataSource : ITileDataSource, IDisposable
             // The tile is outside of the bounding box of the map file
             return null;
 
+        // Overzoom requests of the same parent tile (e.g. the consecutive tile requests of a
+        // renderer) all fall back to the same envelope; rebuilding it costs the read and copy
+        // of all covered tile data, so the last few envelopes are cached
+        var cachedEnvelope = _envelopeCache.Get(tile.Id);
+        if (cachedEnvelope is not null)
+            return cachedEnvelope;
+
         var columns = lastTileX - firstTileX + 1;
         var rows = lastTileY - firstTileY + 1;
         var coveredTiles = new (bool IsWaterTile, byte[] Data)[columns * rows];
@@ -329,23 +345,80 @@ public class MapsforgeTileDataSource : ITileDataSource, IDisposable
             // Empty tile: no data
             return null;
 
-        return BuildTileEnvelope(subFile, firstTileX, firstTileY, columns, coveredTiles);
+        var envelope = BuildTileEnvelope(subFile, firstTileX, firstTileY, columns, coveredTiles);
+        _envelopeCache.Add(tile.Id, envelope);
+        return envelope;
+    }
+
+    /// <summary>
+    /// Small thread-safe LRU cache for the envelopes of the last requested tiles; the envelopes
+    /// are immutable, so callers may share the same byte[] instance.
+    /// </summary>
+    private sealed class EnvelopeCache(int capacity)
+    {
+        private readonly object _lock = new();
+        private readonly int _capacity = capacity;
+        private readonly Dictionary<ulong, LinkedListNode<(ulong Key, byte[] Envelope)>> _entries = [];
+        private readonly LinkedList<(ulong Key, byte[] Envelope)> _order = [];
+
+        public byte[]? Get(ulong key)
+        {
+            lock (_lock)
+            {
+                if (!_entries.TryGetValue(key, out var node))
+                    return null;
+
+                _order.Remove(node);
+                _order.AddFirst(node);
+                return node.Value.Envelope;
+            }
+        }
+
+        public void Add(ulong key, byte[] envelope)
+        {
+            lock (_lock)
+            {
+                if (_entries.TryGetValue(key, out var existing))
+                {
+                    existing.Value = (key, envelope);
+                    _order.Remove(existing);
+                    _order.AddFirst(existing);
+                    return;
+                }
+
+                var node = new LinkedListNode<(ulong Key, byte[] Envelope)>((key, envelope));
+                _order.AddFirst(node);
+                _entries[key] = node;
+
+                if (_entries.Count > _capacity)
+                {
+                    var oldest = _order.Last!;
+                    _order.RemoveLast();
+                    _entries.Remove(oldest.Value.Key);
+                }
+            }
+        }
     }
 
     /// <summary>
     /// Builds the envelope with the tile data of the covered base zoom tiles of the requested
     /// tile, see the class remarks for the layout.
     /// </summary>
-    private static byte[] BuildTileEnvelope(MapsforgeSubFile subFile, int firstTileX, int firstTileY, int columns,
+    private byte[] BuildTileEnvelope(MapsforgeSubFile subFile, int firstTileX, int firstTileY, int columns,
         (bool IsWaterTile, byte[] Data)[] coveredTiles)
     {
         using var envelope = new MemoryStream();
         envelope.WriteByte(0);
         WriteVbeu(envelope, subFile.BaseZoom);
+        WriteVbeu(envelope, subFile.MinZoom);
+        WriteVbeu(envelope, subFile.MaxZoom);
         WriteVbeu(envelope, firstTileX);
         WriteVbeu(envelope, firstTileY);
         WriteVbeu(envelope, columns);
         WriteVbeu(envelope, coveredTiles.Length);
+
+        WriteStringTable(envelope, PoiTags);
+        WriteStringTable(envelope, WayTags);
 
         foreach (var (isWaterTile, tileData) in coveredTiles)
         {
@@ -636,6 +709,23 @@ public class MapsforgeTileDataSource : ITileDataSource, IDisposable
             stream.WriteByte(currentByte);
         }
         while (value != 0);
+    }
+
+    /// <summary>
+    /// Write a string table to a stream: a VBE-U INT with the number of strings, followed by
+    /// each string as VBE-U INT length + UTF-8 bytes.
+    /// </summary>
+    /// <param name="stream">Stream to write to</param>
+    /// <param name="strings">Strings of the table</param>
+    private static void WriteStringTable(Stream stream, IReadOnlyList<string> strings)
+    {
+        WriteVbeu(stream, strings.Count);
+        foreach (var value in strings)
+        {
+            var bytes = Encoding.UTF8.GetBytes(value);
+            WriteVbeu(stream, bytes.Length);
+            stream.Write(bytes);
+        }
     }
 
     /// <summary>

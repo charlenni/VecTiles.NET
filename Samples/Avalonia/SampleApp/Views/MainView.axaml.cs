@@ -37,7 +37,7 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        var styleSource = $"file://{_path}/osm-liberty.json";
+        var styleSource = $"file://{_path}/osm-liberty-for-mapsforge.json";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
         _tileSource = new OMTRenderedTileSource(styleSource);

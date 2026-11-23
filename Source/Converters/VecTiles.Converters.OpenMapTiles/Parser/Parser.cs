@@ -1,6 +1,7 @@
 ﻿using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using ProtoBuf;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Converters.OpenMapTiles.Pbf;
 
@@ -25,8 +26,11 @@ public static class Parser
     /// <param name="stream">Stream containing tile data in Pbf format.</param>
     /// <param name="requestedTile">The tile being requested.</param>
     /// <param name="providedTile">The tile provided in the data stream.</param>
+    /// <param name="tagsConverter">Optional converter for the tags and source layers of the
+    /// features to the conventions of the style rendering the converted tile. When null, the
+    /// tags and source layers of the data are kept unchanged (identity conversion).</param>
     /// <returns>A VectorTile containing layers and features parsed from the stream.</returns>
-    public static VectorTile Parse(ReadOnlyMemory<byte> data, Tile requestedTile, Tile providedTile)
+    public static VectorTile Parse(ReadOnlyMemory<byte> data, Tile requestedTile, Tile providedTile, ITagsConverter? tagsConverter = null)
     {
         // Check if data is null or empty
         if (data.Length == 0)
@@ -50,10 +54,15 @@ public static class Parser
             return vectorTile;
         }
 
-        // Create overzoom transformation if needed
+        // Overzoom transformation if needed
         Overzoom overzoom = requestedTile.Zoom == providedTile.Zoom
             ? Overzoom.None
             : Overzoom.CreateFromTiles(requestedTile, providedTile);
+
+        // With a tags converter, the source layer of a feature follows from its tags and may
+        // differ from the layer of the data, so the features are collected in layers by the
+        // converted source layer name
+        var layersByName = tagsConverter == null ? null : new Dictionary<string, Layer>();
 
         // Iterate through each layer in the PbfTile
         for (int i = 0; i < pbfTile?.Layers?.Count; i++)
@@ -61,10 +70,12 @@ public static class Parser
             var pbfLayer = pbfTile.Layers[i];
 
             // Create a new Layer for the VectorTile
-            var vectorTileLayer = new Layer(pbfLayer.Features.Count)
-            {
-                Name = pbfLayer.Name,
-            };
+            var vectorTileLayer = tagsConverter == null
+                ? new Layer(pbfLayer.Features.Count)
+                {
+                    Name = pbfLayer.Name,
+                }
+                : null;
 
             // The extent of the coordinate space is defined per layer in the MVT format
             var layerOverzoom = overzoom.WithExtent(pbfLayer.Extent);
@@ -80,12 +91,49 @@ public static class Parser
                 if (feature != null)
                 {
                     // Add the feature to the layer
-                    vectorTileLayer.Features.Add(feature);
+                    if (vectorTileLayer != null)
+                    {
+                        vectorTileLayer.Features.Add(feature);
+                    }
+                    else
+                    {
+                        var conversions = tagsConverter!.ConvertTags(
+                            (Geometry)feature.Geometry, pbfLayer.Name, feature.Attributes);
+
+                        foreach (var (sourceLayer, attributes) in conversions)
+                        {
+                            if (!layersByName!.TryGetValue(sourceLayer, out var targetLayer))
+                            {
+                                targetLayer = new Layer
+                                {
+                                    Name = sourceLayer,
+                                };
+                                layersByName.Add(sourceLayer, targetLayer);
+                            }
+
+                            targetLayer.Features.Add(new Feature
+                            {
+                                Geometry = feature.Geometry,
+                                Attributes = attributes,
+                            });
+                        }
+                    }
                 }
             }
 
-            // Add the layer to the VectorTile
-            vectorTile.Layers.Add(vectorTileLayer);
+            if (vectorTileLayer != null)
+            {
+                // Add the layer to the VectorTile
+                vectorTile.Layers.Add(vectorTileLayer);
+            }
+        }
+
+        if (layersByName != null)
+        {
+            foreach (var vectorTileLayer in layersByName.Values)
+            {
+                vectorTile.Layers.Add(vectorTileLayer);
+            }
         }
 
         return vectorTile;

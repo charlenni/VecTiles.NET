@@ -15,6 +15,20 @@ namespace VecTiles.Converters.OpenMapTiles;
 /// </remarks>
 public class OMTTileConverter : ITileConverter
 {
+    private readonly ITagsConverter? _tagsConverter;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OMTTileConverter"/> class.
+    /// </summary>
+    /// <param name="tagsConverter">Optional converter for the tags and source layers of the
+    /// features to the conventions of the style rendering the converted tile (e.g. the
+    /// OpenMapTiles schema). OpenMapTiles data already follows those conventions, so the
+    /// default of null keeps the tags and source layers unchanged (identity conversion).</param>
+    public OMTTileConverter(ITagsConverter? tagsConverter = null)
+    {
+        _tagsConverter = tagsConverter;
+    }
+
     /// <summary>
     /// Convert a glyph collection in Mapbox SDF format
     /// </summary>
@@ -27,7 +41,7 @@ public class OMTTileConverter : ITileConverter
     {
         if (!IsGZipped(data))
         {
-            return Task.FromResult<VectorTile?>(Parser.Parser.Parse(data, requestedTile, providedTile));
+            return Task.FromResult<VectorTile?>(Parser.Parser.Parse(data, requestedTile, providedTile, _tagsConverter));
         }
 
         // Read uncompressed length from last 4 bytes
@@ -68,7 +82,7 @@ public class OMTTileConverter : ITileConverter
 
             // 4. Direkt vom Span deserialisieren – kein zweiter MemoryStream nötig!
             var decompressedSpan = rentedBuffer.AsMemory(0, totalBytesRead);
-            return Task.FromResult<VectorTile?>(Parser.Parser.Parse(decompressedSpan, requestedTile, providedTile));
+            return Task.FromResult<VectorTile?>(Parser.Parser.Parse(decompressedSpan, requestedTile, providedTile, _tagsConverter));
         }
         finally
         {

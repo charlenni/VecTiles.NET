@@ -55,8 +55,11 @@ public class OMTRenderedTileSource : IRenderedTileSource
         var mostUsedAttributionName = omtStyleFile.Layers.Select(l => l.Source)
                 .GroupBy(s => s)
                 .MaxBy(s => s.Count())?.Key;
-        
-        Attribution = _attributions[mostUsedAttributionName];
+
+        // The most used source of the style file does not have to provide an attribution
+        Attribution = mostUsedAttributionName != null && _attributions.TryGetValue(mostUsedAttributionName, out var mostUsedAttribution)
+            ? mostUsedAttribution
+            : new Attribution(string.Empty, string.Empty);
     }
 
     /// <summary>

@@ -75,7 +75,12 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
             _paint.DashArray,
             strokeWidthForIntZoom,
             _paint.Pattern);
-        skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
+        // An empty buffer has no native vertices (SKVertices.CreateCopy returns null for
+        // empty arrays) and nothing to draw
+        if (_lineBuffer.Vertices is { } lineVertices)
+        {
+            skCanvas.DrawVertices(lineVertices, SKBlendMode.SrcOver, _skPaint);
+        }
 
         skCanvas.Restore();
     }

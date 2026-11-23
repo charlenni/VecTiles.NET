@@ -8,19 +8,14 @@ namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 public sealed class VertexBuffer : IDisposable
 {
     /// <summary>
-    /// Empty VertexBuffer
-    /// </summary>
-    /// <remarks>
-    /// This is shared, don't dispose it outside
-    /// </remarks>
-    public static readonly SKVertices Empty = SKVertices.CreateCopy(SKVertexMode.Triangles, new SKPoint[0], new SKPoint[0], new SKColor[0]);
-
-    /// <summary>
     /// Create a new VertexBuffer from points, texs and colors.
     /// All the data is converted to a SKVertices and saved for later use.
     /// </summary>
     /// <remarks>
-    /// Has to be disposed later
+    /// Has to be disposed later. An empty vertex array is NOT given to
+    /// SKVertices.CreateCopy: it returns null for empty arrays, and a
+    /// static "Empty" instance would itself be null (see the Vertices
+    /// property: an empty buffer carries no native vertices at all).
     /// </remarks>
     /// <param name="points">Points to use for the vertices. Always 3 points for one triangle</param>
     /// <param name="texs">Tex coordinates for texture</param>
@@ -44,10 +39,16 @@ public sealed class VertexBuffer : IDisposable
     private SKVertices? _vertices;
 
     /// <summary>
-    /// Gets the vertices in native SkiaSharp format; the empty shared
-    /// buffer when no vertices were created.
+    /// Gets the vertices in native SkiaSharp format; null when no vertices were created
+    /// (the empty buffer). The drawing side skips a null buffer: DrawVertices would throw
+    /// an ArgumentNullException.
     /// </summary>
-    public SKVertices Vertices => _vertices ?? Empty;
+    public SKVertices? Vertices => _vertices;
+
+    /// <summary>
+    /// True when the buffer holds no native vertices.
+    /// </summary>
+    public bool IsEmpty => _vertices is null;
 
     /// <summary>
     /// Disposes the native vertices.

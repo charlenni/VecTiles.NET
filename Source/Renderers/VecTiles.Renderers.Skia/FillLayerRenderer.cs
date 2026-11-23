@@ -74,17 +74,23 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
         _skPaint.Shader = _paint.Pattern is not null
             ? _fillShader.Update(_paint.Pattern, true)
             : _fillShader.Update(_paint.Color.ToSKColor());
-                
-        _skPaint.Color = SKColors.White; // If we don't do this, we use alpha twice
-                
-        skCanvas.DrawVertices(_fillBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
 
-        if (_paint.OutlineColor != _paint.Color && _lineBuffer is not null)
+        _skPaint.Color = SKColors.White; // If we don't do this, we use alpha twice
+
+        // An empty buffer has no native vertices (SKVertices.CreateCopy returns null for
+        // empty arrays) and nothing to draw: e.g. a polygon that degenerated while it was
+        // clipped to the tile of a high overzoom level
+        if (_fillBuffer.Vertices is { } fillVertices)
+        {
+            skCanvas.DrawVertices(fillVertices, SKBlendMode.SrcOver, _skPaint);
+        }
+
+        if (_paint.OutlineColor != _paint.Color && _lineBuffer is not null && _lineBuffer.Vertices is { } lineVertices)
         {
             _skPaint.Shader = _lineShader?.Update(1f, _paint.OutlineColor.ToSKColor());
             _skPaint.Color = SKColors.White;
 
-            skCanvas.DrawVertices(_lineBuffer.Vertices, SKBlendMode.SrcOver, _skPaint);
+            skCanvas.DrawVertices(lineVertices, SKBlendMode.SrcOver, _skPaint);
         }
         
         skCanvas.Restore();

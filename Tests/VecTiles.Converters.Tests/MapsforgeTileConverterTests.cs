@@ -144,6 +144,55 @@ public class MapsforgeTileConverterTests
     }
 
     /// <summary>
+    /// A way crossing the shared border of two vertically neighbouring overzoom tiles must be
+    /// present in both tiles, with its run end point at its original coordinate outside of the
+    /// tile: the line then reaches the tile border everywhere and the neighbouring tile
+    /// continues it seamlessly without a gap at the clipping point.
+    /// </summary>
+    [Fact]
+    public async Task WayCrossingTileBorderContinuesTest()
+    {
+        const int baseZoom = 4;
+
+        // A vertical way from +0.1 latitude delta (north of the base tile (8, 5) top border)
+        // down to -0.8 (south of the shared border of the overzoom tiles (16, 10, 5) and
+        // (16, 11, 5), which the base tile covers): it crosses the shared border of the two
+        // neighbouring overzoom tiles
+        var wayData = new List<byte>();
+        AddWay(wayData, [(100_000, 150_000), (-8_000_000, 150_000)], [0]);
+        var envelope = BuildEnvelope(baseZoom, baseZoom, baseZoom, 8, 5, 1, [], ["highway=residential"],
+            [(false, TileData([(0, 1)], 0, [], [.. wayData]))]);
+
+        var north = await new MapsforgeTileConverter().Convert(Tile(16, 10, 5), Tile(8, 5, baseZoom), envelope);
+        var south = await new MapsforgeTileConverter().Convert(Tile(16, 11, 5), Tile(8, 5, baseZoom), envelope);
+
+        Assert.NotNull(north);
+        Assert.NotNull(south);
+
+        var northLine = north.Layers.SelectMany(l => l.Features)
+            .Single(f => f.Geometry is LineString or MultiLineString);
+        var southLine = south.Layers.SelectMany(l => l.Features)
+            .Single(f => f.Geometry is LineString or MultiLineString);
+
+        // The way reaches the shared border from both tiles and extends beyond it: the run
+        // end points keep their original coordinates outside of the clip rectangle
+        Assert.True(northLine.Geometry.EnvelopeInternal.MaxY > 512,
+            $"The way does not reach the shared border in the northern tile: {northLine.Geometry.EnvelopeInternal}");
+        Assert.True(southLine.Geometry.EnvelopeInternal.MinY < 0,
+            $"The way does not reach the shared border in the southern tile: {southLine.Geometry.EnvelopeInternal}");
+
+        // The overhanging ends must carry valid coordinates
+        foreach (var geometry in new[] { northLine.Geometry, southLine.Geometry })
+        {
+            foreach (var coordinate in geometry.Coordinates)
+            {
+                Assert.True(double.IsFinite(coordinate.X) && double.IsFinite(coordinate.Y),
+                    $"Non-finite coordinate of a crossing way: {coordinate}");
+            }
+        }
+    }
+
+    /// <summary>
     /// An injected ITagsConverter decides the source layer and the tags of the features.
     /// </summary>
     [Fact]
@@ -275,12 +324,21 @@ public class MapsforgeTileConverterTests
 
         // The features of the base tiles covered by the requested tile intersect the tile space:
         // the mapsforge writer clips every way at its base zoom tile (with a small overlap at
-        // the tile borders), so a feature far outside of it indicates a decoding error
+        // the tile borders), so a feature far outside of it indicates a decoding error. Line
+        // runs keep their original end points outside the tile border (for a seamless
+        // continuation in the neighbouring tiles), so for them an intersection is enough.
         var tileEnvelope = new Envelope(-8, 520, -8, 520);
         foreach (var layer in vectorTile.Layers)
         {
             foreach (var feature in layer.Features)
             {
+                if (feature.Geometry is LineString or MultiLineString)
+                {
+                    Assert.True(tileEnvelope.Intersects(feature.Geometry.EnvelopeInternal),
+                        $"Line feature of layer '{layer.Name}' does not reach the tile: bbox {feature.Geometry.EnvelopeInternal}");
+                    continue;
+                }
+
                 Assert.True(feature.Geometry.EnvelopeInternal.Intersects(tileEnvelope) &&
                         feature.Geometry.EnvelopeInternal.MaxX < 520 && feature.Geometry.EnvelopeInternal.MinX > -8 &&
                         feature.Geometry.EnvelopeInternal.MaxY < 520 && feature.Geometry.EnvelopeInternal.MinY > -8,

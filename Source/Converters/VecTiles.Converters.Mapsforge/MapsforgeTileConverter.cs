@@ -489,8 +489,12 @@ public class MapsforgeTileConverter : ITileConverter
 
     /// <summary>
     /// Clip a line given as tile space coordinates to the <see cref="ClipRectangle"/>: each
-    /// run of the line inside the rectangle becomes its own line string (path clipping after
-    /// Cohen-Sutherland); runs of less than two points are dropped.
+    /// run of the line inside the rectangle becomes its own line string; runs of less than
+    /// two points are dropped.
+    /// Runs that leave the rectangle keep their outer end point at its original coordinate
+    /// outside the clip rectangle (like the mapsforge writer, which keeps one node beyond
+    /// the tile border): the neighbouring tile continues the line seamlessly at the shared
+    /// border, without a gap at the clipping point.
     /// </summary>
     private static List<Coordinate[]> ClipLineRuns(Coordinate[] coordinates)
     {
@@ -501,7 +505,8 @@ public class MapsforgeTileConverter : ITileConverter
         {
             var a = coordinates[i];
             var b = coordinates[i + 1];
-            ClipSegment(out var clA, out var clB, a, b, out var aInside, out var bInside);
+            var aInside = IsInsideClip(a);
+            var bInside = IsInsideClip(b);
 
             if (aInside)
             {
@@ -509,12 +514,11 @@ public class MapsforgeTileConverter : ITileConverter
                 // is this segment start
                 run ??= [];
                 if (run.Count == 0)
-                    run.Add(clA);
+                    run.Add(a);
+                run.Add(b);
+
                 if (bInside)
-                {
-                    run.Add(clB);
                     continue;
-                }
 
                 runs.Add([.. run]);
                 run = null;
@@ -523,15 +527,17 @@ public class MapsforgeTileConverter : ITileConverter
 
             if (bInside)
             {
-                // The segment enters the rectangle: start a run at the intersection
-                run = [clA];
-                run.Add(clB);
+                // The segment enters the rectangle: start a run at the original start point
+                // outside the rectangle (see the class comment above)
+                run = [a];
+                run.Add(b);
             }
-            else if (SegmentCrossesRectangle(a, b))
+            else if (SegmentCrossesRectangle(a, b) && RectangleIntersection(a, b) is { } crossing)
             {
                 // Both endpoints outside, but the segment crosses the rectangle: an isolated
-                // run between the two rectangle intersections
-                runs.Add([clA, clB]);
+                // run between the two rectangle intersections; null when the cheap crossing
+                // check produced a false positive and the segment misses the rectangle
+                runs.Add(crossing);
             }
         }
 
@@ -544,23 +550,21 @@ public class MapsforgeTileConverter : ITileConverter
     }
 
     /// <summary>
-    /// Clip one line segment to the <see cref="ClipRectangle"/>. Both flags state whether the
-    /// original endpoints lie inside; on a crossing point, the intersection with the rectangle
-    /// boundary is returned.
+    /// Both intersections of the segment from a to b with the <see cref="ClipRectangle"/>
+    /// boundaries; null when the segment does not pass through the rectangle (only called
+    /// for segments with both endpoints outside).
     /// </summary>
-    private static void ClipSegment(out Coordinate clA, out Coordinate clB, Coordinate a, Coordinate b,
-        out bool aInside, out bool bInside)
+    private static Coordinate[]? RectangleIntersection(Coordinate a, Coordinate b)
     {
-        aInside = IsInsideClip(a);
-        bInside = IsInsideClip(b);
-        clA = a;
-        clB = b;
+        var tA = FindFirstBoundaryCross(a, b);
+        if (tA == double.MaxValue)
+            return null;
 
-        if (aInside && bInside || !aInside && !bInside && !SegmentCrossesRectangle(a, b))
-            return;
+        var tB = FindFirstBoundaryCross(b, a);
+        if (tB == double.MaxValue)
+            return null;
 
-        clA = aInside ? a : RectangleIntersection(a, b);
-        clB = bInside ? b : RectangleIntersection(b, a);
+        return [Interpolate(a, b, tA), Interpolate(b, a, tB)];
     }
 
     /// <summary>
@@ -587,14 +591,11 @@ public class MapsforgeTileConverter : ITileConverter
     }
 
     /// <summary>
-    /// First intersection of the segment from a to b with one of the rectangle boundaries; the
-    /// smallest positive parameter t wins. Only called for segments that cross the rectangle.
+    /// Find the boundary crossings of the segment from a to b: the smallest positive
+    /// parameter t whose interpolated point lies inside the rectangle. Returns
+    /// <see cref="double.MaxValue"/> when no boundary is crossed with a valid intersection
+    /// (the cheap crossing check can produce false positives).
     /// </summary>
-    private static Coordinate RectangleIntersection(Coordinate a, Coordinate b)
-    {
-        var t = FindFirstBoundaryCross(a, b);
-        return Interpolate(a, b, t);
-    }
 
     private static double FindFirstBoundaryCross(Coordinate a, Coordinate b)
     {

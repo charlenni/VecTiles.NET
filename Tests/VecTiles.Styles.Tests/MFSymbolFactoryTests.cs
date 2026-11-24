@@ -90,6 +90,11 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.Equal(42ul, icon.Id);
             Assert.Equal("Test", icon.Name);
             Assert.Same(SpriteFactory.GetSprite("symbols/dot_black.svg"), icon.Icon);
+
+            // The icon must be drawn: the sprite already carries the display
+            // size, so the draw scale multiplier is 1 (a scale of 0 collapses
+            // the icon to an invisible point in the renderers)
+            Assert.Equal(1f, icon.Scale);
         }
 
         [Fact]

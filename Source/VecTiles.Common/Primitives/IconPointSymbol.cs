@@ -43,9 +43,10 @@ public class IconPointSymbol : Symbol
     public bool AllowOverlap { get; init; }
 
     /// <summary>
-    /// Scale of symbol
+    /// Scale of symbol (multiplier on the sprite display size; defaults to 1,
+    /// so a symbol factory that does not set a scale draws the sprite 1:1)
     /// </summary>
-    public float Scale { get; init; }
+    public float Scale { get; init; } = 1f;
 
     /// <summary>
     /// Rotation of symbol in degrees

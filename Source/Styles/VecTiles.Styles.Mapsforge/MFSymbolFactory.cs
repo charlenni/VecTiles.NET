@@ -81,7 +81,12 @@ public class MFSymbolFactory : ISymbolFactory
             RotationAlignment = MapAlignment.Viewport,
             KeepUpright = true,
             Anchor = anchor,
-            Offset = offset
+            Offset = offset,
+            // The sprite already carries the display size of the icon
+            // (symbol-width / symbol-percent / mapsforge default size), so
+            // the draw scale multiplier is 1. Without it the icon collapses
+            // to a point (IconPointSymbolRenderer scales by symbol.Scale).
+            Scale = 1f
         };
 
         // The placement and draw paths accept point symbols only as

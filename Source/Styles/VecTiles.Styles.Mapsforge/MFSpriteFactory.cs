@@ -97,7 +97,8 @@ public class MFSpriteFactory
         if (IsSvg(src, data))
         {
             var (intrinsicWidth, intrinsicHeight) = ParseSvgSize(data);
-            var (width, height) = GetDisplaySize(intrinsicWidth, intrinsicHeight, symbolWidth, symbolHeight, symbolPercent);
+            var (width, height) = GetDisplaySize(intrinsicWidth, intrinsicHeight, symbolWidth, symbolHeight, symbolPercent,
+                scaleToDefault: true);
 
             return new VectorSprite(data, width, height, intrinsicWidth, intrinsicHeight);
         }
@@ -260,8 +261,12 @@ public class MFSpriteFactory
     /// a missing dimension follows the aspect ratio of the intrinsic size, the
     /// percent attribute scales the size.
     /// </summary>
+    /// <param name="scaleToDefault">Whether a missing explicit size scales a
+    /// vector symbol down (up) to the mapsforge default 20 x 20 px baseline
+    /// (raster symbols always render at their natural size).</param>
     private static (float Width, float Height) GetDisplaySize(
-        float intrinsicWidth, float intrinsicHeight, int? symbolWidth, int? symbolHeight, int? symbolPercent)
+        float intrinsicWidth, float intrinsicHeight, int? symbolWidth, int? symbolHeight, int? symbolPercent,
+        bool scaleToDefault = false)
     {
         var width = symbolWidth ?? (symbolHeight.HasValue
             ? intrinsicWidth * symbolHeight.Value / intrinsicHeight
@@ -269,6 +274,18 @@ public class MFSpriteFactory
         var height = symbolHeight ?? (symbolWidth.HasValue
             ? intrinsicHeight * symbolWidth.Value / intrinsicWidth
             : intrinsicHeight);
+
+        // Mapsforge scales vector symbols without an explicit size down to the
+        // default 20 x 20 px (400 px² at baseline scale), preserving the aspect
+        // ratio: the draw scale is 1 / sqrt(w * h / 400) of the intrinsic size
+        // (see mapsforge SvgBitmap). Without this, osm-bright style SVG symbols
+        // (e.g. 580 x 580) would render at their intrinsic size.
+        if (symbolWidth is null && symbolHeight is null && scaleToDefault && intrinsicWidth > 0 && intrinsicHeight > 0)
+        {
+            var areaScale = DefaultSymbolSize / MathF.Sqrt(intrinsicWidth * intrinsicHeight);
+            width *= areaScale;
+            height *= areaScale;
+        }
 
         if (symbolPercent.HasValue)
         {

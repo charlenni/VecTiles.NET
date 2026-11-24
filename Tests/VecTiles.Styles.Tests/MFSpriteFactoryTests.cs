@@ -17,7 +17,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
         /// <summary>
         /// Checks that an SVG source without size attributes becomes a vector
-        /// sprite at its intrinsic size.
+        /// sprite scaled to the mapsforge default size of 20 x 20 px, like
+        /// mapsforge scales SVG symbols without symbol-width / symbol-height.
         /// </summary>
         [Fact]
         public void SvgSpriteIntrinsicSizeTest()
@@ -27,9 +28,9 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.NotNull(sprite);
             var vector = Assert.IsType<VectorSprite>(sprite);
 
-            Assert.Equal(580, vector.Width); // intrinsic size of dot_black.svg
-            Assert.Equal(580, vector.Height);
-            Assert.Equal(580f, vector.IntrinsicWidth);
+            Assert.Equal(20, vector.Width); // 580 x 580 intrinsic, scaled to the 20 x 20 default
+            Assert.Equal(20, vector.Height);
+            Assert.Equal(580f, vector.IntrinsicWidth); // the intrinsic size is kept for the draw scale
             Assert.Equal(580f, vector.IntrinsicHeight);
             Assert.Equal(1f, vector.PixelRatio);
         }
@@ -63,8 +64,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
             var percent = factory.GetSprite("symbols/dot_black.svg", symbolPercent: 50)!;
 
-            Assert.Equal(290, percent.Width);
-            Assert.Equal(290, percent.Height);
+            Assert.Equal(10, percent.Width); // 50% of the 20 x 20 default size
+            Assert.Equal(10, percent.Height);
         }
 
         /// <summary>

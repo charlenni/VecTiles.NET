@@ -27,10 +27,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.NotNull(sprite);
             var vector = Assert.IsType<VectorSprite>(sprite);
 
-            // Display size doubled for the 512 px tiles (intrinsic size
-            // 580 of dot_black.svg stays in the SVG source units)
-            Assert.Equal(1160, vector.Width);
-            Assert.Equal(1160, vector.Height);
+            Assert.Equal(580, vector.Width); // intrinsic size of dot_black.svg
+            Assert.Equal(580, vector.Height);
             Assert.Equal(580f, vector.IntrinsicWidth);
             Assert.Equal(580f, vector.IntrinsicHeight);
             Assert.Equal(1f, vector.PixelRatio);
@@ -60,14 +58,13 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
             var widthOnly = factory.GetSprite("symbols/dot_black.svg", symbolWidth: 20)!;
 
-            // Display sizes doubled for the 512 px tiles
-            Assert.Equal(40, widthOnly.Width);
-            Assert.Equal(40, widthOnly.Height); // square icon follows the aspect ratio
+            Assert.Equal(20, widthOnly.Width);
+            Assert.Equal(20, widthOnly.Height); // square icon follows the aspect ratio
 
             var percent = factory.GetSprite("symbols/dot_black.svg", symbolPercent: 50)!;
 
-            Assert.Equal(580, percent.Width);
-            Assert.Equal(580, percent.Height);
+            Assert.Equal(290, percent.Width);
+            Assert.Equal(290, percent.Height);
         }
 
         /// <summary>
@@ -87,9 +84,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             {
                 var sprite = new MFSpriteFactory($"file://{directory}").GetSprite("wide.svg", symbolHeight: 10)!;
 
-                // Display sizes doubled for the 512 px tiles
-                Assert.Equal(40, sprite.Width);
-                Assert.Equal(20, sprite.Height);
+                Assert.Equal(20, sprite.Width);
+                Assert.Equal(10, sprite.Height);
             }
             finally
             {
@@ -111,9 +107,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.NotNull(sprite);
             Assert.IsNotType<VectorSprite>(sprite);
 
-            // Display size doubled for the 512 px tiles (dot.png IHDR: 18x18)
-            Assert.Equal(36, sprite.Width);
-            Assert.Equal(36, sprite.Height);
+            Assert.Equal(18, sprite.Width); // dot.png IHDR: 18x18
+            Assert.Equal(18, sprite.Height);
         }
 
         /// <summary>
@@ -124,9 +119,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
         {
             var sprite = new MFSpriteFactory(_base).GetSprite("patterns/dot.png", symbolWidth: 9)!;
 
-            // Display size doubled for the 512 px tiles
-            Assert.Equal(18, sprite.Width);
-            Assert.Equal(18, sprite.Height);
+            Assert.Equal(9, sprite.Width);
+            Assert.Equal(9, sprite.Height);
         }
 
         // --- source resolution ---
@@ -197,8 +191,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             {
                 var sprite = new MFSpriteFactory($"file://{directory}").GetSprite("broken.svg")!;
 
-                Assert.Equal(40, sprite.Width); // mapsforge default 20, doubled for 512 px tiles
-                Assert.Equal(40, sprite.Height);
+                Assert.Equal(20, sprite.Width); // mapsforge default symbol size
+                Assert.Equal(20, sprite.Height);
             }
             finally
             {

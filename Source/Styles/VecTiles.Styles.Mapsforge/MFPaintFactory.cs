@@ -101,12 +101,11 @@ public static class MFFillPaint
 
         brush.SetFixOutlineColor(fillStyle.Stroke);
         brush.SetFixOutlineOpacity(fillStyle.Stroke.A / 255f);
-        // Stroke width in renderer units: theme value, theme base stroke
-        // width, 512/256 tile scale and the zoom dependent growth of the
-        // original renderer above zoom 12
+        // Stroke width grows with the zoom like in the original renderer
+        // (1.5 per OSM zoom level above 12, see MFScaling for the tile zoom
+        // mapping of 512 px tiles)
         brush.SetVariableStrokeWidth((context) => fillStyle.StrokeWidth
             * MFFillPaint.GetBaseStrokeWidth(fillStyle)
-            * MFScaling.TileScale
             * MFScaling.GetStrokeScale(context));
 
         return brush;
@@ -163,22 +162,18 @@ public static class MFLinePaint
             brush.SetFixColor(lineStyle.Stroke);
         }
 
-        // Stroke width in renderer units: theme value, theme base stroke
-        // width, 512/256 tile scale and the zoom dependent growth of the
-        // original renderer above zoom 12
+        // Stroke width grows with the zoom like in the original renderer
+        // (1.5 per OSM zoom level above 12, see MFScaling for the tile zoom
+        // mapping of 512 px tiles)
         brush.SetVariableStrokeWidth((context) => lineStyle.StrokeWidth
             * MFFillPaint.GetBaseStrokeWidth(lineStyle)
-            * MFScaling.TileScale
             * MFScaling.GetStrokeScale(context));
         brush.SetFixStrokeCap(lineStyle.Cap);
         brush.SetFixStrokeJoin(lineStyle.Join);
 
         if (lineStyle.StrokeDasharray is { Length: > 0 } dashArray)
         {
-            // Dash arrays do not grow with the zoom in the original renderer
-            // (default scale "stroke"), so only the fixed conversions apply
-            brush.SetFixDashArray(dashArray.Select(d =>
-                d * MFFillPaint.GetBaseStrokeWidth(lineStyle) * MFScaling.TileScale).ToArray());
+            brush.SetFixDashArray(dashArray.Select(d => d * MFFillPaint.GetBaseStrokeWidth(lineStyle)).ToArray());
         }
 
         return brush;
@@ -207,9 +202,9 @@ public static class MFCirclePaint
 
         brush.SetFixStyle(PaintStyle.Fill);
         brush.SetFixColor(circleStyle.Fill);
-        brush.SetFixRadius(circleStyle.Radius * MFScaling.TileScale);
+        brush.SetFixRadius(circleStyle.Radius);
         brush.SetFixOutlineColor(circleStyle.Stroke);
-        brush.SetFixStrokeWidth(circleStyle.StrokeWidth * MFFillPaint.GetBaseStrokeWidth(circleStyle) * MFScaling.TileScale);
+        brush.SetFixStrokeWidth(circleStyle.StrokeWidth * MFFillPaint.GetBaseStrokeWidth(circleStyle));
 
         return brush;
     }

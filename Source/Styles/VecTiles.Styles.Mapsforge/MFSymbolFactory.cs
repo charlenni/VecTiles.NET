@@ -126,18 +126,9 @@ public class MFSymbolFactory : ISymbolFactory
             Offset = offset,
             Color = (context) => style.Fill,
             FontNames = GetFontNames(style.FontFamily, style.FontStyle),
-            // Font size in renderer units: theme value, theme base text size,
-            // 512/256 tile scale and the zoom dependent growth of the
-            // original renderer above zoom 12
-            FontSize = (context) => style.FontSize
-                * style.BaseTextSize
-                * MFScaling.TileScale
-                * MFScaling.GetStrokeScale(context),
+            FontSize = (context) => style.FontSize * style.BaseTextSize,
             HaloColor = (context) => style.Stroke,
-            HaloWidth = (context) => style.StrokeWidth
-                * style.BaseStrokeWidth
-                * MFScaling.TileScale
-                * MFScaling.GetStrokeScale(context),
+            HaloWidth = (context) => style.StrokeWidth * style.BaseStrokeWidth,
             MaxWidth = style.TextWrapWidth.HasValue
                 ? (context, fontSize) => style.TextWrapWidth.Value * fontSize
                 : null
@@ -188,7 +179,7 @@ public class MFSymbolFactory : ISymbolFactory
             KeepUpright = !style.Rotate,
             Anchor = new NtsPoint(0.5, 0.5),
             // Vertical offset of the icon relative to the line (perpendicular)
-            Offset = new NtsPoint(0, style.Dy * MFScaling.TileScale)
+            Offset = new NtsPoint(0, style.Dy)
         };
 
         return new LineSymbol(tile, GetFeatureId(feature), geometry,
@@ -201,7 +192,7 @@ public class MFSymbolFactory : ISymbolFactory
             // Repeated icons use their gap as spacing, otherwise the icon is
             // placed once at the center of the way (renderer convention: a
             // spacing of zero places a single symbol on the path)
-            Spacing = style.Repeat ? style.RepeatGap * MFScaling.TileScale : 0
+            Spacing = style.Repeat ? style.RepeatGap : 0
         };
     }
 
@@ -245,21 +236,12 @@ public class MFSymbolFactory : ISymbolFactory
             KeepUpright = true,
             Anchor = new NtsPoint(0.5, 0.5),
             // Vertical offset of the label relative to the path (perpendicular)
-            Offset = new NtsPoint(0, -style.Dy * MFScaling.TileScale),
+            Offset = new NtsPoint(0, -style.Dy),
             Color = (context) => style.Fill,
             FontNames = GetFontNames(style.FontFamily, style.FontStyle),
-            // Font size in renderer units: theme value, theme base text size,
-            // 512/256 tile scale and the zoom dependent growth of the
-            // original renderer above zoom 12
-            FontSize = (context) => style.FontSize
-                * style.BaseTextSize
-                * MFScaling.TileScale
-                * MFScaling.GetStrokeScale(context),
+            FontSize = (context) => style.FontSize * style.BaseTextSize,
             HaloColor = (context) => style.Stroke,
-            HaloWidth = (context) => style.StrokeWidth
-                * style.BaseStrokeWidth
-                * MFScaling.TileScale
-                * MFScaling.GetStrokeScale(context)
+            HaloWidth = (context) => style.StrokeWidth * style.BaseStrokeWidth
         };
 
         return new LineSymbol(tile, GetFeatureId(feature), geometry,
@@ -272,7 +254,7 @@ public class MFSymbolFactory : ISymbolFactory
             // Repeated labels use their gap as spacing, otherwise the label is
             // placed once at the center of the way (renderer convention: a
             // spacing of zero places a single symbol on the path)
-            Spacing = style.Repeat ? style.RepeatGap * MFScaling.TileScale : 0
+            Spacing = style.Repeat ? style.RepeatGap : 0
         };
     }
 
@@ -354,7 +336,7 @@ public class MFSymbolFactory : ISymbolFactory
 
         if (style.Dy != 0)
         {
-            offset = new NtsPoint(offset.X, offset.Y + style.Dy * MFScaling.TileScale);
+            offset = new NtsPoint(offset.X, offset.Y + style.Dy);
         }
 
         return (anchor, offset);

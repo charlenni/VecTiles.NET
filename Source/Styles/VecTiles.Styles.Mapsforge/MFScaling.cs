@@ -3,34 +3,33 @@ using VecTiles.Common.Primitives;
 namespace VecTiles.Styles.Mapsforge;
 
 /// <summary>
-/// Scale conversions between Mapsforge render theme units and the tile space
-/// of the renderer: a Mapsforge theme is defined relative to a tile of
-/// 256 px, while the renderer draws tiles of 512 px, so every px value of
-/// the theme (stroke widths, dash arrays, radii, font sizes, symbol sizes,
-/// offsets, gaps) scales by two when it leaves the style factories.
+/// Zoom mapping between Mapsforge render themes and the tile space of the
+/// renderer: a 512 px tile of this renderer covers the same ground as a
+/// 256 px tile of the Mapsforge tile grid at the same level (see
+/// GlobalSphericalMercator512), so its pixel density corresponds to the
+/// screen of the original renderer at OSM zoom level + 1 — e.g. the tiles
+/// of level 19 hold the same number of pixels per ground unit as the
+/// original screen at zoom 20. All px values of a theme therefore map 1:1
+/// into the tile space, and the stroke growth of the original renderer
+/// (RenderContext.STROKE_INCREASE = 1.5 per zoom level above
+/// STROKE_MIN_ZOOM_LEVEL = 12) applies with the zoom level + 1.
 /// </summary>
 internal static class MFScaling
 {
     /// <summary>
-    /// Factor from Mapsforge theme units (256 px tiles) to the units of the
-    /// renderer (512 px tiles).
-    /// </summary>
-    internal const float TileScale = 2f;
-
-    /// <summary>
     /// Gets the zoom dependent stroke scale of the original Mapsforge
-    /// renderer: after zoom level 12 every stroke grows by a factor of 1.5
-    /// per zoom level (RenderContext.STROKE_INCREASE and
-    /// STROKE_MIN_ZOOM_LEVEL), below it stays constant. Applies to stroke
-    /// widths, dy offsets and font sizes, matching the original tile
-    /// rendering. Contexts without a zoom use the base scale.
+    /// renderer for the zoom level of the given evaluation context: above
+    /// OSM zoom level 12 every stroke grows by a factor of 1.5 per zoom
+    /// level, below it stays constant; contexts without a zoom use the base
+    /// scale. The level is the zoom of the 512 px tiles of the renderer, so
+    /// 1 is added to reach the OSM zoom level of the same pixel density.
     /// </summary>
     /// <param name="context">The evaluation context to scale for.</param>
     /// <returns>The stroke scale of the zoom level of the context.</returns>
     internal static float GetStrokeScale(EvaluationContext context)
     {
         return context.Zoom is float level
-            ? MathF.Pow(1.5f, MathF.Max(level - 12f, 0f))
+            ? MathF.Pow(1.5f, MathF.Max(level - 11f, 0f))
             : 1f;
     }
 }

@@ -84,12 +84,7 @@ public class MFSpriteFactory
             var (intrinsicWidth, intrinsicHeight) = ParseSvgSize(data);
             var (width, height) = GetDisplaySize(intrinsicWidth, intrinsicHeight, symbolWidth, symbolHeight, symbolPercent);
 
-            // Display size in renderer units (512 px tiles), intrinsic size
-            // stays in the source units of the SVG document
-            return new VectorSprite(data,
-                width * MFScaling.TileScale,
-                height * MFScaling.TileScale,
-                intrinsicWidth, intrinsicHeight);
+            return new VectorSprite(data, width, height, intrinsicWidth, intrinsicHeight);
         }
 
         // Raster sprite: one image of its own, sized by the request or by the
@@ -99,9 +94,7 @@ public class MFSpriteFactory
         var (rasterDisplayWidth, rasterDisplayHeight) = GetDisplaySize(
             rasterWidth, rasterHeight, symbolWidth, symbolHeight, symbolPercent);
 
-        return new Sprite(new Bitmap(data), 0, 0,
-            (int)MathF.Ceiling(rasterDisplayWidth * MFScaling.TileScale),
-            (int)MathF.Ceiling(rasterDisplayHeight * MFScaling.TileScale));
+        return new Sprite(new Bitmap(data), 0, 0, (int)MathF.Ceiling(rasterDisplayWidth), (int)MathF.Ceiling(rasterDisplayHeight));
     }
 
     /// <summary>

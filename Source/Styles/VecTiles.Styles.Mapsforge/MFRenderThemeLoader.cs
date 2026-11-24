@@ -93,6 +93,22 @@ public static class MFRenderThemeLoader
     }
 
     /// <summary>
+    /// Gets the base directory of a theme file in ByteDataSource URL notation, resolved from
+    /// the URL or path of the theme file; null for sources without file system location. Icon
+    /// and pattern sources of a theme are resolved against this directory, so a renderer built
+    /// from the loaded theme creates its sprite factory with the same base directory.
+    /// </summary>
+    /// <param name="source">File path or URL of the render theme, as passed to <see cref="Load"/>.</param>
+    /// <returns>The directory containing the theme file, without trailing slash; null when the
+    /// theme file is not a file system path or file URL.</returns>
+    public static string? GetThemeBaseDirectory(string source)
+    {
+        // Plain file paths are normalized to the URL notation of the byte data source
+        var themeSource = source.Contains(':') ? source : ToFileSource(source);
+        return GetBaseDirectory(themeSource);
+    }
+
+    /// <summary>
     /// Gets the base directory of the theme in ByteDataSource URL notation,
     /// resolved from the URL of the theme file; null for other sources.
     /// </summary>

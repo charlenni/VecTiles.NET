@@ -16,9 +16,12 @@ public class OMTStyleFileLoader
     /// loads the referenced sprite file.
     /// </summary>
     /// <param name="source">File path or URL of the style file.</param>
+    /// <param name="createSources">Whether to create the tile data sources of the style's
+    /// sources; false leaves <see cref="OMTSource.DataSource"/> null, so the caller can attach
+    /// own data sources (e.g. a Mapsforge map file given independently of the style file).</param>
     /// <returns>The loaded style file with sources and sprites initialized.</returns>
     /// <exception cref="ArgumentException">Thrown if the file isn't a valid style file.</exception>
-    public static async Task<OMTStyleFile> Load(string source)
+    public static async Task<OMTStyleFile> Load(string source, bool createSources = true)
     {
         OMTStyleFile? omtStyleFile;
 
@@ -40,9 +43,12 @@ public class OMTStyleFileLoader
                 omtSource.ResolveRelativeUrls(styleDirectory);
         }
 
-        await CreateSources(omtStyleFile.Sources).ConfigureAwait(false);
+        if (createSources)
+        {
+            await CreateSources(omtStyleFile.Sources).ConfigureAwait(false);
 
-        ApplySourceCenterAndZoom(omtStyleFile);
+            ApplySourceCenterAndZoom(omtStyleFile);
+        }
 
         omtStyleFile.Sprites = await LoadSprites(omtStyleFile.spriteFile).ConfigureAwait(false);
 

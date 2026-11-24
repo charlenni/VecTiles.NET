@@ -19,8 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Converters\VecTiles.Converters.Mapsforge\VecTiles.Converters.Mapsforge.csproj" />
+    <ProjectReference Include="..\..\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
     <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
     <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />
+    <ProjectReference Include="..\..\Styles\VecTiles.Styles.Mapsforge\VecTiles.Styles.Mapsforge.csproj" />
     <ProjectReference Include="..\..\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
   </ItemGroup>
 

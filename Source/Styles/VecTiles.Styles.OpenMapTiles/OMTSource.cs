@@ -179,6 +179,17 @@ public class OMTSource
     public ITileDataSource? DataSource { get; internal set; }
 
     /// <summary>
+    /// Sets the tile data source from outside of <see cref="CreateAsync"/> (e.g. a Mapsforge
+    /// map file given to the tile source independently of the style file replaces the vector
+    /// data source the style declares).
+    /// </summary>
+    /// <param name="dataSource">The tile data source of this source.</param>
+    public void SetDataSource(ITileDataSource? dataSource)
+    {
+        DataSource = dataSource;
+    }
+
+    /// <summary>
     /// Center of the underlying tile data source as longitude/latitude, e.g. read
     /// from the metadata of an MBTiles file, empty if the data source provides none.
     /// Not part of the style source specification.

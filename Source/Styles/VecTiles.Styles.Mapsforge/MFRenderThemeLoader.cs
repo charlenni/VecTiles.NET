@@ -754,12 +754,14 @@ public static class MFRenderThemeLoader
     /// </summary>
     private static StrokeCap ParseStrokeCap(string? value)
     {
+        // Mapsforge theme spec: stroke-linecap defaults to "round" (falls
+        // back to round for unknown values as well -- see mapsforge's
+        // Line.parseCap); only an explicit "butt" disables the caps.
         return value?.ToLowerInvariant() switch
         {
-            "round" => StrokeCap.Round,
+            "butt" => StrokeCap.Butt,
             "square" => StrokeCap.Square,
-            "butt" or null or "" => StrokeCap.Butt,
-            _ => StrokeCap.Butt
+            _ => StrokeCap.Round
         };
     }
 

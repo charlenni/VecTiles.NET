@@ -399,7 +399,7 @@ namespace VecTiles.Styles.Mapsforge.Tests
                 Assert.Equal(new Color(0, 0, 0, 255), lines[3].Stroke); // default
                 Assert.Equal(0f, lines[3].StrokeWidth);
                 Assert.Null(lines[3].StrokeDasharray);
-                Assert.Equal(StrokeCap.Butt, lines[3].Cap);
+                Assert.Equal(StrokeCap.Round, lines[3].Cap); // mapsforge default
                 Assert.Equal(StrokeJoin.Miter, lines[3].Join);
             }
             finally
@@ -501,6 +501,68 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
                 Assert.Equal(true, circle.Filter.Evaluate(new EvaluationContext(5, feature: Features(point, "peak"))));
                 Assert.Equal(false, circle.Filter.Evaluate(new EvaluationContext(5, feature: Features(line, "peak"))));
+            }
+            finally
+            {
+                cleanup();
+            }
+        }
+
+        // --- stroke caps ---
+
+        /// <summary>
+        /// Mapsforge theme spec: stroke-linecap defaults to "round" (see
+        /// mapsforge's Line.parseCap), so a <line> without the attribute
+        /// must render with round caps instead of butt.
+        /// </summary>
+        [Fact]
+        public async Task LineWithoutLineCapDefaultsToRoundTest()
+        {
+            var (path, cleanup) = WriteTheme(
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rendertheme xmlns="http://opensciencemap.org/rendertheme" version="5">
+                    <rule e="way" k="highway" v="*">
+                        <line stroke="#FF0000" stroke-width="1.0" />
+                    </rule>
+                </rendertheme>
+                """);
+
+            try
+            {
+                var theme = await LoadTheme(path);
+                var line = Assert.IsType<MFLineLayerStyle>(theme.Layers.Single());
+
+                Assert.Equal(StrokeCap.Round, line.Cap);
+            }
+            finally
+            {
+                cleanup();
+            }
+        }
+
+        /// <summary>
+        /// An explicit stroke-linecap="butt" must still be honored.
+        /// </summary>
+        [Fact]
+        public async Task LineWithExplicitButtCapTest()
+        {
+            var (path, cleanup) = WriteTheme(
+                """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rendertheme xmlns="http://opensciencemap.org/rendertheme" version="5">
+                    <rule e="way" k="highway" v="*">
+                        <line stroke="#FF0000" stroke-width="1.0" stroke-linecap="butt" />
+                    </rule>
+                </rendertheme>
+                """);
+
+            try
+            {
+                var theme = await LoadTheme(path);
+                var line = Assert.IsType<MFLineLayerStyle>(theme.Layers.Single());
+
+                Assert.Equal(StrokeCap.Butt, line.Cap);
             }
             finally
             {

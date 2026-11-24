@@ -135,6 +135,18 @@ public class TextPointSymbol : Symbol
     public bool HaloIsOutsideDistance { get; init; } = true;
 
     /// <summary>
+    /// Gets a value indicating whether this symbol is the caption of an area
+    /// feature (polygon), so its (clipped) copies of that feature across
+    /// neighbouring tiles must be deduplicated per text in the placement
+    /// pass: a polygon spanning several tiles is clipped per tile and its
+    /// caption anchor (the interior point of the clipped geometry) differs
+    /// per tile, which would otherwise draw the same area name once per tile.
+    /// Only meaningful for symbols without a feature id (feature ids are
+    /// deduplicated in <see cref="SymbolPlacementEngine"/> by id).
+    /// </summary>
+    public bool IsAreaCaption { get; init; }
+
+    /// <summary>
     /// Function to calculate translate of symbols point from EvaluationContext in pixels
     /// </summary>
     public Func<EvaluationContext, Point>? Translate { get; init; }
@@ -186,6 +198,7 @@ public class TextPointSymbol : Symbol
             HaloBlur = HaloBlur,
             HaloWidth = HaloWidth,
             HaloIsOutsideDistance = HaloIsOutsideDistance,
+            IsAreaCaption = IsAreaCaption,
             Translate = Translate,
             TranslateAnchor = TranslateAnchor,
             MaxWidth = MaxWidth,

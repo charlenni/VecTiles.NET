@@ -39,9 +39,10 @@ public static class VectorSpriteExtensions
 
             picture = new SKSvg().Load(stream);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
             // A broken icon must not prevent the theme from rendering
+            Console.Error.WriteLine($"VectorSpriteExtensions: SVG of a vector sprite could not be parsed: {exception.Message}");
             picture = null;
         }
 

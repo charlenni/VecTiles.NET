@@ -38,7 +38,40 @@ public class MFSpriteFactory
     /// <param name="baseDirectory">Base location of the theme, or null.</param>
     public MFSpriteFactory(string? baseDirectory)
     {
-        _baseDirectory = baseDirectory;
+        // A relative base (e.g. "file://Files/Mapsforge" without a leading
+        // slash, where the first segment becomes a URI host, or a plain
+        // relative path) silently breaks every relative icon and pattern
+        // source: normalize it to an absolute file URL of the base directory
+        _baseDirectory = ToAbsoluteBase(baseDirectory);
+    }
+
+    private static string? ToAbsoluteBase(string? baseDirectory)
+    {
+        if (string.IsNullOrEmpty(baseDirectory))
+        {
+            return baseDirectory;
+        }
+
+        // Real URLs with another scheme (http(s)://, ...) are kept as-is
+        if (baseDirectory.Contains("://") && !baseDirectory.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
+        {
+            return baseDirectory;
+        }
+
+        var path = baseDirectory.StartsWith("file://", StringComparison.OrdinalIgnoreCase)
+            ? baseDirectory["file://".Length..]
+            : baseDirectory.StartsWith("file:", StringComparison.OrdinalIgnoreCase)
+                ? baseDirectory["file:".Length..]
+                : baseDirectory;
+
+        if (!Path.IsPathRooted(path))
+        {
+            path = Path.GetFullPath(path);
+        }
+
+        return Path.DirectorySeparatorChar == '/'
+            ? $"file://{path}"
+            : $"file:///{path}";
     }
 
     /// <summary>
@@ -86,6 +119,8 @@ public class MFSpriteFactory
         }
 
         // No candidate of the source could be loaded
+        Console.Error.WriteLine(
+            $"MFSpriteFactory: sprite source '{src}' could not be loaded (tried: {string.Join(", ", ResolveSourceCandidates(src))}, base: '{_baseDirectory}')");
         return null;
     }
 

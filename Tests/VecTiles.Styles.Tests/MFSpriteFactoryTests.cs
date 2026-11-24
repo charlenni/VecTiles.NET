@@ -157,6 +157,44 @@ namespace VecTiles.Styles.Mapsforge.Tests
         }
 
         /// <summary>
+        /// Checks that a relative base URL or path ("file://Mapsforge/..." as
+        /// an app builds it from a relative content path, or a plain relative
+        /// path) does not break the sprite resolution: "file://name" must not
+        /// turn "name" into a URI host. The factory normalizes the base to an
+        /// absolute file URL of the working directory.
+        /// </summary>
+        [Fact]
+        public void RelativeFileBaseResolutionTest()
+        {
+            var directory = Path.Combine(Path.GetTempPath(), "VecTilesSpriteFactoryTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(directory);
+
+            File.WriteAllText(Path.Combine(directory, "icon.svg"),
+                "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"10\" height=\"10\"></svg>");
+
+            var previousWorkingDirectory = Environment.CurrentDirectory;
+
+            try
+            {
+                Environment.CurrentDirectory = directory;
+
+                var relativeHost = new MFSpriteFactory("file://images").GetSprite("icon.svg");
+                Assert.NotNull(relativeHost);
+
+                var relativePath = new MFSpriteFactory("images").GetSprite("icon.svg");
+                Assert.NotNull(relativePath);
+
+                var absoluteUrl = new MFSpriteFactory($"file://{directory}").GetSprite("icon.svg");
+                Assert.NotNull(absoluteUrl);
+            }
+            finally
+            {
+                Environment.CurrentDirectory = previousWorkingDirectory;
+                Directory.Delete(directory, true);
+            }
+        }
+
+        /// <summary>
         /// Checks that SVG data is detected from its content (and not only
         /// from the file extension).
         /// </summary>

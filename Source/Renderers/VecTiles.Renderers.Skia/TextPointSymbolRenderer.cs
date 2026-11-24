@@ -266,7 +266,9 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         }
 
         var fontSize = symbol.FontSize.Invoke(context);
-        var maxWidth = symbol.MaxWidth.Invoke(context, fontSize);
+        var maxWidth = symbol.MaxWidth is not null
+            ? symbol.MaxWidth.Invoke(context, fontSize)
+            : float.MaxValue;
 
         // Layout is expensive; identical texts with identical layout parameters
         // share one measured RenderedText

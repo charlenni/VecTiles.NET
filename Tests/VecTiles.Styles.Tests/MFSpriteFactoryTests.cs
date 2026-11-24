@@ -139,6 +139,23 @@ namespace VecTiles.Styles.Mapsforge.Tests
         }
 
         /// <summary>
+        /// Checks that a "jar:" source which is not present relative to the
+        /// base location falls back to the parent folder, so that sprites
+        /// from a theme in a sub-folder (e.g. "mapsforge/default.xml")
+        /// resolve against the shared "symbols" / "patterns" folders of the
+        /// parent directory.
+        /// </summary>
+        [Fact]
+        public void JarSourceParentFallbackTest()
+        {
+            var themeDirectory = Path.Combine(RepoData.MapsforgeFiles, "mapsforge");
+            var sprite = new MFSpriteFactory($"file://{themeDirectory}").GetSprite("jar:symbols/bench.svg");
+
+            Assert.NotNull(sprite);
+            Assert.IsType<VectorSprite>(sprite);
+        }
+
+        /// <summary>
         /// Checks that SVG data is detected from its content (and not only
         /// from the file extension).
         /// </summary>

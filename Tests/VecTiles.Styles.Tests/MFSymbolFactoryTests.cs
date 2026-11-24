@@ -1,6 +1,7 @@
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using VecTiles.Common.Enums;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Styles.Mapsforge;
 using VecTiles.Styles.Mapsforge.Enums;
@@ -58,6 +59,22 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
         private static readonly AttributesTable Named = new() { { "name", "Test" }, { "id", "42" } };
 
+        /// <summary>
+        /// The point symbols of the factory are wrapped in a PointSymbol
+        /// envelope (the form the symbol placement and draw paths consume,
+        /// like for the OpenMapTiles symbol factory); the tests read the
+        /// inner parts.
+        /// </summary>
+        private static IconPointSymbol? IconOf(ISymbol? symbol)
+        {
+            return (symbol as PointSymbol)?.IconSymbol;
+        }
+
+        private static TextPointSymbol? TextOf(ISymbol? symbol)
+        {
+            return (symbol as PointSymbol)?.TextSymbol;
+        }
+
         // --- point icons ---
 
         [Fact]
@@ -67,7 +84,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             var symbol = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg"), EvaluationContext.Empty, PointFeature(Named));
 
             Assert.NotNull(symbol);
-            var icon = Assert.IsType<IconPointSymbol>(symbol);
+            Assert.IsType<PointSymbol>(symbol);
+            var icon = IconOf(symbol)!;
 
             Assert.Equal(42ul, icon.Id);
             Assert.Equal("Test", icon.Name);
@@ -79,12 +97,12 @@ namespace VecTiles.Styles.Mapsforge.Tests
         {
             var factory = new MFSymbolFactory(SpriteFactory);
 
-            var below = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg",
-                position: MapsforgePosition.Below), EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
-            var auto = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg",
-                position: MapsforgePosition.Auto), EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
-            var right = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg",
-                position: MapsforgePosition.Right), EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
+            var below = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg",
+                position: MapsforgePosition.Below), EvaluationContext.Empty, PointFeature(Named)));
+            var auto = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg",
+                position: MapsforgePosition.Auto), EvaluationContext.Empty, PointFeature(Named)));
+            var right = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg",
+                position: MapsforgePosition.Right), EvaluationContext.Empty, PointFeature(Named)));
 
             Assert.NotNull(below);
             Assert.Equal(0.5, below.Anchor.X, 5);
@@ -104,12 +122,12 @@ namespace VecTiles.Styles.Mapsforge.Tests
         {
             var factory = new MFSymbolFactory(SpriteFactory);
 
-            var always = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.Always),
-                EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
-            var order = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.Order),
-                EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
-            var ifSpace = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.IfSpace),
-                EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
+            var always = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.Always),
+                EvaluationContext.Empty, PointFeature(Named)));
+            var order = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.Order),
+                EvaluationContext.Empty, PointFeature(Named)));
+            var ifSpace = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.IfSpace),
+                EvaluationContext.Empty, PointFeature(Named)));
             var never = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", display: MapsforgeDisplay.Never),
                 EvaluationContext.Empty, PointFeature(Named));
 
@@ -132,8 +150,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
         {
             var factory = new MFSymbolFactory(SpriteFactory);
 
-            var symbol = factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", priority: 17),
-                EvaluationContext.Empty, PointFeature(Named)) as IconPointSymbol;
+            var symbol = IconOf(factory.CreateSymbol(Tile, SymbolLayer("symbols/dot_black.svg", priority: 17),
+                EvaluationContext.Empty, PointFeature(Named)))!;
 
             Assert.NotNull(symbol);
             Assert.Equal(-17, symbol.SortOrder);
@@ -162,7 +180,7 @@ namespace VecTiles.Styles.Mapsforge.Tests
             var symbol = factory.CreateSymbol(Tile, layer, EvaluationContext.Empty, PointFeature(Named));
 
             Assert.NotNull(symbol);
-            var text = Assert.IsType<TextPointSymbol>(symbol);
+            var text = TextOf(symbol)!;
 
             Assert.Equal("Test", text.Text);
             Assert.Contains("Open Sans Regular", text.FontNames);
@@ -180,7 +198,7 @@ namespace VecTiles.Styles.Mapsforge.Tests
             var layer = CaptionLayer(transform: MapsforgeTextTransform.Uppercase,
                 family: MapsforgeFontFamily.SansSerif, style: MapsforgeFontStyle.Bold);
 
-            var symbol = factory.CreateSymbol(Tile, layer, EvaluationContext.Empty, PointFeature(Named)) as TextPointSymbol;
+            var symbol = TextOf(factory.CreateSymbol(Tile, layer, EvaluationContext.Empty, PointFeature(Named)));
 
             Assert.NotNull(symbol);
             Assert.Equal("TEST", symbol.Text);
@@ -200,7 +218,7 @@ namespace VecTiles.Styles.Mapsforge.Tests
             var layer = CaptionLayer(position: MapsforgePosition.Above, dy: 4f);
             layer.PositionSymbol = symbolLayer;
 
-            var symbol = factory.CreateSymbol(Tile, layer, EvaluationContext.Empty, PointFeature(Named)) as TextPointSymbol;
+            var symbol = TextOf(factory.CreateSymbol(Tile, layer, EvaluationContext.Empty, PointFeature(Named)));
 
             Assert.NotNull(symbol);
             Assert.Equal(0.5, symbol.Anchor.X, 5);

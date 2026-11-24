@@ -60,7 +60,7 @@ public class MFSymbolFactory : ISymbolFactory
             return null;
         }
 
-        var point = GetFeaturePoint(feature);
+        var point = GetFeaturePoint(tile, feature);
         if (point == null)
         {
             return null;
@@ -68,7 +68,7 @@ public class MFSymbolFactory : ISymbolFactory
 
         var (anchor, offset) = GetPointAnchor(style.Position);
 
-        return new IconPointSymbol(tile, GetFeatureId(feature), point, sprite)
+        var icon = new IconPointSymbol(tile, GetFeatureId(feature), point, sprite)
         {
             Name = GetFeatureName(feature),
             StyleName = style.Name,
@@ -83,6 +83,12 @@ public class MFSymbolFactory : ISymbolFactory
             Anchor = anchor,
             Offset = offset
         };
+
+        // The placement and draw paths accept point symbols only as
+        // PointSymbol envelopes (see SymbolPlacementEngine / PointSymbolRenderer):
+        // a bare IconPointSymbol is quietly skipped, so the icon is wrapped
+        // like the OpenMapTiles symbol factory does
+        return PointSymbolOf(icon);
     }
 
     /// <summary>
@@ -97,13 +103,13 @@ public class MFSymbolFactory : ISymbolFactory
             return null;
         }
 
-        var text = GetText(feature, style.Key, style.TextTransform);
-        if (string.IsNullOrEmpty(text))
+        var caption = GetText(feature, style.Key, style.TextTransform);
+        if (string.IsNullOrEmpty(caption))
         {
             return null;
         }
 
-        var point = GetFeaturePoint(feature);
+        var point = GetFeaturePoint(tile, feature);
         if (point == null)
         {
             return null;
@@ -111,7 +117,7 @@ public class MFSymbolFactory : ISymbolFactory
 
         var (anchor, offset) = GetCaptionAnchor(style);
 
-        return new TextPointSymbol(tile, GetFeatureId(feature), point, text)
+        var text = new TextPointSymbol(tile, GetFeatureId(feature), point, caption)
         {
             Name = GetFeatureName(feature),
             StyleName = style.Name,
@@ -133,6 +139,12 @@ public class MFSymbolFactory : ISymbolFactory
                 ? (context, fontSize) => style.TextWrapWidth.Value * fontSize
                 : null
         };
+
+        // The placement and draw paths accept point symbols only as
+        // PointSymbol envelopes (see SymbolPlacementEngine / PointSymbolRenderer):
+        // a bare TextPointSymbol is quietly skipped, so the caption is wrapped
+        // like the OpenMapTiles symbol factory does
+        return PointSymbolOf(text);
     }
 
     /// <summary>
@@ -155,7 +167,7 @@ public class MFSymbolFactory : ISymbolFactory
             return null;
         }
 
-        var geometry = GetFeatureLineGeometry(feature);
+        var geometry = GetFeatureLineGeometry(tile, feature);
         if (geometry == null)
         {
             return null;
@@ -215,7 +227,7 @@ public class MFSymbolFactory : ISymbolFactory
             return null;
         }
 
-        var geometry = GetFeatureLineGeometry(feature);
+        var geometry = GetFeatureLineGeometry(tile, feature);
         if (geometry == null)
         {
             return null;
@@ -255,6 +267,36 @@ public class MFSymbolFactory : ISymbolFactory
             // placed once at the center of the way (renderer convention: a
             // spacing of zero places a single symbol on the path)
             Spacing = style.Repeat ? style.RepeatGap : 0
+        };
+    }
+
+    /// <summary>
+    /// Wraps a caption inline point symbol in the PointSymbol envelope the
+    /// placement and draw paths expect (no icon, only text).
+    /// </summary>
+    private static PointSymbol PointSymbolOf(TextPointSymbol text)
+    {
+        return new PointSymbol(text.Tile, text.Id, text.Point, icon: null, text)
+        {
+            Name = text.Name,
+            StyleName = text.StyleName,
+            AllowOthers = text.AllowOthers,
+            SortOrder = text.SortOrder
+        };
+    }
+
+    /// <summary>
+    /// Wraps an icon point symbol in the PointSymbol envelope the placement
+    /// and draw paths expect (no text, only icon).
+    /// </summary>
+    private static PointSymbol PointSymbolOf(IconPointSymbol icon)
+    {
+        return new PointSymbol(icon.Tile, icon.Id, icon.Point, icon, text: null)
+        {
+            Name = icon.Name,
+            StyleName = icon.StyleName,
+            AllowOthers = icon.AllowOthers,
+            SortOrder = icon.SortOrder
         };
     }
 
@@ -438,9 +480,12 @@ public class MFSymbolFactory : ISymbolFactory
     /// <summary>
     /// The point to place a point symbol at: the feature point itself, or an
     /// interior point for non point geometries. Null for empty geometries and
-    /// positions outside the valid coordinate range.
+    /// positions outside the valid coordinate range. The tile coordinates of
+    /// the mapsforge vector data (0..512 px) are converted into the world
+    /// coordinates of the tile, the space the symbol placement and the draw
+    /// pass work with.
     /// </summary>
-    private static NtsPoint? GetFeaturePoint(IFeature feature)
+    private static NtsPoint? GetFeaturePoint(Tile tile, IFeature feature)
     {
         // An empty geometry has no centroid or interior point: NetTopologySuite
         // returns a POINT EMPTY with NaN coordinates, which would break the
@@ -459,7 +504,8 @@ public class MFSymbolFactory : ISymbolFactory
             geometryPoint = feature.Geometry.InteriorPoint;
         }
 
-        var point = new NtsPoint(geometryPoint.X, geometryPoint.Y);
+        var (pointX, pointY) = ConvertFrom(tile, geometryPoint.X, geometryPoint.Y);
+        var point = new NtsPoint(pointX, pointY);
 
         if (!double.IsFinite(point.X) || !double.IsFinite(point.Y))
         {
@@ -474,13 +520,15 @@ public class MFSymbolFactory : ISymbolFactory
 
     /// <summary>
     /// Gets the line geometry a line symbol (icon along the line or label on
-    /// the path) is placed along: the feature geometry itself. Mapsforge
-    /// vector data already carries world coordinates of the tile, so no
-    /// conversion is needed. Null for geometries without at least two points
-    /// and for non finite coordinates (e.g. clipped away parts at high
-    /// overzoom).
+    /// the path) is placed along: the feature geometry itself, converted from
+    /// the tile coordinates of the mapsforge vector data (0..512 px) into the
+    /// world coordinates of the tile, the space the symbol placement and the
+    /// draw pass work with (the same conversion the OpenMapTiles symbol
+    /// factory applies to its point symbols). Null for geometries without at
+    /// least two points and for non finite coordinates (e.g. clipped away
+    /// parts at high overzoom).
     /// </summary>
-    private static NetTopologySuite.Geometries.Geometry? GetFeatureLineGeometry(IFeature feature)
+    private static NetTopologySuite.Geometries.Geometry? GetFeatureLineGeometry(Tile tile, IFeature feature)
     {
         if (feature.Geometry.IsEmpty || feature.Geometry.Coordinates.Length < 2)
         {
@@ -497,7 +545,28 @@ public class MFSymbolFactory : ISymbolFactory
             }
         }
 
-        return feature.Geometry.Copy();
+        var worldCoordinates = new NetTopologySuite.Geometries.Coordinate[feature.Geometry.Coordinates.Length];
+        for (var i = 0; i < feature.Geometry.Coordinates.Length; i++)
+        {
+            var (worldX, worldY) = ConvertFrom(tile, feature.Geometry.Coordinates[i].X, feature.Geometry.Coordinates[i].Y);
+            worldCoordinates[i] = new NetTopologySuite.Geometries.Coordinate(worldX, worldY);
+        }
+
+        return new NetTopologySuite.Geometries.GeometryFactory()
+            .CreateLineString(worldCoordinates);
+    }
+
+    /// <summary>
+    /// Converts tile coordinates (0..512 px of the tile top left corner) into
+    /// the world (spherical mercator) coordinates of the tile; the same
+    /// conversion the OpenMapTiles symbol factory applies to its symbols.
+    /// </summary>
+    private static (double X, double Y) ConvertFrom(Tile tile, double pointX, double pointY)
+    {
+        var worldPointX = tile.Left + (tile.Right - tile.Left) * pointX / 512.0;
+        var worldPointY = tile.Top - (tile.Top - tile.Bottom) * pointY / 512.0;
+
+        return (worldPointX, worldPointY);
     }
 
     /// <summary>

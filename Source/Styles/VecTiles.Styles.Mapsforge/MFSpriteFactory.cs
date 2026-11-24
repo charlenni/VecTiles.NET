@@ -69,16 +69,31 @@ public class MFSpriteFactory
     {
         byte[] data;
 
-        try
+        foreach (var candidate in ResolveSourceCandidates(src))
         {
-            data = ByteDataSource.GetBytesAsync(ResolveSource(src)).ConfigureAwait(false).GetAwaiter().GetResult();
-        }
-        catch (Exception)
-        {
-            // A missing icon or pattern must not prevent the theme from rendering
-            return null;
+            try
+            {
+                data = ByteDataSource.GetBytesAsync(candidate).ConfigureAwait(false).GetAwaiter().GetResult();
+            }
+            catch (Exception)
+            {
+                // A missing icon or pattern must not prevent the theme from
+                // rendering; the next candidate is tried
+                continue;
+            }
+
+            return CreateSpriteOfData(src, data, symbolWidth, symbolHeight, symbolPercent);
         }
 
+        // No candidate of the source could be loaded
+        return null;
+    }
+
+    /// <summary>
+    /// Creates the sprite of already loaded source data.
+    /// </summary>
+    private ISprite CreateSpriteOfData(string src, byte[] data, int? symbolWidth, int? symbolHeight, int? symbolPercent)
+    {
         if (IsSvg(src, data))
         {
             var (intrinsicWidth, intrinsicHeight) = ParseSvgSize(data);
@@ -95,6 +110,64 @@ public class MFSpriteFactory
             rasterWidth, rasterHeight, symbolWidth, symbolHeight, symbolPercent);
 
         return new Sprite(new Bitmap(data), 0, 0, (int)MathF.Ceiling(rasterDisplayWidth), (int)MathF.Ceiling(rasterDisplayHeight));
+    }
+
+    /// <summary>
+    /// Gets the candidate sources of a src attribute, in the order they are
+    /// tried: the primary resolution (<see cref="ResolveSource"/>) plus the
+    /// fallback resolutions. Mapsforge distributions often keep the jar:/
+    /// assets: resources of several themes (the symbols/ and patterns/
+    /// folders) one level above the theme file, shared between them, so this
+    /// location is tried as well when the primary one does not exist.
+    /// </summary>
+    private IEnumerable<string> ResolveSourceCandidates(string src)
+    {
+        yield return ResolveSource(src);
+
+        if (_baseDirectory == null || src.Contains("://", StringComparison.OrdinalIgnoreCase))
+        {
+            yield break;
+        }
+
+        var parentIndex = _baseDirectory.LastIndexOf('/');
+        var schemeLength = ByteDataSource.FileScheme.Length + 3; // "file:///"
+        if (parentIndex < schemeLength + 1)
+        {
+            yield break;
+        }
+
+        var stripped = src;
+        if (stripped.StartsWith("jar:", StringComparison.OrdinalIgnoreCase))
+        {
+            stripped = stripped[4..];
+        }
+        else if (stripped.StartsWith("assets:", StringComparison.OrdinalIgnoreCase))
+        {
+            stripped = stripped[7..];
+        }
+
+        if (stripped.Contains("://", StringComparison.OrdinalIgnoreCase) ||
+            stripped.StartsWith('/'))
+        {
+            yield break;
+        }
+
+        yield return ToByteDataSourceUrl($"{_baseDirectory[..parentIndex]}/{stripped}");
+    }
+
+    /// <summary>
+    /// Converts a plain file system path to the file URL notation of the
+    /// byte data source ("file://" on Unix-like systems, "file:///" on
+    /// Windows); paths that already carry a scheme are kept as-is.
+    /// </summary>
+    private static string ToByteDataSourceUrl(string path)
+    {
+        if (path.Contains("://"))
+        {
+            return path;
+        }
+
+        return path.StartsWith('/') ? $"file://{path}" : $"file:///{path}";
     }
 
     /// <summary>
@@ -135,7 +208,7 @@ public class MFSpriteFactory
         }
 
         // Plain paths are loaded through the file scheme of the ByteDataSource
-        return path.StartsWith('/') ? $"file://{path}" : $"file:///{path}";
+        return ToByteDataSourceUrl(path);
     }
 
     /// <summary>

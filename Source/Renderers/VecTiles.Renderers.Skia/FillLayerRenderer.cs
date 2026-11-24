@@ -87,7 +87,7 @@ public class FillLayerRenderer : ILayerRenderer, IDisposable
 
         if (_paint.OutlineColor != _paint.Color && _lineBuffer is not null && _lineBuffer.Vertices is { } lineVertices)
         {
-            _skPaint.Shader = _lineShader?.Update(1f, _paint.OutlineColor.ToSKColor());
+            _skPaint.Shader = _lineShader?.Update(_paint.StrokeWidth, _paint.OutlineColor.ToSKColor());
             _skPaint.Color = SKColors.White;
 
             skCanvas.DrawVertices(lineVertices, SKBlendMode.SrcOver, _skPaint);

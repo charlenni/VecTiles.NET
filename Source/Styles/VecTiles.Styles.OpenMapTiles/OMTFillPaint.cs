@@ -33,7 +33,7 @@ public static class OMTFillPaint
 
         // Set defaults
         brush.SetFixStyle(paint.FillOutlineColor.HasOnlyDefault ? PaintStyle.Fill : PaintStyle.StrokeAndFill);
-        brush.SetFixStrokeWidth(0);
+        brush.SetFixStrokeWidth(1f);
 
         // fill-color
         //   Optional color. Defaults to #000000. Disabled by fill-pattern. Exponential.

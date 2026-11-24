@@ -47,10 +47,10 @@ namespace VecTiles.Styles.Mapsforge.Tests
             MapsforgePosition position = MapsforgePosition.Auto, int priority = 0, int fontSize = 12,
             MapsforgeTextTransform transform = MapsforgeTextTransform.None,
             MapsforgeFontFamily family = MapsforgeFontFamily.Default, MapsforgeFontStyle style = MapsforgeFontStyle.Normal,
-            float dy = 0f)
+            float dy = 0f, float strokeWidth = 0f)
         {
             return new MFCaptionLayerStyle("caption1", MFAllExpression.Empty, 0, 256,
-                key, family, style, fontSize, new Color(0, 0, 0, 255), Colors.Empty, 0f,
+                key, family, style, fontSize, new Color(0, 0, 0, 255), Colors.Empty, strokeWidth,
                 dy, position, priority, display, null, transform, null)
             {
                 Source = "mapsforge"
@@ -194,6 +194,23 @@ namespace VecTiles.Styles.Mapsforge.Tests
             // Layers without a symbol reference are centered on the point
             Assert.Equal(0.5, text.Anchor.X, 5);
             Assert.Equal(0.5, text.Anchor.Y, 5);
+        }
+
+        [Fact]
+        public void CaptionHaloUsesPaintedStrokeWidthTest()
+        {
+            // The caption stroke-width of a Mapsforge theme is a painted stroke width
+            // stroked over the glyph outline, not an outward distance like the OMT
+            // halo-width; the renderer must pass it undoubled (RichTextKit stroke
+            // compensation), so the halo is visible only with half of the stroke width
+            var factory = new MFSymbolFactory(SpriteFactory);
+            var symbol = factory.CreateSymbol(Tile, CaptionLayer(strokeWidth: 2f), EvaluationContext.Empty, PointFeature(Named));
+
+            Assert.NotNull(symbol);
+            var text = TextOf(symbol)!;
+
+            Assert.Equal(2f, text.HaloWidth!(EvaluationContext.Empty), 5);
+            Assert.False(text.HaloIsOutsideDistance);
         }
 
         [Fact]

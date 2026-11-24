@@ -140,6 +140,9 @@ public class MFSymbolFactory : ISymbolFactory
             FontSize = (context) => style.FontSize * style.BaseTextSize,
             HaloColor = (context) => style.Stroke,
             HaloWidth = (context) => style.StrokeWidth * style.BaseStrokeWidth,
+            // The Mapsforge caption stroke-width is a painted stroke width, not an outward
+            // distance like the OMT halo-width (renderer compensation, see TextPointSymbol)
+            HaloIsOutsideDistance = false,
             MaxWidth = style.TextWrapWidth.HasValue
                 ? (context, fontSize) => style.TextWrapWidth.Value * fontSize
                 : null
@@ -258,7 +261,10 @@ public class MFSymbolFactory : ISymbolFactory
             FontNames = GetFontNames(style.FontFamily, style.FontStyle),
             FontSize = (context) => style.FontSize * style.BaseTextSize,
             HaloColor = (context) => style.Stroke,
-            HaloWidth = (context) => style.StrokeWidth * style.BaseStrokeWidth
+            HaloWidth = (context) => style.StrokeWidth * style.BaseStrokeWidth,
+            // The Mapsforge lineSymbol stroke-width is a painted stroke width, not an outward
+            // distance like the OMT halo-width (renderer compensation, see TextLineSymbol)
+            HaloIsOutsideDistance = false
         };
 
         return new LineSymbol(tile, GetFeatureId(feature), geometry,

@@ -133,6 +133,14 @@ public class TextLineSymbol : Symbol
     public Func<EvaluationContext, float>? HaloWidth { get; init; }
 
     /// <summary>
+    /// Gets a value indicating whether the halo width is the distance of the halo to the glyph
+    /// outline outwards (OpenMapTiles text-halo-width semantics; the renderer doubles it to
+    /// compensate the centered glyph stroke), or the stroke width painted over the glyph outline
+    /// (Mapsforge lineSymbol stroke-width; half of it extends outwards)
+    /// </summary>
+    public bool HaloIsOutsideDistance { get; init; } = true;
+
+    /// <summary>
     /// Function to calculate translate of symbols point from EvaluationContext in pixels
     /// </summary>
     public Func<EvaluationContext, Point>? Translate { get; init; }
@@ -182,6 +190,7 @@ public class TextLineSymbol : Symbol
             HaloColor = HaloColor,
             HaloBlur = HaloBlur,
             HaloWidth = HaloWidth,
+            HaloIsOutsideDistance = HaloIsOutsideDistance,
             Translate = Translate,
             TranslateAnchor = TranslateAnchor,
             MaxWidth = MaxWidth,

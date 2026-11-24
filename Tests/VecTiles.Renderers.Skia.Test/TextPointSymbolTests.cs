@@ -434,6 +434,7 @@ public class TextPointSymbolTests
             HaloColor = ctx => new Color(0, 0, 0, 1),
             HaloBlur = ctx => 1f,
             HaloWidth = ctx => 1f,
+            HaloIsOutsideDistance = false,
             Translate = ctx => new Point(3, 4),
             TranslateAnchor = ctx => MapAlignment.Viewport,
             MaxWidth = (ctx, fs) => 120
@@ -488,6 +489,7 @@ public class TextPointSymbolTests
         Assert.Same(symbol.HaloColor, copy.HaloColor);
         Assert.Same(symbol.HaloBlur, copy.HaloBlur);
         Assert.Same(symbol.HaloWidth, copy.HaloWidth);
+        Assert.Equal(symbol.HaloIsOutsideDistance, copy.HaloIsOutsideDistance);
         Assert.Same(symbol.Translate, copy.Translate);
         Assert.Same(symbol.TranslateAnchor, copy.TranslateAnchor);
         Assert.Same(symbol.MaxWidth, copy.MaxWidth);

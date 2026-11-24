@@ -210,6 +210,11 @@ public class TextPointSymbolRenderer : ISymbolRenderer
         // envelope is drawn as debug border in the drawing phase
         symbol.ScreenEnvelope = screenEnvelope;
 
+        // The mapsforge placement pass passes a display class accessor; the
+        // pairwise clash rules then follow the mapsforge display semantics
+        // (see SymbolPlacementEngine.SymbolsClash)
+        var selfClass = SymbolPlacementEngine.MapsforgeDisplayClassAccessor?.Invoke(symbol);
+
         var symbols = tree.Query(screenEnvelope);
 
         foreach (var other in symbols)
@@ -230,7 +235,7 @@ public class TextPointSymbolRenderer : ISymbolRenderer
                 continue;
             }
 
-            if (symbol.AllowOthers && otherSymbol.AllowOthers)
+            if (!SymbolPlacementEngine.SymbolsClash(symbol, otherSymbol, selfClass))
             {
                 continue;
             }

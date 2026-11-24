@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
@@ -336,11 +337,15 @@ public class MapsforgeTileConverter : ITileConverter
                     referencePos = pos;
                     SkipString(data, ref pos);
                 }
-                if ((featureByte & 0x10) != 0)
+                long labelLatMicro = 0, labelLonMicro = 0;
+                var hasLabelPosition = (featureByte & 0x10) != 0;
+                if (hasLabelPosition)
                 {
-                    // Label position: first the latitude offset, then the longitude offset; not used
-                    ReadVbeS(data, ref pos);
-                    ReadVbeS(data, ref pos);
+                    // Label position: first the latitude offset, then the longitude offset (VBE-S,
+                    // microdegrees relative to the first way node, see readOptionalLabelPosition of
+                    // the mapsforge MapFile reader)
+                    labelLatMicro = ReadVbeS(data, ref pos);
+                    labelLonMicro = ReadVbeS(data, ref pos);
                 }
 
                 var doubleDeltaEncoding = (featureByte & 0x04) != 0;
@@ -371,6 +376,45 @@ public class MapsforgeTileConverter : ITileConverter
                     pos = referencePos;
                     tags["ref"] = ReadString(data, ref pos);
                 }
+
+                if (hasLabelPosition)
+                {
+                    // The label position offsets are relative to the first way node of the first
+                    // block (see MapFile.readOptionalLabelPosition of the mapsforge reader, which
+                    // adds them to wayNodes[0][0]). Passed to the renderer as normalized tile
+                    // coordinates, which may lie outside the 0..512 range of this tile.
+                    var labelLatMicroTotal = wayDataBlocksCoordinates[0].Latitudes[0] + labelLatMicro;
+                    var labelLonMicroTotal = wayDataBlocksCoordinates[0].Longitudes[0] + labelLonMicro;
+                    tags["mf:label-x"] = MicrodegreesToTileX(labelLonMicroTotal, requestedTile)
+                        .ToString(CultureInfo.InvariantCulture);
+                    tags["mf:label-y"] = MicrodegreesToTileY(labelLatMicroTotal, requestedTile)
+                        .ToString(CultureInfo.InvariantCulture);
+                }
+
+                // Fixed caption anchor of the way: the center of the bounding box of the unclipped
+                // way blocks (the fallback area caption position of the mapsforge reader, see
+                // PolylineContainer.getCenterAbsolute -> calculateCenterOfBoundingBox). Passed to
+                // the renderer as normalized tile coordinates, which may lie outside the 0..512
+                // range of this tile; the tile that contains the point draws the caption once.
+                var wayMinLat = long.MaxValue;
+                var wayMaxLat = long.MinValue;
+                var wayMinLon = long.MaxValue;
+                var wayMaxLon = long.MinValue;
+                foreach (var block in wayDataBlocksCoordinates)
+                {
+                    for (var i = 0; i < block.Latitudes.Length; i++)
+                    {
+                        wayMinLat = Math.Min(wayMinLat, block.Latitudes[i]);
+                        wayMaxLat = Math.Max(wayMaxLat, block.Latitudes[i]);
+                        wayMinLon = Math.Min(wayMinLon, block.Longitudes[i]);
+                        wayMaxLon = Math.Max(wayMaxLon, block.Longitudes[i]);
+                    }
+                }
+
+                tags["mf:anchor-x"] = MicrodegreesToTileX((wayMinLon + wayMaxLon) / 2, requestedTile)
+                    .ToString(CultureInfo.InvariantCulture);
+                tags["mf:anchor-y"] = MicrodegreesToTileY((wayMinLat + wayMaxLat) / 2, requestedTile)
+                    .ToString(CultureInfo.InvariantCulture);
 
                 AddFeature(layers, _tagsConverter, CreateWayGeometry(wayDataBlocksCoordinates, requestedTile, tags), tags);
             }

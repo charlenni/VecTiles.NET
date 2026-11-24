@@ -114,10 +114,25 @@ public class MFSymbolFactory : ISymbolFactory
             return null;
         }
 
-        var point = GetFeaturePoint(tile, feature);
+        // A way feature has a fixed caption anchor (label position or bounding
+        // box center of the unclipped way): only the tile that contains the
+        // anchor draws the caption, the others return null here. Point
+        // features have no anchor tags and are placed at their own point.
+        var point = GetCaptionPoint(tile, feature);
         if (point == null)
         {
-            return null;
+            if (feature.Attributes is not null &&
+                (feature.Attributes.Exists("mf:label-x") || feature.Attributes.Exists("mf:anchor-x")))
+            {
+                // Way feature whose caption anchor lies outside this tile
+                return null;
+            }
+
+            point = GetFeaturePoint(tile, feature);
+            if (point == null)
+            {
+                return null;
+            }
         }
 
         var (anchor, offset) = GetCaptionAnchor(style);
@@ -496,6 +511,67 @@ public class MFSymbolFactory : ISymbolFactory
     /// coordinates of the tile, the space the symbol placement and the draw
     /// pass work with.
     /// </summary>
+    /// <summary>
+    /// Gets the fixed caption position of a way feature, following the mapsforge
+    /// reference pipeline (PolylineContainer.getCenterAbsolute). Priority: the
+    /// optional label position of the map file ("mf:label-x" / "mf:label-y",
+    /// MapFile.readOptionalLabelPosition), then the fallback anchor of the
+    /// converter ("mf:anchor-x" / "mf:anchor-y", the bounding box center of the
+    /// unclipped way). The tile that contains the point (half open 0..512)
+    /// draws the caption, all other tiles the area reaches return null so the
+    /// caption appears exactly once. Null when the feature has no anchor tags
+    /// (e.g. point features) or an invalid one; the caller falls back to the
+    /// geometry point.
+    /// </summary>
+    private static NtsPoint? GetCaptionPoint(Tile tile, IFeature feature)
+    {
+        var attributes = feature.Attributes;
+        if (attributes == null)
+        {
+            return null;
+        }
+
+        var x = double.NaN;
+        var y = double.NaN;
+        if (attributes.Exists("mf:label-x") && attributes.Exists("mf:label-y"))
+        {
+            x = Parse(attributes["mf:label-x"]);
+            y = Parse(attributes["mf:label-y"]);
+        }
+        else if (attributes.Exists("mf:anchor-x") && attributes.Exists("mf:anchor-y"))
+        {
+            x = Parse(attributes["mf:anchor-x"]);
+            y = Parse(attributes["mf:anchor-y"]);
+        }
+        else
+        {
+            // Point features have no anchor tags: their caption is placed at
+            // the feature point (GetFeaturePoint)
+            return null;
+        }
+
+        if (!double.IsFinite(x) || !double.IsFinite(y))
+        {
+            return null;
+        }
+
+        // Only the tile that contains the caption position (half open 0..512)
+        // draws it: a point at the right or bottom edge belongs to the
+        // neighbouring tile, the same convention the vertex deduplication of
+        // the mapsforge map file uses
+        if (x < 0.0 || x >= 512.0 || y < 0.0 || y >= 512.0)
+        {
+            return null;
+        }
+
+        var (pointX, pointY) = ConvertFrom(tile, x, y);
+        return new NtsPoint(pointX, pointY);
+
+        static double Parse(object? value) =>
+            double.TryParse(value?.ToString(), NumberStyles.Float,
+                CultureInfo.InvariantCulture, out var parsed) ? parsed : double.NaN;
+    }
+
     private static NtsPoint? GetFeaturePoint(Tile tile, IFeature feature)
     {
         // An empty geometry has no centroid or interior point: NetTopologySuite

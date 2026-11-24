@@ -33,8 +33,10 @@ namespace VecTiles.Controls.Mapsui;
 /// vector sources of the style (e.g. raster overlays) are created from the style file as usual
 /// and skipped when they cannot be loaded.
 /// </remarks>
-public class MFRenderedTileSource : IRenderedTileSource, IDisposable
+public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, IDisposable
 {
+    /// <inheritdoc />
+    public bool OrdersPlacementByPriority => true;
     private const string TempFolderName = "VecTilesMapsforge";
 
     private readonly Renderer _renderer;

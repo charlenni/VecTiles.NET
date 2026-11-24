@@ -287,6 +287,11 @@ public static class TextLineSymbolRenderer
             union.ExpandToInclude(box);
         }
 
+        // The mapsforge placement pass passes a display class accessor; the
+        // pairwise clash rules then follow the mapsforge display semantics
+        // (see SymbolPlacementEngine.SymbolsClash)
+        var selfClass = SymbolPlacementEngine.MapsforgeDisplayClassAccessor?.Invoke(symbol);
+
         var symbols = tree.Query(union);
 
         foreach (var other in symbols)
@@ -314,7 +319,7 @@ public static class TextLineSymbolRenderer
                 continue;
             }
 
-            if (symbol.AllowOthers && otherSymbol.AllowOthers)
+            if (!SymbolPlacementEngine.SymbolsClash(symbol, otherSymbol, selfClass))
             {
                 continue;
             }

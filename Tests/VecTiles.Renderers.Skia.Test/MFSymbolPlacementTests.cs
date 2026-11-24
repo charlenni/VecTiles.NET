@@ -107,6 +107,59 @@ public class MFSymbolPlacementTests
         }
     }
 
+    [Fact]
+    public async Task PlatzpromenadeCaptionsArePlacedOnceAtAFixedPositionTest()
+    {
+        const int zoom = 18;
+        const int tileSize = 512;
+        // The Platzpromenade paths of zuerich.span reach the tiles
+        // x = 137289..137291, y = 91792..91795; without the fixed way anchors
+        // the caption of every way copy was placed per tile (duplicated,
+        // position jumping between the tile copies)
+        const int minX = 137289;
+        const int minY = 91792;
+        const int columns = 3;
+        const int rows = 4;
+
+        double resolution = 78271.51696402031 / Math.Pow(2, zoom);
+        double tileSpan = tileSize * resolution;
+
+        double centerXWorld = WebMercatorX(minX, zoom) + columns * tileSpan / 2.0;
+        double centerYWorld = WebMercatorY(minY, zoom) - rows * tileSpan / 2.0;
+        var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, columns * tileSize, rows * tileSize);
+
+        using var tileSource = new MFRenderedTileSource(_mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+        var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
+        var renderService = new Mapsui.Rendering.RenderService();
+
+        using var bitmap = new SKBitmap(columns * tileSize, rows * tileSize);
+        using var canvas = new SKCanvas(bitmap);
+        canvas.Clear(SKColors.White);
+
+        RenderedTileLayerRenderer.Draw(canvas, viewport, tileLayer, renderService);
+        RenderedTileLayerRenderer.Draw(canvas, viewport, tileLayer, renderService);
+
+        var view = tileLayer.CurrentPlacement;
+        Assert.NotNull(view);
+        Assert.False(view!.Placement.Incomplete);
+
+        var placed = view.Placement.PlacedByLayer.Values
+            .SelectMany(e => e)
+            .Select(e => e.Symbol)
+            .OfType<VecTiles.Common.Primitives.PointSymbol>()
+            .Where(s => s.TextSymbol?.Text == "Platzpromenade")
+            .Select(s => (s.Point.X, s.Point.Y))
+            .ToList();
+
+        // The thematic data of the plaza carries one caption symbol (on the
+        // park polygon; the footways get no caption). In the mapsforge
+        // priority placement the caption wins against the bank icon and is
+        // placed exactly once, at the fixed world position of its anchor
+        Assert.Equal(1, placed.Count);
+        Assert.InRange(placed[0].Item1, 950670.2324864075 - 1e-3, 950670.2324864075 + 1e-3);
+        Assert.InRange(placed[0].Item2, 6004461.071088876 - 1e-3, 6004461.071088876 + 1e-3);
+    }
+
     private static double WebMercatorX(int tileX, int zoom) => -20037508.343 + (20037508.343 * 2) * tileX / Math.Pow(2, zoom);
 
     private static double WebMercatorY(int tileY, int zoom) => 20037508.343 - (20037508.343 * 2) * tileY / Math.Pow(2, zoom);

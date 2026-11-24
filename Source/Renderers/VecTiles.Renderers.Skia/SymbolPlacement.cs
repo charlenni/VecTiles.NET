@@ -18,6 +18,28 @@ namespace VecTiles.Renderers.Skia;
 public sealed record PlacementEntry(ISymbol Symbol, LineSymbolPlacementRun? Run);
 
 /// <summary>
+/// Sets the placement semantics of a placement pass and restores the previous
+/// one when disposed. Using the declaration form, the disposal keeps the
+/// semantics bound to the <see cref="SymbolPlacementEngine.Compute"/> call
+/// (which runs single-threaded on one thread).
+/// </summary>
+internal readonly struct PlacementSemanticsScope : IDisposable
+{
+    public PlacementSemanticsScope(Func<ISymbol, int>? displayClassAccessor)
+    {
+        Previous = SymbolPlacementEngine.MapsforgeDisplayClassAccessor;
+        SymbolPlacementEngine.MapsforgeDisplayClassAccessor = displayClassAccessor;
+    }
+
+    private Func<ISymbol, int>? Previous { get; }
+
+    public void Dispose()
+    {
+        SymbolPlacementEngine.MapsforgeDisplayClassAccessor = Previous;
+    }
+}
+
+/// <summary>
 /// Result of the placement pass over a set of tiles. The symbols are grouped
 /// by style layer name; the dictionary preserves the ascending style order of
 /// the layers, so drawing in dictionary order draws the layers from bottom
@@ -312,7 +334,7 @@ public static class SymbolPlacementEngine
     /// <returns>The placement result for all tiles.</returns>
     public static PlacementResult Compute(IReadOnlyList<IRenderedTile> tiles, int zoomLevel,
         Func<double, double, (double, double)> worldToScreen, CancellationToken token = default,
-        IncrementalPlacementState? incremental = null)
+        IncrementalPlacementState? incremental = null, bool orderByPriority = false)
     {
         using var recorder = new SKPictureRecorder();
         var canvas = recorder.BeginRecording(
@@ -329,6 +351,13 @@ public static class SymbolPlacementEngine
 
         var tree = new Quadtree<ISymbol>();
         var context = new EvaluationContext(zoomLevel);
+
+        // The mapsforge placement semantics (display classes and the clash
+        // rules of the mapsforge reference labeller); see the pair checks of
+        // the renderers and the ordering below. A using declaration restores
+        // the previous semantics also when the pass is cancelled.
+        using var placementSemantics = new PlacementSemanticsScope(
+            orderByPriority ? GetMapsforgeDisplayClass : null);
 
         var placedByLayer = new Dictionary<string, List<PlacementEntry>>();
 
@@ -400,10 +429,16 @@ public static class SymbolPlacementEngine
             }
         }
 
-        // The highest style layer wins: process the layers top first (highest
-        // style index; equal indices order by list position, later entry
-        // first) so its symbols occupy the quadtree first; symbols of lower
-        // layers that collide are dropped and nothing is removed later
+        // The mapsforge placement orders the candidates of all layers by the
+        // render-theme priority (attribute priority, descending), then by the
+        // display class ("always" before "order" before "ifspace"), then by
+        // position (x descending, y ascending, matching the arithmetic of the
+        // reference labeller), independent of the style layers.
+        // The default (OpenMapTiles) semantics: the highest style layer wins;
+        // the layers are processed top first (highest style index; equal
+        // indices order by list position, later entry first) so its symbols
+        // occupy the quadtree first; symbols of lower layers that collide are
+        // dropped and nothing is removed later
         var merged = layerPositions.Select((name, position) => (name, position));
         var topFirst = merged
             .OrderByDescending(pair => layerOrder[pair.name])
@@ -411,133 +446,154 @@ public static class SymbolPlacementEngine
             .Select(pair => pair.name)
             .ToList();
 
+        // Merge the line symbol tile copies per layer: both placement modes
+        // need the merged lists; the default mode processes layer by layer,
+        // the mapsforge mode interleaves the layers by priority
+        var mergedByLayer = new Dictionary<string, List<ISymbol>>();
+
         foreach (var name in topFirst)
         {
-            token.ThrowIfCancellationRequested();
+            // Every layer keeps its own list of placements (the dictionary is
+            // copied over in the ascending style order after the pass)
+            placesTopFirst.Add(name, new List<PlacementEntry>());
 
             if (IsVisibleAtZoom(layerZooms[name], zoomLevel) == false)
             {
-                // Invisible at this zoom level, but keep the layer order
-                placesTopFirst.Add(name, new List<PlacementEntry>());
+                // Invisible at this zoom level
                 continue;
             }
 
             // Names in the same style layer are ordered by SortOrder and then
             // by Rank; line symbols of the same feature split across tiles are
             // merged into one continuous symbol
-            var symbols = LineSymbolMerger.MergeById(layers[name].Symbols
-                .OrderBy(s => s.SortOrder).ThenBy(s => s.Rank));
+            mergedByLayer.Add(name, LineSymbolMerger.MergeById(layers[name].Symbols
+                .OrderBy(s => s.SortOrder).ThenBy(s => s.Rank)));
+        }
 
-            var placements = new List<PlacementEntry>();
+        // In the default mode the merged lists are in the top-first layer
+        // order (the dictionary keeps the insertion order), so the symbols
+        // are placed layer by layer like before; the mapsforge mode sorts the
+        // candidates of all layers into a single placement order
+        var orderedCandidates = mergedByLayer
+            .SelectMany(pair => pair.Value.Select(s => (Symbol: s, Layer: pair.Key)));
 
-            foreach (var symbol in symbols)
+        if (orderByPriority)
+        {
+            orderedCandidates = orderedCandidates
+                .OrderBy(c => c.Symbol.SortOrder)
+                .ThenByDescending(c => GetMapsforgeDisplayClass(c.Symbol))
+                .ThenByDescending(c => SymbolPoint(c.Symbol).X)
+                .ThenBy(c => SymbolPoint(c.Symbol).Y)
+                .ThenByDescending(c => layerOrder[c.Layer]);
+        }
+
+        foreach (var (symbol, layer) in orderedCandidates)
+        {
+            token.ThrowIfCancellationRequested();
+
+            if (incremental is not null &&
+                !seenSymbols!.Add(symbol))
             {
-                token.ThrowIfCancellationRequested();
+                // A later occurrence of the same feature: decided or
+                // rejected already in this very pass
+                continue;
+            }
 
-                if (incremental is not null &&
-                    !seenSymbols!.Add(symbol))
+            if (symbol.Id != 0 && !examinedIds.Add(symbol.Id))
+            {
+                continue;
+            }
+
+            var placements = placesTopFirst[layer];
+
+            // A persistent state keeps the decision of an earlier pass:
+            // the label stays at the position of the pass that placed
+            // it, also when tiles appear or disappear. The collision
+            // check still runs again (the tree is fresh), so the space
+            // of the pinned symbol is re-affirmed in the current pass
+            // and the boxes of vanished symbols free their space
+            if (incremental is not null &&
+                incremental.TryGetDecision(symbol, out var decided) &&
+                decided is not null)
+            {
+                if (symbol is PointSymbol pinnedPoint)
                 {
-                    // A later occurrence of the same feature: decided or
-                    // rejected already in this very pass
-                    continue;
-                }
-
-                if (symbol.Id != 0 && !examinedIds.Add(symbol.Id))
-                {
-                    continue;
-                }
-
-                // A persistent state keeps the decision of an earlier pass:
-                // the label stays at the position of the pass that placed
-                // it, also when tiles appear or disappear. The collision
-                // check still runs again (the tree is fresh), so the space
-                // of the pinned symbol is re-affirmed in the current pass
-                // and the boxes of vanished symbols free their space
-                if (incremental is not null &&
-                    incremental.TryGetDecision(symbol, out var decided) &&
-                    decided is not null)
-                {
-                    if (symbol is PointSymbol pinnedPoint)
-                    {
-                        var status = PointSymbolRenderer.CheckForSpace(canvas, context, pinnedPoint, tree,
-                            worldToScreen, 0, showUnvalidBorders: false);
-
-                        if (status == SymbolPlacementStatus.Success)
-                        {
-                            insertCollisionBoxes(pinnedPoint);
-                        }
-                    }
-                    else if (symbol is LineSymbol pinnedLine)
-                    {
-                        LineSymbolRenderer.Place(canvas, context, pinnedLine, tree, worldToScreen,
-                            showUnvalidBorders: false);
-                    }
-
-                    placements.Add(decided);
-                    continue;
-                }
-
-                if (symbol is PointSymbol pointSymbol)
-                {
-                    var status = PointSymbolRenderer.CheckForSpace(canvas, context, pointSymbol, tree,
+                    var status = PointSymbolRenderer.CheckForSpace(canvas, context, pinnedPoint, tree,
                         worldToScreen, 0, showUnvalidBorders: false);
 
                     if (status == SymbolPlacementStatus.Success)
                     {
-                        placedByLayerAdd(symbol, null);
-                    }
-                    else
-                    {
-                        // No persistent record: the symbol is re-examined in
-                        // the next pass (see Decide)
-                        rejected.Add(symbol);
+                        insertCollisionBoxes(pinnedPoint);
                     }
                 }
-                else if (symbol is LineSymbol lineSymbol)
+                else if (symbol is LineSymbol pinnedLine)
                 {
-                    var run = LineSymbolRenderer.Place(canvas, context, lineSymbol, tree, worldToScreen,
+                    LineSymbolRenderer.Place(canvas, context, pinnedLine, tree, worldToScreen,
                         showUnvalidBorders: false);
-
-                    if (run.HasPlacements)
-                    {
-                        placedByLayerAdd(symbol, run);
-                    }
-                    else
-                    {
-                        // No persistent record: the symbol's merged run is
-                        // re-examined in the next pass (see Decide)
-                        rejected.Add(symbol);
-                    }
                 }
+
+                placements.Add(decided);
+                continue;
             }
 
-            placesTopFirst.Add(name, placements);
-
-            void insertCollisionBoxes(PointSymbol point)
+            if (symbol is PointSymbol pointSymbol)
             {
-                // The check set the draw flags and screen envelopes;
-                // insert the collision boxes like the drawing pass did
-                if (point.IconSymbol is not null && point.DrawIcon)
-                {
-                    tree.Insert(point.IconSymbol.ScreenEnvelope!, point.IconSymbol.Copy());
-                }
+                var status = PointSymbolRenderer.CheckForSpace(canvas, context, pointSymbol, tree,
+                    worldToScreen, 0, showUnvalidBorders: false);
 
-                if (point.TextSymbol is not null && point.DrawText)
+                if (status == SymbolPlacementStatus.Success)
                 {
-                    tree.Insert(point.TextSymbol.ScreenEnvelope!, point.TextSymbol.Copy());
+                    placedByLayerAdd(symbol, null, placements);
+                }
+                else
+                {
+                    // No persistent record: the symbol is re-examined in
+                    // the next pass (see Decide)
+                    rejected.Add(symbol);
                 }
             }
-
-            void placedByLayerAdd(ISymbol symbol, LineSymbolPlacementRun? run)
+            else if (symbol is LineSymbol lineSymbol)
             {
-                if (symbol is PointSymbol point)
-                {
-                    insertCollisionBoxes(point);
-                }
+                var run = LineSymbolRenderer.Place(canvas, context, lineSymbol, tree, worldToScreen,
+                    showUnvalidBorders: false);
 
-                placements.Add(new PlacementEntry(symbol, run));
-                incremental?.Decide(symbol, placements[^1]);
+                if (run.HasPlacements)
+                {
+                    placedByLayerAdd(symbol, run, placements);
+                }
+                else
+                {
+                    // No persistent record: the symbol's merged run is
+                    // re-examined in the next pass (see Decide)
+                    rejected.Add(symbol);
+                }
             }
+        }
+
+        void insertCollisionBoxes(PointSymbol point)
+        {
+            // The check set the draw flags and screen envelopes;
+            // insert the collision boxes like the drawing pass did
+            if (point.IconSymbol is not null && point.DrawIcon)
+            {
+                tree.Insert(point.IconSymbol.ScreenEnvelope!, point.IconSymbol.Copy());
+            }
+
+            if (point.TextSymbol is not null && point.DrawText)
+            {
+                tree.Insert(point.TextSymbol.ScreenEnvelope!, point.TextSymbol.Copy());
+            }
+        }
+
+        void placedByLayerAdd(ISymbol symbol, LineSymbolPlacementRun? run, List<PlacementEntry> placements)
+        {
+            if (symbol is PointSymbol point)
+            {
+                insertCollisionBoxes(point);
+            }
+
+            placements.Add(new PlacementEntry(symbol, run));
+            incremental?.Decide(symbol, placements[^1]);
         }
 
         // Copy the placements into the result dictionary in the ascending
@@ -558,6 +614,91 @@ public static class SymbolPlacementEngine
             Tree = tree,
             ZoomLevel = zoomLevel,
         };
+    }
+
+    /// <summary>
+    /// Gets or sets the mapsforge display class accessor of the running
+    /// placement pass (2 = "always", 1 = "order", 0 = "ifspace"), or null for
+    /// the default OpenMapTiles semantics. Set by
+    /// <see cref="PlacementSemanticsScope"/>; a pass runs single-threaded on
+    /// one thread, so the accessor is thread-static.
+    /// </summary>
+    [ThreadStatic]
+    internal static Func<ISymbol, int>? MapsforgeDisplayClassAccessor;
+
+    /// <summary>
+    /// Gets the position of a symbol for the mapsforge placement order
+    /// (PointSymbols sit on their point; LineSymbols on the center of the
+    /// envelope of their geometry).
+    /// </summary>
+    private static (double X, double Y) SymbolPoint(ISymbol symbol)
+    {
+        return symbol switch
+        {
+            PointSymbol point => (point.Point.X, point.Point.Y),
+            LineSymbol line => ((line.Geometry.EnvelopeInternal.MinX + line.Geometry.EnvelopeInternal.MaxX) / 2,
+                (line.Geometry.EnvelopeInternal.MinY + line.Geometry.EnvelopeInternal.MaxY) / 2),
+            _ => (0, 0),
+        };
+    }
+
+    /// <summary>
+    /// Gets the mapsforge display class of a symbol: the highest class of its
+    /// inner symbols (see <see cref="ClassOf"/>; the Point/LineSymbol wrappers
+    /// of the mapsforge symbol factory only carry AllowOthers of the inners).
+    /// </summary>
+    private static int GetMapsforgeDisplayClass(ISymbol symbol)
+    {
+        return symbol switch
+        {
+            PointSymbol point => Math.Max(Display(point.IconSymbol), Display(point.TextSymbol)),
+            LineSymbol line => Math.Max(Display(line.IconSymbol), Display(line.TextSymbol)),
+            IconPointSymbol inner => ClassOf(inner),
+            TextPointSymbol inner => ClassOf(inner),
+            IconLineSymbol inner => ClassOf(inner),
+            TextLineSymbol inner => ClassOf(inner),
+            _ => 0
+        };
+
+        static int ClassOf<TSymbol>(TSymbol? inner) where TSymbol : ISymbol =>
+            inner switch
+            {
+                IconPointSymbol innerSymbol => innerSymbol.AllowOverlap ? (innerSymbol.AllowOthers ? 2 : 1) : 0,
+                TextPointSymbol innerSymbol => innerSymbol.AllowOverlap ? (innerSymbol.AllowOthers ? 2 : 1) : 0,
+                IconLineSymbol innerSymbol => innerSymbol.AllowOverlap ? (innerSymbol.AllowOthers ? 2 : 1) : 0,
+                TextLineSymbol innerSymbol => innerSymbol.AllowOverlap ? (innerSymbol.AllowOthers ? 2 : 1) : 0,
+                _ => 0
+            };
+
+        // Mapsforge display mapping (see the symbol factory): "always" allows
+        // overlap in both directions, "order" overlaps other symbols but is
+        // removed when overlapping an "always" symbol, "ifspace" only takes
+        // space that is free
+        static int Display<TSymbol>(TSymbol? inner) where TSymbol : ISymbol =>
+            ClassOf(inner);
+    }
+
+    /// <summary>
+    /// Runs the pairwise clash decision of a placement check: returns true
+    /// when the two symbols clash under the active semantics (the rectangle
+    /// intersection is already checked by the caller). Without an accessor
+    /// (default OpenMapTiles semantics) two symbols clash unless both allow
+    /// others; with the mapsforge accessor (see
+    /// <see cref="MapsforgeDisplayClassAccessor"/>) symbols of display
+    /// "always" clash with nothing and a symbol of display "order" clashes
+    /// only with other "order" symbols, so the classified self class is
+    /// compared against the class of the other symbol.
+    /// </summary>
+    internal static bool SymbolsClash(ISymbol symbol, Symbol otherSymbol, int? selfClass)
+    {
+        if (MapsforgeDisplayClassAccessor is not null)
+        {
+            var otherClass = MapsforgeDisplayClassAccessor(otherSymbol);
+
+            return selfClass != 2 && otherClass != 2 && selfClass == otherClass;
+        }
+
+        return !(symbol.AllowOthers && otherSymbol.AllowOthers);
     }
 
     /// <summary>

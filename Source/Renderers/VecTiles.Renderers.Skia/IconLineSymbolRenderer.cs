@@ -192,6 +192,12 @@ public static class IconLineSymbolRenderer
 
         screenEnvelope.Translate(screenX, screenY);
 
+        // Save (unchanged for a rejected symbol) and the mapsforge display
+        // class accessor of the placement pass (pairwise clash rules, see
+        // SymbolPlacementEngine.SymbolsClash)
+        symbol.ScreenEnvelope = screenEnvelope;
+        var selfClass = SymbolPlacementEngine.MapsforgeDisplayClassAccessor?.Invoke(symbol);
+
         var symbols = tree.Query(screenEnvelope);
 
         foreach (var other in symbols)
@@ -212,7 +218,7 @@ public static class IconLineSymbolRenderer
                 continue;
             }
 
-            if (symbol.AllowOthers && otherSymbol.AllowOthers)
+            if (!SymbolPlacementEngine.SymbolsClash(symbol, otherSymbol, selfClass))
             {
                 continue;
             }
@@ -225,8 +231,6 @@ public static class IconLineSymbolRenderer
 
             return SymbolPlacementStatus.Collision;
         }
-
-        symbol.ScreenEnvelope = screenEnvelope;
 
         return SymbolPlacementStatus.Success;
     }

@@ -142,7 +142,16 @@ public sealed class PlacementService
     public PlacementService(IRenderedTileSource tileSource, int maxConcurrentFetches = 4)
     {
         _fetchScheduler = new TileFetchScheduler(tileSource, maxConcurrentFetches);
+        OrdersPlacementByPriority = tileSource is IPlacementOrderSource { OrdersPlacementByPriority: true };
     }
+
+    /// <summary>
+    /// Gets a value indicating whether the candidates of a placement pass are
+    ///  ordered by the render priority (mapsforge data sources) instead of the
+    ///  style layer order (OpenMapTiles data sources); see
+    ///  <see cref="SymbolPlacementEngine.Compute"/>.
+    /// </summary>
+    public bool OrdersPlacementByPriority { get; }
 
     /// <summary>
     /// Time in milliseconds the zoom must stay constant before the placement
@@ -518,7 +527,7 @@ public sealed class PlacementService
                 (info, tile) => AddTileToView(key, info, tile)).ConfigureAwait(false);
 
             result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom),
-                screenTileInfos);
+                screenTileInfos, OrdersPlacementByPriority);
         }
         catch (OperationCanceledException)
         {
@@ -636,7 +645,7 @@ public sealed class PlacementService
                 (info, tile) => AddTileToView(key, info, tile)).ConfigureAwait(false);
 
             var result = ComputePlacement(fetch, key.Zoom, worldToScreen, token, StateFor(key.Zoom),
-                screenTileInfos);
+                screenTileInfos, OrdersPlacementByPriority);
 
             lock (_lock)
             {
@@ -690,7 +699,8 @@ public sealed class PlacementService
     /// </param>
     private static PlacementResult ComputePlacement(TileFetchResult fetch, int zoomLevel,
         Func<double, double, (double, double)> worldToScreen, CancellationToken token,
-        IncrementalPlacementState incremental, IReadOnlyList<TileInfo>? screenTileInfos = null)
+        IncrementalPlacementState incremental, IReadOnlyList<TileInfo>? screenTileInfos = null,
+        bool ordersPlacementByPriority = false)
     {
         var blocksPublication = BlocksPublication(fetch, screenTileInfos);
 
@@ -710,8 +720,10 @@ public sealed class PlacementService
         // enter the persistent state either — the pass that sees the complete
         // tile set decides and pins the labels
         var placed = blocksPublication
-            ? SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, null) with { Incomplete = true }
-            : SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, incremental);
+            ? SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, null,
+                ordersPlacementByPriority) with { Incomplete = true }
+            : SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, incremental,
+                ordersPlacementByPriority);
 
         return placed;
     }

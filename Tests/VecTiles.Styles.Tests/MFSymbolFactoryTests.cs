@@ -166,7 +166,9 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
             Assert.Equal("Test", text.Text);
             Assert.Contains("Open Sans Regular", text.FontNames);
-            Assert.Equal(18f, text.FontSize!(EvaluationContext.Empty), 5); // 12 * 1.5
+            // Font size in renderer units: 12 (theme) * 1.5 (base), doubled
+            // for the 512 px tiles
+            Assert.Equal(36f, text.FontSize!(EvaluationContext.Empty), 5);
 
             // Layers without a symbol reference are centered on the point
             Assert.Equal(0.5, text.Anchor.X, 5);
@@ -206,7 +208,9 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.Equal(0.5, symbol.Anchor.X, 5);
             Assert.Equal(1, symbol.Anchor.Y, 5);
             Assert.Equal(0, symbol.Offset.X, 5);
-            Assert.Equal(-10 + 4, symbol.Offset.Y, 5); // half of the 20px icon, pushed up, plus dy
+            // Half of the icon (20 theme px become 40 renderer px), pushed
+            // up, plus dy (4 theme px become 8 renderer px)
+            Assert.Equal(-20 + 8, symbol.Offset.Y, 5);
         }
 
         [Fact]
@@ -237,13 +241,13 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.NotNull(symbol);
             var line = Assert.IsType<LineSymbol>(symbol);
 
-            Assert.Equal(150f, line.Spacing, 5);
+            Assert.Equal(300f, line.Spacing, 5); // repeat gap doubled for 512 px tiles
             Assert.NotNull(line.IconSymbol);
             Assert.Null(line.TextSymbol);
             Assert.Equal(10, line.IconSymbol.SortOrder); // -(-10): higher priority first
             // The icon follows the path direction
             Assert.Equal(MapAlignment.Map, line.IconSymbol.RotationAlignment);
-            Assert.Equal(3, line.IconSymbol.Offset.Y, 5);
+            Assert.Equal(6, line.IconSymbol.Offset.Y, 5); // dy doubled for 512 px tiles
         }
 
         [Fact]
@@ -287,8 +291,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.NotNull(line.TextSymbol);
             Assert.Equal("Test", line.TextSymbol.Text);
             Assert.Equal(8, line.TextSymbol.SortOrder); // -(-8): higher priority first
-            Assert.Equal(-2, line.TextSymbol.Offset.Y, 5); // dy shifts up from the path
-            Assert.Equal(14f, line.TextSymbol.FontSize!(EvaluationContext.Empty), 5);
+            Assert.Equal(-4, line.TextSymbol.Offset.Y, 5); // dy shifts up, doubled for 512 px tiles
+            Assert.Equal(28f, line.TextSymbol.FontSize!(EvaluationContext.Empty), 5); // font size doubled
         }
 
         /// <summary>

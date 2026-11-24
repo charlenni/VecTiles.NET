@@ -45,10 +45,12 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.NotNull(paint);
             Assert.Equal(PaintStyle.Stroke, paint.Style);
             Assert.Equal(new Color(255, 0, 0, 255), paint.Color);
-            Assert.Equal(3f, paint.StrokeWidth, 5);
+            // Stroke width and dash array in renderer units: theme values
+            // doubled for the 512 px tiles (zoom 0 has no stroke growth)
+            Assert.Equal(6f, paint.StrokeWidth, 5);
             Assert.Equal(StrokeCap.Round, paint.StrokeCap);
             Assert.Equal(StrokeJoin.Bevel, paint.StrokeJoin);
-            Assert.Equal(new[] { 5f, 4f }, paint.DashArray);
+            Assert.Equal(new[] { 10f, 8f }, paint.DashArray);
         }
 
         /// <summary>
@@ -68,7 +70,28 @@ namespace VecTiles.Styles.Mapsforge.Tests
             paint.Update(EvaluationContext.Empty);
 
             Assert.NotNull(paint);
-            Assert.Equal(6f, paint.StrokeWidth, 5);
+            Assert.Equal(12f, paint.StrokeWidth, 5);
+            Assert.Equal(new[] { 20f, 16f }, paint.DashArray);
+        }
+
+        /// <summary>
+        /// Checks that the stroke width grows like in the original renderer
+        /// with the zoom (1.5 per zoom level above zoom 12), while the dash
+        /// array stays at its base size.
+        /// </summary>
+        [Fact]
+        public void LinePaintStrokeScaleTest()
+        {
+            var line = new MFLineLayerStyle("line1", MFAllExpression.Empty, 0, 256,
+                new Color(255, 0, 0, 255), 3f, [5f, 4f], StrokeCap.Butt, StrokeJoin.Miter, null, 0f);
+
+            var paint = new MFPaintFactory(SpriteFactory).CreatePaint(line);
+            var context = new EvaluationContext(14f);
+            paint.Update(context);
+
+            Assert.NotNull(paint);
+            // 3 (theme) * 2 (tile scale) * 1.5 ^ (14 - 12) = 13.5
+            Assert.Equal(13.5f, paint.StrokeWidth, 5);
             Assert.Equal(new[] { 10f, 8f }, paint.DashArray);
         }
 
@@ -106,7 +129,7 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.Equal(PaintStyle.Fill, paint.Style);
             Assert.Equal(new Color(0, 255, 0, 200), paint.Color);
             Assert.Equal(new Color(0, 0, 255, 255), paint.OutlineColor);
-            Assert.Equal(2f, paint.StrokeWidth, 5);
+            Assert.Equal(4f, paint.StrokeWidth, 5);
             Assert.Null(paint.Pattern);
         }
 
@@ -142,8 +165,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.Equal(PaintStyle.Fill, paint.Style);
             Assert.Equal(new Color(255, 0, 0, 255), paint.Color);
             Assert.Equal(new Color(0, 0, 0, 255), paint.OutlineColor);
-            Assert.Equal(12f, paint.Radius, 5);
-            Assert.Equal(3f, paint.StrokeWidth, 5);
+            Assert.Equal(24f, paint.Radius, 5);
+            Assert.Equal(6f, paint.StrokeWidth, 5);
         }
 
         // --- symbol ---

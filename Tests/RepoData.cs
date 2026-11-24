@@ -1,7 +1,7 @@
 namespace VecTiles.Tests;
 
 /// <summary>
-/// Path to the central OpenMapTiles data Files folder of the repository.
+/// Path to the central data Files folders of the repository.
 /// All test input data (styles, mbtiles, mapsforge maps, fonts, sprites)
 /// lives there and is read directly from the repository, so inputs are
 /// kept in a single place instead of being copied into the test output.
@@ -23,16 +23,42 @@ public static class RepoData
 
         var repoRoot = directory?.FullName
             ?? throw new InvalidOperationException(
-                $"Repository root (VecTiles.NET.sln) not found walking up from '{AppContext.BaseDirectory}' " +
-                $"(cwd: '{Directory.GetCurrentDirectory()}').");
+                $"Repository root (VecTiles.NET.sln) not found walking up from '{AppContext.BaseDirectory}' "
+                + $"(cwd: '{Directory.GetCurrentDirectory()}').");
 
         var dataFiles = Path.Combine(repoRoot, "Files", "OpenMapTiles");
 
         if (!File.Exists(Path.Combine(dataFiles, "osm-liberty.json")))
         {
             throw new InvalidOperationException(
-                $"Data folder not found in '{repoRoot}'. " +
-                $"Expected '{Path.Combine(dataFiles, "osm-liberty.json")}'.");
+                $"Data folder not found in '{repoRoot}'. "
+                + $"Expected '{Path.Combine(dataFiles, "osm-liberty.json")}'.");
+        }
+
+        return dataFiles;
+    });
+
+    private static readonly Lazy<string> _mapsforgeFiles = new(() =>
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "VecTiles.NET.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        var repoRoot = directory?.FullName
+            ?? throw new InvalidOperationException(
+                $"Repository root (VecTiles.NET.sln) not found walking up from '{AppContext.BaseDirectory}' "
+                + $"(cwd: '{Directory.GetCurrentDirectory()}').");
+
+        var dataFiles = Path.Combine(repoRoot, "Files", "Mapsforge");
+
+        if (!File.Exists(Path.Combine(dataFiles, "mapsforge", "default.xml")))
+        {
+            throw new InvalidOperationException(
+                $"Data folder not found in '{repoRoot}'. "
+                + $"Expected '{Path.Combine(dataFiles, "mapsforge", "default.xml")}'.");
         }
 
         return dataFiles;
@@ -43,4 +69,10 @@ public static class RepoData
     /// (styles, mbtiles, mapsforge maps, fonts, sprites).
     /// </summary>
     public static string DataFiles => _dataFiles.Value;
+
+    /// <summary>
+    /// The Mapsforge data Files folder of the repository
+    /// (render themes, symbols and patterns).
+    /// </summary>
+    public static string MapsforgeFiles => _mapsforgeFiles.Value;
 }

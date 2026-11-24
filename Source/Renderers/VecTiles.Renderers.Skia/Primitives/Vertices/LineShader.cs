@@ -1,5 +1,6 @@
 using SkiaSharp;
 using VecTiles.Common.Interfaces;
+using VecTiles.Renderers.Skia.Extensions;
 
 namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 
@@ -172,18 +173,19 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
 
             if (!ReferenceEquals(pattern, _lastPattern))
             {
-                pattern.Atlas.Native ??= SKImage.FromEncodedData(pattern.Atlas.Binary);
-                pattern.Native ??= ((SKImage)pattern.Atlas.Native).Subset(new SKRectI(
-                    pattern.X,
-                    pattern.Y,
-                    pattern.X + pattern.Width,
-                    pattern.Y + pattern.Height));
+                // Vector sprites (SVG patterns) are rasterized at their
+                // display size, raster sprites are decoded and cut out of
+                // their atlas
+                var image = pattern.GetImage();
 
-                _patternShader?.Dispose();
-                _patternShader = ((SKImage)pattern.Native).ToShader(
-                    SKShaderTileMode.Repeat, SKShaderTileMode.Clamp,
-                    new SKSamplingOptions(SKFilterMode.Linear));
-                _lastPattern = pattern;
+                if (image != null)
+                {
+                    _patternShader?.Dispose();
+                    _patternShader = image.ToShader(
+                        SKShaderTileMode.Repeat, SKShaderTileMode.Clamp,
+                        new SKSamplingOptions(SKFilterMode.Linear));
+                    _lastPattern = pattern;
+                }
             }
         }
         else

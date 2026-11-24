@@ -5,6 +5,7 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
+using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Styles.OpenMapTiles.Extensions;
 
 namespace VecTiles.Renderers.Skia;
@@ -43,9 +44,14 @@ public class IconPointSymbolRenderer : ISymbolRenderer
             ? SKColorFilter.CreateColorMatrix(symbol.ColorFilter(context))
             : null;
 
-        var image = (SKImage)symbol.Icon.Native!;
-        var imgWidth = image.Width;
-        var imgHeight = image.Height;
+        // Raster icons carry their decoded image in the native slot; vector
+        // icons (mapsforge SVG symbols) are drawn as pictures instead
+        var picture = (symbol.Icon as IVectorSprite)?.GetPicture();
+
+        var image = picture == null ? symbol.Icon.GetImage() : null;
+
+        var imgWidth = picture != null ? symbol.Icon.Width / symbol.Icon.PixelRatio : image!.Width;
+        var imgHeight = picture != null ? symbol.Icon.Height / symbol.Icon.PixelRatio : image!.Height;
         var anchorX = (float)symbol.Anchor.X;
         var anchorY = (float)symbol.Anchor.Y;
         var offsetX = (float)symbol.Offset.X;
@@ -95,11 +101,27 @@ public class IconPointSymbolRenderer : ISymbolRenderer
                 (0.5f - anchorY) * imgHeight);
         }
 
-        canvas.DrawImage(image,
-            -anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
-            -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio,
-            ScreenSampling,
-            paint);
+        if (picture != null)
+        {
+            // Vector icons are drawn from their picture, scaled from the
+            // intrinsic units of the SVG to the pixel size of the sprite
+            var cullRect = picture.CullRect;
+
+            canvas.Save();
+            canvas.Translate(-anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
+                -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio);
+            canvas.Scale(imgWidth / cullRect.Width, imgHeight / cullRect.Height);
+            canvas.DrawPicture(picture, paint);
+            canvas.Restore();
+        }
+        else
+        {
+            canvas.DrawImage(image!,
+                -anchorX * imgWidth + offsetX * symbol.Icon.PixelRatio,
+                -anchorY * imgHeight + offsetY * symbol.Icon.PixelRatio,
+                ScreenSampling,
+                paint);
+        }
 
         canvas.Restore();
 
@@ -224,7 +246,9 @@ public class IconPointSymbolRenderer : ISymbolRenderer
         var width = (int)Math.Ceiling(symbol.Icon.Width / symbol.Icon.PixelRatio * symbol.Scale);
         var height = (int)Math.Ceiling(symbol.Icon.Height / symbol.Icon.PixelRatio * symbol.Scale);
 
-        if (symbol.Icon.Native is null)
+        // Vector sprites draw from their picture (parsed lazily on draw), no
+        // atlas cutout is created for them
+        if (symbol.Icon.Native is null && symbol.Icon is not IVectorSprite)
         {
             var atlasImage = (SKImage)(symbol.Icon.Atlas.Native ??= SKImage.FromEncodedData(symbol.Icon.Atlas.Binary));
 

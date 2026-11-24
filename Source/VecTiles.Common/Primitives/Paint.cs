@@ -157,9 +157,16 @@ public class Paint : IPaint
             StrokeMiter = funcStrokeMiter(context);
         }
 
-        if (variablePattern && funcPattern != null)
+        if (variablePattern)
         {
-            Pattern = funcPattern(context);
+            if (funcISpritePattern != null)
+            {
+                Pattern = funcISpritePattern(context);
+            }
+            else if (funcPattern != null)
+            {
+                Pattern = funcPattern(context);
+            }
         }
 
         if (variableDashArray && funcDashArray != null)
@@ -520,6 +527,17 @@ public class Paint : IPaint
     }
 
     /// <summary>
+    /// Sets the pattern sprite to a fixed value, accepting any implementation
+    /// of <see cref="ISprite"/> (also vector sprites, e.g. of SVG patterns).
+    /// </summary>
+    /// <param name="sprite">The fixed pattern sprite.</param>
+    public void SetFixPattern(ISprite sprite)
+    {
+        variablePattern = false;
+        Pattern = sprite;
+    }
+
+    /// <summary>
     /// Sets the pattern sprite from a function evaluated per context.
     /// </summary>
     /// <param name="func">The function that calculates the pattern sprite for an evaluation context.</param>
@@ -527,6 +545,20 @@ public class Paint : IPaint
     {
         variablePattern = true;
         funcPattern = func;
+    }
+
+    Func<EvaluationContext, ISprite>? funcISpritePattern;
+
+    /// <summary>
+    /// Sets the pattern sprite from a function evaluated per context,
+    /// accepting any implementation of <see cref="ISprite"/> (also vector
+    /// sprites, e.g. of SVG patterns).
+    /// </summary>
+    /// <param name="func">The function that calculates the pattern sprite for an evaluation context.</param>
+    public void SetVariablePattern(Func<EvaluationContext, ISprite> func)
+    {
+        variablePattern = true;
+        funcISpritePattern = func;
     }
 
     #endregion

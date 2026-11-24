@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VecTiles.Styles.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VecTiles.Common\VecTiles.Common.csproj" />
+    <ProjectReference Include="..\..\DataSources\VecTiles.ByteDataSources\VecTiles.ByteDataSources.csproj" />
+  </ItemGroup>
+
+</Project>

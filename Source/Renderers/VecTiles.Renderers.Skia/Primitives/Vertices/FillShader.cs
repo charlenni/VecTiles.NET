@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using SkiaSharp;
+using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Common.Interfaces;
 
 namespace VecTiles.Renderers.Skia.Primitives.Vertices;
@@ -124,20 +125,22 @@ public class FillShader(SKRuntimeEffect effect) : IDisposable
         float patternWidthWorldPx = -1f,
         float patternHeightWorldPx = -1f)
     {
-        sprite.Atlas.Native ??= SKImage.FromEncodedData(sprite.Atlas.Binary);
-        sprite.Native ??= ((SKImage)sprite.Atlas.Native).Subset(new SKRectI(
-            sprite.X, 
-            sprite.Y, 
-            sprite.X + sprite.Width, 
-            sprite.Y + sprite.Height));
+        // Vector sprites (SVG patterns) are rasterized at their display size,
+        // raster sprites are decoded and cut out of their atlas
+        var image = sprite.GetImage();
+        if (image == null)
+        {
+            // Sprite cannot be drawn: keep sampling the white shader
+            return Update(SKColors.White, alpha);
+        }
 
         if (!ReferenceEquals(sprite, _lastSprite))
         {
-            // Sprite changed: rebuild the cached child shader. The Subset
-            // image is owned by the sprite, so do not dispose it here --
-            // only the shader wrapper is ours.
+            // Sprite changed: rebuild the cached child shader. The image is
+            // owned by the sprite, so do not dispose it here -- only the
+            // shader wrapper is ours.
             _spriteShader?.Dispose();
-            _spriteShader = ((SKImage)sprite.Native).ToShader(
+            _spriteShader = image.ToShader(
                 SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, new SKSamplingOptions(SKFilterMode.Linear));
             _lastSprite = sprite;
         }

@@ -35,11 +35,14 @@ public static class IPaintExtension
 
         if (paint.Pattern != null)
         {
-            paint.Pattern.Atlas.Native ??= SKImage.FromEncodedData(paint.Pattern.Atlas.Binary);
-            paint.Pattern.Native ??= ((SKImage) paint.Pattern.Atlas.Native).Subset(new SKRectI(paint.Pattern.X, paint.Pattern.Y,
-                paint.Pattern.X + paint.Pattern.Width, paint.Pattern.Y + paint.Pattern.Height));
-            
-            skPaint.Shader = ((SKImage)paint.Pattern.Native).ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
+            // Vector sprites (SVG patterns) are rasterized at their display
+            // size, raster sprites are decoded and cut out of their atlas
+            var image = paint.Pattern.GetImage();
+
+            if (image != null)
+            {
+                skPaint.Shader = image.ToShader(SKShaderTileMode.Repeat, SKShaderTileMode.Repeat, SKMatrix.CreateScale(context.Scale, context.Scale));
+            }
         }
         
         if (skPaint.Style != SKPaintStyle.StrokeAndFill)

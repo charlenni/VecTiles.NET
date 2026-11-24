@@ -405,4 +405,8 @@
     <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.Mapsforge\VecTiles.Styles.Mapsforge.csproj" />
+  </ItemGroup>
+
 </Project>

@@ -346,14 +346,6 @@ public static class SymbolPlacementEngine
         // detection instead.
         var examinedIds = new HashSet<ulong>();
 
-        // Captions of area features (polygons) without a feature id (see
-        // TextPointSymbol.IsAreaCaption): a polygon spanning several tiles is
-        // clipped per tile and its caption anchor (the interior point of the
-        // clipped geometry) differs per tile, so the copies of one polygon in
-        // the neighbouring tiles find no shared identity. One label per text
-        // keeps them from drawing the same area name once per tile.
-        var placedAreaTexts = new HashSet<string>();
-
         // With a persistent state every decision is one per pass; see the
         // first occurrence rule in the loop below
         var seenSymbols = incremental is null ? null : new HashSet<ISymbol>();
@@ -436,24 +428,6 @@ public static class SymbolPlacementEngine
             var symbols = LineSymbolMerger.MergeById(layers[name].Symbols
                 .OrderBy(s => s.SortOrder).ThenBy(s => s.Rank));
 
-            // Mark the texts of the pinned area captions first (see
-            // placedAreaTexts above): a pinned placement must win over the
-            // fresh copies of the same area in the other tiles, also when a
-            // copy precedes it in the symbol order below
-            if (incremental is not null)
-            {
-                foreach (var symbol in symbols)
-                {
-                    if (symbol is PointSymbol { Id: 0, TextSymbol: { IsAreaCaption: true } caption } &&
-                        caption.Text.Length > 0 &&
-                        incremental.TryGetDecision(symbol, out var decided) &&
-                        decided is not null)
-                    {
-                        placedAreaTexts.Add(caption.Text);
-                    }
-                }
-            }
-
             var placements = new List<PlacementEntry>();
 
             foreach (var symbol in symbols)
@@ -505,18 +479,6 @@ public static class SymbolPlacementEngine
 
                 if (symbol is PointSymbol pointSymbol)
                 {
-                    // Reserve-before-place with rollback: when the area text
-                    // of this copy is taken by another tile's copy (placed in
-                    // an earlier iteration of this pass, or pinned from an
-                    // earlier pass), the copy is not examined at all; the
-                    // reservation is given back when the placement fails, so
-                    // another copy can still take the space
-                    if (!TryReserveAreaText(pointSymbol, placedAreaTexts))
-                    {
-                        rejected.Add(symbol);
-                        continue;
-                    }
-
                     var status = PointSymbolRenderer.CheckForSpace(canvas, context, pointSymbol, tree,
                         worldToScreen, 0, showUnvalidBorders: false);
 
@@ -526,8 +488,6 @@ public static class SymbolPlacementEngine
                     }
                     else
                     {
-                        ReleaseAreaText(pointSymbol, placedAreaTexts);
-
                         // No persistent record: the symbol is re-examined in
                         // the next pass (see Decide)
                         rejected.Add(symbol);
@@ -598,35 +558,6 @@ public static class SymbolPlacementEngine
             Tree = tree,
             ZoomLevel = zoomLevel,
         };
-
-        // The point symbol is the caption of an area without a feature id
-        // (see TextPointSymbol.IsAreaCaption): take the text in the set of
-        // the pass (true) or report that another copy has it (false)
-        bool TryReserveAreaText(PointSymbol point, HashSet<string> texts)
-        {
-            if (point.Id != 0 ||
-                point.TextSymbol is not { IsAreaCaption: true } caption ||
-                caption.Text.Length == 0)
-            {
-                // Not an area caption, or identified by its feature id (the
-                // examinedIds rule above covers the duplicates)
-                return true;
-            }
-
-            return texts.Add(caption.Text);
-        }
-
-        // Gives the reservation back after a failed collision check, so
-        // another copy of the same area can still place the label
-        void ReleaseAreaText(PointSymbol point, HashSet<string> texts)
-        {
-            if (point.Id == 0 &&
-                point.TextSymbol is { IsAreaCaption: true } caption &&
-                caption.Text.Length > 0)
-            {
-                texts.Remove(caption.Text);
-            }
-        }
     }
 
     /// <summary>

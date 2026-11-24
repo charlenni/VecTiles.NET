@@ -142,12 +142,6 @@ public class MFSymbolFactory : ISymbolFactory
             HaloWidth = (context) => style.StrokeWidth * style.BaseStrokeWidth,
             // The Mapsforge caption stroke-width is a painted stroke width, not an outward
             // distance like the OMT halo-width (renderer compensation, see TextPointSymbol)
-            // Mapsforge captions of area features (polygons): the clipped
-            // copies of the same polygon in neighbouring tiles must be
-            // deduplicated per text in the placement pass (see
-            // TextPointSymbol.IsAreaCaption), since without feature ids
-            // nothing else identifies the copies of one polygon
-            IsAreaCaption = feature.Geometry.GeometryType is "Polygon" or "MultiPolygon",
             HaloIsOutsideDistance = false,
             MaxWidth = style.TextWrapWidth.HasValue
                 ? (context, fontSize) => style.TextWrapWidth.Value * fontSize

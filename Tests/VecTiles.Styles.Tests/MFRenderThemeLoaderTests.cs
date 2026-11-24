@@ -110,6 +110,53 @@ namespace VecTiles.Styles.Mapsforge.Tests
         }
 
         /// <summary>
+        /// Regression test of the place-of-worship icons ("Grosse Kirche Fluntern",
+        /// 15/17162/11474): the church polygon carries amenity=place_of_worship,
+        /// building=church and religion=christian, so the christian symbol layers must match
+        /// and the unknown religion fallback (rule religion=~|*) must not.
+        /// </summary>
+        [Fact]
+        public async Task LoadDefaultThemeChurchSymbolFiltersTest()
+        {
+            var theme = await LoadTheme(Path.Combine(_themes, "mapsforge", "default.xml"));
+
+            var church = new Feature(
+                new Polygon(new LinearRing([new Coordinate(0, 0), new Coordinate(10, 0),
+                    new Coordinate(10, 10), new Coordinate(0, 0)])),
+                new AttributesTable
+                {
+                    { "amenity", "place_of_worship" },
+                    { "building", "church" },
+                    { "religion", "christian" },
+                    { "name", "Grosse Kirche Fluntern" },
+                });
+            var context = new EvaluationContext(15, feature: church);
+
+            var christian = theme.Layers
+                .OfType<MFSymbolLayerStyle>()
+                .Where(l => l.Src.EndsWith("place_of_worship/christian.svg", StringComparison.Ordinal))
+                .ToList();
+            Assert.NotEmpty(christian);
+            Assert.All(christian, l => Assert.Equal(true, l.Filter.Evaluate(context)));
+
+            var unknown = theme.Layers
+                .OfType<MFSymbolLayerStyle>()
+                .Where(l => l.Src.EndsWith("place_of_worship/unknown.svg", StringComparison.Ordinal))
+                .ToList();
+            Assert.NotEmpty(unknown);
+            Assert.All(unknown, l => Assert.Equal(false, l.Filter.Evaluate(context)));
+
+            // Without the religion tag the unknown fallback matches
+            var withoutReligion = new Feature(church.Geometry, new AttributesTable
+            {
+                { "amenity", "place_of_worship" },
+            });
+            var withoutReligionContext = new EvaluationContext(15, feature: withoutReligion);
+            Assert.All(christian, l => Assert.Equal(false, l.Filter.Evaluate(withoutReligionContext)));
+            Assert.All(unknown, l => Assert.Equal(true, l.Filter.Evaluate(withoutReligionContext)));
+        }
+
+        /// <summary>
         /// Checks that symbol layers, captions, line symbols and path texts of
         /// default.xml are read with their attributes.
         /// </summary>

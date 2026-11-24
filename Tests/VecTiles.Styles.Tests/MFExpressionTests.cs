@@ -162,6 +162,34 @@ namespace VecTiles.Styles.Mapsforge.Tests
             Assert.Equal(false, expression.Evaluate(Context(new AttributesTable { { "highway", "footway" } })));
         }
 
+        [Fact]
+        public void TagMatchNegationWildcardMeansKeyNotPresentTest()
+        {
+            // "religion=~|*": the Mapsforge rule engine (RuleBuilder, NegativeMatcher) removes
+            // the "~" marker and matches the remaining values literally, so the "*" is NOT a
+            // wildcard and the rule means "religion not present" (the place-of-worship icons:
+            // unknown.svg was also drawn when religion was present, covering christian.svg)
+            var expression = new MFTagMatchExpression(["religion"], ["~", "*"], MapsforgeMatchMode.Negation);
+
+            Assert.Equal(true, expression.Evaluate(Context(new AttributesTable { { "amenity", "place_of_worship" } })));
+            Assert.Equal(false, expression.Evaluate(Context(new AttributesTable
+            {
+                { "amenity", "place_of_worship" },
+                { "religion", "christian" },
+            })));
+        }
+
+        [Fact]
+        public void TagMatchNegationListedValuesTest()
+        {
+            // "tunnel=~|no|false": matches when tunnel is absent, "no" or "false"
+            var expression = new MFTagMatchExpression(["tunnel"], ["~", "no", "false"], MapsforgeMatchMode.Negation);
+
+            Assert.Equal(true, expression.Evaluate(Context(new AttributesTable { { "highway", "primary" } })));
+            Assert.Equal(true, expression.Evaluate(Context(new AttributesTable { { "tunnel", "no" } })));
+            Assert.Equal(false, expression.Evaluate(Context(new AttributesTable { { "tunnel", "yes" } })));
+        }
+
         // --- MFAllExpression ---
 
         [Fact]

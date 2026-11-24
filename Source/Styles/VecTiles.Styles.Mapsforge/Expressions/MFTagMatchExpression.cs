@@ -20,9 +20,10 @@ public class MFTagMatchExpression : IExpression
     private readonly string[] _keys;
 
     /// <summary>
-    /// Tag values the rule matches, already split at "|" and stripped of the
-    /// negation/exclusion markers. An empty list or a list of "*" matches any
-    /// value.
+    /// Tag values the rule matches. In positive mode, "split at |" of the rule value; an empty
+    /// list or a list of "*" matches any value. In negation/exclusion mode, the marker token
+    /// ("~"/"-") is removed and the remaining values match literally (no wildcard resolution),
+    /// following the Mapsforge NegativeMatcher.
     /// </summary>
     private readonly string[] _values;
 
@@ -39,7 +40,7 @@ public class MFTagMatchExpression : IExpression
 
     /// <summary>
     /// Gets a value indicating whether any value of the feature matches
-    /// (<c>v="*"</c>).
+    /// (<c>v="*"</c>, positive mode only).
     /// </summary>
     private readonly bool _anyValue;
 
@@ -47,16 +48,24 @@ public class MFTagMatchExpression : IExpression
     /// Initializes a tag match expression.
     /// </summary>
     /// <param name="keys">Tag keys of the rule ("k" attribute, already split at "|").</param>
-    /// <param name="values">Tag values of the rule ("v" attribute, already split at "|"
-    /// and stripped of "~" and "-" markers).</param>
+    /// <param name="values">Tag values of the rule ("v" attribute, already split at "|"; the
+    /// "~"/"-" marker token is removed here, in positive mode a "*" is a wildcard, in
+    /// negation/exclusion mode the remaining values match literally).</param>
     /// <param name="mode">Match mode derived from the value list markers.</param>
     public MFTagMatchExpression(string[] keys, string[] values, MapsforgeMatchMode mode)
     {
         _keys = keys;
-        _values = values;
+        // The negation/exclusion marker is part of the value list passed by the rule parser;
+        // the Mapsforge rule engine removes the marker token before matching (RuleBuilder:
+        // valueList.remove("~"/"-")) and matches the remaining values literally, so a "*" in a
+        // negated rule is NOT a wildcard (in the themes, v="key=~|*" means "key not present")
+        _values = mode == MapsforgeMatchMode.Positive
+            ? values
+            : values.Where(value => value is not ("~" or "-")).ToArray();
         _mode = mode;
         _anyKey = keys.Length == 0 || keys.Contains("*");
-        _anyValue = values.Length == 0 || values.Contains("*");
+        _anyValue = mode == MapsforgeMatchMode.Positive &&
+            (values.Length == 0 || values.Contains("*"));
     }
 
     /// <inheritdoc />
@@ -85,9 +94,11 @@ public class MFTagMatchExpression : IExpression
                     return true;
                 }
 
-                // Tilde: a tag with key and one of the remaining values must be present.
-                // Minus: no tag with key and one of the remaining values may be present.
-                var tagMatchesValue = MatchesAnyTag(attributes);
+                // Tilde: a tag with key and one of the listed values must be present.
+                // Minus: no tag with key and one of the listed values may be present.
+                // The Mapsforge NegativeMatcher compares keys and values literally, no wildcard
+                var tagMatchesValue = attributes.Any(tag =>
+                    _keys.Contains(tag.Key) && _values.Contains(tag.Value));
 
                 return _mode == MapsforgeMatchMode.Negation ? tagMatchesValue : !tagMatchesValue;
             }

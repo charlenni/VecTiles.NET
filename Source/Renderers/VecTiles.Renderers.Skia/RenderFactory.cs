@@ -123,7 +123,7 @@ public class RenderFactory : IRenderFactory
                     var groupOutlineBuilder = new VertexBuilder();
                     foreach (var feature in group)
                     {
-                        feature.ToVertices(groupOutlineBuilder, 1f, groupPaint.StrokeJoin);
+                        feature.ToVertices(groupOutlineBuilder, groupPaint.GetMaxStrokeWidth(context), groupPaint.StrokeJoin);
                     }
 
                     renderers.Add(new FillLayerRenderer(groupFillBuilder.Build(), groupOutlineBuilder.Build(), true, groupPaint));
@@ -152,7 +152,7 @@ public class RenderFactory : IRenderFactory
             // Create vertices for features that belong to a outline style (only stroke around area)
             foreach (var feature in features!)
             {
-                feature.ToVertices(outlineBuilder, 1f,
+                feature.ToVertices(outlineBuilder, paint.GetMaxStrokeWidth(context),
                     paint.StrokeJoin);
             }
 

@@ -13,6 +13,8 @@ using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Styles.OpenMapTiles;
 using SampleApp.Widgets;
+using VecTiles.Converters.Mapsforge;
+using VecTiles.Renderers.Common.Interfaces;
 
 namespace SampleApp.Views;
 
@@ -23,9 +25,10 @@ namespace SampleApp.Views;
 /// </summary>
 public partial class MainView : UserControl
 {
-    private readonly string _path = "Files/OpenMapTiles";
+    private readonly string _pathOMT = "Files/OpenMapTiles";
+    private readonly string _pathMF = "Files/Mapsforge";
     private readonly TileGridDebugLayer _debugLayer;
-    private readonly OMTRenderedTileSource _tileSource;
+    private readonly IRenderedTileSource _tileSource;
     private readonly RenderedTileLayer _tileLayer;
 
     /// <summary>
@@ -37,12 +40,15 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        var styleSource = $"file://{_path}/osm-liberty.json";
-        //var styleSource = $"file://{_path}/osm-liberty-for-mapsforge.json";
+        var styleSource = $"file://{_pathOMT}/osm-liberty.json";
+        //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
-        _tileSource = new OMTRenderedTileSource(styleSource);
-
+        //_tileSource = new OMTRenderedTileSource(styleSource);
+        _tileSource = new MFRenderedTileSource($"file://{_pathMF}/zuerich.map", 
+            new MapsforgeIdentityTagsConverter(), 
+            $"file://{_pathMF}/mapsforge/default.xml");
+        
         _tileLayer = new RenderedTileLayer(_tileSource);
         MapControl.Map.Layers.Add(_tileLayer);
 
@@ -76,7 +82,7 @@ public partial class MainView : UserControl
         MapControl.Map.Navigator.OverrideZoomBounds = _tileLayer.ZoomBounds;
 
         // Create a checkbox for each style of the style file. Initial state is the visibility from the style file.
-        foreach (var style in _tileSource.Styles)
+        /*foreach (var style in _tileSource.Styles)
         {
             var checkBox = new CheckBox
             {
@@ -86,7 +92,7 @@ public partial class MainView : UserControl
             };
             checkBox.Click += (_, _) => StyleCheckBox_Click(style, checkBox);
             StylesPanel.Children.Add(checkBox);
-        }
+        }*/
 
         var rotationSliderObservable = RotationSlider.GetObservable(Slider.ValueProperty);
         rotationSliderObservable.Subscribe(new AnonymousObserver<double>(value => 
@@ -126,7 +132,7 @@ public partial class MainView : UserControl
         style.Layout.Visibility = checkBox.IsChecked == true ? "visible" : "none";
 
         // Styles are baked into the rendered tiles, so all caches have to be cleared, before redrawing the map
-        _tileSource.ClearCache();
+        //_tileSource.ClearCache();
         _tileLayer.ClearCache();
 
         MapControl.Map.RefreshData(Mapsui.ChangeType.Discrete);

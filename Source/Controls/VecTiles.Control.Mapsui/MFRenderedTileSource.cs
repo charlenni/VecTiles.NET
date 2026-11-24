@@ -276,7 +276,7 @@ public class MFRenderedTileSource : IRenderedTileSource, IDisposable
 
         if (source.StartsWith("file://", StringComparison.OrdinalIgnoreCase))
         {
-            source = Uri.UnescapeDataString(new Uri(source).LocalPath);
+            source = source.Substring(7);
         }
 
         if (source.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||

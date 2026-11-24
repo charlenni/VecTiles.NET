@@ -10,6 +10,642 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\biker.xml">
+      <Link>Files/Mapsforge/mapsforge/biker.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\dark.xml">
+      <Link>Files/Mapsforge/mapsforge/dark.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\default.xml">
+      <Link>Files/Mapsforge/mapsforge/default.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\hillshading.xml">
+      <Link>Files/Mapsforge/mapsforge/hillshading.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\indigo.xml">
+      <Link>Files/Mapsforge/mapsforge/indigo.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\motorider.xml">
+      <Link>Files/Mapsforge/mapsforge/motorider.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\mapsforge\osmarender.xml">
+      <Link>Files/Mapsforge/mapsforge/osmarender.xml</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\access-destination.png">
+      <Link>Files/Mapsforge/patterns/access-destination.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\access-private.png">
+      <Link>Files/Mapsforge/patterns/access-private.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\arrow.png">
+      <Link>Files/Mapsforge/patterns/arrow.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\cemetery.png">
+      <Link>Files/Mapsforge/patterns/cemetery.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\coniferous.svg">
+      <Link>Files/Mapsforge/patterns/coniferous.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\coniferous_and_deciduous.svg">
+      <Link>Files/Mapsforge/patterns/coniferous_and_deciduous.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\deciduous.svg">
+      <Link>Files/Mapsforge/patterns/deciduous.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\dot.png">
+      <Link>Files/Mapsforge/patterns/dot.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\farmland.svg">
+      <Link>Files/Mapsforge/patterns/farmland.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\grass.svg">
+      <Link>Files/Mapsforge/patterns/grass.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\hills.svg">
+      <Link>Files/Mapsforge/patterns/hills.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\marsh.png">
+      <Link>Files/Mapsforge/patterns/marsh.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\military.png">
+      <Link>Files/Mapsforge/patterns/military.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\nature-reserve.png">
+      <Link>Files/Mapsforge/patterns/nature-reserve.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\pike.png">
+      <Link>Files/Mapsforge/patterns/pike.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\quarry.svg">
+      <Link>Files/Mapsforge/patterns/quarry.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\rail.png">
+      <Link>Files/Mapsforge/patterns/rail.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\scrub.svg">
+      <Link>Files/Mapsforge/patterns/scrub.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\swamp.svg">
+      <Link>Files/Mapsforge/patterns/swamp.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\wood-coniferous.png">
+      <Link>Files/Mapsforge/patterns/wood-coniferous.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\wood-deciduous.png">
+      <Link>Files/Mapsforge/patterns/wood-deciduous.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\patterns\wood-mixed.png">
+      <Link>Files/Mapsforge/patterns/wood-mixed.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\alpinehut.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/alpinehut.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\camping.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/camping.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\caravan_park.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/caravan_park.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\chalet.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/chalet.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\hostel.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/hostel.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\hotel2.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/hotel2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\accommodation\shelter2.svg">
+      <Link>Files/Mapsforge/symbols/accommodation/shelter2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\firestation3.svg">
+      <Link>Files/Mapsforge/symbols/amenity/firestation3.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\fountain2.svg">
+      <Link>Files/Mapsforge/symbols/amenity/fountain2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\library.svg">
+      <Link>Files/Mapsforge/symbols/amenity/library.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\playground.svg">
+      <Link>Files/Mapsforge/symbols/amenity/playground.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\police2.svg">
+      <Link>Files/Mapsforge/symbols/amenity/police2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\post_box.svg">
+      <Link>Files/Mapsforge/symbols/amenity/post_box.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\post_office.svg">
+      <Link>Files/Mapsforge/symbols/amenity/post_office.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\recycling.svg">
+      <Link>Files/Mapsforge/symbols/amenity/recycling.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\telephone.svg">
+      <Link>Files/Mapsforge/symbols/amenity/telephone.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\amenity\toilets.svg">
+      <Link>Files/Mapsforge/symbols/amenity/toilets.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\barrier\blocks.svg">
+      <Link>Files/Mapsforge/symbols/barrier/blocks.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\barrier\bollard.svg">
+      <Link>Files/Mapsforge/symbols/barrier/bollard.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\barrier\cycle_barrier.svg">
+      <Link>Files/Mapsforge/symbols/barrier/cycle_barrier.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\barrier\gate.svg">
+      <Link>Files/Mapsforge/symbols/barrier/gate.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\barrier\lift_gate.svg">
+      <Link>Files/Mapsforge/symbols/barrier/lift_gate.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\barrier\stile.svg">
+      <Link>Files/Mapsforge/symbols/barrier/stile.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\bench.svg">
+      <Link>Files/Mapsforge/symbols/bench.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\cable_car.svg">
+      <Link>Files/Mapsforge/symbols/cable_car.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\chair_lift.svg">
+      <Link>Files/Mapsforge/symbols/chair_lift.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\amenity\fountain2.svg">
+      <Link>Files/Mapsforge/symbols/custom/amenity/fountain2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\amenity\library.svg">
+      <Link>Files/Mapsforge/symbols/custom/amenity/library.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\amenity\toilets.svg">
+      <Link>Files/Mapsforge/symbols/custom/amenity/toilets.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\money\atm2.svg">
+      <Link>Files/Mapsforge/symbols/custom/money/atm2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\archaeological2.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/archaeological2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\attraction.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/attraction.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\castle2.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/castle2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\cinema2.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/cinema2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\information.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/information.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\memorial.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/memorial.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\monument.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/monument.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\museum.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/museum.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\ruin.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/ruin.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\theatre.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/theatre.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\view_point.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/view_point.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\windmill.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/windmill.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\tourist\zoo.svg">
+      <Link>Files/Mapsforge/symbols/custom/tourist/zoo.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\transport\charging_station.svg">
+      <Link>Files/Mapsforge/symbols/custom/transport/charging_station.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\custom\transport\parking_motorcycle.svg">
+      <Link>Files/Mapsforge/symbols/custom/transport/parking_motorcycle.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\dot_black.svg">
+      <Link>Files/Mapsforge/symbols/dot_black.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\dot_blue.svg">
+      <Link>Files/Mapsforge/symbols/dot_blue.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\dot_blue_dark.svg">
+      <Link>Files/Mapsforge/symbols/dot_blue_dark.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\dot_gray_dark.svg">
+      <Link>Files/Mapsforge/symbols/dot_gray_dark.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\dot_magenta.svg">
+      <Link>Files/Mapsforge/symbols/dot_magenta.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\dot_white.svg">
+      <Link>Files/Mapsforge/symbols/dot_white.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\education\nursery3.svg">
+      <Link>Files/Mapsforge/symbols/education/nursery3.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\education\school.svg">
+      <Link>Files/Mapsforge/symbols/education/school.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\education\university.svg">
+      <Link>Files/Mapsforge/symbols/education/university.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\bar.svg">
+      <Link>Files/Mapsforge/symbols/food/bar.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\biergarten.svg">
+      <Link>Files/Mapsforge/symbols/food/biergarten.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\cafe.svg">
+      <Link>Files/Mapsforge/symbols/food/cafe.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\drinkingtap.svg">
+      <Link>Files/Mapsforge/symbols/food/drinkingtap.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\fastfood.svg">
+      <Link>Files/Mapsforge/symbols/food/fastfood.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\pub.svg">
+      <Link>Files/Mapsforge/symbols/food/pub.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\food\restaurant.svg">
+      <Link>Files/Mapsforge/symbols/food/restaurant.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\gondola.svg">
+      <Link>Files/Mapsforge/symbols/gondola.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\health\doctors2.svg">
+      <Link>Files/Mapsforge/symbols/health/doctors2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\health\hospital.svg">
+      <Link>Files/Mapsforge/symbols/health/hospital.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\health\pharmacy.svg">
+      <Link>Files/Mapsforge/symbols/health/pharmacy.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\money\atm2.svg">
+      <Link>Files/Mapsforge/symbols/money/atm2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\money\bank2.svg">
+      <Link>Files/Mapsforge/symbols/money/bank2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\oneway.svg">
+      <Link>Files/Mapsforge/symbols/oneway.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\peak.svg">
+      <Link>Files/Mapsforge/symbols/peak.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\buddhist.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/buddhist.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\christian.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/christian.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\hindu.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/hindu.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\islamic.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/islamic.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\jewish.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/jewish.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\shinto.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/shinto.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\place_of_worship\unknown.svg">
+      <Link>Files/Mapsforge/symbols/place_of_worship/unknown.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\poi\cave.svg">
+      <Link>Files/Mapsforge/symbols/poi/cave.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\poi\embassy2.svg">
+      <Link>Files/Mapsforge/symbols/poi/embassy2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\poi\mountain_pass.svg">
+      <Link>Files/Mapsforge/symbols/poi/mountain_pass.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\railway-crossing-small.svg">
+      <Link>Files/Mapsforge/symbols/railway-crossing-small.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\railway-crossing.svg">
+      <Link>Files/Mapsforge/symbols/railway-crossing.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\alcohol.svg">
+      <Link>Files/Mapsforge/symbols/shopping/alcohol.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\bakery.svg">
+      <Link>Files/Mapsforge/symbols/shopping/bakery.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\bicycle.svg">
+      <Link>Files/Mapsforge/symbols/shopping/bicycle.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\book.svg">
+      <Link>Files/Mapsforge/symbols/shopping/book.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\butcher.svg">
+      <Link>Files/Mapsforge/symbols/shopping/butcher.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\car_repair.svg">
+      <Link>Files/Mapsforge/symbols/shopping/car_repair.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\convenience.svg">
+      <Link>Files/Mapsforge/symbols/shopping/convenience.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\diy.svg">
+      <Link>Files/Mapsforge/symbols/shopping/diy.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\greengrocer.svg">
+      <Link>Files/Mapsforge/symbols/shopping/greengrocer.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\laundrette.svg">
+      <Link>Files/Mapsforge/symbols/shopping/laundrette.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\marketplace.svg">
+      <Link>Files/Mapsforge/symbols/shopping/marketplace.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\shopping\supermarket.svg">
+      <Link>Files/Mapsforge/symbols/shopping/supermarket.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\sport\golf.svg">
+      <Link>Files/Mapsforge/symbols/sport/golf.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\sport\shooting.svg">
+      <Link>Files/Mapsforge/symbols/sport/shooting.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\sport\soccer.svg">
+      <Link>Files/Mapsforge/symbols/sport/soccer.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\sport\stadium.svg">
+      <Link>Files/Mapsforge/symbols/sport/stadium.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\sport\swimming_outdoor.svg">
+      <Link>Files/Mapsforge/symbols/sport/swimming_outdoor.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\sport\tennis.svg">
+      <Link>Files/Mapsforge/symbols/sport/tennis.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\archaeological2.svg">
+      <Link>Files/Mapsforge/symbols/tourist/archaeological2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\attraction.svg">
+      <Link>Files/Mapsforge/symbols/tourist/attraction.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\castle2.svg">
+      <Link>Files/Mapsforge/symbols/tourist/castle2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\cinema2.svg">
+      <Link>Files/Mapsforge/symbols/tourist/cinema2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\information.svg">
+      <Link>Files/Mapsforge/symbols/tourist/information.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\memorial.svg">
+      <Link>Files/Mapsforge/symbols/tourist/memorial.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\monument.svg">
+      <Link>Files/Mapsforge/symbols/tourist/monument.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\museum.svg">
+      <Link>Files/Mapsforge/symbols/tourist/museum.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\picnic.svg">
+      <Link>Files/Mapsforge/symbols/tourist/picnic.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\ruin.svg">
+      <Link>Files/Mapsforge/symbols/tourist/ruin.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\theatre.svg">
+      <Link>Files/Mapsforge/symbols/tourist/theatre.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\view_point.svg">
+      <Link>Files/Mapsforge/symbols/tourist/view_point.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\windmill.svg">
+      <Link>Files/Mapsforge/symbols/tourist/windmill.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\tourist\zoo.svg">
+      <Link>Files/Mapsforge/symbols/tourist/zoo.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\traffic_signal.svg">
+      <Link>Files/Mapsforge/symbols/traffic_signal.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\airport2.svg">
+      <Link>Files/Mapsforge/symbols/transport/airport2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\bus_station.svg">
+      <Link>Files/Mapsforge/symbols/transport/bus_station.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\bus_stop.svg">
+      <Link>Files/Mapsforge/symbols/transport/bus_stop.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\fuel.svg">
+      <Link>Files/Mapsforge/symbols/transport/fuel.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\helicopter.svg">
+      <Link>Files/Mapsforge/symbols/transport/helicopter.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\lighthouse.svg">
+      <Link>Files/Mapsforge/symbols/transport/lighthouse.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\parking.svg">
+      <Link>Files/Mapsforge/symbols/transport/parking.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\parking_private.svg">
+      <Link>Files/Mapsforge/symbols/transport/parking_private.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\rental_bicycle.svg">
+      <Link>Files/Mapsforge/symbols/transport/rental_bicycle.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\slipway.svg">
+      <Link>Files/Mapsforge/symbols/transport/slipway.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\traffic_lights.svg">
+      <Link>Files/Mapsforge/symbols/transport/traffic_lights.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\train_station2.svg">
+      <Link>Files/Mapsforge/symbols/transport/train_station2.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\transport\tram_stop.svg">
+      <Link>Files/Mapsforge/symbols/transport/tram_stop.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\volcano.svg">
+      <Link>Files/Mapsforge/symbols/volcano.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\symbols\water\weir.svg">
+      <Link>Files/Mapsforge/symbols/water/weir.svg</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\..\Files\Mapsforge\zuerich.map">
+      <Link>Files/Mapsforge/zuerich.map</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="..\..\..\Files\OpenMapTiles\osm-liberty-for-mapsforge.json">
       <Link>Files/OpenMapTiles/osm-liberty-for-mapsforge.json</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

@@ -11,11 +11,6 @@ namespace VecTiles.Renderers.Skia.Primitives.Vertices;
 /// </summary>
 public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
 {
-    // Style calibration factor: 1 = dash length equals the stroke width
-    // (Mapbox spec semantics). If your reference renderer shows a different
-    // ratio (e.g. dashes 4x the stroke width), set the measured factor here.
-    private const float DashUnitScale = 1f;
-
     private readonly SKRuntimeEffect _effect = effect;
     private readonly float _maxHalfWidth = maxWidth / 2f;
     private float[] _dashArray = [];
@@ -135,7 +130,10 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
     ///     Current width in tile px (drives the stroke).
     /// </param>
     /// <param name="color">Color for line</param>
-    /// <param name="dashArray">Array for dash pattern with on-off-values</param>
+    /// <param name="dashArray">
+    ///     Array of dash and gap lengths in tile-space px, or null/empty for a
+    ///     solid line. The converters scale their style units themselves.
+    /// </param>
     /// <param name="pattern">
     ///     Sprite from the atlas for a patterned line. A pattern disables the
     ///     dash array (Mapbox spec: dasharray is disabled by line-pattern) and
@@ -146,7 +144,6 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
     public SKShader Update(float strokeWidth,
         SKColor color,
         float[]? dashArray = null,
-        float strokeWidthForIntZoom = 0f,
         ISprite? pattern = null)
     {
         var dashTexelsPerWorldPx = 0f;
@@ -217,13 +214,15 @@ public class LineShader(SKRuntimeEffect effect, float maxWidth) : IDisposable
 
             if (_dashShader is not null)
             {
+                // Dash and gap lengths are absolute tile-space px (the
+                // converters scale their style units themselves -- mapsforge
+                // dash arrays do not scale with the stroke width, Mapbox dash
+                // arrays arrive pre-multiplied by the line width). One pattern
+                // repeat covers `total` world px.
                 float total = 0f;
                 foreach (var v in _dashArray) total += MathF.Max(v, 0f);
 
-                // uHalfWidth drives the stroke (animated); the dash period uses
-                // strokeWidthForIntZoom (frozen per zoom level) so the pattern does
-                // not crawl while zooming.
-                dashTexelsPerWorldPx = _dashTexelWidth / (total * strokeWidthForIntZoom);
+                dashTexelsPerWorldPx = total > 0f ? _dashTexelWidth / total : 0f;
             }
         }
 

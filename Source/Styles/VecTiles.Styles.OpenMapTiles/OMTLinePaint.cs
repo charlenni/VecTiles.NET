@@ -114,19 +114,34 @@ public static class OMTLinePaint
 
         // line-dasharray
         //   Optional array. Units in line widths. Disabled by line-pattern. Interval.
-        //   Specifies the lengths of the alternating dashes and gaps that form the dash pattern. 
-        //   The lengths are later scaled by the line width.To convert a dash length to pixels, 
-        //   multiply the length by the current line width.
+        //   Specifies the lengths of the alternating dashes and gaps that form the dash pattern.
+        //   The lengths are later scaled by the line width. To convert a dash length to pixels,
+        //   multiply the length by the current line width. The renderer expects tile-space px,
+        //   so the conversion happens here: like the dash period before, the widths are frozen
+        //   at the nearest lower integer zoom level -> the pattern stays glued to the geometry
+        //   and snaps discretely at a level change (nothing crawls during zoom animations).
         if (paint.LineDashArray.IsConstant)
         {
             if (!paint.LineDashArray.HasOnlyDefault)
             {
-                brush.SetFixDashArray(paint.LineDashArray.Evaluate(EvaluationContext.Empty));
+                var width = paint.LineWidth.Evaluate(EvaluationContext.Empty);
+                brush.SetFixDashArray(paint.LineDashArray
+                    .Evaluate(EvaluationContext.Empty)
+                    .Select(v => v * width)
+                    .ToArray());
             }
         }
         else
         {
-            brush.SetVariableDashArray((context) => paint.LineDashArray.Evaluate(context));
+            brush.SetVariableDashArray((context) =>
+            {
+                var values = paint.LineDashArray.Evaluate(context);
+                var width = paint.LineWidth.Evaluate(new EvaluationContext((int)context.Zoom));
+                var scaled = new float[values.Length];
+                for (var i = 0; i < values.Length; i++)
+                    scaled[i] = values[i] * width;
+                return scaled;
+            });
         }
 
         // line-pattern

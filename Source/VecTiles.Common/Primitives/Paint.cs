@@ -205,23 +205,6 @@ public class Paint : IPaint
             0.1f);
     }
 
-    /// <summary>
-    /// Gets the stroke width obtained when the stroke width function is evaluated at the
-    /// nearest lower integer zoom level of the context.
-    /// </summary>
-    /// <param name="context">The evaluation context with zoom information.</param>
-    /// <returns>The stroke width evaluated at the integer zoom level.</returns>
-    public float GetStrokeWidthFromIntZoom(EvaluationContext context)
-    {
-        if (!variableStrokeWidth)
-            return _strokeWidth;
-
-        var intContext = new EvaluationContext((int)context.Zoom);
-        
-        // Calc MaxStrokeWidth for variable stroke width
-        return funcStrokeWidth!(intContext); 
-    }
-
     #region Color
 
     Color color = Colors.Empty;

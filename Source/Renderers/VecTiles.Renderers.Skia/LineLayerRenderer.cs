@@ -60,21 +60,14 @@ public class LineLayerRenderer : ILayerRenderer, IDisposable
         }
         */
 
-        // Dash period follows the SETTLED zoom level: width evaluated at the
-        // integer zoom, converted to the tile px of that same level. During a
-        // zoom animation this value is constant -> the pattern stays glued to
-        // the geometry; at a level change it snaps discretely (dashes grow),
-        // which matches the "everything gets bigger, nothing crawls" behavior.
-        float scaleXInt = 1f; //ScaleForZoom(zInt);             // your zoom->scale mapping at zInt
-        float strokeWidthForIntZoom = _paint.GetStrokeWidthFromIntZoom(context) / scaleXInt;
-
         // Draw features that belong to a line style.
-        // A pattern overrides dash array and color (Mapbox spec).
+        // A pattern overrides dash array and color (Mapbox spec). The dash
+        // array arrives in tile-space px (converters scale their style units
+        // themselves), so no further stroke width multiplication happens.
         _skPaint.Shader = _shader.Update(_paint.StrokeWidth,
             _paint.Color.ToSKColor(),
             _paint.DashArray,
-            strokeWidthForIntZoom,
-            _paint.Pattern);
+            pattern: _paint.Pattern);
         // An empty buffer has no native vertices (SKVertices.CreateCopy returns null for
         // empty arrays) and nothing to draw
         if (_lineBuffer.Vertices is { } lineVertices)

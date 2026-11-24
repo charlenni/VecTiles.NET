@@ -110,7 +110,7 @@ public class LineShaderPatternTests
         // upper half (across < 0 maps to sprite top) must be bright red, the
         // lower half dark red, repeating every 8 px along the line.
         using var shader = LineShader.Create(MaxHalfWidth);
-        using var update = shader.Update(StrokeWidth, SKColors.Magenta, null, 0f,
+        using var update = shader.Update(StrokeWidth, SKColors.Magenta, pattern:
             CreateGradientPatternSprite(1f));
 
         DrawAndCompare(vertices, update, "Line-Pattern-Horizontal.png");
@@ -129,7 +129,7 @@ public class LineShaderPatternTests
         var vertices = CreateLineVertices([new PointF(8f, 88f), new PointF(88f, 8f)]);
 
         using var shader = LineShader.Create(MaxHalfWidth);
-        using var update = shader.Update(StrokeWidth, SKColors.Magenta, null, 0f,
+        using var update = shader.Update(StrokeWidth, SKColors.Magenta, pattern:
             CreateGradientPatternSprite(1f));
 
         DrawAndCompare(vertices, update, "Line-Pattern-Diagonal.png");
@@ -147,7 +147,7 @@ public class LineShaderPatternTests
         var vertices = CreateLineVertices([new PointF(8f, 48f), new PointF(88f, 48f)]);
 
         using var shader = LineShader.Create(MaxHalfWidth);
-        using var update = shader.Update(StrokeWidth, SKColors.Magenta, null, 0f,
+        using var update = shader.Update(StrokeWidth, SKColors.Magenta, pattern:
             CreateGradientPatternSprite(2f));
 
         DrawAndCompare(vertices, update, "Line-Pattern-PixelRatio2.png");

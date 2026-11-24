@@ -59,7 +59,9 @@ public interface IPaint
     ISprite? Pattern { get; }
 
     /// <summary>
-    /// Dash pattern as an array of dash and gap lengths, or <c>null</c> for a solid line.
+    /// Dash pattern as an array of dash and gap lengths in tile-space px, or
+    /// <c>null</c> for a solid line. The converters scale their style units
+    /// themselves.
     /// </summary>
     float[]? DashArray { get; }
 
@@ -85,11 +87,4 @@ public interface IPaint
     /// <param name="context">The evaluation context with zoom information and feature attributes.</param>
     /// <returns>The maximum stroke width in style px.</returns>
     float GetMaxStrokeWidth(EvaluationContext context);
-
-    /// <summary>
-    /// Gets the output value for stroke-width evaluated against the nearest integer zoom level.
-    /// </summary>
-    /// <param name="context">The evaluation context with zoom information and feature attributes.</param>
-    /// <returns>The stroke width obtained when using the integer zoom.</returns>
-    float GetStrokeWidthFromIntZoom(EvaluationContext context);
 }

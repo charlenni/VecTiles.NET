@@ -173,6 +173,11 @@ public static class MFLinePaint
 
         if (lineStyle.StrokeDasharray is { Length: > 0 } dashArray)
         {
+            // Dash and gap lengths in px: like the original renderer, the dash
+            // array is scaled with the base-stroke-width factor of the theme,
+            // but NOT with the zoom-growing stroke scale (mapsforge only
+            // rescales dash arrays for styles with scale="all"). The renderer
+            // expects tile-space px, so the values pass through as they are.
             brush.SetFixDashArray(dashArray.Select(d => d * MFFillPaint.GetBaseStrokeWidth(lineStyle)).ToArray());
         }
 

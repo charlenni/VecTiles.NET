@@ -157,6 +157,42 @@ namespace VecTiles.Styles.Mapsforge.Tests
         }
 
         /// <summary>
+        /// Regression test of the drawing order ("Texte unter Straßen"): except for labels and
+        /// symbols, all rendering instructions are drawn in the order of their definition
+        /// (Rendertheme.md); captions, icons, lineSymbols and pathTexts are labels, the
+        /// reference renderer draws them after all fills, lines and circles. The loader must
+        /// reorder the flattened layers accordingly, otherwise a caption of an early rule is
+        /// overdrawn by the lines of later rules.
+        /// </summary>
+        [Fact]
+        public async Task LoadDefaultThemeSymbolLayersAfterGeometryLayersTest()
+        {
+            var theme = await LoadTheme(Path.Combine(_themes, "mapsforge", "default.xml"));
+
+            Assert.True(theme.Layers.Count > 100);
+
+            var lastGeometryIndex = -1;
+            var firstSymbolIndex = theme.Layers.Count;
+            for (var i = 0; i < theme.Layers.Count; i++)
+            {
+                if (theme.Layers[i].StyleType == LayerStyleType.Symbol)
+                {
+                    firstSymbolIndex = Math.Min(firstSymbolIndex, i);
+                }
+                else
+                {
+                    lastGeometryIndex = i;
+                }
+            }
+
+            Assert.True(firstSymbolIndex > lastGeometryIndex,
+                $"Symbol layer at index {firstSymbolIndex} before geometry layer at index {lastGeometryIndex}");
+
+            // The sea area rule is the first rule of the theme and stays the first layer
+            Assert.IsType<MFFillLayerStyle>(theme.Layers[0]);
+        }
+
+        /// <summary>
         /// Checks that symbol layers, captions, line symbols and path texts of
         /// default.xml are read with their attributes.
         /// </summary>

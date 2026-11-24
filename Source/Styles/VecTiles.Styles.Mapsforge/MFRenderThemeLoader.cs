@@ -89,7 +89,28 @@ public static class MFRenderThemeLoader
             // Other root elements (hillshading) are not supported yet
         }
 
+        ReorderLayersForDrawing(theme);
+
         return theme;
+    }
+
+    /// <summary>
+    /// Reorders the flattened layers of the theme for the drawing: "Except for labels and
+    /// symbols, all rendering instructions are drawn on the map in the order of their
+    /// definition" (Rendertheme.md). The reference renderer collects the captions, icons,
+    /// lineSymbols and pathTexts as labels and draws them after all fills, lines and circles,
+    /// so a label of an early rule never disappears under the geometry of a later rule. The
+    /// geometry layers keep their document order, the symbol style layers follow (also in
+    /// document order); the label priorities order the labels among themselves.
+    /// </summary>
+    private static void ReorderLayersForDrawing(MFRenderTheme theme)
+    {
+        var geometryLayers = theme.Layers.Where(layer => layer.StyleType != LayerStyleType.Symbol).ToList();
+        var symbolLayers = theme.Layers.Where(layer => layer.StyleType == LayerStyleType.Symbol).ToList();
+
+        theme.Layers.Clear();
+        theme.Layers.AddRange(geometryLayers);
+        theme.Layers.AddRange(symbolLayers);
     }
 
     /// <summary>

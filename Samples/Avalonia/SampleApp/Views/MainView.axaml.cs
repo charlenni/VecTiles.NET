@@ -23,7 +23,7 @@ namespace SampleApp.Views;
 /// </summary>
 public partial class MainView : UserControl
 {
-    private readonly string _path = "Files";
+    private readonly string _path = "Files/OpenMapTiles";
     private readonly TileGridDebugLayer _debugLayer;
     private readonly OMTRenderedTileSource _tileSource;
     private readonly RenderedTileLayer _tileLayer;
@@ -37,7 +37,8 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        var styleSource = $"file://{_path}/osm-liberty-for-mapsforge.json";
+        var styleSource = $"file://{_path}/osm-liberty.json";
+        //var styleSource = $"file://{_path}/osm-liberty-for-mapsforge.json";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
         _tileSource = new OMTRenderedTileSource(styleSource);

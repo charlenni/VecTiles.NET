@@ -20,7 +20,7 @@ VecTiles.Mapsui).
 - `Samples/Avalonia/` — `SampleApp` (shared Avalonia UI) and `SampleApp.Desktop` (desktop head)
 - `Benchmarks/` — BenchmarkDotNet benchmarks for the OpenMapTiles code
 - `Source/Packages/` — thin NuGet packaging projects (`*.Package`); one per published package
-- `Logos/`, `Files/` — assets used by the packages and samples
+- `Logos/`, `Files/OpenMapTiles` — assets used by the packages and samples
 - `Directory.Build.props` — shared package metadata (version, author, repository)
 - `pack-nuget.sh` — builds/pushes all NuGet packages in dependency order
 - `NuGet.config` — nuget.org plus a local feed at `artifacts/nugets` (created by `pack-nuget.sh`)

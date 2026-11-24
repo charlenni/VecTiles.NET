@@ -47,7 +47,7 @@ using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
 
 // Source of the style file in URL notation (see "Loading styles and tile data" below)
-var styleSource = "file://Files/osm-liberty.json";
+var styleSource = "file://Files/OpenMapTiles/osm-liberty.json";
 // ... or from a tile server:
 //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 

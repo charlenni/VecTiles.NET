@@ -18,7 +18,7 @@ namespace VecTiles.OpenMapTiles.Benchmarks;
 [MemoryDiagnoser]
 public class OMTRenderBenchmarks
 {
-    private const string _path = "Files";
+    private const string _path = "Files/OpenMapTiles/";
 
     private ITileDataSource? _dataSource;
     ITileConverter? _tileConverter;

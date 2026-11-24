@@ -396,7 +396,7 @@ public class MapsforgeTileConverterTests
         double longitude, double latitude, int zoom)
     {
         using var dataSource = new VecTiles.DataSources.Mapsforge.MapsforgeTileDataSource(
-            [Path.Combine("Files", "zuerich.map")], 0, 21);
+            [Path.Combine("Files", "OpenMapTiles", "zuerich.map")], 0, 21);
 
         var requested = ToTile(longitude, latitude, zoom);
         var provided = requested;

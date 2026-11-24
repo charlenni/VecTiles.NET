@@ -9,7 +9,7 @@ namespace VecTiles.DataSources.Tests;
 /// </summary>
 public class MBTilesDataSourceTests
 {
-    readonly string _path = Path.Combine("Files", "zurich.mbtiles");
+    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zurich.mbtiles");
 
     /// <summary>
     /// Verifies that the metadata read from the MBTiles file matches the Zurich tileset.

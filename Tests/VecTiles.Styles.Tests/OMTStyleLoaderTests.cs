@@ -8,7 +8,7 @@ namespace VecTiles.Styles.MapboxTests
     /// </summary>
     public class OMTStyleLoaderTests
     {
-        readonly string _path = "Files";
+        readonly string _path = "Files/OpenMapTiles";
 
         /// <summary>
         /// Checks that loading the style file populates the metadata.

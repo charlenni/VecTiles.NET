@@ -10,7 +10,7 @@ namespace VecTiles.Converters.Tests;
 /// </summary>
 public class OMTConverterTests
 {
-    readonly string _path = Path.Combine("Files", "zurich.mbtiles");
+    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zurich.mbtiles");
 
     /// <summary>
     /// Verifies that a Zurich MBTiles tile converted by <see cref="OMTTileConverter" />

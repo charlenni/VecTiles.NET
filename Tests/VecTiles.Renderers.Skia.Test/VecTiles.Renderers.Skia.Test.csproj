@@ -8,34 +8,34 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\..\Files\Fonts\Roboto Condensed Italic.ttf" Link="Files\Fonts\Roboto Condensed Italic.ttf">
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic.ttf" Link="Files\OpenMapTiles\Fonts\Roboto Condensed Italic.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\Files\Fonts\Roboto Medium.ttf" Link="Files\Fonts\Roboto Medium.ttf">
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Medium.ttf" Link="Files\OpenMapTiles\Fonts\Roboto Medium.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\Files\Fonts\Roboto Regular.ttf" Link="Files\Fonts\Roboto Regular.ttf">
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Regular.ttf" Link="Files\OpenMapTiles\Fonts\Roboto Regular.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\Files\Fonts\Bungee Regular.ttf" Link="Files\Fonts\Bungee Regular.ttf">
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Bungee Regular.ttf" Link="Files\OpenMapTiles\Fonts\Bungee Regular.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="..\..\Files\osm-liberty.json" Link="Files\osm-liberty.json">
+    <Content Include="..\..\Files\OpenMapTiles\osm-liberty.json" Link="Files\OpenMapTiles\osm-liberty.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty.json" Link="Files\Sprites\osm-liberty.json">
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty.json" Link="Files\OpenMapTiles\Sprites\osm-liberty.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty.png" Link="Files\Sprites\osm-liberty.png">
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty.png" Link="Files\OpenMapTiles\Sprites\osm-liberty.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty@2x.json" Link="Files\Sprites\osm-liberty%402x.json">
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty@2x.json" Link="Files\OpenMapTiles\Sprites\osm-liberty%402x.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
-    <EmbeddedResource Include="..\..\Files\Sprites\osm-liberty@2x.png" Link="Files\Sprites\osm-liberty%402x.png">
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty@2x.png" Link="Files\OpenMapTiles\Sprites\osm-liberty%402x.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
@@ -60,22 +60,19 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Files\Fonts\" />
+    <Folder Include="Files\OpenMapTiles\Fonts\" />
     <Folder Include="Files\Results\" />
-    <Folder Include="Files\Sprites\" />
+    <Folder Include="Files\OpenMapTiles\Sprites\" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\Files\LICENSE.md" Link="Files\LICENSE.md">
+    <None Include="..\..\Files\OpenMapTiles\LICENSE.md" Link="Files\OpenMapTiles\LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\Files\natural_earth_2_shaded_relief.raster.mbtiles" Link="Files\natural_earth_2_shaded_relief.raster.mbtiles">
+    <None Include="..\..\Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles" Link="Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\Files\switzerland_zurich.mbtiles" Link="Files\switzerland_zurich.mbtiles">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\Files\zurich.mbtiles" Link="Files\zurich.mbtiles">
+    <None Include="..\..\Files\OpenMapTiles\zurich.mbtiles" Link="Files\OpenMapTiles\zurich.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Files\Originals\Text-KeepUpright-False-0.png">

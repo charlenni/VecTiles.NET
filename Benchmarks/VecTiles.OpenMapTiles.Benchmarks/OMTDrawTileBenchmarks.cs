@@ -19,7 +19,7 @@ namespace VecTiles.OpenMapTiles.Benchmarks;
 [MemoryDiagnoser]
 public class OMTDrawTileBenchmarks
 {
-    private const string _path = "Files";
+    private const string _path = "Files/OpenMapTiles/";
     private const int Zoom = 19;
     private const int CenterX = 274582;
     private const int CenterY = 183615;

@@ -12,7 +12,7 @@ namespace VecTiles.Converters.Tests;
 /// </summary>
 public class SchanzengrabenDumpTests
 {
-    readonly string _path = Path.Combine("Files", "zurich.mbtiles");
+    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zurich.mbtiles");
     private readonly ITestOutputHelper _output;
 
     /// <summary>

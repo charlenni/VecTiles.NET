@@ -29,12 +29,12 @@ public static class Utilities
 
         var projectDir = Path.Combine(repoRoot, "Tests", "VecTiles.Renderers.Skia.Test");
 
-        if (!File.Exists(Path.Combine(repoRoot, "Files", "osm-liberty.json")) ||
+        if (!File.Exists(Path.Combine(repoRoot, "Files", "OpenMapTiles", "osm-liberty.json")) ||
             !Directory.Exists(Path.Combine(projectDir, "Files", "Originals")))
         {
             throw new InvalidOperationException(
                 $"Data or goldens folder not found in '{repoRoot}'. " +
-                $"Expected '{Path.Combine(repoRoot, "Files", "osm-liberty.json")}' and " +
+                $"Expected '{Path.Combine(repoRoot, "Files", "OpenMapTiles", "osm-liberty.json")}' and " +
                 $"'{Path.Combine(projectDir, "Files", "Originals")}'.");
         }
 
@@ -42,9 +42,9 @@ public static class Utilities
     });
 
     /// <summary>
-    /// The data Files folder of the repository (styles, mbtiles, fonts, sprites).
+    /// The OpenMapTiles data Files folder of the repository (styles, mbtiles, fonts, sprites).
     /// </summary>
-    public static string DataFiles => Path.Combine(_folders.Value.RepoRoot, "Files");
+    public static string DataFiles => Path.Combine(_folders.Value.RepoRoot, "Files", "OpenMapTiles");
 
     /// <summary>
     /// The Files folder of the test project (golden images and test results).

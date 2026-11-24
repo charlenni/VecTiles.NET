@@ -33,20 +33,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\Files\LICENSE.md" Link="Files\LICENSE.md">
+    <None Include="..\..\Files\OpenMapTiles\LICENSE.md" Link="Files\OpenMapTiles\LICENSE.md">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\Files\natural_earth_2_shaded_relief.raster.mbtiles" Link="Files\natural_earth_2_shaded_relief.raster.mbtiles">
+    <None Include="..\..\Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles" Link="Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="..\..\Files\switzerland_zurich.mbtiles" Link="Files\switzerland_zurich.mbtiles">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <Content Include="..\..\Files\zurich.mbtiles">
-      <Link>Files/zurich.mbtiles</Link>
+    <Content Include="..\..\Files\OpenMapTiles\zurich.mbtiles">
+      <Link>Files/OpenMapTiles/zurich.mbtiles</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="..\..\Files\zuerich.map" Link="Files\zuerich.map">
+    <None Include="..\..\Files\OpenMapTiles\zuerich.map" Link="Files\OpenMapTiles\zuerich.map">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

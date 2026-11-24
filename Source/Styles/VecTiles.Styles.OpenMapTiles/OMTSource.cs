@@ -195,6 +195,51 @@ public class OMTSource
     public float? Zoom { get; internal set; }
 
     /// <summary>
+    /// Resolves the relative file URLs of the source (mbtiles://, mapsforge://,
+    /// file://) against the given base directory, so they can point to files
+    /// that live next to the style file.
+    /// </summary>
+    /// <param name="baseDirectory">Directory the relative URLs are resolved against.</param>
+    internal void ResolveRelativeUrls(string baseDirectory)
+    {
+        Url = ResolveRelativeUrl(Url, baseDirectory);
+
+        if (Tiles != null)
+        {
+            for (var i = 0; i < Tiles.Count; i++)
+                Tiles[i] = ResolveRelativeUrl(Tiles[i], baseDirectory);
+        }
+    }
+
+    /// <summary>
+    /// Resolves a single source URL with a file based scheme against a base
+    /// directory. Absolute paths and URLs of other schemes are returned unchanged.
+    /// </summary>
+    /// <param name="url">The source URL to resolve, may be null.</param>
+    /// <param name="baseDirectory">Directory the relative URLs are resolved against.</param>
+    /// <returns>The resolved URL, or the unchanged input.</returns>
+    private static string? ResolveRelativeUrl(string? url, string baseDirectory)
+    {
+        if (string.IsNullOrEmpty(url))
+            return url;
+
+        var separatorIndex = url.IndexOf("://", StringComparison.Ordinal);
+        if (separatorIndex <= 0)
+            return url;
+
+        var scheme = url.Substring(0, separatorIndex);
+        if (scheme is not (DefaultTileDataSourceFactory.FileScheme or DefaultTileDataSourceFactory.MbTilesScheme or DefaultTileDataSourceFactory.MapsforgeScheme))
+            return url;
+
+        var path = url.Substring(separatorIndex + 3);
+
+        if (Path.IsPathRooted(path))
+            return url;
+
+        return $"{scheme}://{(baseDirectory.Length > 0 ? baseDirectory.TrimEnd('/') + "/" : string.Empty)}{path}";
+    }
+
+    /// <summary>
     /// Creates the actual tile data source from the source description, resolving a
     /// TileJSON reference if necessary and wrapping vector data with the
     /// OpenMapTiles tile converter.

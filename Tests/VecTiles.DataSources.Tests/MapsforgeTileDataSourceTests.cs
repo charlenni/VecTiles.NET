@@ -5,6 +5,8 @@ using VecTiles.Common.Primitives;
 using VecTiles.DataSources;
 using VecTiles.DataSources.Mapsforge;
 
+using VecTiles.Tests;
+
 namespace VecTiles.DataSources.Tests;
 
 /// <summary>
@@ -13,7 +15,7 @@ namespace VecTiles.DataSources.Tests;
 /// </summary>
 public class MapsforgeTileDataSourceTests
 {
-    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zuerich.map");
+    readonly string _path = Path.Combine(RepoData.DataFiles, "zuerich.map");
 
     /// <summary>
     /// Verifies that the header metadata of the real Zurich mapsforge file is read correctly.

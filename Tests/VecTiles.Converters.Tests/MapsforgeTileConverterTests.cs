@@ -3,6 +3,8 @@ using NetTopologySuite.Geometries;
 using VecTiles.Common.Primitives;
 using VecTiles.Converters.Mapsforge;
 
+using VecTiles.Tests;
+
 namespace VecTiles.Converters.Tests;
 
 /// <summary>
@@ -396,7 +398,7 @@ public class MapsforgeTileConverterTests
         double longitude, double latitude, int zoom)
     {
         using var dataSource = new VecTiles.DataSources.Mapsforge.MapsforgeTileDataSource(
-            [Path.Combine("Files", "OpenMapTiles", "zuerich.map")], 0, 21);
+            [Path.Combine(RepoData.DataFiles, "zuerich.map")], 0, 21);
 
         var requested = ToTile(longitude, latitude, zoom);
         var provided = requested;

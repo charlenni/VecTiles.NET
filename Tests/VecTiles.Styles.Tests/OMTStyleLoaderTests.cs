@@ -1,6 +1,8 @@
 ﻿using VecTiles.DataSources;
 using VecTiles.Styles.OpenMapTiles;
 
+using VecTiles.Tests;
+
 namespace VecTiles.Styles.MapboxTests
 {
     /// <summary>
@@ -8,7 +10,7 @@ namespace VecTiles.Styles.MapboxTests
     /// </summary>
     public class OMTStyleLoaderTests
     {
-        readonly string _path = "Files/OpenMapTiles";
+        readonly string _path = RepoData.DataFiles;
 
         /// <summary>
         /// Checks that loading the style file populates the metadata.

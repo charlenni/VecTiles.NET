@@ -3,6 +3,8 @@ using VecTiles.Converters.OpenMapTiles;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.TileDataSources;
 
+using VecTiles.Tests;
+
 namespace VecTiles.Converters.Tests;
 
 /// <summary>
@@ -10,7 +12,7 @@ namespace VecTiles.Converters.Tests;
 /// </summary>
 public class OMTConverterTests
 {
-    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zurich.mbtiles");
+    readonly string _path = Path.Combine(RepoData.DataFiles, "zurich.mbtiles");
 
     /// <summary>
     /// Verifies that a Zurich MBTiles tile converted by <see cref="OMTTileConverter" />

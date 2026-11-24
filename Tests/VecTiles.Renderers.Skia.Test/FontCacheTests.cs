@@ -52,7 +52,7 @@ public class FontCacheTests : IDisposable
         var typeface = SKTypeface.FromFile(GetFontPath("Roboto Regular.ttf"));
         Assert.NotNull(typeface);
 
-        FontCache.AddFontSearchPath("Files/OpenMapTiles/Fonts", searchSubDirectories: false);
+        FontCache.AddFontSearchPath(Path.Combine(Utilities.DataFiles, "Fonts"), searchSubDirectories: false);
 
         var missing = FontCache.GetMissingFonts([typeface!.FamilyName]);
 
@@ -69,7 +69,7 @@ public class FontCacheTests : IDisposable
         var typeface = SKTypeface.FromFile(GetFontPath("Roboto Regular.ttf"));
         Assert.NotNull(typeface);
 
-        FontCache.AddFontSearchPath("Files/OpenMapTiles/Fonts", searchSubDirectories: false);
+        FontCache.AddFontSearchPath(Path.Combine(Utilities.DataFiles, "Fonts"), searchSubDirectories: false);
 
         var style = FontCache.CreateFonts($"FontCacheTests_{Guid.NewGuid():N}", [typeface!.FamilyName]);
         Assert.NotNull(style);

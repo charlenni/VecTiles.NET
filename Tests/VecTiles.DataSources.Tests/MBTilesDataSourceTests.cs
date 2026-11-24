@@ -2,6 +2,8 @@
 using VecTiles.DataSources.MbTiles;
 using SQLite;
 
+using VecTiles.Tests;
+
 namespace VecTiles.DataSources.Tests;
 
 /// <summary>
@@ -9,7 +11,7 @@ namespace VecTiles.DataSources.Tests;
 /// </summary>
 public class MBTilesDataSourceTests
 {
-    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zurich.mbtiles");
+    readonly string _path = Path.Combine(RepoData.DataFiles, "zurich.mbtiles");
 
     /// <summary>
     /// Verifies that the metadata read from the MBTiles file matches the Zurich tileset.

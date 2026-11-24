@@ -30,6 +30,16 @@ public class OMTStyleFileLoader
         if (omtStyleFile == null)
             throw new ArgumentException("Style file isn't valid");
 
+        // Resolve relative source file URLs against the folder of the style
+        // file, so styles are independent of the working directory.
+        var styleDirectory = GetStyleFileDirectory(source);
+
+        if (styleDirectory != null)
+        {
+            foreach (var omtSource in omtStyleFile.Sources.Values)
+                omtSource.ResolveRelativeUrls(styleDirectory);
+        }
+
         await CreateSources(omtStyleFile.Sources).ConfigureAwait(false);
 
         ApplySourceCenterAndZoom(omtStyleFile);
@@ -37,6 +47,24 @@ public class OMTStyleFileLoader
         omtStyleFile.Sprites = await LoadSprites(omtStyleFile.spriteFile).ConfigureAwait(false);
 
         return omtStyleFile;
+    }
+
+    /// <summary>
+    /// Directory part of a style file source, or null when the source isn't a
+    /// file system path (e.g. a network URL) and relative paths cannot be
+    /// resolved against it.
+    /// </summary>
+    /// <param name="source">File path or URL of the style file.</param>
+    /// <returns>The directory containing the style file, without trailing slash.</returns>
+    private static string? GetStyleFileDirectory(string source)
+    {
+        if (!source.StartsWith(ByteDataSource.FileScheme + "://", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var path = source.Substring(ByteDataSource.FileScheme.Length + 3);
+        var lastSeparator = path.LastIndexOf('/');
+
+        return lastSeparator < 0 ? string.Empty : path.Substring(0, lastSeparator);
     }
 
     /// <summary>

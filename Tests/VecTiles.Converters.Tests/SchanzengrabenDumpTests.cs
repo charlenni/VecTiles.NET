@@ -4,6 +4,8 @@ using VecTiles.DataSources.MbTiles;
 using VecTiles.TileDataSources;
 using Xunit.Abstractions;
 
+using VecTiles.Tests;
+
 namespace VecTiles.Converters.Tests;
 
 /// <summary>
@@ -12,7 +14,7 @@ namespace VecTiles.Converters.Tests;
 /// </summary>
 public class SchanzengrabenDumpTests
 {
-    readonly string _path = Path.Combine("Files", "OpenMapTiles", "zurich.mbtiles");
+    readonly string _path = Path.Combine(RepoData.DataFiles, "zurich.mbtiles");
     private readonly ITestOutputHelper _output;
 
     /// <summary>

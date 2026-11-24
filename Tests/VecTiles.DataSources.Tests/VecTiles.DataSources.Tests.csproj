@@ -30,18 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\Files\OpenMapTiles\LICENSE.md" Link="Files\OpenMapTiles\LICENSE.md">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles" Link="Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\Files\OpenMapTiles\zurich.mbtiles" Link="Files\OpenMapTiles\zurich.mbtiles">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Include="..\..\Files\OpenMapTiles\zuerich.map" Link="Files\OpenMapTiles\zuerich.map">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
+    <Compile Include="..\RepoData.cs" Link="RepoData.cs" />
   </ItemGroup>
 
 </Project>

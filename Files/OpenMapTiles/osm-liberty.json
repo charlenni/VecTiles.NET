@@ -9,13 +9,13 @@
   "sources": {
     "openmaptiles": {
       "type": "vector",
-      "url": "mbtiles://Files/OpenMapTiles/zurich.mbtiles"
+      "url": "mbtiles://zurich.mbtiles"
     },
     "natural_earth_shaded_relief": {
       "maxzoom": 6,
       "tileSize": 256,
       "tiles": [
-        "mbtiles://Files/OpenMapTiles/natural_earth_2_shaded_relief.raster.mbtiles"
+        "mbtiles://natural_earth_2_shaded_relief.raster.mbtiles"
       ],
       "type": "raster"
     }

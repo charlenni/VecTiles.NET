@@ -236,6 +236,41 @@ public class MapsforgeTileConverterTests
     }
 
     /// <summary>
+    /// A way whose segment crosses the tile with BOTH nodes outside the clip rectangle
+    /// (no node inside) must keep its original outer nodes: the alternative — border
+    /// interpolation points — would end the stroke at the border, where a round stroke
+    /// cap leaves a half-disc notch exactly where the neighbouring tile continues the
+    /// line (mapsforge convention: one node beyond the border).
+    /// </summary>
+    [Fact]
+    public async Task WayCrossingWithBothNodesOutsideKeepsNodesTest()
+    {
+        const int baseZoom = 4;
+
+        // A diagonal way crossing the overzoom tile (16, 10, 5) from west of the left
+        // border to east of the right border (latitudes within the tile): both nodes are
+        // outside the clip rectangle [-4, 516]², so the run detection must keep them
+        // instead of the boundary crossing points. 1° = 512·2⁵/360 ≈ 45.5 px.
+        var wayData = new List<byte>();
+        AddWay(wayData, [(-1_000_000, -300_000), (-10_000_000, 12_000_000)], [0]);
+        var envelope = BuildEnvelope(baseZoom, baseZoom, baseZoom, 8, 5, 1, [], ["highway=residential"],
+            [(false, TileData([(0, 1)], 0, [], [.. wayData]))]);
+
+        var tile = await new MapsforgeTileConverter().Convert(Tile(16, 10, 5), Tile(8, 5, baseZoom), envelope);
+
+        Assert.NotNull(tile);
+        var line = tile.Layers.SelectMany(l => l.Features)
+            .Single(f => f.Geometry is LineString or MultiLineString);
+        Assert.Equal(2, line.Geometry.Coordinates.Length);
+
+        var envelopeInternal = line.Geometry.EnvelopeInternal;
+        Assert.True(envelopeInternal.MinX < -5,
+            $"The run start is the border interpolation point, not the original node: {envelopeInternal}");
+        Assert.True(envelopeInternal.MaxX > 517,
+            $"The run end is the border interpolation point, not the original node: {envelopeInternal}");
+    }
+
+    /// <summary>
     /// An injected ITagsConverter decides the source layer and the tags of the features.
     /// </summary>
     [Fact]

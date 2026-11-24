@@ -532,15 +532,20 @@ public class MapsforgeTileConverter : ITileConverter
                 run = [a];
                 run.Add(b);
             }
-            else if (SegmentBoundingBoxIntersectsRectangle(a, b) && RectangleIntersection(a, b) is { } crossing)
+            else if (SegmentBoundingBoxIntersectsRectangle(a, b) && RectangleIntersection(a, b) is not null)
             {
                 // Both endpoints outside, but the segment passes the rectangle: an isolated
-                // run between the two rectangle boundary crossings. The bounding box check is
-                // only a pre-filter: a segment can cross the rectangle through two adjacent
-                // edges (e.g. a far tile corner at a high overzoom level), so it needs not
-                // span a full axis of the rectangle; segments that miss the rectangle are
-                // rejected by the boundary intersection search
-                runs.Add(crossing);
+                // run. The bounding box check is only a pre-filter: a segment can cross the
+                // rectangle through two adjacent edges (e.g. a far tile corner at a high
+                // overzoom level), so it needs not span a full axis of the rectangle;
+                // segments that miss the rectangle are rejected by the boundary
+                // intersection search.
+                // Keep the original outer nodes (not the border interpolation points):
+                // with a round stroke cap the run would otherwise END at the border with a
+                // half-disc notch where the neighbouring tile continues the line. Keeping
+                // the nodes follows the same convention as the mapsforge writer ("one node
+                // beyond the border") and makes both tiles overlap at the shared border.
+                runs.Add([a, b]);
             }
         }
 

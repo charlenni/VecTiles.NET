@@ -43,9 +43,10 @@ public class IconLineSymbol : Symbol
     public bool AllowOverlap { get; init; }
 
     /// <summary>
-    /// Scale of symbol
+    /// Scale of symbol (multiplier on the sprite display size; defaults to 1,
+    /// like <see cref="IconPointSymbol.Scale" />)
     /// </summary>
-    public float Scale { get; init; }
+    public float Scale { get; init; } = 1f;
 
     /// <summary>
     /// Rotation of symbol in degrees

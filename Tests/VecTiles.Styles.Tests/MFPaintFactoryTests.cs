@@ -74,9 +74,9 @@ namespace VecTiles.Styles.Mapsforge.Tests
 
         /// <summary>
         /// Checks that the stroke width grows like in the original renderer
-        /// with the zoom (1.5 per OSM zoom level above 12 — the tiles of the
-        /// renderer are 512 px, so one level is added to the OSM zoom of the
-        /// same pixel density), while the dash array stays at its base size.
+        /// with the zoom (1.5 per tile level above 12 — the tiles of the
+        /// renderer cover the tile grid of the mapsforge data at the same
+        /// levels), while the dash array stays at its base size.
         /// </summary>
         [Fact]
         public void LinePaintStrokeScaleTest()
@@ -88,8 +88,8 @@ namespace VecTiles.Styles.Mapsforge.Tests
             paint.Update(new EvaluationContext(14f));
 
             Assert.NotNull(paint);
-            // 3 (theme) * 1.5 ^ (14 + 1 - 12) = 10.125
-            Assert.Equal(10.125f, paint.StrokeWidth, 5);
+            // 3 (theme) * 1.5 ^ (14 - 12) = 6.75
+            Assert.Equal(6.75f, paint.StrokeWidth, 5);
             Assert.Equal(new[] { 5f, 4f }, paint.DashArray);
         }
 

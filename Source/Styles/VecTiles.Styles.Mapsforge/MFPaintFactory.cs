@@ -102,8 +102,8 @@ public static class MFFillPaint
         brush.SetFixOutlineColor(fillStyle.Stroke);
         brush.SetFixOutlineOpacity(fillStyle.Stroke.A / 255f);
         // Stroke width grows with the zoom like in the original renderer
-        // (1.5 per OSM zoom level above 12, see MFScaling for the tile zoom
-        // mapping of 512 px tiles)
+        // (1.5 per tile level above 12, see MFScaling for the px mapping of
+        // the 512 px tiles)
         brush.SetVariableStrokeWidth((context) => fillStyle.StrokeWidth
             * MFFillPaint.GetBaseStrokeWidth(fillStyle)
             * MFScaling.GetStrokeScale(context));
@@ -163,8 +163,8 @@ public static class MFLinePaint
         }
 
         // Stroke width grows with the zoom like in the original renderer
-        // (1.5 per OSM zoom level above 12, see MFScaling for the tile zoom
-        // mapping of 512 px tiles)
+        // (1.5 per tile level above 12, see MFScaling for the px mapping of
+        // the 512 px tiles)
         brush.SetVariableStrokeWidth((context) => lineStyle.StrokeWidth
             * MFFillPaint.GetBaseStrokeWidth(lineStyle)
             * MFScaling.GetStrokeScale(context));

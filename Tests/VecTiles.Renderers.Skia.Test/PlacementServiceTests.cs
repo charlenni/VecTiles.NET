@@ -29,6 +29,10 @@ internal static class PlacementServiceTestSupport
 
         public Attribution Attribution => new("Fake", string.Empty);
 
+        public float[] Center => [];
+
+        public float? Zoom => null;
+
         public async Task<IRenderedTile?> GetTileAsync(TileInfo tileInfo)
         {
             await Gate.Task.ConfigureAwait(false);
@@ -52,6 +56,10 @@ internal static class PlacementServiceTestSupport
         public string Name => "fake";
 
         public Attribution Attribution => new("Fake", string.Empty);
+
+        public float[] Center => [];
+
+        public float? Zoom => null;
 
         public Task<IRenderedTile?> GetTileAsync(TileInfo tileInfo)
         {

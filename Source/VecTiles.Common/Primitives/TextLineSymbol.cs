@@ -85,7 +85,7 @@ public class TextLineSymbol : Symbol
     /// <summary>
     /// Function to calculate opacity of symbol from EvaluationContext
     /// </summary>
-    public Func<EvaluationContext, float>? Opacity { get; init; }
+    public Func<EvaluationContext, float>? Opacity { get; init; } = (ctx) => 1f;
 
     /// <summary>
     /// Text alignment in MaxWidth
@@ -175,6 +175,8 @@ public class TextLineSymbol : Symbol
             Anchor = Anchor,
             Offset = Offset,
             Direction = Direction,
+            Color = Color,
+            Opacity = Opacity,
             FontNames = FontNames,
             FontSize = FontSize,
             HaloColor = HaloColor,

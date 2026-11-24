@@ -34,6 +34,10 @@ public class TileFetchSchedulerTests
         public string Name => "fake";
 
         public Attribution Attribution => new("Fake", string.Empty);
+
+        public float[] Center => [];
+
+        public float? Zoom => null;
     }
 
     private static TileInfo TileInfo(int x, int y, int zoom)

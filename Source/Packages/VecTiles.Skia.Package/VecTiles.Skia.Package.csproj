@@ -22,7 +22,7 @@
     <PackageReference Include="SkiaSharp" Version="4.157.0" />
     <PackageReference Include="SkiaSharp.HarfBuzz" Version="4.157.0" />
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
-    <PackageReference Include="Topten.RichTextKit" Version="0.6.174" />
+    <PackageReference Include="Topten.RichTextKit" Version="0.6.175" />
   </ItemGroup>
 
   <!-- NuGet dependencies on the VecTiles packages, only used while packing

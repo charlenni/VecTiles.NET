@@ -101,6 +101,16 @@ public sealed record PlacementResult
     public bool Incomplete { get; init; }
 
     /// <summary>
+    /// True when the placement was computed with the mapsforge semantics (a
+    /// Mapsforge render theme): the drawing then lifts the line-symbol icons
+    /// (e.g. the oneway arrows) out of the per-style-layer draw order — like
+    /// the Mapsforge renderer they are drawn with the ways, below the placed
+    /// symbols and labels of every style layer, even when their rule comes
+    /// after the caption rules of the theme (dark.xml).
+    /// </summary>
+    public bool MapsforgeDrawOrder { get; init; }
+
+    /// <summary>
     /// An empty result without placed symbols.
     /// </summary>
     public static PlacementResult Empty() => new()

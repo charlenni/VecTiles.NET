@@ -712,6 +712,7 @@ public sealed class PlacementService
                 PlacedByLayer = new Dictionary<string, List<PlacementEntry>>(),
                 Incomplete = blocksPublication,
                 ZoomLevel = zoomLevel,
+                MapsforgeDrawOrder = ordersPlacementByPriority,
             };
         }
 
@@ -719,13 +720,11 @@ public sealed class PlacementService
         // result is not published (see the latch), so its decisions must not
         // enter the persistent state either — the pass that sees the complete
         // tile set decides and pins the labels
-        var placed = blocksPublication
+        return (blocksPublication
             ? SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, null,
                 ordersPlacementByPriority) with { Incomplete = true }
             : SymbolPlacementEngine.Compute(fetch.Tiles, zoomLevel, worldToScreen, token, incremental,
-                ordersPlacementByPriority);
-
-        return placed;
+                ordersPlacementByPriority)) with { MapsforgeDrawOrder = ordersPlacementByPriority };
     }
 
     /// <summary>

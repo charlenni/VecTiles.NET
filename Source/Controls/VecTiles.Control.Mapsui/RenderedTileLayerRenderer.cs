@@ -420,60 +420,42 @@ public static class RenderedTileLayerRenderer
         var newLayoutContext = LayoutContextOf(view.Placement, context);
         var oldLayoutContext = fadeOutPlacement is null ? null : LayoutContextOf(fadeOutPlacement, context);
 
-        foreach (var name in names)
+        // The mapsforge draw order (a Mapsforge render theme): the line-symbol
+        // icons (e.g. the oneway arrows) are drawn with the ways — below the
+        // placed symbols and labels of every style layer, even when their rule
+        // comes after the caption rules of the theme (the per-style-layer
+        // interleaving below would draw them on top of the captions)
+        var mapsforgeDrawOrder = view.Placement.MapsforgeDrawOrder;
+
+        void DrawPlacedSymbols(string name, bool onlyLineIcons)
         {
-            if (layerIndex.TryGetValue(name, out var layerMeta) && layerMeta.IsGeometry)
-            {
-                // The geometry of the style layer across all screen tiles
-                foreach (var tileInView in tiles)
-                {
-                    if (tileInView.Tile.Layers.FirstOrDefault(e => e is RenderedGeometryLayer && e.Name == name)
-                        is not RenderedGeometryLayer geometryLayer)
-                    {
-                        continue;
-                    }
-
-                    if (!SymbolPlacementEngine.IsVisibleAtZoom((geometryLayer.MinZoom, geometryLayer.MaxZoom), drawZoom))
-                    {
-                        continue;
-                    }
-
-                    DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
-                }
-
-                continue;
-            }
-
-            // The placed symbols of the same style layer; the layer metadata
-            // comes from the tiles the placement read its symbols from, so a
-            // layer invisible at the drawn zoom draws no symbols even when
-            // the placement placed them at the canonical zoom.
-            // Skipped entirely for the geometry-only frame: symbols of an
-            // old zoom must never end up inside a frame that is later mapped
-            // into a changed viewport (there they would show scaled).
-            // While the crossfade runs, the fading-out holdover draws its
-            // entries of the same style layer before the current placement,
-            // both wrapped in alpha layers
-            if (!drawSymbols)
-            {
-                continue;
-            }
-
             var newPlaced = view.Placement.PlacedByLayer.TryGetValue(name, out var list) &&
                 list.Count > 0 ? list : null;
             var oldPlaced = fadeOutPlacement is not null && fadeOutAlpha > 0 &&
                 fadeOutPlacement.PlacedByLayer.TryGetValue(name, out var oldList) &&
                 oldList.Count > 0 ? oldList : null;
 
+            if (onlyLineIcons)
+            {
+                newPlaced = newPlaced is { Count: > 0 } ? newPlaced.Where(IsLineIconEntry).ToList() : null;
+                oldPlaced = oldPlaced is { Count: > 0 } ? oldPlaced.Where(IsLineIconEntry).ToList() : null;
+            }
+            else if (mapsforgeDrawOrder)
+            {
+                // Not the line-ICON pass: skip the entries the line-icon pass drew
+                newPlaced = newPlaced is { Count: > 0 } ? newPlaced.Where(e => !IsLineIconEntry(e)).ToList() : null;
+                oldPlaced = oldPlaced is { Count: > 0 } ? oldPlaced.Where(e => !IsLineIconEntry(e)).ToList() : null;
+            }
+
             if (newPlaced == null && oldPlaced == null)
             {
-                continue;
+                return;
             }
 
             if (FindSymbolLayer(view, name) is { } symbolLayer &&
                 !SymbolPlacementEngine.IsVisibleAtZoom((symbolLayer.MinZoom, symbolLayer.MaxZoom), drawZoom))
             {
-                continue;
+                return;
             }
 
             if (oldPlaced != null)
@@ -515,6 +497,88 @@ public static class RenderedTileLayerRenderer
                 }
             }
         }
+
+        foreach (var name in names)
+        {
+            if (layerIndex.TryGetValue(name, out var layerMeta) && layerMeta.IsGeometry)
+            {
+                // The geometry of the style layer across all screen tiles
+                foreach (var tileInView in tiles)
+                {
+                    if (tileInView.Tile.Layers.FirstOrDefault(e => e is RenderedGeometryLayer && e.Name == name)
+                        is not RenderedGeometryLayer geometryLayer)
+                    {
+                        continue;
+                    }
+
+                    if (!SymbolPlacementEngine.IsVisibleAtZoom((geometryLayer.MinZoom, geometryLayer.MaxZoom), drawZoom))
+                    {
+                        continue;
+                    }
+
+                    DrawGeometryLayer(canvas, viewport, tileInView.Info, geometryLayer);
+                }
+
+                continue;
+            }
+
+            // The placed symbols of the same style layer; the layer metadata
+            // comes from the tiles the placement read its symbols from, so a
+            // layer invisible at the drawn zoom draws no symbols even when
+            // the placement placed them at the canonical zoom.
+            // Skipped entirely for the geometry-only frame: symbols of an
+            // old zoom must never end up inside a frame that is later mapped
+            // into a changed viewport (there they would show scaled).
+            // While the crossfade runs, the fading-out holdover draws its
+            // entries of the same style layer before the current placement,
+            // both wrapped in alpha layers
+            if (!drawSymbols)
+            {
+                continue;
+            }
+
+            if (mapsforgeDrawOrder)
+            {
+                // Deferred: the line icons are drawn below all symbols and
+                // labels of every style layer, the rest above them (see the
+                // passes after the loop)
+                continue;
+            }
+
+            DrawPlacedSymbols(name, onlyLineIcons: false);
+        }
+
+        if (!drawSymbols || !mapsforgeDrawOrder)
+        {
+            return;
+        }
+
+        // The Mapsforge semantics: the line-symbol icons (oneway arrows) are
+        // drawn with the ways, before the placed symbols and labels of every
+        // style layer; the point symbols and the labels (including the captions
+        // along the ways) are drawn afterwards on top. Both passes iterate the
+        // style layers in ascending order; a style layer that places both
+        // kinds draws its icons in the first pass and its texts in the second
+        foreach (var name in names)
+        {
+            DrawPlacedSymbols(name, onlyLineIcons: true);
+        }
+
+        foreach (var name in names)
+        {
+            DrawPlacedSymbols(name, onlyLineIcons: false);
+        }
+    }
+
+    /// <summary>
+    /// Whether the entry carries only a line icon (an icon repeated along or
+    /// placed once on a line without text, e.g. the oneway arrows of a
+    /// Mapsforge theme): such entries are drawn with the ways, below the
+    /// symbols and labels of every style layer (Mapsforge draw order).
+    /// </summary>
+    private static bool IsLineIconEntry(PlacementEntry entry)
+    {
+        return entry.Symbol is LineSymbol { IconSymbol: not null } line && !line.HasText;
     }
 
     /// <summary>

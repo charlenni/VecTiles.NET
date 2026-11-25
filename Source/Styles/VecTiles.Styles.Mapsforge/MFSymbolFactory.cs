@@ -494,10 +494,11 @@ public class MFSymbolFactory : ISymbolFactory
         var families = family switch
         {
             MapsforgeFontFamily.Monospace => new[] { "Roboto Mono", "Courier New", "DejaVu Sans Mono" },
-            MapsforgeFontFamily.SansSerif => new[] { "Open Sans", "Roboto", "Arial" },
+            MapsforgeFontFamily.SansSerif => new[] { "Open Sans", "Roboto", "Arial", "DejaVu Sans", "Liberation Sans" },
             MapsforgeFontFamily.Serif => new[] { "Noto Serif", "DejaVu Serif", "Times New Roman" },
-            // Default font of the platform
-            _ => new[] { "Open Sans", "Arial Unicode MS", "Roboto" }
+            // Default font of the platform: sans serif per Mapsforge convention
+            // (e.g. Roboto on Android, see the Cruiser map viewer)
+            _ => new[] { "Open Sans", "Roboto", "Arial", "DejaVu Sans", "Liberation Sans" }
         };
 
         return families.Select(f => $"{f} {suffix}").ToArray();

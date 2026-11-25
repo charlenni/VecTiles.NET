@@ -98,6 +98,27 @@ public class FontCacheTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that <see cref="FontCache.CreateFonts" /> tries every candidate of
+    /// the font name list before falling back to the system default. Previously
+    /// the first unresolvable name produced the fallback style immediately, so
+    /// the remaining candidates were never tried (e.g. the Mapsforge default
+    /// font list "Open Sans / Arial Unicode MS / Roboto" always ended in the
+    /// system default, a serif font on many systems).
+    /// </summary>
+    [Fact]
+    public void CreateFonts_TriesAllCandidates_BeforeSystemDefault()
+    {
+        FontCache.RegisterFontFile(GetFontPath("Roboto Regular.ttf"));
+
+        var style = FontCache.CreateFonts(
+            $"FontCacheTests_{Guid.NewGuid():N}",
+            ["This Family Does Not Exist 12345", "Roboto"]);
+
+        Assert.NotNull(style);
+        Assert.Equal("Roboto", style!.FontFamily);
+    }
+
+    /// <summary>
     /// Verifies that a missing family is loaded via the configured font source resolver
     /// and that the resolver is only consulted once.
     /// </summary>

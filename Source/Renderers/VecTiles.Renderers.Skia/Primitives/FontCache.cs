@@ -24,7 +24,7 @@ namespace VecTiles.Renderers.Skia.Primitives;
 /// </summary>
 public static class FontCache
 {
-    private static readonly Dictionary<(string, string), Topten.RichTextKit.Style> TextStyles = new();
+    private static readonly Dictionary<(string, string, bool), Topten.RichTextKit.Style> TextStyles = new();
     private static readonly object TextStylesLock = new();
 
     // Font families registered from font files, keyed by family name
@@ -70,7 +70,9 @@ public static class FontCache
 
     /// <summary>
     /// Creates a text style with the first font of the given font name list
-    /// that can be resolved, in the order given.
+    /// that can be resolved, in the order given. Only if none of the names
+    /// resolves to a font, the system default family is used as last resort
+    /// (see the resolution order in the class description).
     /// </summary>
     /// <param name="styleName">Name of the style, used for error messages.</param>
     /// <param name="names">Font family names to try, in order.</param>
@@ -85,7 +87,7 @@ public static class FontCache
 
         foreach (var name in names)
         {
-            var textStyle = CreateFont(styleName, name);
+            var textStyle = CreateFont(styleName, name, allowSystemDefaultFallback: false);
 
             if (textStyle != null)
             {
@@ -93,7 +95,16 @@ public static class FontCache
             }
         }
 
-        throw new FontNotFoundException(names.Length == 1 ? $"Font '{names[0]}' not found" : $"Fonts '{string.Join(", ", names)}' not found");
+        // None of the candidates resolved: fall back to the system default,
+        // so labels stay visible even without the styled fonts installed
+        var fallbackName = names.FirstOrDefault(name => !string.IsNullOrEmpty(name));
+
+        if (fallbackName == null)
+        {
+            throw new FontNotFoundException($"Font of style not found");
+        }
+
+        return CreateFont(styleName, fallbackName, allowSystemDefaultFallback: true);
     }
 
     /// <summary>
@@ -396,14 +407,15 @@ public static class FontCache
         return match;
     }
 
-    private static Topten.RichTextKit.Style? CreateFont(string styleName, string fontName)
+    private static Topten.RichTextKit.Style? CreateFont(string styleName, string fontName,
+        bool allowSystemDefaultFallback = true)
     {
         if (string.IsNullOrEmpty(fontName))
         {
             return null;
         }
 
-        var key = (styleName, fontName);
+        var key = (styleName, fontName, allowSystemDefaultFallback);
 
         lock (TextStylesLock)
         {
@@ -431,11 +443,17 @@ public static class FontCache
                 .CreateFontItalic(ref textStyle);
 
             // Since registered font files are resolved by the font mapper, the
-            // family name is kept as is; only unknown families fall back to the
-            // system default, so labels stay visible even without the styled
-            // fonts installed
+            // family name is kept as is; unknown families return null here, so
+            // the next candidate of the font name list can be tried. Only the
+            // last resort (see CreateFonts) falls back to the system default,
+            // so labels stay visible even without the styled fonts installed
             if (!IsAvailable(fontFamilyName))
             {
+                if (!allowSystemDefaultFallback)
+                {
+                    return null;
+                }
+
                 fontFamilyName = SKTypeface.Default.FamilyName;
             }
 

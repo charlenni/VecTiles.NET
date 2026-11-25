@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>VecTiles.Skia</PackageId>
+    <Title>VecTiles.Skia</Title>
+    <Description>Skia based renderer for the VecTiles.NET vector tile mapping stack. Provides VecTiles.Renderers.Skia, which renders styled vector tiles (fill, line and symbol layers, including text) to a bitmap using SkiaSharp and HarfBuzz shaped text.</Description>
+    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;openmaptiles;renderer;skia;skiasharp</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Earcut.NET" Version="1.2.0" />
+    <PackageReference Include="protobuf-net" Version="3.4.40" />
+    <PackageReference Include="SkiaSharp" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.HarfBuzz" Version="4.157.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.157.0" />
+    <PackageReference Include="Topten.RichTextKit" Version="0.6.174" />
+  </ItemGroup>
+
+  <!-- NuGet dependencies on the VecTiles packages, only used while packing
+       (pack-nuget.sh passes -p:CreateNuGets=true). During normal builds the
+       projects are referenced directly, so no NuGet feed is needed. -->
+  <ItemGroup Condition="'$(CreateNuGets)' == 'true'">
+    <PackageReference Include="VecTiles.OpenMapTiles" Version="$(Version)" />
+  </ItemGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(ReferencePath->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

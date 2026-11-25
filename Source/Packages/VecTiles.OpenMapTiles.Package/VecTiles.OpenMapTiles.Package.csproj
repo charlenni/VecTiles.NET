@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>VecTiles.OpenMapTiles</PackageId>
+    <Title>VecTiles.OpenMapTiles</Title>
+    <Description>OpenMapTiles support for the VecTiles.NET vector tile mapping stack. It bundles VecTiles.Styles.OpenMapTiles (styles in the Mapbox style format) and VecTiles.Converters.OpenMapTiles convert Mapbox/OpenMapTiles vector tiles (MVT, PBF optionally zipped) to VectorTile objects.</Description>
+    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;openmaptiles;mapbox;mvt;styles</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\..\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="protobuf-net" Version="3.4.40" />
+  </ItemGroup>
+
+  <!-- NuGet dependencies on the VecTiles packages, only used while packing
+       (pack-nuget.sh passes -p:CreateNuGets=true). During normal builds the
+       projects are referenced directly, so no NuGet feed is needed. -->
+  <ItemGroup Condition="'$(CreateNuGets)' == 'true'">
+    <PackageReference Include="VecTiles.Common" Version="$(Version)" />
+  </ItemGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(ReferencePath->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

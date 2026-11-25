@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>VecTiles.Common</PackageId>
+    <Title>VecTiles.Common</Title>
+    <Description>Core package of the VecTiles.NET vector tile mapping stack. It bundles the shared core types and interfaces of VecTiles.Common, the common renderer abstractions of VecTiles.Renderers.Common, byte based tile data sources (e.g. HTTP) of VecTiles.ByteDataSources and tile data sources, such as MBTiles (SQLite), of VecTiles.TileDataSources.</Description>
+    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;mbtiles;openmaptiles</PackageTags>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\VecTiles.Common\VecTiles.Common.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\..\DataSources\VecTiles.ByteDataSources\VecTiles.ByteDataSources.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\..\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="NetTopologySuite.Features" Version="2.2.0" />
+    <PackageReference Include="BruTile" Version="6.0.0" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.11.285" />
+  </ItemGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <TfmSpecificPackageFile Include="@(ReferencePath->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" PackagePath="lib/$(TargetFramework)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

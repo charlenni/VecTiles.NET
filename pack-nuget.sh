@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the four VecTiles NuGet packages in dependency order (optionally pushes them).
+# Creates the five VecTiles NuGet packages in dependency order (optionally pushes them).
 #
 # Usage:
 #   ./pack-nuget.sh                    # build all packages into artifacts/nugets
@@ -8,7 +8,7 @@
 #                                      #   ./pack-nuget.sh --push nuget.org $NUGET_API_KEY
 #                                      # the api key defaults to the NUGET_API_KEY env variable
 #
-# The version of all four packages is set in Directory.Build.props (property "Version").
+# The version of all five packages is set in Directory.Build.props (property "Version").
 # Bump it there before releasing.
 set -euo pipefail
 
@@ -25,6 +25,7 @@ fi
 PACKAGES=(
     "Source/Packages/VecTiles.Common.Package/VecTiles.Common.Package.csproj"
     "Source/Packages/VecTiles.OpenMapTiles.Package/VecTiles.OpenMapTiles.Package.csproj"
+    "Source/Packages/VecTiles.Mapsforge.Package/VecTiles.Mapsforge.Package.csproj"
     "Source/Packages/VecTiles.Skia.Package/VecTiles.Skia.Package.csproj"
     "Source/Packages/VecTiles.Mapsui.Package/VecTiles.Mapsui.Package.csproj"
 )
@@ -34,7 +35,7 @@ mkdir -p "$OUT_DIR"
 # Remove previously built packages (same version) and the cached versions from
 # the global NuGet package folder, so packing the same version repeatedly works.
 rm -f "$OUT_DIR"/VecTiles.*.nupkg $OUT_DIR/*.snupkg 2>/dev/null || true
-for pkg in vectiles.common vectiles.openmaptiles vectiles.skia vectiles.mapsui; do
+for pkg in vectiles.common vectiles.openmaptiles vectiles.mapsforge vectiles.skia vectiles.mapsui; do
     rm -rf "$HOME/.nuget/packages/$pkg"
 done
 

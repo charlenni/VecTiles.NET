@@ -50,5 +50,27 @@ corresponding license texts are included in [LICENSE.md](LICENSE.md):
   MBTiles support in `Source/DataSources/VecTiles.TileDataSources/MBTilesTileDataSource/`.
 
 VecTiles also implements the open [Mapbox style specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
-and reads tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec) and
-[OpenMapTiles](https://github.com/openmaptiles/openmaptiles) schemas.
+and reads tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec),
+[OpenMapTiles](https://github.com/openmaptiles/openmaptiles) and
+[Mapsforge binary map file](https://github.com/mapsforge/mapsforge/blob/master/docs/Specification-Binary-Map-File.md)
+schemas, and styles them with [Mapsforge render themes](https://github.com/mapsforge/mapsforge/blob/master/docs/Rendertheme-V5.md).
+
+## Sample content
+
+The sample application ships the Mapsforge render themes (`osmarender.xml`, `default.xml`,
+`biker.xml`, `motorider.xml`, `dark.xml`, `indigo.xml`, `hillshading.xml`) together with the
+symbols and patterns they reference in [`Files/Mapsforge/`](Files/Mapsforge); they are part of
+the [mapsforge](https://github.com/mapsforge/mapsforge) project and are licensed under
+[LGPL-3.0](https://www.gnu.org/licenses/lgpl-3.0.html) (see [LICENSE.md](LICENSE.md)).
+
+The sample styles and maps build on open data and open projects:
+
+- [OSM Liberty](https://github.com/maputnik/osm-liberty) — the sample style `osm-liberty.json`
+  and its Mapsforge variant `osm-liberty-for-mapsforge.json`; license see
+  [`Files/OpenMapTiles/LICENSE.md`](Files/OpenMapTiles/LICENSE.md).
+- The sample map files `zuerich.map` and `zurich.mbtiles` are derived from OpenStreetMap data
+  (© [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, ODbL); `zuerich.map`
+  was written with the mapsforge `map-writer`.
+- The shaded relief raster sample
+  [`natural_earth_2_shaded_relief.raster.mbtiles`](Files/OpenMapTiles) is based on
+  [Natural Earth](https://www.naturalearthdata.com/) (public domain).

@@ -3,10 +3,12 @@
 VecTiles.NET is a .NET library suite that makes vector map data (vector tiles) usable in C#
 applications. It covers the full pipeline:
 
-- loading tile bytes from different sources (HTTP(S) tile servers, MBTiles/SQLite files),
-- converting Mapbox/OpenMapTiles vector tiles (MVT, PBF optionally zipped) into feature objects,
-- styling them with map styles in the [Mapbox style format](https://docs.mapbox.com/mapbox-gl-js/style-spec/),
-  and
+- loading tile bytes from different sources (HTTP(S) tile servers, MBTiles/SQLite files, Mapsforge
+  map files),
+- converting Mapbox/OpenMapTiles vector tiles (MVT, PBF optionally zipped) and Mapsforge binary
+  map tiles into feature objects,
+- styling them with map styles in the [Mapbox style format](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
+  or with Mapsforge render themes, and
 - rendering the styled map — fills, lines and symbols (with placed and HarfBuzz shaped text) — to
   bitmaps using SkiaSharp.
 
@@ -19,12 +21,13 @@ where data ends.
 
 ## Installation
 
-VecTiles.NET targets `net10.0` and is available as four NuGet packages:
+VecTiles.NET targets `net10.0` and is available as five NuGet packages:
 
 | Package | Content |
 | --- | --- |
 | [VecTiles.Common](https://www.nuget.org/packages/VecTiles.Common) | Core types and interfaces, common renderer abstractions and tile data sources (HTTP(S), MBTiles) |
 | [VecTiles.OpenMapTiles](https://www.nuget.org/packages/VecTiles.OpenMapTiles) | Mapbox/OpenMapTiles (MVT) tile converter and Mapbox style support |
+| [VecTiles.Mapsforge](https://www.nuget.org/packages/VecTiles.Mapsforge) | Mapsforge map file tile converter and Mapsforge render theme support |
 | [VecTiles.Skia](https://www.nuget.org/packages/VecTiles.Skia) | SkiaSharp based renderer for styled vector tiles |
 | [VecTiles.Mapsui](https://www.nuget.org/packages/VecTiles.Mapsui) | Mapsui integration: the `RenderedTileLayer` for Mapsui map controls |
 
@@ -79,6 +82,33 @@ Optionally, a `RenderedTileLayer` accepts a `fontSourceResolver` that maps a fon
 style file to a font file source, which is loaded when the font is neither registered nor
 installed on the system.
 
+## Displaying a map from a Mapsforge map file
+
+`MFRenderedTileSource` loads a [Mapsforge](https://github.com/mapsforge/mapsforge) map file
+(`mapsforge://…map`) and styles its tiles with a
+[Mapsforge render theme](https://github.com/mapsforge/mapsforge/blob/master/docs/Rendertheme-V5.md):
+
+```csharp
+using VecTiles.Converters.Mapsforge;
+using VecTiles.Controls.Mapsui;
+
+// Loads the map file and the sprites and patterns referenced by the render theme
+var tileSource = new MFRenderedTileSource(
+    "file://Files/Mapsforge/zuerich.map",
+    new MapsforgeTagsConverter(),                       // maps raw Mapsforge tags to the OpenMapTiles
+    "file://Files/Mapsforge/mapsforge/osmarender.xml"); // schema; an IdentityTagsConverter keeps
+                                                        // the raw tags for render themes instead
+
+var tileLayer = new RenderedTileLayer(tileSource);
+MapControl.Map.Layers.Add(tileLayer);
+MapControl.Map.Navigator.OverrideZoomBounds = tileLayer.ZoomBounds;
+```
+
+The Mapsforge render theme format uses its own tag vocabulary, so a `MapsforgeTagsConverter` and a
+Mapbox style based on the OpenMapTiles schema (e.g. `osm-liberty-for-mapsforge.json`) work with
+Mapsforge map files as well. The rest of the setup (center, zoom, attribution) is identical to the
+style based example above.
+
 ## Loading styles and tile data
 
 VecTiles.NET addresses everything in URL notation. The `OMTStyleFileLoader` (used by
@@ -100,8 +130,11 @@ The tile sources referenced by the style file are created automatically:
 | `mbtiles://path/to/file.mbtiles` | MBTiles file (SQLite in Mapbox format) |
 | `mapsforge://path/to/file.map` | Mapsforge map file (binary MAP format) |
 
-Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the
-OpenMapTiles converter and applies the overzoom fallback described above.
+Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the matching
+tile converter and applies the overzoom fallback described above: tile server and MBTiles payloads
+with the OpenMapTiles converter, Mapsforge tiles with the Mapsforge converter, whose tag
+conversion by default maps the raw Mapsforge tags to the OpenMapTiles schema (so Mapbox style
+based styles work unchanged on Mapsforge maps).
 
 ## How it fits together
 

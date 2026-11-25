@@ -32,8 +32,12 @@ Hint: This project uses parts of the NetTopologySuite VectorTiles library.
 Please refer to the NetTopologySuite license for terms and conditions regarding 
 its use.
 
-Hint:  This project uses parts of the Mapsui library. Please refer to the 
+Hint:  This project uses parts of the Mapsui library. Please refer to the
 Mapsui license for terms and conditions regarding its use.
+
+Hint: The sample application contains Mapsforge render theme, symbol and
+pattern files. Please refer to the mapsforge license for terms and conditions
+regarding their use (see the LGPL section below).
 
 ---
 
@@ -308,3 +312,12 @@ https://github.com/NetTopologySuite/NetTopologySuite
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+## GNU Lesser General Public License 3.0 — mapsforge render themes, symbols and patterns
+
+The Mapsforge render theme XML files (e.g. `osmarender.xml` and `default.xml`) together with the
+SVG symbols and pattern images they reference, shipped in `Files/Mapsforge/`, are part of the
+[mapsforge](https://github.com/mapsforge/mapsforge) project and are licensed under the
+[GNU Lesser General Public License, version 3.0](https://www.gnu.org/licenses/lgpl-3.0.html)
+(LGPL-3.0). The full license text is available at
+https://www.gnu.org/licenses/lgpl-3.0.html.

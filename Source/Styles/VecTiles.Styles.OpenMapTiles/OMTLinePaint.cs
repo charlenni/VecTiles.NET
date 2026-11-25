@@ -124,11 +124,26 @@ public static class OMTLinePaint
         {
             if (!paint.LineDashArray.HasOnlyDefault)
             {
-                var width = paint.LineWidth.Evaluate(EvaluationContext.Empty);
-                brush.SetFixDashArray(paint.LineDashArray
-                    .Evaluate(EvaluationContext.Empty)
-                    .Select(v => v * width)
-                    .ToArray());
+                var values = paint.LineDashArray.Evaluate(EvaluationContext.Empty);
+                var lineWidth = paint.LineWidth;
+
+                // The line-width may interpolate with the zoom: pre-scaling
+                // the fixed dash values with one frozen width (e.g. the
+                // zoom 0 width) would scale the pattern with the wrong
+                // factor, so the freeze happens per context at the integer
+                // zoom. Like the stroke width (Paint.Update), the widths
+                // multiply with the context scale, so the dash pattern and
+                // the stroke always agree
+                brush.SetVariableDashArray((context) =>
+                {
+                    var width = lineWidth.IsConstant
+                        ? lineWidth.Evaluate(EvaluationContext.Empty)
+                        : lineWidth.Evaluate(new EvaluationContext((int)context.Zoom!));
+                    var scaled = new float[values.Length];
+                    for (var i = 0; i < values.Length; i++)
+                        scaled[i] = values[i] * width * context.Scale;
+                    return scaled;
+                });
             }
         }
         else
@@ -136,7 +151,8 @@ public static class OMTLinePaint
             brush.SetVariableDashArray((context) =>
             {
                 var values = paint.LineDashArray.Evaluate(context);
-                var width = paint.LineWidth.Evaluate(new EvaluationContext((int)context.Zoom));
+                var width = paint.LineWidth.Evaluate(
+                    new EvaluationContext((int)context.Zoom!)) * context.Scale;
                 var scaled = new float[values.Length];
                 for (var i = 0; i < values.Length; i++)
                     scaled[i] = values[i] * width;

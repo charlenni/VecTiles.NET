@@ -1,6 +1,7 @@
 using BruTile;
 using VecTiles.Converters.Mapsforge;
 using VecTiles.Controls.Mapsui;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
@@ -25,7 +26,7 @@ public class MFOnewayArrowTests
     [Fact]
     public async Task OnewayArrowsArePlacedWithTheirIconSizeTest()
     {
-        using var tileSource = new MFRenderedTileSource(MapFile, MapsforgeIdentityTagsConverter.Instance, MapsforgeTheme);
+        using var tileSource = new MFRenderedTileSource(MapFile, new IdentityTagsConverter("mapsforge"), MapsforgeTheme);
         var tile = await tileSource.GetTileAsync(new TileInfo
         {
             Index = new TileIndex(274577, 183589, 19),

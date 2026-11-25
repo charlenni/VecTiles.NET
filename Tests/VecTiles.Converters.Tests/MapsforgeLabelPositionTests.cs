@@ -1,6 +1,7 @@
 using System.Text;
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Converters.Mapsforge;
 using VecTiles.DataSources.Mapsforge;
@@ -46,7 +47,7 @@ public class MapsforgeLabelPositionTests
             [], ["highway=residential"],
             [(false, TileData([(0, 1)], 0, [], [.. wayData]))]);
 
-        var vectorTile = await new MapsforgeTileConverter(VecTiles.Converters.Mapsforge.MapsforgeIdentityTagsConverter.Instance).Convert(tile, tile, envelope);
+        var vectorTile = await new MapsforgeTileConverter(new IdentityTagsConverter("mapsforge")).Convert(tile, tile, envelope);
 
         var way = SingleWay(vectorTile!);
         Assert.Equal(
@@ -76,7 +77,7 @@ public class MapsforgeLabelPositionTests
             [], ["highway=residential"],
             [(false, TileData([(0, 1)], 0, [], [.. wayData]))]);
 
-        var vectorTile = await new MapsforgeTileConverter(VecTiles.Converters.Mapsforge.MapsforgeIdentityTagsConverter.Instance).Convert(tile, tile, envelope);
+        var vectorTile = await new MapsforgeTileConverter(new IdentityTagsConverter("mapsforge")).Convert(tile, tile, envelope);
 
         var way = SingleWay(vectorTile!);
         Assert.Equal(
@@ -105,7 +106,7 @@ public class MapsforgeLabelPositionTests
             [], ["highway=residential"],
             [(false, TileData([(0, 1)], 0, [], [.. wayData]))]);
 
-        var vectorTile = await new MapsforgeTileConverter(VecTiles.Converters.Mapsforge.MapsforgeIdentityTagsConverter.Instance).Convert(tile, tile, envelope);
+        var vectorTile = await new MapsforgeTileConverter(new IdentityTagsConverter("mapsforge")).Convert(tile, tile, envelope);
 
         var way = SingleWay(vectorTile!);
         Assert.False(way.Attributes!.Exists("mf:label-x"), "A way without a label position must not carry label tags");
@@ -189,7 +190,7 @@ public class MapsforgeLabelPositionTests
         var data = await dataSource.GetTileAsync(provided)
             ?? throw new InvalidOperationException("No tile data in the map file");
 
-        var vectorTile = await new MapsforgeTileConverter(VecTiles.Converters.Mapsforge.MapsforgeIdentityTagsConverter.Instance).Convert(tile, provided, data)
+        var vectorTile = await new MapsforgeTileConverter(new IdentityTagsConverter("mapsforge")).Convert(tile, provided, data)
             ?? throw new InvalidOperationException("The converter returned no vector tile");
 
         return vectorTile.Layers

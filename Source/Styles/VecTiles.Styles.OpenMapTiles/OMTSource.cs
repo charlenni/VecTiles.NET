@@ -290,10 +290,11 @@ public class OMTSource
         {
             // The tiles of a mapsforge file are raw mapsforge data, their source layers and
             // tags follow the OpenMapTiles schema only after the conversion of the mapsforge
-            // tile converter; OpenMapTiles data is converted by the OpenMapTiles converter
+            // tile converter; OpenMapTiles data is already organized in the source layers and
+            // tags of the style, so its converter gets the (strict) identity tags converter
             ITileConverter converter = dataSource is VecTiles.DataSources.Mapsforge.MapsforgeTileDataSource
                 ? new VecTiles.Converters.Mapsforge.MapsforgeTileConverter()
-                : new OMTTileConverter();
+                : new OMTTileConverter(IdentityTagsConverter.Instance);
             dataSource = new VectorTileDataSource(dataSource, converter);
         }
         

@@ -27,8 +27,9 @@ public static class Parser
     /// <param name="requestedTile">The tile being requested.</param>
     /// <param name="providedTile">The tile provided in the data stream.</param>
     /// <param name="tagsConverter">Optional converter for the tags and source layers of the
-    /// features to the conventions of the style rendering the converted tile. When null, the
-    /// tags and source layers of the data are kept unchanged (identity conversion).</param>
+    /// features to the conventions of the style rendering the converted tile. When null, or a
+    /// strict <see cref="IdentityTagsConverter"/>, the tags and source layers of the data are
+    /// kept unchanged (identity conversion).</param>
     /// <returns>A VectorTile containing layers and features parsed from the stream.</returns>
     public static VectorTile Parse(ReadOnlyMemory<byte> data, Tile requestedTile, Tile providedTile, ITagsConverter? tagsConverter = null)
     {
@@ -59,10 +60,12 @@ public static class Parser
             ? Overzoom.None
             : Overzoom.CreateFromTiles(requestedTile, providedTile);
 
-        // With a tags converter, the source layer of a feature follows from its tags and may
-        // differ from the layer of the data, so the features are collected in layers by the
-        // converted source layer name
-        var layersByName = tagsConverter == null ? null : new Dictionary<string, Layer>();
+        // A strict identity tags converter keeps the source layer of a feature as delivered by
+        // the data, like no converter at all, so the features can stay in the layers of the
+        // data. Any other tags converter derives the source layer of a feature from its tags,
+        // so the features are collected in layers by the converted source layer name
+        var isIdentity = tagsConverter == null || tagsConverter is IdentityTagsConverter { FallbackSourceLayer: null };
+        var layersByName = isIdentity ? null : new Dictionary<string, Layer>();
 
         // Iterate through each layer in the PbfTile
         for (int i = 0; i < pbfTile?.Layers?.Count; i++)
@@ -70,7 +73,7 @@ public static class Parser
             var pbfLayer = pbfTile.Layers[i];
 
             // Create a new Layer for the VectorTile
-            var vectorTileLayer = tagsConverter == null
+            var vectorTileLayer = isIdentity
                 ? new Layer(pbfLayer.Features.Count)
                 {
                     Name = pbfLayer.Name,

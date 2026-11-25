@@ -1,5 +1,6 @@
 using BruTile;
 using SkiaSharp;
+using VecTiles.Common.Interfaces;
 using VecTiles.Converters.Mapsforge;
 using VecTiles.Controls.Mapsui;
 using Viewport = Mapsui.Viewport;
@@ -30,7 +31,7 @@ public class MFRenderedTileSourceTests
     public async Task MapsforgeTheme_RendersTileWithLayers()
     {
         using var tileSource = new MFRenderedTileSource(
-            _mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+            _mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
 
         Assert.Equal("default", tileSource.Name);
         Assert.NotEmpty(tileSource.Styles);
@@ -82,7 +83,7 @@ public class MFRenderedTileSourceTests
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, size, size);
 
         using var tileSource = new MFRenderedTileSource(
-            _mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+            _mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
         var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 

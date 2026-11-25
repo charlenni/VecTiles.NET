@@ -1,6 +1,7 @@
 using BruTile;
 using SkiaSharp;
 using VecTiles.Converters.Mapsforge;
+using VecTiles.Common.Interfaces;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;
@@ -31,7 +32,7 @@ public class MFSymbolPlacementTests
 
     private static async Task<IRenderedTile> BakeQuaibrueckeTile()
     {
-        using var tileSource = new MFRenderedTileSource(_mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+        using var tileSource = new MFRenderedTileSource(_mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
 
         var tile = await tileSource.GetTileAsync(new TileInfo
         {
@@ -128,7 +129,7 @@ public class MFSymbolPlacementTests
         double centerYWorld = WebMercatorY(minY, zoom) - rows * tileSpan / 2.0;
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, columns * tileSize, rows * tileSize);
 
-        using var tileSource = new MFRenderedTileSource(_mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+        using var tileSource = new MFRenderedTileSource(_mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
         var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 
@@ -179,7 +180,7 @@ public class MFSymbolPlacementTests
         double centerYWorld = 20037508.343 - (TileY + 0.5) * tileSpan;
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, 3 * tileSize, 3 * tileSize);
 
-        using var tileSource = new MFRenderedTileSource(_mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+        using var tileSource = new MFRenderedTileSource(_mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
         var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 
@@ -226,7 +227,7 @@ public class MFSymbolPlacementTests
         double centerYWorld = 20037508.343 - (TileY + 0.5) * tileSpan;
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, 3 * tileSize, 3 * tileSize);
 
-        using var tileSource = new MFRenderedTileSource(_mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+        using var tileSource = new MFRenderedTileSource(_mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
         var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 

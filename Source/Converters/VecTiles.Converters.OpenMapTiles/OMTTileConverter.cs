@@ -22,8 +22,11 @@ public class OMTTileConverter : ITileConverter
     /// </summary>
     /// <param name="tagsConverter">Optional converter for the tags and source layers of the
     /// features to the conventions of the style rendering the converted tile (e.g. the
-    /// OpenMapTiles schema). OpenMapTiles data already follows those conventions, so the
-    /// default of null keeps the tags and source layers unchanged (identity conversion).</param>
+    /// OpenMapTiles schema). Either leave null or pass the strict
+    /// <see cref="IdentityTagsConverter.Instance"/> to keep the tags and source layers of the
+    /// OpenMapTiles data unchanged (identity conversion); pass
+    /// <c>new IdentityTagsConverter(...)</c> with a fallback source layer for render themes
+    /// that do not match the source layer and tag conventions of the data.</param>
     public OMTTileConverter(ITagsConverter? tagsConverter = null)
     {
         _tagsConverter = tagsConverter;

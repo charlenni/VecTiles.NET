@@ -1,5 +1,6 @@
 using BruTile;
 using SkiaSharp;
+using VecTiles.Common.Interfaces;
 using VecTiles.Converters.Mapsforge;
 using VecTiles.Controls.Mapsui;
 using Viewport = Mapsui.Viewport;
@@ -40,7 +41,7 @@ public class MFStrokeWidthAppPipelineTests
         double centerYWorld = 20037508.343 - (TileY + 0.5) * tileSpan;
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, 3 * tileSize, 3 * tileSize);
 
-        using var tileSource = new MFRenderedTileSource(_mapFile, MapsforgeIdentityTagsConverter.Instance, _mapsforgeTheme);
+        using var tileSource = new MFRenderedTileSource(_mapFile, new IdentityTagsConverter("mapsforge"), _mapsforgeTheme);
         var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 

@@ -14,6 +14,7 @@ using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Styles.OpenMapTiles;
 using SampleApp.Widgets;
 using VecTiles.Converters.Mapsforge;
+using VecTiles.Common.Interfaces;
 using VecTiles.Renderers.Common.Interfaces;
 
 namespace SampleApp.Views;
@@ -46,7 +47,7 @@ public partial class MainView : UserControl
 
         //_tileSource = new OMTRenderedTileSource(styleSource);
         _tileSource = new MFRenderedTileSource($"file://{_pathMF}/zuerich.map", 
-            new MapsforgeIdentityTagsConverter(), 
+            new IdentityTagsConverter("mapsforge"),
             $"file://{_pathMF}/mapsforge/default.xml");
         
         _tileLayer = new RenderedTileLayer(_tileSource);

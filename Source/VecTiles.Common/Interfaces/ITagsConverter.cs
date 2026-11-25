@@ -10,7 +10,8 @@ namespace VecTiles.Common.Interfaces;
 /// tagged 'building=yes' belongs to the source layer 'building'): the source layer of the raw
 /// tile data cannot be derived from the data itself, the consumer of the converted vector tile
 /// defines the mapping. Other style flavours render the features of the raw data directly and
-/// do not need this conversion, they use an identity conversion which returns its input.
+/// do not need this conversion, they use the identity conversion of
+/// <see cref="IdentityTagsConverter"/> which returns its input.
 /// </summary>
 public interface ITagsConverter
 {

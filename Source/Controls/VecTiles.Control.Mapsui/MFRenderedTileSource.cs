@@ -58,9 +58,11 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
     /// source is downloaded once to a temporary file and served from there (it is deleted when
     /// the tile source is disposed).</param>
     /// <param name="tagConverter">Converts the raw tags of the features to the tag and source
-    /// layer conventions of the style. Pass <see cref="MapsforgeIdentityTagsConverter.Instance"/>
-    /// for a Mapsforge render theme (data file and theme share the tag conventions); leave null
-    /// for an OpenMapTiles style, which applies the OpenMapTiles schema.</param>
+    /// layer conventions of the style. Pass <see cref="IdentityTagsConverter"/> with the source
+    /// layer fallback of the theme, i.e. <c>new IdentityTagsConverter("mapsforge")</c> (or
+    /// <see cref="IdentityTagsConverter.Instance"/> when the theme references empty source
+    /// layers), for a Mapsforge render theme (data file and theme share the tag conventions);
+    /// leave null for an OpenMapTiles style, which applies the OpenMapTiles schema.</param>
     /// <param name="styleSource">The style file: a Mapsforge render theme (.xml) or an
     /// OpenMapTiles style file (.json), as path or URL.</param>
     public MFRenderedTileSource(string mapSource, ITagsConverter? tagConverter, string styleSource)

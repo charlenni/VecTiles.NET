@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using NetTopologySuite.Features;
 using SkiaSharp;
 using VecTiles.Common.Interfaces;
@@ -21,7 +21,6 @@ public class RenderFactory : IRenderFactory
     static readonly SKRect _tileRect = new SKRect(0, 0, 512, 512);
 
     Dictionary<string, IPaint> _paints;
-    IPaintFactory _paintFactory;
     ISymbolFactory _symbolFactory;
     private ISymbolRenderer _pointSymbolRenderer = new PointSymbolRenderer();
     private ISymbolRenderer _iconPointSymbolRenderer = new IconPointSymbolRenderer();
@@ -35,7 +34,6 @@ public class RenderFactory : IRenderFactory
     public RenderFactory(IEnumerable<ILayerStyle> styles, IPaintFactory paintFactory, ISymbolFactory symbolFactory)
     {
         _symbolFactory = symbolFactory;
-        _paintFactory = paintFactory;
         _paints = new Dictionary<string, IPaint>(styles.Count());
 
         // Create for each style a IPaint, which then creates later a SKPaint for a given evaluation context
@@ -77,7 +75,7 @@ public class RenderFactory : IRenderFactory
         // A filled area consits of a polygon, that is filled and a outline around it
         // Both need different vertices. So we need two types of vertices.
 
-        if (!_paints.ContainsKey(style.Name))
+        if (!_paints.TryGetValue(style.Name, out var paint))
         {
             return null;
         }
@@ -85,33 +83,15 @@ public class RenderFactory : IRenderFactory
         features = SortBySortKey(style, context, features, s => s.Layout.FillSortKey);
 
         // Data-driven paint? Then every group of features with equal values
-        // gets its own paint and renderer.
-        if (style is OMTLayerStyle fillStyle &&
-            (fillStyle.Paint.FillColor.Expression != null ||
-             fillStyle.Paint.FillOpacity.Expression != null ||
-             fillStyle.Paint.FillOutlineColor.Expression != null))
+        // gets its own paint (the snapshot of the paint for the first feature
+        // of the group) and renderer.
+        if (paint.IsDataDriven)
         {
             var renderers = new List<ILayerRenderer>();
 
-            foreach (var group in GroupFeatures(features!, f =>
+            foreach (var (groupPaint, group) in GroupFeaturesByPaint(features!, f =>
+                         paint.SnapshotFor(context.WithFeature(f))))
             {
-                var fc = context.WithFeature(f);
-                var paint = fillStyle.Paint;
-                return $"{(paint.FillColor.Expression != null ? paint.FillColor.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.FillOpacity.Expression != null ? paint.FillOpacity.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.FillOutlineColor.Expression != null ? paint.FillOutlineColor.Evaluate(fc) : (object?)string.Empty)}";
-            }))
-            {
-                var groupPaint = CreateGroupPaint(fillStyle, context.WithFeature(group[0]), (brush, featureContext) =>
-                {
-                    if (fillStyle.Paint.FillColor.Expression != null)
-                        brush.SetFixColor(fillStyle.Paint.FillColor.Evaluate(featureContext));
-                    if (fillStyle.Paint.FillOpacity.Expression != null)
-                        brush.SetFixOpacity(fillStyle.Paint.FillOpacity.Evaluate(featureContext));
-                    if (fillStyle.Paint.FillOutlineColor.Expression != null)
-                        brush.SetFixOutlineColor(fillStyle.Paint.FillOutlineColor.Evaluate(featureContext));
-                });
-
                 var groupFillBuilder = new VertexBuilder();
                 foreach (var feature in group)
                 {
@@ -139,7 +119,6 @@ public class RenderFactory : IRenderFactory
 
         var fillBuilder = new VertexBuilder();
         var outlineBuilder = new VertexBuilder();
-        var paint = _paints[style.Name];
 
         // Create vertices for features that belong to a fill style (only fill area)
         foreach (var feature in features!)
@@ -156,18 +135,18 @@ public class RenderFactory : IRenderFactory
                     paint.StrokeJoin);
             }
 
-            return new FillLayerRenderer(fillBuilder.Build(), outlineBuilder.Build(), true, _paints[style.Name]);
+            return new FillLayerRenderer(fillBuilder.Build(), outlineBuilder.Build(), true, paint);
         }
 
-        return new FillLayerRenderer(fillBuilder.Build(), true, _paints[style.Name]);
+        return new FillLayerRenderer(fillBuilder.Build(), true, paint);
     }
 
     /// <inheritdoc />
-    public ILayerRenderer CreateVectorLineLayer(ILayerStyle style, 
-        EvaluationContext context, 
+    public ILayerRenderer CreateVectorLineLayer(ILayerStyle style,
+        EvaluationContext context,
         IEnumerable<IFeature> features)
     {
-        if (!_paints.ContainsKey(style.Name))
+        if (!_paints.TryGetValue(style.Name, out var paint))
         {
             return null;
         }
@@ -175,33 +154,15 @@ public class RenderFactory : IRenderFactory
         features = SortBySortKey(style, context, features, s => s.Layout.LineSortKey);
 
         // Data-driven paint? Then every group of features with equal values
-        // gets its own paint and renderer.
-        if (style is OMTLayerStyle lineStyle &&
-            (lineStyle.Paint.LineColor.Expression != null ||
-             lineStyle.Paint.LineOpacity.Expression != null ||
-             lineStyle.Paint.LineWidth.Expression != null))
+        // gets its own paint (the snapshot of the paint for the first feature
+        // of the group) and renderer.
+        if (paint.IsDataDriven)
         {
             var renderers = new List<ILayerRenderer>();
 
-            foreach (var group in GroupFeatures(features!, f =>
+            foreach (var (groupPaint, group) in GroupFeaturesByPaint(features!, f =>
+                         paint.SnapshotFor(context.WithFeature(f))))
             {
-                var fc = context.WithFeature(f);
-                var paint = lineStyle.Paint;
-                return $"{(paint.LineColor.Expression != null ? paint.LineColor.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.LineOpacity.Expression != null ? paint.LineOpacity.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.LineWidth.Expression != null ? paint.LineWidth.Evaluate(fc) : (object?)string.Empty)}";
-            }))
-            {
-                var groupPaint = CreateGroupPaint(lineStyle, context.WithFeature(group[0]), (brush, featureContext) =>
-                {
-                    if (lineStyle.Paint.LineColor.Expression != null)
-                        brush.SetFixColor(lineStyle.Paint.LineColor.Evaluate(featureContext));
-                    if (lineStyle.Paint.LineOpacity.Expression != null)
-                        brush.SetFixOpacity(lineStyle.Paint.LineOpacity.Evaluate(featureContext));
-                    if (lineStyle.Paint.LineWidth.Expression != null)
-                        brush.SetFixStrokeWidth(lineStyle.Paint.LineWidth.Evaluate(featureContext));
-                });
-
                 // Calc number of possible vertices
                 var groupNumOfPoints = 0;
 
@@ -236,7 +197,6 @@ public class RenderFactory : IRenderFactory
         }
 
         var builder = new VertexBuilder(numOfPoints * 3);
-        var paint = _paints[style.Name];
         var maxStrokeWidth = paint.GetMaxStrokeWidth(context) + 2;  // Small adjustments for AA
 
         // Create vertices for features that belong to a line style (only the line, no border)
@@ -244,11 +204,11 @@ public class RenderFactory : IRenderFactory
         {
             feature.ToVertices(builder, maxStrokeWidth ,
                 paint.StrokeCap,
-                paint.StrokeCap, 
+                paint.StrokeCap,
                 paint.StrokeJoin);
         }
 
-        return new LineLayerRenderer(builder.Build(), false, _paints[style.Name], maxStrokeWidth);
+        return new LineLayerRenderer(builder.Build(), false, paint, maxStrokeWidth);
     }
 
     /// <inheritdoc />
@@ -256,7 +216,7 @@ public class RenderFactory : IRenderFactory
         EvaluationContext context,
         IEnumerable<IFeature> features)
     {
-        if (!_paints.ContainsKey(style.Name))
+        if (!_paints.TryGetValue(style.Name, out var paint))
         {
             return null;
         }
@@ -264,50 +224,15 @@ public class RenderFactory : IRenderFactory
         var sortedFeatures = SortBySortKey(style, context, features, s => s.Layout.CircleSortKey);
 
         // Data-driven paint? Then every group of features with equal values
-        // gets its own paint and renderer.
-        if (style is OMTLayerStyle circleStyle &&
-            (circleStyle.Paint.CircleColor.Expression != null ||
-             circleStyle.Paint.CircleOpacity.Expression != null ||
-             circleStyle.Paint.CircleRadius.Expression != null ||
-             circleStyle.Paint.CircleBlur.Expression != null ||
-             circleStyle.Paint.CircleStrokeColor.Expression != null ||
-             circleStyle.Paint.CircleStrokeOpacity.Expression != null ||
-             circleStyle.Paint.CircleStrokeWidth.Expression != null))
+        // gets its own paint (the snapshot of the paint for the first feature
+        // of the group) and renderer.
+        if (paint.IsDataDriven)
         {
             var renderers = new List<ILayerRenderer>();
 
-            foreach (var group in GroupFeatures(sortedFeatures, f =>
+            foreach (var (groupPaint, group) in GroupFeaturesByPaint(sortedFeatures, f =>
+                         paint.SnapshotFor(context.WithFeature(f))))
             {
-                var fc = context.WithFeature(f);
-                var paint = circleStyle.Paint;
-                return $"{(paint.CircleColor.Expression != null ? paint.CircleColor.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.CircleOpacity.Expression != null ? paint.CircleOpacity.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.CircleRadius.Expression != null ? paint.CircleRadius.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.CircleBlur.Expression != null ? paint.CircleBlur.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.CircleStrokeColor.Expression != null ? paint.CircleStrokeColor.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.CircleStrokeOpacity.Expression != null ? paint.CircleStrokeOpacity.Evaluate(fc) : (object?)string.Empty)};" +
-                       $"{(paint.CircleStrokeWidth.Expression != null ? paint.CircleStrokeWidth.Evaluate(fc) : (object?)string.Empty)}";
-            }))
-            {
-                var groupPaint = CreateGroupPaint(circleStyle, context.WithFeature(group[0]), (brush, featureContext) =>
-                {
-                    var p = circleStyle.Paint;
-                    if (p.CircleColor.Expression != null)
-                        brush.SetFixColor(p.CircleColor.Evaluate(featureContext));
-                    if (p.CircleOpacity.Expression != null)
-                        brush.SetFixOpacity(p.CircleOpacity.Evaluate(featureContext));
-                    if (p.CircleRadius.Expression != null)
-                        brush.SetFixRadius(p.CircleRadius.Evaluate(featureContext));
-                    if (p.CircleBlur.Expression != null)
-                        brush.SetFixBlur(p.CircleBlur.Evaluate(featureContext));
-                    if (p.CircleStrokeColor.Expression != null)
-                        brush.SetFixOutlineColor(p.CircleStrokeColor.Evaluate(featureContext));
-                    if (p.CircleStrokeOpacity.Expression != null)
-                        brush.SetFixOutlineOpacity(p.CircleStrokeOpacity.Evaluate(featureContext));
-                    if (p.CircleStrokeWidth.Expression != null)
-                        brush.SetFixStrokeWidth(p.CircleStrokeWidth.Evaluate(featureContext));
-                });
-
                 // Per Mapbox spec a circle is drawn at every vertex of the geometry
                 var groupPoints = new List<SKPoint>();
 
@@ -336,7 +261,7 @@ public class RenderFactory : IRenderFactory
             }
         }
 
-        return new CircleLayerRenderer([.. points], _paints[style.Name]);
+        return new CircleLayerRenderer([.. points], paint);
     }
 
     /// <summary>
@@ -362,54 +287,52 @@ public class RenderFactory : IRenderFactory
     }
 
     /// <summary>
-    /// Groups features by a per-feature signature. Features with an equal
-    /// signature belong to the same group, groups keep the (sorted) order of
-    /// their first feature. Used for data-driven paint properties, so every
-    /// group can be drawn with its own paint.
+    /// Groups features by their data-driven paint snapshot: features whose
+    /// paint properties evaluate equally belong to the same group, groups
+    /// keep the (sorted) order of their first feature, and each group carries
+    /// the snapshot paint of its first feature.
     /// </summary>
-    private static List<List<IFeature>> GroupFeatures(IEnumerable<IFeature> features,
-        Func<IFeature, string> signature)
+    private static List<(IPaint Paint, List<IFeature> Features)> GroupFeaturesByPaint(
+        IEnumerable<IFeature> features, Func<IFeature, IPaint> snapshotFor)
     {
-        var groups = new Dictionary<string, List<IFeature>>();
-        var result = new List<List<IFeature>>();
+        var groups = new Dictionary<string, (IPaint Paint, List<IFeature> Features)>();
+        var result = new List<(IPaint, List<IFeature>)>();
 
         foreach (var feature in features)
         {
-            var key = signature(feature);
+            var paint = snapshotFor(feature);
+            var key = PaintSignature(paint);
 
             if (!groups.TryGetValue(key, out var group))
             {
-                group = new List<IFeature>();
-                groups[key] = group;
+                group = (paint, new List<IFeature>());
+                groups.Add(key, group);
                 result.Add(group);
             }
 
-            group.Add(feature);
+            group.Features.Add(feature);
         }
 
         return result;
     }
 
     /// <summary>
-    /// Creates a paint for a group of features with equal data-driven paint
-    /// values. The paint is created from the style, afterwards the evaluated
-    /// data-driven values are applied as fix values.
+    /// Signature of the evaluated paint values: features whose snapshot
+    /// paints have equal signatures draw identically. Constant properties
+    /// evaluate equally for every feature, so including them in the
+    /// signature does not create additional groups.
     /// </summary>
-    private IPaint CreateGroupPaint(OMTLayerStyle style, EvaluationContext featureContext,
-        Action<Paint, EvaluationContext> apply)
+    private static string PaintSignature(IPaint paint)
     {
-        var paint = _paintFactory.CreatePaint(style) as Paint
-            ?? throw new InvalidOperationException($"Couldn't create a group paint for layer '{style.Name}'");
-
-        apply(paint, featureContext);
-
-        return paint;
+        return $"{paint.Style};{paint.Color};{paint.Opacity};{paint.OutlineColor};{paint.IsAntialias};" +
+               $"{paint.StrokeWidth};{paint.StrokeCap};{paint.StrokeJoin};{paint.StrokeMiter};" +
+               $"{paint.Pattern?.GetHashCode()};{paint.DashArray};{paint.Radius};{paint.Blur}";
     }
 
     /// <inheritdoc />
     public ISymbol? CreateSymbol(Tile tile,
-        ILayerStyle style, 
-        EvaluationContext context, 
+        ILayerStyle style,
+        EvaluationContext context,
         IFeature feature)
     {
         return _symbolFactory.CreateSymbol(tile, style, context, feature);

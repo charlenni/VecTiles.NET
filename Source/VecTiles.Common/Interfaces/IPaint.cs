@@ -76,10 +76,28 @@ public interface IPaint
     float Blur { get; }
 
     /// <summary>
+    /// Gets a value indicating whether any paint property is data-driven, i.e.
+    /// is evaluated from a variable function instead of a fixed value.
+    /// </summary>
+    bool IsDataDriven { get; }
+
+    /// <summary>
     /// Updates all properties of the paint using the given evaluation context.
     /// </summary>
     /// <param name="context">The evaluation context with zoom information and feature attributes.</param>
     void Update(EvaluationContext context);
+
+    /// <summary>
+    /// Gets a paint whose variable properties are evaluated for the given
+    /// feature context and then fixed to these values (the paint of a group
+    /// of features whose data-driven properties evaluate equally). The
+    /// snapshot paint keeps these evaluated values regardless of the context
+    /// of later <see cref="Update"/> calls at draw time, so the geometry is
+    /// drawn with exactly the values the features were grouped by.
+    /// </summary>
+    /// <param name="featureContext">The evaluation context with the feature and the tile information (zoom, scale).</param>
+    /// <returns>The paint evaluated and fixed to the values of the given context.</returns>
+    IPaint SnapshotFor(EvaluationContext featureContext);
 
     /// <summary>
     /// Gets the maximum stroke width of the paint, i.e. the (largest) stroke width evaluated at the current zoom.

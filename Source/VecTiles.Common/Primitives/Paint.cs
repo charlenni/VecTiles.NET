@@ -13,6 +13,12 @@ public class Paint : IPaint
     EvaluationContext? _lastContext;
     float _strokeWidth;
 
+    /// <summary>
+    /// Maximum stroke width frozen by <see cref="SnapshotFor"/> for baking
+    /// (see <see cref="GetMaxStrokeWidth"/>), 0 for paints without one.
+    /// </summary>
+    float _maxStrokeWidth;
+
     float _radius;
 
     float _blur;
@@ -196,13 +202,127 @@ public class Paint : IPaint
     public float GetMaxStrokeWidth(EvaluationContext context)
     {
         if (!variableStrokeWidth)
-            return _strokeWidth;
+        {
+            // Snapshots (see SnapshotFor) freeze a variable stroke width and
+            // keep the maximum stroke width the paint evaluated for baking,
+            // the draw-time width stays the frozen value
+            return _maxStrokeWidth > 0 ? _maxStrokeWidth : _strokeWidth;
+        }
         
         // Calc MaxStrokeWidth for variable stroke width
         return Math.Max(Math.Max(
-            funcStrokeWidth!(context), 
+            funcStrokeWidth!(context),
             funcStrokeWidth!(new EvaluationContext(context.Zoom + 1))),
             0.1f);
+    }
+
+    /// <inheritdoc/>
+    public bool IsDataDriven =>
+        (variableColor && funcColor != null) ||
+        (variableOpacity && funcOpacity != null) ||
+        (variableOutlineColor && funcOutlineColor != null) ||
+        (variableOutlineOpacity && funcOutlineOpacity != null) ||
+        (variableStyle && funcStyle != null) ||
+        (variableAntialias && funcAntialias != null) ||
+        (variableStrokeWidth && funcStrokeWidth != null) ||
+        (variableStrokeCap && funcStrokeCap != null) ||
+        (variableStrokeJoin && funcStrokeJoin != null) ||
+        (variableStrokeMiter && funcStrokeMiter != null) ||
+        (variablePattern && (funcPattern != null || funcISpritePattern != null)) ||
+        (variableDashArray && funcDashArray != null) ||
+        (variableRadius && funcRadius != null) ||
+        (variableBlur && funcBlur != null);
+
+    /// <inheritdoc/>
+    public IPaint SnapshotFor(EvaluationContext featureContext)
+    {
+        // Fresh paint with the raw fixed values of this paint; the variable
+        // functions of this paint are not taken over, instead every variable
+        // property is evaluated for the given feature context and frozen as
+        // a fixed value below.
+        var snapshot = new Paint(Id)
+        {
+            color = color,
+            opacity = opacity,
+            outlineColor = outlineColor,
+            _outlineOpacity = _outlineOpacity,
+            _strokeWidth = _strokeWidth,
+            _maxStrokeWidth = _maxStrokeWidth,
+            _radius = _radius,
+            _blur = _blur,
+            Color = Color,
+            OutlineColor = OutlineColor,
+            DashArray = DashArray,
+            Style = Style,
+            IsAntialias = IsAntialias,
+            StrokeCap = StrokeCap,
+            StrokeJoin = StrokeJoin,
+            StrokeMiter = StrokeMiter,
+            Pattern = Pattern,
+        };
+
+        if (fixDashArray.Length > 0)
+        {
+            var dashArray = new float[fixDashArray.Length];
+            for (var i = 0; i < fixDashArray.Length; i++)
+                dashArray[i] = fixDashArray[i];
+            snapshot.SetFixDashArray(dashArray);
+        }
+
+        // Freeze every variable property to its evaluated value in the order
+        // of the evaluation of Update: opacity before the colors, because the
+        // fix setters compose the alpha of the colors with the current opacity.
+        if (variableOpacity && funcOpacity != null)
+            snapshot.SetFixOpacity(funcOpacity(featureContext));
+        if (variableOutlineOpacity && funcOutlineOpacity != null)
+            snapshot.SetFixOutlineOpacity(funcOutlineOpacity(featureContext));
+        if (variableColor && funcColor != null)
+            snapshot.SetFixColor(funcColor(featureContext));
+        if (variableOutlineColor && funcOutlineColor != null)
+            snapshot.SetFixOutlineColor(funcOutlineColor(featureContext));
+        if (variableStyle && funcStyle != null)
+            snapshot.SetFixStyle(funcStyle(featureContext));
+        if (variableAntialias && funcAntialias != null)
+            snapshot.SetFixAntialias(funcAntialias(featureContext));
+        if (variableStrokeWidth && funcStrokeWidth != null)
+        {
+            // Bake width: the maximum of the variable stroke width (see
+            // GetMaxStrokeWidth); the draw-time stroke width stays the raw
+            // evaluated value
+            snapshot._maxStrokeWidth = Math.Max(Math.Max(
+                funcStrokeWidth(featureContext),
+                funcStrokeWidth(new EvaluationContext(featureContext.Zoom + 1))),
+                0.1f);
+
+            snapshot.SetFixStrokeWidth(funcStrokeWidth(featureContext));
+        }
+        if (variableStrokeCap && funcStrokeCap != null)
+            snapshot.SetFixStrokeCap(funcStrokeCap(featureContext));
+        if (variableStrokeJoin && funcStrokeJoin != null)
+            snapshot.SetFixStrokeJoin(funcStrokeJoin(featureContext));
+        if (variableStrokeMiter && funcStrokeMiter != null)
+            snapshot.SetFixStrokeMiter(funcStrokeMiter(featureContext));
+        if (variablePattern)
+        {
+            if (funcISpritePattern != null)
+                snapshot.SetFixPattern(funcISpritePattern(featureContext));
+            else if (funcPattern != null)
+                snapshot.SetFixPattern(funcPattern(featureContext));
+        }
+        if (variableDashArray && funcDashArray != null)
+            snapshot.SetFixDashArray(funcDashArray(featureContext));
+        if (variableRadius && funcRadius != null)
+            snapshot.SetFixRadius(funcRadius(featureContext));
+        if (variableBlur && funcBlur != null)
+            snapshot.SetFixBlur(funcBlur(featureContext));
+
+        // Compose the derived properties (e.g. the alpha composition of the
+        // colors and the dash array of its fix value) for the frozen values,
+        // same as the draw time update would; all variables are frozen, so
+        // this run cannot change the frozen values.
+        snapshot.Update(featureContext);
+
+        return snapshot;
     }
 
     #region Color

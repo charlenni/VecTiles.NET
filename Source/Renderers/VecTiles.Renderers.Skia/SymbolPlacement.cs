@@ -483,21 +483,49 @@ public static class SymbolPlacementEngine
         // In the default mode the merged lists are in the top-first layer
         // order (the dictionary keeps the insertion order), so the symbols
         // are placed layer by layer like before; the mapsforge mode sorts the
-        // candidates of all layers into a single placement order
-        var orderedCandidates = mergedByLayer
-            .SelectMany(pair => pair.Value.Select(s => (Symbol: s, Layer: pair.Key)));
+        // candidates of all layers into a single placement order in three
+        // groups, like the label placement of the mapsforge reference: first
+        // the way labels (pathText — applied with the ways), then the point
+        // labels (the nodes), finally the icon-only line symbols (e.g. the
+        // oneway arrows), which are drawn with the ways and claim no label
+        // space at all (they neither ask for space nor reserve it, they only
+        // avoid their own kind over a separate tree). Within each group:
+        // priority ascending (the SortOrder), then the display class
+        // ("always" before "order" before "ifspace"), then position
+        // (x descending, y ascending, matching the arithmetic of the
+        // reference labeller), then the later theme rule wins (higher style
+        // index) as the last tie breaker.
+        var candidateList = mergedByLayer
+            .SelectMany(pair => pair.Value.Select(s => (Symbol: s, Layer: pair.Key)))
+            .ToList();
 
         if (orderByPriority)
         {
-            orderedCandidates = orderedCandidates
-                .OrderBy(c => c.Symbol.SortOrder)
+            static bool IsWayTextLine(ISymbol s) => s is LineSymbol { TextSymbol: not null };
+
+            static bool IsIconOnlyLine(ISymbol s) =>
+                s is LineSymbol { IconSymbol: not null } line && !line.HasText;
+
+            static int GroupOf(ISymbol s) => IsWayTextLine(s) ? 0 : (IsIconOnlyLine(s) ? 2 : 1);
+
+            var candidates = candidateList;
+            candidateList = candidates
+                .OrderBy(c => GroupOf(c.Symbol))
+                .ThenBy(c => c.Symbol.SortOrder)
                 .ThenByDescending(c => GetMapsforgeDisplayClass(c.Symbol))
                 .ThenByDescending(c => SymbolPoint(c.Symbol).X)
                 .ThenBy(c => SymbolPoint(c.Symbol).Y)
-                .ThenByDescending(c => layerOrder[c.Layer]);
+                .ThenByDescending(c => layerOrder[c.Layer])
+                .ToList();
         }
 
-        foreach (var (symbol, layer) in orderedCandidates)
+        // The icon-only line symbols (oneway arrows in the mapsforge mode)
+        // check their space only against each other over this separate tree:
+        // in the mapsforge semantics they are drawn with the ways, below the
+        // labels of every style layer, and block nothing
+        Quadtree<ISymbol>? lineIconTree = orderByPriority ? new Quadtree<ISymbol>() : null;
+
+        foreach (var (symbol, layer) in candidateList)
         {
             token.ThrowIfCancellationRequested();
 
@@ -538,8 +566,14 @@ public static class SymbolPlacementEngine
                 }
                 else if (symbol is LineSymbol pinnedLine)
                 {
-                    LineSymbolRenderer.Place(canvas, context, pinnedLine, tree, worldToScreen,
-                        showUnvalidBorders: false);
+                    // The icon-only line symbols claim no space (see below);
+                    // the pinned decision is re-affirmed without touching the
+                    // collision tree
+                    if (pinnedLine.IconSymbol is null || pinnedLine.HasText)
+                    {
+                        LineSymbolRenderer.Place(canvas, context, pinnedLine, tree, worldToScreen,
+                            showUnvalidBorders: false);
+                    }
                 }
 
                 placements.Add(decided);
@@ -564,18 +598,38 @@ public static class SymbolPlacementEngine
             }
             else if (symbol is LineSymbol lineSymbol)
             {
-                var run = LineSymbolRenderer.Place(canvas, context, lineSymbol, tree, worldToScreen,
-                    showUnvalidBorders: false);
-
-                if (run.HasPlacements)
+                if (lineIconTree is { } icons && lineSymbol.IconSymbol is not null && !lineSymbol.HasText)
                 {
-                    placedByLayerAdd(symbol, run, placements);
+                    // The oneway arrows (icon-only line symbols) run against
+                    // their own kind only; the label collision tree is not
+                    // touched
+                    var run = LineSymbolRenderer.Place(canvas, context, lineSymbol, icons, worldToScreen,
+                        showUnvalidBorders: false);
+
+                    if (run.HasPlacements)
+                    {
+                        placedByLayerAdd(symbol, run, placements);
+                    }
+                    else
+                    {
+                        rejected.Add(symbol);
+                    }
                 }
                 else
                 {
-                    // No persistent record: the symbol's merged run is
-                    // re-examined in the next pass (see Decide)
-                    rejected.Add(symbol);
+                    var run = LineSymbolRenderer.Place(canvas, context, lineSymbol, tree, worldToScreen,
+                        showUnvalidBorders: false);
+
+                    if (run.HasPlacements)
+                    {
+                        placedByLayerAdd(symbol, run, placements);
+                    }
+                    else
+                    {
+                        // No persistent record: the symbol's merged run is
+                        // re-examined in the next pass (see Decide)
+                        rejected.Add(symbol);
+                    }
                 }
             }
         }

@@ -1,13 +1,12 @@
 using System.Diagnostics;
 using NetTopologySuite.Features;
 using SkiaSharp;
+using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia.Extensions;
 using VecTiles.Renderers.Skia.Primitives.Vertices;
-using VecTiles.Styles.OpenMapTiles;
-using VecTiles.Styles.OpenMapTiles.Expressions;
 
 namespace VecTiles.Renderers.Skia;
 
@@ -80,7 +79,7 @@ public class RenderFactory : IRenderFactory
             return null;
         }
 
-        features = SortBySortKey(style, context, features, s => s.Layout.FillSortKey);
+        features = SortBySortKey(style, context, features, FeatureSortKey.Fill);
 
         // Data-driven paint? Then every group of features with equal values
         // gets its own paint (the snapshot of the paint for the first feature
@@ -151,7 +150,7 @@ public class RenderFactory : IRenderFactory
             return null;
         }
 
-        features = SortBySortKey(style, context, features, s => s.Layout.LineSortKey);
+        features = SortBySortKey(style, context, features, FeatureSortKey.Line);
 
         // Data-driven paint? Then every group of features with equal values
         // gets its own paint (the snapshot of the paint for the first feature
@@ -221,7 +220,7 @@ public class RenderFactory : IRenderFactory
             return null;
         }
 
-        var sortedFeatures = SortBySortKey(style, context, features, s => s.Layout.CircleSortKey);
+        var sortedFeatures = SortBySortKey(style, context, features, FeatureSortKey.Circle);
 
         // Data-driven paint? Then every group of features with equal values
         // gets its own paint (the snapshot of the paint for the first feature
@@ -266,25 +265,15 @@ public class RenderFactory : IRenderFactory
 
     /// <summary>
     /// Sorts features in ascending order by the evaluated sort-key layout
-    /// property. Features with a higher key are drawn later and appear on top
-    /// (Mapbox spec). Equal keys keep their source order (stable sort). Only a
-    /// data-driven key (an expression) can differ per feature, so sorting is
-    /// done only in that case; constant keys (no stops / no expression) give
-    /// every feature the same key and keep the source order.
+    /// property of the style (see <see cref="IFeatureSorting"/>); features
+    /// with a higher key are drawn later and appear on top. Styles without
+    /// sort keys keep the source order.
     /// </summary>
-    private static List<IFeature> SortBySortKey(ILayerStyle style, EvaluationContext context,
-        IEnumerable<IFeature> features, Func<OMTLayerStyle, StoppedFloat> sortKey)
-    {
-        if (style is not OMTLayerStyle omtStyle || sortKey(omtStyle).Expression == null)
-        {
-            return [.. features];
-        }
-
-        return [.. features
-            .Select(f => (Feature: f, Key: sortKey(omtStyle).Evaluate(context.WithFeature(f))))
-            .OrderBy(t => t.Key)
-            .Select(t => t.Feature)];
-    }
+    private static IEnumerable<IFeature> SortBySortKey(ILayerStyle style, EvaluationContext context,
+        IEnumerable<IFeature> features, FeatureSortKey sortKey) =>
+        style is IFeatureSorting sortable
+            ? sortable.SortFeatures(context, features, sortKey)
+            : [.. features];
 
     /// <summary>
     /// Groups features by their data-driven paint snapshot: features whose

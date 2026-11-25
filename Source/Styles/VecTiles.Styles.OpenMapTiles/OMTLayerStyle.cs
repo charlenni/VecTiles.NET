@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using NetTopologySuite.Features;
+using System.Text.Json.Serialization;
 using System.Text.Json.Nodes;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
@@ -12,7 +13,7 @@ namespace VecTiles.Styles.OpenMapTiles;
 /// A single layer of an OpenMapTiles (Mapbox-style) JSON style, containing the
 /// filter, layout, and paint properties of the layer.
 /// </summary>
-public class OMTLayerStyle : ILayerStyle
+public class OMTLayerStyle : ILayerStyle, IFeatureSorting
 {
     /// <inheritdoc />
     [JsonPropertyName("id")]
@@ -76,6 +77,28 @@ public class OMTLayerStyle : ILayerStyle
 
     /// <inheritdoc />
     public bool Visible => Layout?.Visibility == "visible";
+
+    /// <inheritdoc />
+    public IEnumerable<IFeature> SortFeatures(EvaluationContext context, IEnumerable<IFeature> features,
+        FeatureSortKey sortKey)
+    {
+        var key = sortKey switch
+        {
+            FeatureSortKey.Fill => Layout.FillSortKey,
+            FeatureSortKey.Line => Layout.LineSortKey,
+            _ => Layout.CircleSortKey,
+        };
+
+        if (key.Expression == null)
+        {
+            return [.. features];
+        }
+
+        return [.. features
+            .Select(f => (Feature: f, Key: key.Evaluate(context.WithFeature(f))))
+            .OrderBy(t => t.Key)
+            .Select(t => t.Feature)];
+    }
 
     /// <summary>
     /// Returns the layer name and type.

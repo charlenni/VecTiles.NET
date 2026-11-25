@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\DataSources\VecTiles.ByteDataSources\VecTiles.ByteDataSources.csproj" />
     <ProjectReference Include="..\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
   </ItemGroup>
 

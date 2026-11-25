@@ -5,7 +5,7 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Renderers.Skia.Extensions;
-using VecTiles.Styles.OpenMapTiles.Extensions;
+using VecTiles.Common.Extensions;
 
 namespace VecTiles.Renderers.Skia;
 

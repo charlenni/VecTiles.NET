@@ -1,6 +1,6 @@
 ﻿using NetTopologySuite.Geometries;
 
-namespace VecTiles.Styles.OpenMapTiles.Extensions;
+namespace VecTiles.Common.Extensions;
 
 /// <summary>
 /// Extension methods for rotating a <see cref="Envelope"/> around its center,

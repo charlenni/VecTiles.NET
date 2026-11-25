@@ -1,6 +1,8 @@
 using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
+using VecTiles.Converters.OpenMapTiles;
 using VecTiles.Styles.OpenMapTiles;
 using Xunit.Abstractions;
 
@@ -27,7 +29,7 @@ public class RoadShieldPlacementTests
     private static (OMTSymbolFactory Factory, OMTLayerStyle Layer) CreateRoadShield()
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
+        var styleFile = OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance)).Result;
         var layer = styleFile.Layers.First(l => l.Name == "road_shield");
 
         return (new OMTSymbolFactory(styleFile.Sprites!), layer);
@@ -82,7 +84,7 @@ public class RoadShieldPlacementTests
     public void RoadLabelsStayLineSymbols()
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
+        var styleFile = OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance)).Result;
         var layer = styleFile.Layers.First(l => l.Name == "road_label");
         var factory = new OMTSymbolFactory(styleFile.Sprites!);
 

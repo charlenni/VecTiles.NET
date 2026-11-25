@@ -12,8 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Converters\VecTiles.Converters.Mapsforge\VecTiles.Converters.Mapsforge.csproj" />
-    <ProjectReference Include="..\..\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" />
     <ProjectReference Include="..\..\DataSources\VecTiles.ByteDataSources\VecTiles.ByteDataSources.csproj" />
     <ProjectReference Include="..\..\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
     <ProjectReference Include="..\..\VecTiles.Common\VecTiles.Common.csproj" />

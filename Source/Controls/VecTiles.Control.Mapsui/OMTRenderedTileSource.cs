@@ -26,7 +26,7 @@ public class OMTRenderedTileSource : IRenderedTileSource
     /// <param name="source">Source in URL notation pointing to the OpenMapTiles style file, including to the data sources and sprites it references.</param>
     public OMTRenderedTileSource(string source)
     {
-        _styleFile = OMTStyleFileLoader.Load(source).Result;
+        _styleFile = OMTStyleFileLoader.Load(source, vectorTileConnectionFactory: DefaultVectorTileConverterFactory.Factory).Result;
 
         var omtStyleFile = _styleFile;
         var minZoom = 0;

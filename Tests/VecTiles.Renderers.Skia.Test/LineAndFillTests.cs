@@ -30,7 +30,7 @@ public class LineAndFillTests
         var vectorDataSource = new VectorTileDataSource(dataSource, converter);
 
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var styleFile = OMTStyleFileLoader.Load(styleSource).Result;
+        var styleFile = OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance)).Result;
 
         var spriteDictionary = styleFile.Sprites;
         var paintFactory = new OMTPaintFactory(spriteDictionary);

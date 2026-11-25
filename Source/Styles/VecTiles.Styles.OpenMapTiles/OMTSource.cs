@@ -2,7 +2,6 @@
 using System.Text.Json.Serialization;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
-using VecTiles.Converters.OpenMapTiles;
 using VecTiles.DataSources;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.Styles.OpenMapTiles.Enums;
@@ -190,6 +189,19 @@ public class OMTSource
     }
 
     /// <summary>
+    /// Factory for the tile converter that wraps a created vector data source,
+    /// because which converter is needed depends on the tile data format (a
+    /// mapsforge map file provides raw mapsforge tiles that must be converted
+    /// into the OpenMapTiles schema first, ordinary OpenMapTiles/MVT sources are
+    /// converted with the identity tags converter). The consumer of the style
+    /// file provides the factory, the style layer itself stays independent of
+    /// the converters.
+    /// Not part of the style source specification.
+    /// </summary>
+    [JsonIgnore]
+    public Func<ITileDataSource, ITileConverter>? VectorTileConverterFactory { get; set; }
+
+    /// <summary>
     /// Center of the underlying tile data source as longitude/latitude, e.g. read
     /// from the metadata of an MBTiles file, empty if the data source provides none.
     /// Not part of the style source specification.
@@ -288,13 +300,16 @@ public class OMTSource
         
         if (SourceType == SourceType.Vector)
         {
-            // The tiles of a mapsforge file are raw mapsforge data, their source layers and
-            // tags follow the OpenMapTiles schema only after the conversion of the mapsforge
-            // tile converter; OpenMapTiles data is already organized in the source layers and
-            // tags of the style, so its converter gets the (strict) identity tags converter
-            ITileConverter converter = dataSource is VecTiles.DataSources.Mapsforge.MapsforgeTileDataSource
-                ? new VecTiles.Converters.Mapsforge.MapsforgeTileConverter()
-                : new OMTTileConverter(IdentityTagsConverter.Instance);
+            // Which converter a vector source needs depends on the tile data format:
+            // the tiles of a mapsforge file are raw mapsforge data, their source layers
+            // and tags follow the OpenMapTiles schema only after the conversion of the
+            // mapsforge tile converter; OpenMapTiles data is already organized in the
+            // source layers and tags of the style, so its converter gets the (strict)
+            // identity tags converter. The style layer itself stays independent of the
+            // converters, the consumer of the style file provides the factory.
+            var converter = VectorTileConverterFactory?.Invoke(dataSource)
+                ?? throw new InvalidOperationException(
+                    $"Vector source '{Name}' is missing a {nameof(VectorTileConverterFactory)}.");
             dataSource = new VectorTileDataSource(dataSource, converter);
         }
         

@@ -99,7 +99,8 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
         else
         {
             // Sources are created manually below, because vector data comes from the map file
-            var styleFile = OMTStyleFileLoader.Load(styleSource, createSources: false).Result;
+            var styleFile = OMTStyleFileLoader.Load(styleSource, createSources: false,
+                vectorTileConnectionFactory: DefaultVectorTileConverterFactory.Factory).Result;
 
             foreach (var omtSource in styleFile.Sources.Values)
             {

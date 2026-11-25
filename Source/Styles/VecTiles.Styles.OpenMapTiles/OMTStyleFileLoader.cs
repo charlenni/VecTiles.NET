@@ -1,4 +1,5 @@
 using System.Text.Json;
+using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.DataSources;
 using VecTiles.Styles.OpenMapTiles.Json;
@@ -19,9 +20,13 @@ public class OMTStyleFileLoader
     /// <param name="createSources">Whether to create the tile data sources of the style's
     /// sources; false leaves <see cref="OMTSource.DataSource"/> null, so the caller can attach
     /// own data sources (e.g. a Mapsforge map file given independently of the style file).</param>
+    /// <param name="vectorTileConnectionFactory">Factory for the tile converter of vector
+    /// sources (see <see cref="OMTSource.VectorTileConverterFactory"/>); vector sources that
+    /// load through this loader need it to provide renderable tiles.</param>
     /// <returns>The loaded style file with sources and sprites initialized.</returns>
     /// <exception cref="ArgumentException">Thrown if the file isn't a valid style file.</exception>
-    public static async Task<OMTStyleFile> Load(string source, bool createSources = true)
+    public static async Task<OMTStyleFile> Load(string source, bool createSources = true,
+        Func<ITileDataSource, ITileConverter>? vectorTileConnectionFactory = null)
     {
         OMTStyleFile? omtStyleFile;
 
@@ -41,6 +46,12 @@ public class OMTStyleFileLoader
         {
             foreach (var omtSource in omtStyleFile.Sources.Values)
                 omtSource.ResolveRelativeUrls(styleDirectory);
+        }
+
+        if (vectorTileConnectionFactory != null)
+        {
+            foreach (var omtSource in omtStyleFile.Sources.Values)
+                omtSource.VectorTileConverterFactory = vectorTileConnectionFactory;
         }
 
         if (createSources)

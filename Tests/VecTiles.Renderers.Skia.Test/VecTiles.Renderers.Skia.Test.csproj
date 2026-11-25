@@ -313,6 +313,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" />
     <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
     <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />
     <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />

@@ -1,4 +1,6 @@
-﻿using VecTiles.DataSources;
+﻿using VecTiles.Common.Interfaces;
+using VecTiles.Converters.OpenMapTiles;
+using VecTiles.DataSources;
 using VecTiles.Styles.OpenMapTiles;
 
 using VecTiles.Tests;
@@ -20,7 +22,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.NotNull(mapboxStyleFile.Metadata);
             Assert.True(mapboxStyleFile.Metadata.ContainsKey("maputnik:license"));
@@ -34,7 +36,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.True(mapboxStyleFile.Version >= 8);
             Assert.NotNull(mapboxStyleFile.Center);
@@ -50,7 +52,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var styleFile = await OMTStyleFileLoader.Load(styleSource);
+            var styleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.Equal(new[] { 8.5618f, 47.37565f }, styleFile.Center);
             Assert.Equal(10f, styleFile.Zoom);
@@ -64,7 +66,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.False(string.IsNullOrEmpty(mapboxStyleFile.Glyphs));
             Assert.Contains("{fontstack}", mapboxStyleFile.Glyphs);
@@ -78,7 +80,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             // Ensure layers are in the expected order
             Assert.Equal("background", mapboxStyleFile.Layers[0].Name);
@@ -94,7 +96,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             var layer = mapboxStyleFile.Layers.FirstOrDefault(l => l.Name == "water");
             Assert.NotNull(layer);
@@ -111,7 +113,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.True(mapboxStyleFile != null);
             Assert.True(mapboxStyleFile.Sprites != null);
@@ -125,7 +127,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.NotNull(mapboxStyleFile.Sprites);
             Assert.NotNull(mapboxStyleFile.Sprites.Sprites);
@@ -150,7 +152,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.NotNull(mapboxStyleFile.Sources);
             Assert.True(mapboxStyleFile.Sources.Count > 0);
@@ -167,7 +169,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.NotNull(mapboxStyleFile.Sources);
 
@@ -196,7 +198,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             Assert.NotNull(mapboxStyleFile.Sources);
 
@@ -216,7 +218,7 @@ namespace VecTiles.Styles.MapboxTests
         {
             var styleSource = $"file://{_path}/osm-liberty.json";
 
-            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource);
+            var mapboxStyleFile = await OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance));
 
             var sourceNames = mapboxStyleFile.Sources.Keys.ToList();
             Assert.Equal(sourceNames.Count, sourceNames.Distinct().Count());

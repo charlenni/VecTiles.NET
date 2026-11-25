@@ -80,18 +80,21 @@ public partial class MainView : UserControl
         // default zoom bounds allow one level beyond the biggest resolution)
         MapControl.Map.Navigator.OverrideZoomBounds = _tileLayer.ZoomBounds;
 
-        // Create a checkbox for each style of the style file. Initial state is the visibility from the style file.
-        /*foreach (var style in _tileSource.Styles)
+        if (_tileSource is OMTRenderedTileSource renderedTileSource)
         {
-            var checkBox = new CheckBox
+            // Create a checkbox for each style of the style file. Initial state is the visibility from the style file.
+            foreach (var style in renderedTileSource.Styles)
             {
-                Content = style.Name,
-                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
-                IsChecked = style.Visible
-            };
-            checkBox.Click += (_, _) => StyleCheckBox_Click(style, checkBox);
-            StylesPanel.Children.Add(checkBox);
-        }*/
+                var checkBox = new CheckBox
+                {
+                    Content = style.Name,
+                    HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                    IsChecked = style.Visible
+                };
+                checkBox.Click += (_, _) => StyleCheckBox_Click(style, checkBox);
+                StylesPanel.Children.Add(checkBox);
+            }
+        }
 
         var rotationSliderObservable = RotationSlider.GetObservable(Slider.ValueProperty);
         rotationSliderObservable.Subscribe(new AnonymousObserver<double>(value => 

@@ -45,10 +45,8 @@ public partial class MainView : UserControl
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
-        //_tileSource = new OMTRenderedTileSource(styleSource);
-        _tileSource = new MFRenderedTileSource($"file://{_pathMF}/zuerich.map", 
-            new IdentityTagsConverter("mapsforge"),
-            $"file://{_pathMF}/mapsforge/default.xml");
+        _tileSource = new OMTRenderedTileSource(styleSource);
+        //_tileSource = new MFRenderedTileSource($"file://{_pathMF}/zuerich.map", new IdentityTagsConverter("mapsforge"), $"file://{_pathMF}/mapsforge/default.xml");
         
         _tileLayer = new RenderedTileLayer(_tileSource);
         MapControl.Map.Layers.Add(_tileLayer);

@@ -6,7 +6,7 @@ namespace VecTiles.DataSources;
 /// <summary>
 /// This class provides a factory for creating ITileDataSource instances based 
 /// on the scheme of the provided source URIs. 
-/// Supported schemes (up to now): mbtiles, http, https. 
+/// Supported schemes (up to now): mbtiles, http, https, mapsforge, pmtiles.
 /// Throws an exception for unknown schemes.
 /// </summary>
 public static class DefaultTileDataSourceFactory
@@ -31,6 +31,10 @@ public static class DefaultTileDataSourceFactory
     /// Scheme of a source URI that identifies tiles in a Mapsforge map file.
     /// </summary>
     public const string MapsforgeScheme = "mapsforge";
+    /// <summary>
+    /// Scheme of a source URI that identifies a PMTiles archive.
+    /// </summary>
+    public const string PmTilesScheme = "pmtiles";
 
     /// <summary>
     /// Create a ITileDataSource from provided source list
@@ -56,6 +60,7 @@ public static class DefaultTileDataSourceFactory
             MbTilesScheme => CreateMbTilesSource(source.Substring(MbTilesScheme.Length + 3)),
             HttpScheme or HttpsScheme => CreateHttpSource(sources, minZoom, maxZoom),
             MapsforgeScheme => CreateMapsforgeSource(sources, minZoom, maxZoom),
+            PmTilesScheme => CreatePmTilesSource(source),
             _ => throw new ArgumentException($"Scheme '{scheme}' of '{source}' is not supported"),
         };
     }
@@ -73,5 +78,10 @@ public static class DefaultTileDataSourceFactory
     private static ITileDataSource CreateMapsforgeSource(string[] sources, int minZoom, int maxZoom)
     {
         return new Mapsforge.MapsforgeTileDataSource(sources, minZoom, maxZoom);
+    }
+
+    private static ITileDataSource CreatePmTilesSource(string source)
+    {
+        return new PmTiles.PMTilesTileDataSource(source);
     }
 }

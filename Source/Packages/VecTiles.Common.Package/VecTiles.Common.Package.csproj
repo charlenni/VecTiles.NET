@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
     <PackageId>VecTiles.Common</PackageId>
     <Title>VecTiles.Common</Title>
-    <Description>Core package of the VecTiles.NET vector tile mapping stack. It bundles the shared core types and interfaces of VecTiles.Common, the common renderer abstractions of VecTiles.Renderers.Common, byte based tile data sources (e.g. HTTP) of VecTiles.ByteDataSources and tile data sources, such as MBTiles (SQLite), of VecTiles.TileDataSources.</Description>
-    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;mbtiles;openmaptiles</PackageTags>
+    <Description>Core package of the VecTiles.NET vector tile mapping stack. It bundles the shared core types and interfaces of VecTiles.Common, the common renderer abstractions of VecTiles.Renderers.Common, byte based tile data sources (e.g. HTTP) of VecTiles.ByteDataSources and tile data sources, such as MBTiles (SQLite) and PMTiles archives, of VecTiles.TileDataSources.</Description>
+    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;mbtiles;pmtiles;openmaptiles</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
   </PropertyGroup>

@@ -148,7 +148,39 @@ public class TextPointSymbolRenderer : ISymbolRenderer
     public static SymbolPlacementStatus CheckForSpace(SKCanvas canvas, EvaluationContext context,
         TextPointSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation, bool showInvalidBorders)
     {
-        symbol.Envelope ??= CreateEnvelope(symbol, context);
+        // text-variable-anchor: try the candidate anchors in style order and
+        // keep the first one with free space on the symbol for the drawing pass
+        if (symbol.VariableAnchors is { Length: > 0 } && symbol.VariableOffsets.Length == symbol.VariableAnchors.Length)
+        {
+            var status = SymbolPlacementStatus.NotInitialized;
+
+            for (int i = 0; i < symbol.VariableAnchors.Length; i++)
+            {
+                symbol.UsePlacement(symbol.VariableAnchors[i], symbol.VariableOffsets[i]);
+
+                status = CheckPlacement(canvas, context, symbol, tree, screenX, screenY, rotation,
+                    showInvalidBorders, useCachedEnvelope: false);
+
+                if (status == SymbolPlacementStatus.Success)
+                {
+                    return status;
+                }
+            }
+
+            return status;
+        }
+
+        return CheckPlacement(canvas, context, symbol, tree, screenX, screenY, rotation,
+            showInvalidBorders, useCachedEnvelope: true);
+    }
+
+    private static SymbolPlacementStatus CheckPlacement(SKCanvas canvas, EvaluationContext context,
+        TextPointSymbol symbol, Quadtree<ISymbol> tree, double screenX, double screenY, double rotation,
+        bool showInvalidBorders, bool useCachedEnvelope)
+    {
+        symbol.Envelope = useCachedEnvelope
+            ? (symbol.Envelope ?? CreateEnvelope(symbol, context))
+            : CreateEnvelope(symbol, context, useCached: false);
 
         if (symbol.Envelope is null)
         {

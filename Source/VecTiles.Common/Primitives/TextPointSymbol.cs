@@ -1,5 +1,8 @@
 ﻿using NetTopologySuite.Geometries;
 using VecTiles.Common.Enums;
+using VecTiles.Common.Extensions;
+// The class has a property named "Anchor", so the Anchor enum needs an alias
+using AnchorEnum = VecTiles.Common.Enums.Anchor;
 
 namespace VecTiles.Common.Primitives;
 
@@ -62,14 +65,53 @@ public class TextPointSymbol : Symbol
     public bool KeepUpright { get; init; }
 
     /// <summary>
-    /// Anchor of symbol given as relative position with [0..1, 0..1]
+    /// Anchor of symbol given as relative position with [0..1, 0..1].
+    /// Mutable: the placement tries the variable anchors (see below) and
+    /// stores the anchor of the placement that found free space.
     /// </summary>
-    public Point Anchor { get; init; } = new(0, 0);
+    public Point Anchor { get; set; } = new(0, 0);
 
     /// <summary>
-    /// Offset from point in pixels
+    /// Offset from point in pixels. Mutable: belongs to the anchor chosen
+    /// by the placement of a variable anchor text.
     /// </summary>
-    public Point Offset { get; init; } = new(0, 0);
+    public Point Offset { get; set; } = new(0, 0);
+
+    /// <summary>
+    /// Candidate anchors (text-variable-anchor of the Mapbox Style Spec) the
+    /// placement tries in order; empty for a fixed anchor.
+    /// </summary>
+    public Anchor[] VariableAnchors { get; init; } = [];
+
+    /// <summary>
+    /// The pixel offset belonging to every candidate anchor of
+    /// <see cref="VariableAnchors"/> (same order), the distance the text is
+    /// pushed away from the symbol point (text-radial-offset/text-offset).
+    /// </summary>
+    public Point[] VariableOffsets { get; init; } = [];
+
+    /// <summary>
+    /// Stores the placement of a chosen variable anchor: the anchor and offset
+    /// of the candidate that found free space, and - for text-justify auto -
+    /// the alignment towards the anchor position.
+    /// </summary>
+    /// <param name="anchor">The chosen candidate anchor.</param>
+    /// <param name="offset">The pixel offset of the candidate.</param>
+    public void UsePlacement(AnchorEnum anchor, Point offset)
+    {
+        Anchor = anchor.ToPoint();
+        Offset = offset;
+
+        if (JustifyAuto)
+        {
+            Alignment = anchor switch
+            {
+                AnchorEnum.Left or AnchorEnum.TopLeft or AnchorEnum.BottomLeft => TextJustify.Left,
+                AnchorEnum.Right or AnchorEnum.TopRight or AnchorEnum.BottomRight => TextJustify.Right,
+                _ => TextJustify.Center,
+            };
+        }
+    }
 
     /// <summary>
     /// Function to calculate color to use when drawing symbol from EvaluationContext
@@ -82,9 +124,17 @@ public class TextPointSymbol : Symbol
     public Func<EvaluationContext, float>? Opacity { get; init; } = (ctx) => 1f;
 
     /// <summary>
-    /// Text alignment in MaxWidth
+    /// Text alignment in MaxWidth. Mutable when <see cref="JustifyAuto"/> is
+    /// set: the alignment follows the anchor chosen by the placement.
     /// </summary>
-    public TextJustify Alignment { get; init; }
+    public TextJustify Alignment { get; set; }
+
+    /// <summary>
+    /// Whether the style asks for automatic justification (text-justify auto),
+    /// which aligns the text towards the anchor position: left for a left
+    /// anchor, right for a right anchor, centered otherwise.
+    /// </summary>
+    public bool JustifyAuto { get; init; }
     
     /// <summary>
     /// Text direction (LTR, RTL, Auto)
@@ -177,6 +227,9 @@ public class TextPointSymbol : Symbol
             KeepUpright = KeepUpright,
             Anchor = Anchor,
             Offset = Offset,
+            VariableAnchors = VariableAnchors,
+            VariableOffsets = VariableOffsets,
+            JustifyAuto = JustifyAuto,
             Direction = Direction,
             FontNames = FontNames,
             FontSize = FontSize,

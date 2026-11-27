@@ -1,5 +1,5 @@
 ﻿using VecTiles.Common.Interfaces;
-using VecTiles.Converters.OpenMapTiles;
+using VecTiles.Converters.MVT;
 using VecTiles.DataSources;
 using VecTiles.Styles.OpenMapTiles;
 

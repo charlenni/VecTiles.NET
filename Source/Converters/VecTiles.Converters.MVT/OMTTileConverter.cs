@@ -4,7 +4,7 @@ using System.IO.Compression;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 
-namespace VecTiles.Converters.OpenMapTiles;
+namespace VecTiles.Converters.MVT;
 
 /// <summary>
 /// Converts a binary array in OpenMapTiles format to a vector tile

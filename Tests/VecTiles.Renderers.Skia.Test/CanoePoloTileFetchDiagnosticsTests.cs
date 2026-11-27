@@ -60,7 +60,7 @@ public class CanoePoloTileFetchDiagnosticsTests
     [InlineData(19)]
     public async Task ProbePlacementRingFetches(int zoom)
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
 
         double resolution = zoom.ToResolution();
         const int width = 1024, height = 768;

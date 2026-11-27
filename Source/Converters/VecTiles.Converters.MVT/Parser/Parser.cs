@@ -3,9 +3,9 @@ using NetTopologySuite.Geometries;
 using ProtoBuf;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Converters.OpenMapTiles.Pbf;
+using VecTiles.Converters.MVT.Pbf;
 
-namespace VecTiles.Converters.OpenMapTiles.Parser;
+namespace VecTiles.Converters.MVT.Parser;
 
 /// <summary>
 /// Parses tiles in OpenMapTiles PBF format into <see cref="VectorTile"/> instances.
@@ -21,7 +21,7 @@ public static class Parser
     private static Geometry fullTile = geometryFactory.ToGeometry(new Envelope(0, 512, 0, 512));
 
     /// <summary>
-    /// Parses an unzipped tile in OpenMapTiles format.
+    /// Parses an unzipped tile in MVT format.
     /// </summary>
     /// <param name="stream">Stream containing tile data in Pbf format.</param>
     /// <param name="requestedTile">The tile being requested.</param>

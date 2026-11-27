@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace VecTiles.Converters.OpenMapTiles.Pbf;
+namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
 /// Represents the geometry type for OpenMapTiles PBF features.

@@ -51,7 +51,7 @@ public class LindenhofSingleFrameTests
     public void LindenhofLabelsArePlacedInBothCases(bool withTileAbove)
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var tileSource = new OMTRenderedTileSource(styleSource);
+        var tileSource = new MLRenderedTileSource(styleSource);
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution(); // like the app: map starts at zoom 17.9

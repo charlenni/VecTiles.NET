@@ -45,7 +45,7 @@ public class LindenhofFrameRenderTests
     public void RenderFrame(bool withTileAbove, string fileName)
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var tileSource = new OMTRenderedTileSource(styleSource);
+        var tileSource = new MLRenderedTileSource(styleSource);
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution();

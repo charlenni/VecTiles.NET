@@ -45,12 +45,12 @@ public partial class MainView : UserControl
 
         //var styleSource = $"file://{_pathOMT}/osm-liberty.json";
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
-        //var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
-        var styleSource = $"file://{_pathVT}/versatiles-en-style.json";
+        var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
+        //var styleSource = $"file://{_pathVT}/versatiles-en-style.json";
         //var styleSource = $"https://api.protomaps.com/styles/v5/light/en.json?key=YOUR_API_KEY";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
-        _tileSource = new OMTRenderedTileSource(styleSource);
+        _tileSource = new MLRenderedTileSource(styleSource);
         //_tileSource = new MFRenderedTileSource($"file://{_pathMF}/zuerich.map", new IdentityTagsConverter("mapsforge"), $"file://{_pathMF}/mapsforge/default.xml");
         
         // The style file references the fonts of a glyph server by their
@@ -94,7 +94,7 @@ public partial class MainView : UserControl
         // default zoom bounds allow one level beyond the biggest resolution)
         MapControl.Map.Navigator.OverrideZoomBounds = _tileLayer.ZoomBounds;
 
-        if (_tileSource is OMTRenderedTileSource renderedTileSource)
+        if (_tileSource is MLRenderedTileSource renderedTileSource)
         {
             // Create a checkbox for each style of the style file. Initial state is the visibility from the style file.
             foreach (var style in renderedTileSource.Styles)

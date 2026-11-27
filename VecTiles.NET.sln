@@ -27,7 +27,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.TileDataSources", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Converters", "Converters", "{B12671CC-7A17-4A76-BF16-42FBF260E973}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.OpenMapTiles", "Source\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj", "{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.MVT", "Source\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj", "{5413F3CE-3B3D-4B28-8E27-4D6B901F9E17}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.Tests", "Tests\VecTiles.Converters.Tests\VecTiles.Converters.Tests.csproj", "{899F24A9-FDB0-4E70-A8A6-4C31481C1437}"
 EndProject
@@ -75,7 +75,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packages", "Packages", "{7D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Common.Package", "Source\Packages\VecTiles.Common.Package\VecTiles.Common.Package.csproj", "{B66BBC6A-CA57-403D-B981-C40DBE393E99}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.OpenMapTiles.Package", "Source\Packages\VecTiles.OpenMapTiles.Package\VecTiles.OpenMapTiles.Package.csproj", "{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.MVT.Package", "Source\Packages\VecTiles.MVT.Package\VecTiles.MVT.Package.csproj", "{CF05473C-5E7E-4BBF-8FC0-CBFD084E8A12}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Skia.Package", "Source\Packages\VecTiles.Skia.Package\VecTiles.Skia.Package.csproj", "{896DAC03-E2DF-439F-97B9-41F078F4799F}"
 EndProject

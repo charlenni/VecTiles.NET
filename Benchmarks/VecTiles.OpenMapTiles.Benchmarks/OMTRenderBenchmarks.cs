@@ -1,7 +1,7 @@
 ﻿using BenchmarkDotNet.Attributes;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Converters.OpenMapTiles;
+using VecTiles.Converters.MVT;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.Renderers.Common;
 using VecTiles.Renderers.Common.Interfaces;

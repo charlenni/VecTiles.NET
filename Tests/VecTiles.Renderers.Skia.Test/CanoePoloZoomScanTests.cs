@@ -65,7 +65,7 @@ public class CanoePoloZoomScanTests
     [InlineData(19)]
     public void ScanCanoePoloPerZoom(int zoom)
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = zoom.ToResolution();

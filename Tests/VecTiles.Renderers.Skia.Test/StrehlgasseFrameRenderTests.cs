@@ -40,7 +40,7 @@ public class StrehlgasseFrameRenderTests
     public void RenderStrehlgasseFrame()
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var tileSource = new OMTRenderedTileSource(styleSource);
+        var tileSource = new MLRenderedTileSource(styleSource);
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = (17.9).ToResolution();
@@ -201,7 +201,7 @@ public class StrehlgasseFrameRenderTests
         TileInfo[]? tileInfos = null)
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var tileSource = new OMTRenderedTileSource(styleSource);
+        var tileSource = new MLRenderedTileSource(styleSource);
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();

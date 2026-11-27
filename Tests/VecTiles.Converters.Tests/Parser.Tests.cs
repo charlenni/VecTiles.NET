@@ -1,8 +1,8 @@
 using NetTopologySuite.Geometries;
 using ProtoBuf;
 using VecTiles.Common.Primitives;
-using VecTiles.Converters.OpenMapTiles.Pbf;
-using OmtParser = VecTiles.Converters.OpenMapTiles.Parser.Parser;
+using VecTiles.Converters.MVT.Pbf;
+using OmtParser = VecTiles.Converters.MVT.Parser.Parser;
 
 namespace VecTiles.Converters.Tests;
 

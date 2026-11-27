@@ -1,4 +1,4 @@
-﻿namespace VecTiles.Converters.OpenMapTiles.Parser;
+﻿namespace VecTiles.Converters.MVT.Parser;
 
 /// <summary>
 /// Provides methods for ZigZag encoding and decoding of signed integers.

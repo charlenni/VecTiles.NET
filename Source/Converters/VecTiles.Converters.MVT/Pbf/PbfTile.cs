@@ -1,6 +1,6 @@
 ﻿using ProtoBuf;
 
-namespace VecTiles.Converters.OpenMapTiles.Pbf;
+namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
 /// Represents a OpenMapTiles vector tile containing one or more layers.

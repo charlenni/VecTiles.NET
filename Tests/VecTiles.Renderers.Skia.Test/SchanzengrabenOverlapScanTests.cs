@@ -43,7 +43,7 @@ public class SchanzengrabenOverlapScanTests
     public void ScanForOverlappingPlacements(double fractionalZoom)
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var tileSource = new OMTRenderedTileSource(styleSource);
+        var tileSource = new MLRenderedTileSource(styleSource);
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = fractionalZoom.ToResolution();

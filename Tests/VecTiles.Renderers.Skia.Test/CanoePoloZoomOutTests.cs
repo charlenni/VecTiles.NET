@@ -59,7 +59,7 @@ public class CanoePoloZoomOutTests
     [Fact]
     public async Task ZoomOutFrom17()
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
         using var layer = new RenderedTileLayer(tileSource);
 
         DrawAt(layer, 17.0, "stable17");

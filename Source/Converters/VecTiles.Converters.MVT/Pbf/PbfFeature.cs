@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using ProtoBuf;
 
-namespace VecTiles.Converters.OpenMapTiles.Pbf;
+namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
 /// Represents a OpenMapTiles PBF feature, containing geometry, tags, and an identifier.

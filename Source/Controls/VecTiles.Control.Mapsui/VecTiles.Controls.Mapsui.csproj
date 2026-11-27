@@ -20,7 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Converters\VecTiles.Converters.Mapsforge\VecTiles.Converters.Mapsforge.csproj" />
-    <ProjectReference Include="..\..\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" />
     <ProjectReference Include="..\..\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
     <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
     <ProjectReference Include="..\..\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />

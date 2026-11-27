@@ -1,7 +1,7 @@
 ﻿using NetTopologySuite.Geometries;
 using VecTiles.Common.Primitives;
 
-namespace VecTiles.Converters.OpenMapTiles.Parser;
+namespace VecTiles.Converters.MVT.Parser;
 
 /// <summary>
 /// Transforms MVT tile coordinates into the normalized 512x512 tile space used by VecTiles.NET,

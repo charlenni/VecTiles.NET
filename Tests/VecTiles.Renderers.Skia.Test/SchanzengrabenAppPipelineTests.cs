@@ -42,7 +42,7 @@ public class SchanzengrabenAppPipelineTests
     [InlineData(17.8)]
     public void RenderAppPipelineFrame(double fractionalZoom)
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
         using var layer = new RenderedTileLayer(tileSource)
         {
             ShowValidBorders = true,

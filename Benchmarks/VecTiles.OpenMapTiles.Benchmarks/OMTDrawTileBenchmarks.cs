@@ -27,7 +27,7 @@ public class OMTDrawTileBenchmarks
     private const double WorldWidth = 40075016.686;
     private const double WorldHalf = WorldWidth / 2;
 
-    private OMTRenderedTileSource _tileSource = null!;
+    private MLRenderedTileSource _tileSource = null!;
     private RenderedTileLayer _tileLayer = null!;
     private Mapsui.Rendering.RenderService _renderService = null!;
     private Viewport _viewport = new();
@@ -47,7 +47,7 @@ public class OMTDrawTileBenchmarks
     public async Task Setup()
     {
         var styleSource = $"file://{_path}osm-liberty.json";
-        _tileSource = new OMTRenderedTileSource(styleSource);
+        _tileSource = new MLRenderedTileSource(styleSource);
         _tileLayer = new RenderedTileLayer(_tileSource)
         {
             SynchronousPlacement = true

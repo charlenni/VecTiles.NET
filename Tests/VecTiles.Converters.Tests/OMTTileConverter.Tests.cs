@@ -1,5 +1,5 @@
 ﻿using VecTiles.Common.Primitives;
-using VecTiles.Converters.OpenMapTiles;
+using VecTiles.Converters.MVT;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.TileDataSources;
 

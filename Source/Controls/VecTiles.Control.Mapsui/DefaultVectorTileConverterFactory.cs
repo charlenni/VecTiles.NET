@@ -1,6 +1,6 @@
 using VecTiles.Common.Interfaces;
 using VecTiles.Converters.Mapsforge;
-using VecTiles.Converters.OpenMapTiles;
+using VecTiles.Converters.MVT;
 using VecTiles.DataSources.Mapsforge;
 
 namespace VecTiles.Controls.Mapsui;

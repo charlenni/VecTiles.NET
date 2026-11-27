@@ -10,11 +10,12 @@
     <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;openmaptiles;mapbox;mvt;styles</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
+    <RootNamespace>VecTiles.OpenMapTiles.Package</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" PrivateAssets="all" />
-    <ProjectReference Include="..\..\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\..\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" PrivateAssets="all" />
   </ItemGroup>
 
   <ItemGroup>

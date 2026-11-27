@@ -34,7 +34,7 @@ public class CanoePoloHiDpiTests
     [InlineData(17.6, 2.0)]
     public async Task DensityCanvas_ShowsIcons(double zoom, double density)
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
         using var layer = new RenderedTileLayer(tileSource) { PlacementDebounceMs = 0 };
 
         var (cx, cy) = Center();

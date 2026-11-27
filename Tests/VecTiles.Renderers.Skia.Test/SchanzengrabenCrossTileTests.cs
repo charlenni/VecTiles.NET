@@ -52,7 +52,7 @@ public class SchanzengrabenCrossTileTests
     [InlineData("panned-right")]
     public void RenderCrossTileVariants(string mode)
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         double resolution = Zoom.ToResolution();

@@ -50,7 +50,7 @@ public class CanoePoloProgressiveArrivalTests
     [Fact]
     public void ProgressiveArrival_BothIconsPlacedInTheSettledView()
     {
-        var tileSource = new OMTRenderedTileSource($"file://{_path}/osm-liberty.json");
+        var tileSource = new MLRenderedTileSource($"file://{_path}/osm-liberty.json");
         var service = new PlacementService(tileSource) { SynchronousPlacement = true };
 
         const int zoom = 17;

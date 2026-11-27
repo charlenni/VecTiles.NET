@@ -23,7 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.Mapsforge\VecTiles.Converters.Mapsforge.csproj" />
-    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.OpenMapTiles\VecTiles.Converters.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" />
     <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.SdfFont\VecTiles.Converters.SdfFont.csproj" />
     <ProjectReference Include="..\..\Source\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
   </ItemGroup>

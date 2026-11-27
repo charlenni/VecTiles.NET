@@ -94,7 +94,7 @@ public class RenderedTileTests
         var viewport = new Viewport(centerXWorld, centerYWorld, resolution, 0, size, size);
 
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var tileSource = new OMTRenderedTileSource(styleSource);
+        var tileSource = new MLRenderedTileSource(styleSource);
         var tileLayer = new RenderedTileLayer(tileSource) { SynchronousPlacement = true };
         var renderService = new Mapsui.Rendering.RenderService();
 

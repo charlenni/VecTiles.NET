@@ -2,7 +2,7 @@ using NetTopologySuite.Features;
 using NetTopologySuite.Geometries;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
-using VecTiles.Converters.OpenMapTiles;
+using VecTiles.Converters.MVT;
 using VecTiles.Styles.OpenMapTiles;
 using Xunit.Abstractions;
 

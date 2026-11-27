@@ -242,22 +242,39 @@ public static class Tessellation
                 && InnerMiter(segmentEnd, n, nextN, dirAwayNext, hw,
                               out eSign, out eMiter);
 
+            // Validity check: each trim point must lie within the own
+            // segment's extent (projection onto the segment direction in
+            // [0, len]). At very sharp corners the inner offset lines
+            // intersect far away (hw * tan(angle/2)); when BOTH adjacent
+            // segments are shorter than that distance, the trim point
+            // lands outside both quads and the wedge polygon degenerates
+            // into a long sliver reaching far beyond the geometry (the
+            // "road spike" defect). Drop such a trim and fall back to the
+            // untrimmed quad edge, as with the crossing safety net below.
             // Safety net: on very short segments (length ~ hw) the two
             // trims can cross -> fall back to the untrimmed quad (the
             // wedge is negligible compared to a self-intersection).
-            if (startTrimmed && endTrimmed)
+            var d = Sub(segmentEnd, segmentStart);
+            float len = MathF.Sqrt(d.X * d.X + d.Y * d.Y);
+            if (len > 1e-6f)
             {
-                var d = Sub(segmentEnd, segmentStart);
-                float len = MathF.Sqrt(d.X * d.X + d.Y * d.Y);
-                if (len > 1e-6f)
+                var dir = new PointF(d.X / len, d.Y / len);
+                const float eps = 0.01f;
+                float aS = 0f, aE = 0f;
+                if (startTrimmed)
                 {
-                    var dir = new PointF(d.X / len, d.Y / len);
-                    float aS = (sMiter.X - segmentStart.X) * dir.X
-                             + (sMiter.Y - segmentStart.Y) * dir.Y;
-                    float aE = (eMiter.X - segmentStart.X) * dir.X
-                             + (eMiter.Y - segmentStart.Y) * dir.Y;
-                    if (aS > aE) startTrimmed = endTrimmed = false;
+                    aS = (sMiter.X - segmentStart.X) * dir.X
+                       + (sMiter.Y - segmentStart.Y) * dir.Y;
+                    if (aS < -eps || aS > len + eps) startTrimmed = false;
                 }
+                if (endTrimmed)
+                {
+                    aE = (eMiter.X - segmentStart.X) * dir.X
+                       + (eMiter.Y - segmentStart.Y) * dir.Y;
+                    if (aE < -eps || aE > len + eps) endTrimmed = false;
+                }
+                if (startTrimmed && endTrimmed && aS > aE)
+                    startTrimmed = endTrimmed = false;
             }
 
             // Start edge (point, u) in u-ascending order. The miter lies

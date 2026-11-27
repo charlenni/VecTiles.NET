@@ -9,14 +9,17 @@ namespace VecTiles.Renderers.Skia.Primitives;
 /// Resolves the font names of a style file to styles for RichTextKit.
 ///
 /// Resolution order per font name ("Noto Sans Bold"):
-/// 1. Font files registered via <see cref="RegisterFontFile"/> or
+/// 1. a name resolver set via <see cref="SetFontNameResolver"/> renames the
+///    font name before it is resolved (the style attributes of the target
+///    name are parsed afterwards),
+/// 2. font files registered via <see cref="RegisterFontFile"/> or
 ///    <see cref="RegisterFontDirectory"/>,
-/// 2. font files found in the directories added via <see cref="AddFontSearchPath"/>
+/// 3. font files found in the directories added via <see cref="AddFontSearchPath"/>
 ///    (each directory is scanned once, lazily on first need),
-/// 3. font files loaded for a missing font via the source resolver set by
+/// 4. font files loaded for a missing font via the source resolver set by
 ///    <see cref="SetFontSourceResolver"/> (each font name is attempted once),
-/// 4. fonts installed on the system,
-/// 5. the system default family as last resort.
+/// 5. fonts installed on the system,
+/// 6. the system default family as last resort.
 ///
 /// <see cref="GetMissingFonts"/> reports the font names of a style file that
 /// resolve to the fallback (3), so the user can install them or register
@@ -37,11 +40,41 @@ public static class FontCache
     private static readonly HashSet<string> ScannedFontSearchPaths = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object FontSearchPathsLock = new();
 
+    // Optional resolver that renames a font name of a style file before it
+    // is resolved (e.g. "noto_sans_regular" to "Noto Sans Regular")
+    private static Func<string, string?>? FontNameResolver;
+    private static readonly object FontNameResolverLock = new();
+
     // Optional resolver that maps a font name to a source (URL notation of
     // ByteDataSource) from which the font file is loaded on first need
     private static Func<string, string?>? FontSourceResolver;
     private static readonly HashSet<string> AttemptedResolverFonts = new(StringComparer.OrdinalIgnoreCase);
     private static readonly object FontSourceResolverLock = new();
+
+    /// <summary>
+    /// Sets an optional resolver that renames a font name of a style file
+    /// (e.g. "noto_sans_regular") to another font name (e.g. "Noto Sans
+    /// Regular") before it is resolved. The target name goes through the
+    /// usual resolution (registered files, search paths, font source
+    /// resolver, system fonts, system default), and its style attributes
+    /// (weight, width, italic) are parsed from it, so they must be part of
+    /// the target name ("Noto Sans" would lose the bold of "noto_sans_bold").
+    /// Returning null or an empty string, or having no resolver set, leaves
+    /// the name unchanged. Call with null to remove the resolver again.
+    /// </summary>
+    public static void SetFontNameResolver(Func<string, string?>? fontNameResolver)
+    {
+        lock (FontNameResolverLock)
+        {
+            FontNameResolver = fontNameResolver;
+        }
+
+        // Styles already resolved with the previous names must be recalculated
+        lock (TextStylesLock)
+        {
+            TextStyles.Clear();
+        }
+    }
 
     /// <summary>
     /// Sets an optional resolver that maps a font name to a source in URL
@@ -109,9 +142,9 @@ public static class FontCache
 
     /// <summary>
     /// Clears all cached styles, registered font files, font search paths,
-    /// attempted font source resolutions and the font source resolver itself,
-    /// so that fonts registered after a style was loaded are taken into
-    /// account on the next style creation.
+    /// the font name resolver, attempted font source resolutions and the
+    /// font source resolver itself, so that fonts registered after a style
+    /// was loaded are taken into account on the next style creation.
     /// </summary>
     public static void Reset()
     {
@@ -129,6 +162,11 @@ public static class FontCache
         {
             FontSearchPaths.Clear();
             ScannedFontSearchPaths.Clear();
+        }
+
+        lock (FontNameResolverLock)
+        {
+            FontNameResolver = null;
         }
 
         lock (FontSourceResolverLock)
@@ -286,8 +324,12 @@ public static class FontCache
                 continue;
             }
 
+            // The resolved name decides whether the font is available; the
+            // original name is reported, so it matches the style file
+            var resolvedName = ResolveFontName(name);
+
             var textStyle = new Topten.RichTextKit.Style();
-            var family = name.CreateFontWidth(ref textStyle)
+            var family = resolvedName.CreateFontWidth(ref textStyle)
                 .CreateFontWeight(ref textStyle)
                 .CreateFontItalic(ref textStyle);
 
@@ -415,6 +457,8 @@ public static class FontCache
             return null;
         }
 
+        fontName = ResolveFontName(fontName);
+
         var key = (styleName, fontName, allowSystemDefaultFallback);
 
         lock (TextStylesLock)
@@ -466,6 +510,37 @@ public static class FontCache
     }
 
     /// <summary>
+    /// Returns the renamed font name for the given name, or the name itself
+    /// if no name resolver is set, it returns null or an empty string, or it
+    /// fails (see <see cref="SetFontNameResolver"/>).
+    /// </summary>
+    private static string ResolveFontName(string fontName)
+    {
+        Func<string, string?>? nameResolver;
+
+        lock (FontNameResolverLock)
+        {
+            nameResolver = FontNameResolver;
+        }
+
+        if (nameResolver is null)
+        {
+            return fontName;
+        }
+
+        try
+        {
+            var resolvedName = nameResolver(fontName);
+            return string.IsNullOrWhiteSpace(resolvedName) ? fontName : resolvedName;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not rename the font name '{fontName}': {ex.Message}");
+            return fontName;
+        }
+    }
+
+    /// <summary>
     /// Loads a font file via the font source resolver, if a resolver is set,
     /// the font was not attempted before and it is still missing after the
     /// usual resolution. A failure of the resolver or of the download is
@@ -490,9 +565,10 @@ public static class FontCache
         // directories are found before consulting the resolver
         EnsureFontSearchPathsScanned();
 
-        // The resolver receives the font name as in the style file (e.g.
-        // "Noto Sans Bold"); the family without style attributes decides
-        // whether the font is really missing
+        // The resolver receives the font name as renamed via
+        // SetFontNameResolver, if a name resolver is set, or as in the style
+        // file (e.g. "Noto Sans Bold"); the family without style attributes
+        // decides whether the font is really missing
         var probeStyle = new Topten.RichTextKit.Style();
         var family = fontName.CreateFontWidth(ref probeStyle)
             .CreateFontWeight(ref probeStyle)

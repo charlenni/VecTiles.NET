@@ -197,7 +197,16 @@ public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
     /// The resolver is held globally by <see cref="FontCache"/>; the resolver
     /// of the last created layer wins.
     /// </param>
-    public RenderedTileLayer(IRenderedTileSource tileSource, Func<string, string?>? fontSourceResolver = null)
+    /// <param name="fontNameResolver">
+    /// Optional resolver that renames a font name of the style file (e.g.
+    /// "noto_sans_regular" as used by glyph servers) to another font name
+    /// (e.g. "Noto Sans Regular") before it is resolved. Returning null or
+    /// an empty string leaves the name unchanged. The resolver is held
+    /// globally by <see cref="FontCache"/>; the resolver of the last created
+    /// layer wins.
+    /// </param>
+    public RenderedTileLayer(IRenderedTileSource tileSource, Func<string, string?>? fontSourceResolver = null,
+        Func<string, string?>? fontNameResolver = null)
     {
         MapRenderer.RegisterLayerRenderer(_customLayerRendererName, RenderedTileLayerRenderer.Draw);
 
@@ -221,6 +230,12 @@ public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
             FontCache.SetFontSourceResolver(fontSourceResolver);
         }
 
+        FontNameResolver = fontNameResolver;
+        if (fontNameResolver != null)
+        {
+            FontCache.SetFontNameResolver(fontNameResolver);
+        }
+
         _extent = TileSource.Schema.Extent.ToMRect();
     }
 
@@ -235,6 +250,12 @@ public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
     /// resolver was passed to the constructor.
     /// </summary>
     public Func<string, string?>? FontSourceResolver { get; }
+
+    /// <summary>
+    /// Gets the optional resolver that renames a font name of the style file
+    /// before it is resolved. Null if no resolver was passed to the constructor.
+    /// </summary>
+    public Func<string, string?>? FontNameResolver { get; }
 
     /// <summary>
     /// Gets or sets a value indicating whether to show valid symbol borders for debugging.

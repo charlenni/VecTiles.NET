@@ -173,6 +173,131 @@ public class FontCacheTests : IDisposable
         Assert.Equal(1, calls);
     }
 
+    /// <summary>
+    /// Verifies that a font name resolver maps a style file name to a
+    /// registered family, also when the resolver is set after the style was
+    /// already resolved to the system default.
+    /// </summary>
+    [Fact]
+    public void SetFontNameResolver_RenamesStyleFontName()
+    {
+        FontCache.RegisterFontFile(GetFontPath("Roboto Regular.ttf"));
+
+        var styleName = $"FontCacheTests_{Guid.NewGuid():N}";
+
+        var styleBefore = FontCache.CreateFonts(styleName, ["noto_sans_regular"]);
+        Assert.NotNull(styleBefore);
+        Assert.Equal(SKTypeface.Default.FamilyName, styleBefore!.FontFamily);
+
+        FontCache.SetFontNameResolver(f => f switch
+        {
+            "noto_sans_regular" => "Roboto Regular",
+            _ => f
+        });
+
+        var styleAfter = FontCache.CreateFonts(styleName, ["noto_sans_regular"]);
+        Assert.NotNull(styleAfter);
+        Assert.Equal("Roboto", styleAfter!.FontFamily);
+    }
+
+    /// <summary>
+    /// Verifies that the style attributes (weight, width, italic) are parsed
+    /// from the name returned by the resolver, not from the original style
+    /// file name.
+    /// </summary>
+    [Fact]
+    public void SetFontNameResolver_ParsesStyleAttributesOfResolvedName()
+    {
+        var typeface = SKTypeface.FromFile(GetFontPath("Roboto Medium.ttf"));
+        Assert.NotNull(typeface);
+
+        FontCache.RegisterFontFile(GetFontPath("Roboto Medium.ttf"));
+        FontCache.SetFontNameResolver(f => f switch
+        {
+            "noto_sans_medium" => "Roboto Medium",
+            _ => f
+        });
+
+        var style = FontCache.CreateFonts($"FontCacheTests_{Guid.NewGuid():N}", ["noto_sans_medium"]);
+
+        Assert.NotNull(style);
+        Assert.Equal("Roboto", style!.FontFamily);
+        Assert.Equal(500, style.FontWeight);
+    }
+
+    /// <summary>
+    /// Verifies that a resolver returning null or an empty string leaves the
+    /// font name unchanged, so it falls back to the system default.
+    /// </summary>
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void SetFontNameResolver_ReturnsNullOrEmpty_KeepsOriginalName(string? resolvedName)
+    {
+        FontCache.SetFontNameResolver(_ => resolvedName);
+
+        var style = FontCache.CreateFonts($"FontCacheTests_{Guid.NewGuid():N}", ["This Family Does Not Exist 12345"]);
+
+        Assert.NotNull(style);
+        Assert.Equal(SKTypeface.Default.FamilyName, style!.FontFamily);
+    }
+
+    /// <summary>
+    /// Verifies that a throwing resolver does not break the style creation
+    /// and leaves the font name unchanged.
+    /// </summary>
+    [Fact]
+    public void SetFontNameResolver_Throws_KeepsOriginalName()
+    {
+        FontCache.SetFontNameResolver(_ => throw new InvalidOperationException("resolver failed"));
+
+        var style = FontCache.CreateFonts($"FontCacheTests_{Guid.NewGuid():N}", ["This Family Does Not Exist 12345"]);
+
+        Assert.NotNull(style);
+        Assert.Equal(SKTypeface.Default.FamilyName, style!.FontFamily);
+    }
+
+    /// <summary>
+    /// Verifies that removing the name resolver restores the fallback to the
+    /// system default, even for an already created style.
+    /// </summary>
+    [Fact]
+    public void SetFontNameResolver_Null_RemovesResolver()
+    {
+        FontCache.RegisterFontFile(GetFontPath("Roboto Regular.ttf"));
+
+        var styleName = $"FontCacheTests_{Guid.NewGuid():N}";
+        FontCache.SetFontNameResolver(_ => "Roboto Regular");
+        var styleWithResolver = FontCache.CreateFonts(styleName, ["noto_sans_regular"]);
+        Assert.NotNull(styleWithResolver);
+        Assert.Equal("Roboto", styleWithResolver!.FontFamily);
+
+        FontCache.SetFontNameResolver(null);
+
+        var styleWithoutResolver = FontCache.CreateFonts(styleName, ["noto_sans_regular"]);
+        Assert.NotNull(styleWithoutResolver);
+        Assert.Equal(SKTypeface.Default.FamilyName, styleWithoutResolver!.FontFamily);
+    }
+
+    /// <summary>
+    /// Verifies that <see cref="FontCache.GetMissingFonts" /> checks the
+    /// resolved name, so a renamed and available font is not reported as missing.
+    /// </summary>
+    [Fact]
+    public void GetMissingFonts_AppliesNameResolver()
+    {
+        FontCache.RegisterFontFile(GetFontPath("Roboto Regular.ttf"));
+        FontCache.SetFontNameResolver(f => f switch
+        {
+            "noto_sans_regular" => "Roboto Regular",
+            _ => f
+        });
+
+        var missing = FontCache.GetMissingFonts(["noto_sans_regular"]);
+
+        Assert.Empty(missing);
+    }
+
     private static string GetFontPath(string fileName)
     {
         return Path.Combine(Utilities.DataFiles, "Fonts", fileName);

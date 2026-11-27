@@ -104,6 +104,40 @@ Optionally, a `RenderedTileLayer` accepts a `fontSourceResolver` that maps a fon
 style file to a font file source, which is loaded when the font is neither registered nor
 installed on the system.
 
+Some style files (e.g. from [VersaTiles](https://github.com/versatiles-org/versatiles-style))
+reference fonts by the fontstack names of a glyph server (`noto_sans_regular`) instead of the
+family names installed on the system (`Noto Sans`). A `fontNameResolver` renames such font names
+before they are resolved. The returned name goes through the usual font resolution (registered
+font files, font search paths, font source resolver, installed fonts), and its style attributes
+(bold, italic, ...) are parsed from it, so they must be part of the returned name:
+
+```csharp
+// Variant 1: passed to the layer constructor
+var tileLayer = new RenderedTileLayer(tileSource, fontNameResolver: name => name switch
+{
+    "noto_sans_regular" => "Noto Sans Regular",
+    "noto_sans_bold" => "Noto Sans Bold",
+    _ => name
+});
+```
+
+```csharp
+// Variant 2: set globally before the layer is created
+using VecTiles.Renderers.Skia.Primitives;
+
+FontCache.SetFontNameResolver(name => name switch
+{
+    "noto_sans_regular" => "Noto Sans Regular",
+    "noto_sans_bold" => "Noto Sans Bold",
+    _ => name
+});
+
+var tileLayer = new RenderedTileLayer(tileSource);
+```
+
+Both resolvers are held globally by `FontCache`; the resolvers of the last created layer win.
+Returning null or an empty string leaves the font name unchanged.
+
 ## Displaying a map from a Mapsforge map file
 
 `MFRenderedTileSource` loads a [Mapsforge](https://github.com/mapsforge/mapsforge) map file

@@ -102,7 +102,8 @@ public class RenderFactory : IRenderFactory
                     var groupOutlineBuilder = new VertexBuilder();
                     foreach (var feature in group)
                     {
-                        feature.ToVertices(groupOutlineBuilder, groupPaint.GetMaxStrokeWidth(context), groupPaint.StrokeJoin);
+                        feature.ToVertices(groupOutlineBuilder, groupPaint.GetMaxStrokeWidth(context), groupPaint.StrokeJoin,
+                            groupPaint.StrokeMiter);
                     }
 
                     renderers.Add(new FillLayerRenderer(groupFillBuilder.Build(), groupOutlineBuilder.Build(), true, groupPaint));
@@ -131,7 +132,7 @@ public class RenderFactory : IRenderFactory
             foreach (var feature in features!)
             {
                 feature.ToVertices(outlineBuilder, paint.GetMaxStrokeWidth(context),
-                    paint.StrokeJoin);
+                    paint.StrokeJoin, paint.StrokeMiter);
             }
 
             return new FillLayerRenderer(fillBuilder.Build(), outlineBuilder.Build(), true, paint);
@@ -178,7 +179,8 @@ public class RenderFactory : IRenderFactory
                     feature.ToVertices(groupBuilder, groupMaxStrokeWidth,
                         groupPaint.StrokeCap,
                         groupPaint.StrokeCap,
-                        groupPaint.StrokeJoin);
+                        groupPaint.StrokeJoin,
+                        groupPaint.StrokeMiter);
                 }
 
                 renderers.Add(new LineLayerRenderer(groupBuilder.Build(), false, groupPaint, groupMaxStrokeWidth));
@@ -204,7 +206,8 @@ public class RenderFactory : IRenderFactory
             feature.ToVertices(builder, maxStrokeWidth ,
                 paint.StrokeCap,
                 paint.StrokeCap,
-                paint.StrokeJoin);
+                paint.StrokeJoin,
+                paint.StrokeMiter);
         }
 
         return new LineLayerRenderer(builder.Build(), false, paint, maxStrokeWidth);

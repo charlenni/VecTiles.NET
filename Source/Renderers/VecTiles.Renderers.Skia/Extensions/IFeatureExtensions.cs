@@ -21,15 +21,17 @@ public static class IFeatureExtensions
     /// <param name="startCap">Cap style at the start of a line.</param>
     /// <param name="endCap">Cap style at the end of a line.</param>
     /// <param name="join">Join style at line corners.</param>
+    /// <param name="miterLimit">Miter limit for miter joins (miter length / half stroke width).</param>
     /// <returns>The vertex builder with the added vertices.</returns>
     public static VertexBuilder ToVertices(this IFeature feature,
         VertexBuilder builder,
-        float maxWidth, 
+        float maxWidth,
         StrokeCap startCap,
         StrokeCap endCap,
-        StrokeJoin join)
+        StrokeJoin join,
+        float miterLimit = 4f)
     {
-        return LineGeometryToVertices(builder, feature.Geometry, maxWidth, startCap, endCap, join); 
+        return LineGeometryToVertices(builder, feature.Geometry, maxWidth, startCap, endCap, join, miterLimit);
     }
 
     /// <summary>
@@ -54,44 +56,47 @@ public static class IFeatureExtensions
     /// <param name="builder">Vertex builder to add the vertices to.</param>
     /// <param name="maxWidth">Maximum stroke width the outline is expanded for.</param>
     /// <param name="join">Join style at polygon corners.</param>
+    /// <param name="miterLimit">Miter limit for miter joins (miter length / half stroke width).</param>
     /// <returns>The vertex builder with the added vertices.</returns>
-    public static VertexBuilder ToVertices(this IFeature feature, 
+    public static VertexBuilder ToVertices(this IFeature feature,
         VertexBuilder builder,
-        float maxWidth, 
-        StrokeJoin join)
+        float maxWidth,
+        StrokeJoin join,
+        float miterLimit = 4f)
     {
-        return OutlinedPolygonGeometryToVertices(builder, feature.Geometry, maxWidth, join); 
+        return OutlinedPolygonGeometryToVertices(builder, feature.Geometry, maxWidth, join, miterLimit);
     }
     
     private static VertexBuilder LineGeometryToVertices(VertexBuilder builder, Geometry geometry,
-            float maxWidth, 
+            float maxWidth,
             StrokeCap startCap,
             StrokeCap endCap,
-            StrokeJoin join)
+            StrokeJoin join,
+            float miterLimit)
     {
         switch (geometry)
         {
             case LineString line:
-                LineStringToVertices(builder, line, maxWidth, startCap, endCap, join);
+                LineStringToVertices(builder, line, maxWidth, startCap, endCap, join, miterLimit);
                 break;
 
             case MultiLineString multiLine:
                 foreach (LineString lineStr in multiLine.Geometries)
                 {
-                    LineStringToVertices(builder, lineStr, maxWidth, startCap, endCap, join);
+                    LineStringToVertices(builder, lineStr, maxWidth, startCap, endCap, join, miterLimit);
                 }
                 break;
 
             // Could happen for line layers
             case Polygon polygon:
-                OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join);
+                OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join, miterLimit);
                 break;
 
             // Could happen for line layers
             case MultiPolygon multiPolygon:
                 foreach (Polygon polygon in multiPolygon.Geometries)
                 {
-                    OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join);
+                    OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join, miterLimit);
                 }
                 break;
 
@@ -137,19 +142,20 @@ public static class IFeatureExtensions
     }
 
     private static VertexBuilder OutlinedPolygonGeometryToVertices(VertexBuilder builder, Geometry geometry,
-        float maxWidth, 
-        StrokeJoin join)
+        float maxWidth,
+        StrokeJoin join,
+        float miterLimit)
     {
         switch (geometry)
         {
             case Polygon polygon:
-                OutlinedPolygonToVertices(builder, polygon, maxWidth, join);
+                OutlinedPolygonToVertices(builder, polygon, maxWidth, join, miterLimit);
                 break;
 
             case MultiPolygon multiPolygon:
                 foreach (Polygon poly in multiPolygon.Geometries)
                 {
-                    OutlinedPolygonToVertices(builder, poly, maxWidth, join);
+                    OutlinedPolygonToVertices(builder, poly, maxWidth, join, miterLimit);
                 }
                 break;
 
@@ -164,15 +170,16 @@ public static class IFeatureExtensions
         return builder;
     }
 
-    private static VertexBuilder LineStringToVertices(VertexBuilder builder, LineString line, 
-        float maxWidth, 
+    private static VertexBuilder LineStringToVertices(VertexBuilder builder, LineString line,
+        float maxWidth,
         StrokeCap startCap,
         StrokeCap endCap,
-        StrokeJoin join)
+        StrokeJoin join,
+        float miterLimit)
     {
         if (line.NumPoints == 0) return null;
         var coords = line.Coordinates;
-        builder.AddLines([coords], maxWidth, startCap, endCap, join);
+        builder.AddLines([coords], maxWidth, startCap, endCap, join, miterLimit);
         
         return builder;
     }
@@ -195,20 +202,21 @@ public static class IFeatureExtensions
     }
     
     private static VertexBuilder OutlinedPolygonToVertices(VertexBuilder builder, Polygon polygon,
-        float maxWidth, 
-        StrokeJoin join)
+        float maxWidth,
+        StrokeJoin join,
+        float miterLimit)
     {
         // Outer ring
         var outer = polygon.ExteriorRing.Coordinates;
         var rings = new List<Coordinate[]> { outer };
-        
+
         // Inner ring (holes)
         for (int i = 0; i < polygon.NumInteriorRings; i++)
         {
             rings.Add(polygon.GetInteriorRingN(i).Coordinates);
         }
-        
-        builder.AddOutline(rings, maxWidth, join);
+
+        builder.AddOutline(rings, maxWidth, join, miterLimit);
         
         return builder;
     }

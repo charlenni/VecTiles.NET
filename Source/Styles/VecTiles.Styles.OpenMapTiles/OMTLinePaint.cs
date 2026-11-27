@@ -76,6 +76,20 @@ public static class OMTLinePaint
                 break;
         }
 
+        // line-miter-limit
+        //   Optional number. Defaults to 2. Requires line-join = miter. Exponential.
+        //   Used to automatically convert miter joins to bevel joins for sharp angles.
+        //   Expressed as the ratio miter length / half stroke width: the join falls
+        //   back to Bevel when the corner is sharper than this limit allows.
+        if (layout.LineMiterLimit.IsConstant)
+        {
+            brush.SetFixStrokeMiter(layout.LineMiterLimit.Evaluate(EvaluationContext.Empty));
+        }
+        else
+        {
+            brush.SetVariableStrokeMiter((context) => layout.LineMiterLimit.Evaluate(context));
+        }
+
         // line-color
         //   Optional color. Defaults to #000000. Disabled by line-pattern. Exponential.
         //   The color with which the line will be drawn.
@@ -195,10 +209,6 @@ public static class OMTLinePaint
                 return spriteFactory(name);
             });
         }
-
-        // line-miter-limit
-        //   Optional number. Defaults to 2. Requires line-join = miter. Exponential.
-        //   Used to automatically convert miter joins to bevel joins for sharp angles.
 
         // line-round-limit
         //   Optional number. Defaults to 1.05. Requires line-join = round. Exponential.

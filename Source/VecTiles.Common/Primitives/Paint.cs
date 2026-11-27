@@ -63,7 +63,8 @@ public class Paint : IPaint
     public StrokeJoin StrokeJoin { get; private set; }
 
     /// <inheritdoc/>
-    public float StrokeMiter { get; private set; }
+    /// <remarks>Skia default: 4 (maximum ratio miter length / half stroke width).</remarks>
+    public float StrokeMiter { get; private set; } = 4f;
 
     /// <inheritdoc/>
     public ISprite? Pattern { get; private set; }

@@ -113,7 +113,7 @@ public static class RenderedTextCache
         // texts keep the compact default layout
         if (result.Text.LineCount > 1)
         {
-            result.TextStyle.LineHeight = lineHeight;
+            result.TextStyle.LineHeight = RichTextLineHeight(lineHeight, fontSize, result.TextStyle);
             result.Text.ApplyStyle(0, result.Text.Length, result.TextStyle);
             result.MeasuredWidth = result.Text.MeasuredWidth;
             result.MeasuredHeight = result.Text.MeasuredHeight;
@@ -127,6 +127,29 @@ public static class RenderedTextCache
         result.LeftRightCorrection = result.Text.MeasuredPadding.Left;
 
         return result;
+    }
+
+    /// <summary>
+    /// Converts a line height given as a multiple of the font size (the
+    /// MapLibre text-line-height semantics, where the distance between the
+    /// baselines of two lines is line height times font size) into the
+    /// multiplier RichTextKit expects, which scales the natural line height
+    /// of the font (ascent plus descent) instead of the font size. Falls
+    /// back to the raw value if the typeface cannot be resolved.
+    /// </summary>
+    private static float RichTextLineHeight(float lineHeight, float fontSize, Style textStyle)
+    {
+        using var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
+
+        if (typeface is null || fontSize <= 0)
+        {
+            return lineHeight;
+        }
+
+        using var font = new SKFont(typeface, fontSize);
+        var naturalLineHeight = font.Spacing;
+
+        return naturalLineHeight > 0 ? lineHeight * fontSize / naturalLineHeight : lineHeight;
     }
 
     /// <summary>

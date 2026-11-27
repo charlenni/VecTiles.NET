@@ -8,7 +8,7 @@ namespace VecTiles.DataSources.Tests;
 
 /// <summary>
 /// Tests for the PMTiles tile data source against the Zuerich.pmtiles test archive
-/// (MVT vector tiles, gzip compressed, zoom levels 0 to 14).
+/// (MVT vector tiles, gzip compressed, zoom levels 0 to 15).
 /// </summary>
 public class PMTilesTileDataSourceTests
 {
@@ -60,7 +60,7 @@ public class PMTilesTileDataSourceTests
         using var dataSource = new PMTilesTileDataSource("pmtiles://file://" + ArchivePath);
 
         Assert.Equal(0, dataSource.MinZoom);
-        Assert.Equal(14, dataSource.MaxZoom);
+        Assert.Equal(15, dataSource.MaxZoom);
         Assert.Equal(SourceType.Vector, dataSource.SourceType);
         Assert.Equal(Scheme.Xyz, dataSource.Scheme);
         Assert.Equal(PmTilesCompression.Gzip, dataSource.Header.InternalCompression);
@@ -75,7 +75,7 @@ public class PMTilesTileDataSourceTests
         using var dataSource = new PMTilesTileDataSource(ArchivePath);
 
         Assert.Equal(ArchivePath, dataSource.Source);
-        Assert.Equal(14, dataSource.MaxZoom);
+        Assert.Equal(15, dataSource.MaxZoom);
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public void ConstructorThrowsWhenZoomRangeDoesNotIntersect()
     {
-        Assert.Throws<ArgumentException>(() => new PMTilesTileDataSource(ArchivePath, 15, 22));
+        Assert.Throws<ArgumentException>(() => new PMTilesTileDataSource(ArchivePath, 16, 22));
     }
 
     [Theory]
@@ -146,7 +146,7 @@ public class PMTilesTileDataSourceTests
     {
         using var dataSource = new PMTilesTileDataSource(ArchivePath);
 
-        var data = await dataSource.GetTileAsync(new Tile(0, 0, 15));
+        var data = await dataSource.GetTileAsync(new Tile(0, 0, 16));
 
         Assert.Null(data);
     }
@@ -176,7 +176,7 @@ public class PMTilesTileDataSourceTests
             DefaultTileDataSourceFactory.CreateTileDataSource(["pmtiles://file://" + ArchivePath]));
 
         Assert.Equal(ArchivePath, dataSource.Source);
-        Assert.Equal(14, dataSource.MaxZoom);
+        Assert.Equal(15, dataSource.MaxZoom);
     }
 
     [Fact]

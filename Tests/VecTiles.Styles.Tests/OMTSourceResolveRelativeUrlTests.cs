@@ -23,16 +23,42 @@ public class OMTSourceResolveRelativeUrlTests
 
     /// <summary>
     /// A pmtiles source with a path relative to the base directory keeps the
-    /// pmtiles scheme, so the data source factory can route the URL.
+    /// pmtiles scheme, so the data source factory can route the URL. The path
+    /// is only resolved when the resolved file exists.
     /// </summary>
     [Fact]
     public void PmTilesRelativePathIsResolvedAgainstBaseDirectory()
     {
-        var source = new OMTSource { Url = "pmtiles://file://zuerich.pmtiles" };
+        var baseDirectory = Path.Combine(Path.GetTempPath(), "vectiles-omtsource-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(baseDirectory);
+        try
+        {
+            File.WriteAllText(Path.Combine(baseDirectory, "zuerich.pmtiles"), string.Empty);
 
-        source.ResolveRelativeUrls("/styles/protomaps");
+            var source = new OMTSource { Url = "pmtiles://file://zuerich.pmtiles" };
 
-        Assert.Equal("pmtiles:///styles/protomaps/zuerich.pmtiles", source.Url);
+            source.ResolveRelativeUrls(baseDirectory);
+
+            Assert.Equal($"pmtiles://{Path.Combine(baseDirectory, "zuerich.pmtiles")}", source.Url);
+        }
+        finally
+        {
+            Directory.Delete(baseDirectory, true);
+        }
+    }
+
+    /// <summary>
+    /// A pmtiles source whose file exists neither relative to the working
+    /// directory nor relative to the base directory is returned unchanged.
+    /// </summary>
+    [Fact]
+    public void PmTilesMissingFileIsUnchanged()
+    {
+        var source = new OMTSource { Url = "pmtiles://file://missing.pmtiles" };
+
+        source.ResolveRelativeUrls("/nonexistent/directory");
+
+        Assert.Equal("pmtiles://file://missing.pmtiles", source.Url);
     }
 
     /// <summary>

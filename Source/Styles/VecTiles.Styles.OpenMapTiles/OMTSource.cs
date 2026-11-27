@@ -267,10 +267,21 @@ public class OMTSource
 
             path = path.Substring(DefaultTileDataSourceFactory.FileScheme.Length + 3);
 
+            // Absolute paths and paths relative to the working directory are
+            // resolved by the data source itself
             if (Path.IsPathRooted(path) || File.Exists(path))
                 return url;
 
-            return $"{DefaultTileDataSourceFactory.PmTilesScheme}://{(baseDirectory.Length > 0 ? baseDirectory.TrimEnd('/') + "/" : string.Empty)}{path}";
+            var resolvedPath = baseDirectory.Length > 0
+                ? Path.Combine(baseDirectory, path)
+                : path;
+
+            // Only use the resolved path when it exists, otherwise keep the
+            // original URL, e.g. when the path is relative to the working
+            // directory of an application running from a different directory
+            return File.Exists(resolvedPath)
+                ? $"{DefaultTileDataSourceFactory.PmTilesScheme}://{resolvedPath}"
+                : url;
         }
 
         if (Path.IsPathRooted(path))

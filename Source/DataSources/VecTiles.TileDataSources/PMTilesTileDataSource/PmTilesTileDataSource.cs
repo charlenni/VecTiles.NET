@@ -22,7 +22,7 @@ namespace VecTiles.DataSources.PmTiles;
 /// directory stays in memory; tiles are decompressed on the fly according to the tile
 /// compression of the header and passed through to an <see cref="ITileConverter"/> unchanged.
 /// </remarks>
-public class PMTilesTileDataSource : ITileDataSource, IDisposable
+public class PmTilesTileDataSource : ITileDataSource, IDisposable
 {
     private const string SchemePrefix = "pmtiles://";
     private const int LeafDirectoryCacheSize = 4;
@@ -38,7 +38,7 @@ public class PMTilesTileDataSource : ITileDataSource, IDisposable
     private bool _disposed;
 
     ///  <summary>
-    ///  Initializes a new instance of the <see cref="PMTilesTileDataSource"/> class for the given source.
+    ///  Initializes a new instance of the <see cref="PmTilesTileDataSource"/> class for the given source.
     ///  </summary>
     ///  <param name="source">The PMTiles archive as URL: 'pmtiles://file://path/to/archive.pmtiles' for a file,
     ///  'pmtiles://https://host/path/archive.pmtiles' or 'pmtiles://http://host/path/archive.pmtiles' for an
@@ -50,7 +50,7 @@ public class PMTilesTileDataSource : ITileDataSource, IDisposable
     ///  <exception cref="FileNotFoundException">Thrown when the archive file does not exist</exception>
     ///  <exception cref="InvalidDataException">Thrown when the file is not a PMTiles archive or it is corrupt</exception>
     ///  <exception cref="NotSupportedException">Thrown when the compression of the archive is not supported</exception>
-    public PMTilesTileDataSource(string source, int minZoom = 0, int maxZoom = 22)
+    public PmTilesTileDataSource(string source, int minZoom = 0, int maxZoom = 22)
     {
         if (string.IsNullOrWhiteSpace(source))
             throw new ArgumentException("A pmtiles source must be provided", nameof(source));

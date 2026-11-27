@@ -57,7 +57,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public void ConstructorReadsHeaderOfArchive()
     {
-        using var dataSource = new PMTilesTileDataSource("pmtiles://file://" + ArchivePath);
+        using var dataSource = new PmTilesTileDataSource("pmtiles://file://" + ArchivePath);
 
         Assert.Equal(0, dataSource.MinZoom);
         Assert.Equal(15, dataSource.MaxZoom);
@@ -72,7 +72,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public void ConstructorAcceptsBareFilePath()
     {
-        using var dataSource = new PMTilesTileDataSource(ArchivePath);
+        using var dataSource = new PmTilesTileDataSource(ArchivePath);
 
         Assert.Equal(ArchivePath, dataSource.Source);
         Assert.Equal(15, dataSource.MaxZoom);
@@ -82,7 +82,7 @@ public class PMTilesTileDataSourceTests
     public void ConstructorThrowsForMissingFile()
     {
         Assert.Throws<FileNotFoundException>(
-            () => new PMTilesTileDataSource("pmtiles://file:///does/not/exist.pmtiles"));
+            () => new PmTilesTileDataSource("pmtiles://file:///does/not/exist.pmtiles"));
     }
 
     [Fact]
@@ -90,13 +90,13 @@ public class PMTilesTileDataSourceTests
     {
         var notPmTiles = Path.Combine(RepoData.ProtomapsFiles, "protomaps-light-style.json");
 
-        Assert.Throws<InvalidDataException>(() => new PMTilesTileDataSource(notPmTiles));
+        Assert.Throws<InvalidDataException>(() => new PmTilesTileDataSource(notPmTiles));
     }
 
     [Fact]
     public void ConstructorThrowsWhenZoomRangeDoesNotIntersect()
     {
-        Assert.Throws<ArgumentException>(() => new PMTilesTileDataSource(ArchivePath, 16, 22));
+        Assert.Throws<ArgumentException>(() => new PmTilesTileDataSource(ArchivePath, 16, 22));
     }
 
     [Theory]
@@ -104,7 +104,7 @@ public class PMTilesTileDataSourceTests
     [InlineData(14, 8580, 5734)]
     public async Task GetTileAsyncReturnsTileData(int zoom, int x, int y)
     {
-        using var dataSource = new PMTilesTileDataSource(ArchivePath);
+        using var dataSource = new PmTilesTileDataSource(ArchivePath);
 
         var data = await dataSource.GetTileAsync(new Tile(x, y, zoom));
 
@@ -118,7 +118,7 @@ public class PMTilesTileDataSourceTests
     [InlineData(14, 8580, 5734)]
     public async Task GetTileAsyncReturnsDecompressedMvtTile(int zoom, int x, int y)
     {
-        using var dataSource = new PMTilesTileDataSource(ArchivePath);
+        using var dataSource = new PmTilesTileDataSource(ArchivePath);
 
         var data = await dataSource.GetTileAsync(new Tile(x, y, zoom));
 
@@ -133,7 +133,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public async Task GetTileAsyncReturnsNullForTileOutsideOfArchive()
     {
-        using var dataSource = new PMTilesTileDataSource(ArchivePath);
+        using var dataSource = new PmTilesTileDataSource(ArchivePath);
 
         // Tile in the Gulf of Guinea, far outside of the Zurich archive
         var data = await dataSource.GetTileAsync(new Tile(0, 0, 10));
@@ -144,7 +144,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public async Task GetTileAsyncReturnsNullForTileAboveMaxZoom()
     {
-        using var dataSource = new PMTilesTileDataSource(ArchivePath);
+        using var dataSource = new PmTilesTileDataSource(ArchivePath);
 
         var data = await dataSource.GetTileAsync(new Tile(0, 0, 16));
 
@@ -154,7 +154,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public async Task GetTileAsyncRepeatedRequestsUseLeafDirectoryCache()
     {
-        using var dataSource = new PMTilesTileDataSource(ArchivePath);
+        using var dataSource = new PmTilesTileDataSource(ArchivePath);
 
         // Tiles around the center of the archive: neighbouring tiles of the same zoom level
         // are spread over one leaf directory, so the requests hit the cache
@@ -172,7 +172,7 @@ public class PMTilesTileDataSourceTests
     [Fact]
     public void FactoryCreatesPmTilesSourceFromFileUrl()
     {
-        using var dataSource = Assert.IsType<PMTilesTileDataSource>(
+        using var dataSource = Assert.IsType<PmTilesTileDataSource>(
             DefaultTileDataSourceFactory.CreateTileDataSource(["pmtiles://file://" + ArchivePath]));
 
         Assert.Equal(ArchivePath, dataSource.Source);

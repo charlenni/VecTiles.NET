@@ -322,7 +322,7 @@ public class OMTSource
             Center = mbTiles.Center;
             Zoom ??= mbTiles.CenterZoom;
         }
-        else if (dataSource is PMTilesTileDataSource pmTiles)
+        else if (dataSource is PmTilesTileDataSource pmTiles)
         {
             Center = pmTiles.Center;
             Zoom ??= pmTiles.CenterZoom;

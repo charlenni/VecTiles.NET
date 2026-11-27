@@ -82,6 +82,6 @@ public static class DefaultTileDataSourceFactory
 
     private static ITileDataSource CreatePmTilesSource(string source)
     {
-        return new PmTiles.PMTilesTileDataSource(source);
+        return new PmTiles.PmTilesTileDataSource(source);
     }
 }

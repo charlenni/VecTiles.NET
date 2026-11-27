@@ -103,7 +103,11 @@ public class CanoePoloPlacementRingTests
             .OfType<Symbol>()
             .Where(s => s.Subclass == "canoe_polo")
             .ToList();
-        Assert.Equal(2, canoe.Count);
+        // At 16 only one icon is expected: the label "Universitätsbibliothek,
+        // Völkerkundemuseum" is no longer broken inside its words (MapLibre
+        // only wraps between words), so it is wider and its conservative
+        // placement square for viewport-aligned text reaches the second icon
+        Assert.Equal(zoom == 16 ? 1 : 2, canoe.Count);
 
         foreach (var symbol in canoe)
         {

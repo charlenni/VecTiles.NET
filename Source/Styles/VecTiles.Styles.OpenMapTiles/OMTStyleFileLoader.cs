@@ -61,7 +61,7 @@ public class OMTStyleFileLoader
             ApplySourceCenterAndZoom(omtStyleFile);
         }
 
-        omtStyleFile.Sprites = await LoadSprites(omtStyleFile.spriteFile).ConfigureAwait(false);
+        omtStyleFile.Sprites = await LoadSprites(omtStyleFile.SpriteDefinitions).ConfigureAwait(false);
 
         return omtStyleFile;
     }
@@ -129,7 +129,57 @@ public class OMTStyleFileLoader
     /// <exception cref="ArgumentException">Thrown if the sprite JSON isn't valid.</exception>
     public static async Task<SpriteDictionary> LoadSprites(string spriteFile)
     {
-        Dictionary<string, Sprite>? omtSprites;
+        return await LoadSprites(new OMTSpriteDefinitionCollection
+        {
+            new OMTSpriteDefinition { Url = spriteFile }
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Loads the sprite atlases of the given sprite definitions (a single
+    /// sprite URL, or the id/URL pairs of the MapLibre style spec) and merges
+    /// them into one dictionary. Sprites of a definition with an id are also
+    /// registered under "id:name", so style properties can reference them
+    /// prefixed.
+    /// </summary>
+    /// <param name="spriteDefinitions">The sprite definitions of the style file.</param>
+    /// <returns>The sprite dictionary with each sprite's atlas set to its loaded bitmap.</returns>
+    /// <exception cref="ArgumentException">Thrown if a sprite JSON isn't valid.</exception>
+    public static async Task<SpriteDictionary> LoadSprites(OMTSpriteDefinitionCollection spriteDefinitions)
+    {
+        var sprites = new Dictionary<string, Sprite>();
+
+        foreach (var definition in spriteDefinitions)
+        {
+            var (bitmap, atlasSprites) = await LoadSpriteAtlas(definition.Url).ConfigureAwait(false);
+
+            foreach (var (name, sprite) in atlasSprites)
+            {
+                sprite.Atlas = bitmap;
+
+                // Sprites are always resolvable by their plain name; when
+                // several definitions contain the same name, the first wins
+                if (!sprites.ContainsKey(name))
+                    sprites.Add(name, sprite);
+
+                if (!string.IsNullOrEmpty(definition.Id))
+                    sprites.TryAdd($"{definition.Id}:{name}", sprite);
+            }
+        }
+
+        return new SpriteDictionary(sprites);
+    }
+
+    /// <summary>
+    /// Loads a sprite atlas from its base path ("@2x" version when available,
+    /// unsuffixed version as fallback).
+    /// </summary>
+    /// <param name="spriteFile">Base path or URL of the sprite file, without file extension.</param>
+    /// <returns>The atlas bitmap and the dictionary of the atlas' sprite descriptions.</returns>
+    /// <exception cref="ArgumentException">Thrown if the sprite JSON isn't valid.</exception>
+    private static async Task<(Bitmap Bitmap, Dictionary<string, Sprite> Sprites)> LoadSpriteAtlas(string spriteFile)
+    {
+        Dictionary<string, Sprite>? atlasSprites;
 
         byte[] bitmapBytes;
         byte[] jsonBytes;
@@ -149,21 +199,14 @@ public class OMTStyleFileLoader
 
         using (var stream = new MemoryStream(jsonBytes, writable: false))
         {
-            omtSprites = JsonSerializer.Deserialize<Dictionary<string, Sprite>>(stream, StyleJson.Options);
+            atlasSprites = JsonSerializer.Deserialize<Dictionary<string, Sprite>>(stream, StyleJson.Options);
         }
 
-        if (omtSprites == null)
+        if (atlasSprites == null)
         {
             throw new ArgumentException("Sprite file isn't valid");
         }
 
-        var bitmap = new Bitmap(bitmapBytes);
-        
-        foreach (var sprite in omtSprites.Values)
-        {
-            sprite.Atlas = bitmap;
-        }
-
-        return new SpriteDictionary(omtSprites);
+        return (new Bitmap(bitmapBytes), atlasSprites);
     }
 }

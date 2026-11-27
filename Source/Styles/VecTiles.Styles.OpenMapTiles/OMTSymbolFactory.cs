@@ -28,9 +28,16 @@ public class OMTSymbolFactory : ISymbolFactory
 
         _spriteFactory = (name) =>
         {
-            if (string.IsNullOrEmpty(name) || !spriteFile.Sprites.TryGetValue(name, out Sprite? sprite))
+            if (string.IsNullOrEmpty(name))
             {
                 return null;
+            }
+
+            if (!spriteFile.Sprites.TryGetValue(name, out Sprite? sprite) && name.Contains(':'))
+            {
+                // Sprites of a MapLibre multi-sprite style are referenced as
+                // "id:name"; fall back to the plain name when the id isn't known
+                spriteFile.Sprites.TryGetValue(name.Substring(name.IndexOf(':') + 1), out sprite);
             }
 
             return sprite;

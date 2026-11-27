@@ -1,6 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Text.Json.Nodes;
 using VecTiles.Common.Primitives;
+using VecTiles.Styles.OpenMapTiles.Json;
 
 namespace VecTiles.Styles.OpenMapTiles;
 
@@ -63,9 +64,13 @@ public class OMTStyleFile
     [JsonPropertyName("pitch")]
     public float Pitch { get; set; } = 0.0f;
 
+    /// <summary>
+    /// Sprite definitions of the style: either a single sprite URL (Mapbox
+    /// style spec) or a list of id/URL pairs (MapLibre style spec), where
+    /// sprites are referenced as "id:name" in icon-image and pattern properties.
+    /// </summary>
     [JsonPropertyName("sprite")]
-    [JsonInclude]
-    internal string spriteFile = string.Empty;
+    public OMTSpriteDefinitionCollection SpriteDefinitions { get; set; } = [];
 
     /// <summary>
     /// Sprites loaded from the style's sprite file image and atlas definition,

@@ -4,7 +4,7 @@
        Package specific metadata (PackageId, Title, Description, PackageTags) lives in the
        Source/Packages/*.Package projects. -->
   <PropertyGroup>
-    <Version>0.3.0</Version>
+    <Version>0.2.0</Version>
     <Authors>Dirk Weltz</Authors>
     <PackageProjectUrl>https://github.com/charlenni/VecTiles.NET</PackageProjectUrl>
     <RepositoryUrl>https://github.com/charlenni/VecTiles.NET</RepositoryUrl>

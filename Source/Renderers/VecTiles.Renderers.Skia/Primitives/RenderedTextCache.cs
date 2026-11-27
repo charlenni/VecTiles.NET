@@ -1,6 +1,7 @@
 using SkiaSharp;
 using System.Collections.Concurrent;
 using Topten.RichTextKit;
+using VecTiles.Common.Exceptions;
 
 namespace VecTiles.Renderers.Skia.Primitives;
 
@@ -37,8 +38,10 @@ public static class RenderedTextCache
     /// <summary>
     /// Gets a cached <see cref="RenderedText"/> for the given text and layout
     /// parameters, or creates and measures a new one. The created text block is
-    /// shared between all callers with identical parameters, so it must not be
-    /// modified afterwards.
+    /// shared between all callers with identical parameters. Its style is owned
+    /// by the entry: the renderers may adjust paint attributes (colors, halo)
+    /// per draw, but layout attributes (font size, letter spacing, line height)
+    /// must not be modified, so the shared layout stays valid.
     /// </summary>
     /// <param name="text">The text.</param>
     /// <param name="styleName">Name of the style to resolve fonts for.</param>
@@ -76,7 +79,11 @@ public static class RenderedTextCache
     private static RenderedText LayoutRenderedText(string text, string styleName, string[] fontNames,
         float fontSize, float lineHeight, float letterSpacing, float? maxWidth, TextAlignment alignment)
     {
-        var textStyle = FontCache.CreateFonts(styleName, fontNames);
+        // FontCache returns a shared style instance per font signature; this
+        // entry owns a private copy, because the layout parameters below are
+        // entry specific and RichTextKit reads the live style at first paint
+        var textStyle = FontCache.CreateFonts(styleName, fontNames)?.Modify()
+            ?? throw new FontNotFoundException($"Font of style '{styleName}' not found");
 
         // Like MapLibre, a word wider than the maximum width must overflow on
         // its own line instead of being broken mid-word. RichTextKit breaks

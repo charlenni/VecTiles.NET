@@ -35,7 +35,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Benchmarks", "Benchmarks", 
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Styles", "Styles", "{35D8B1E7-56F4-4913-A89B-6622468EF9F6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Styles.OpenMapTiles", "Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj", "{AC086188-C627-4967-9B6A-B41B524BE1D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Styles.MapLibre", "Source\Styles\VecTiles.Styles.MapLibre\VecTiles.Styles.MapLibre.csproj", "{AC086188-C627-4967-9B6A-B41B524BE1D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Styles.Mapsforge", "Source\Styles\VecTiles.Styles.Mapsforge\VecTiles.Styles.Mapsforge.csproj", "{7A19C2F1-6D53-4E0E-9F5F-2A3B9CE1D6A0}"
 EndProject
@@ -69,7 +69,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Renderers.Skia.Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.Converters.SdfFont", "Source\Converters\VecTiles.Converters.SdfFont\VecTiles.Converters.SdfFont.csproj", "{CA78D703-BC71-4FD0-AFED-FDF7992DD2DC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.OpenMapTiles.Benchmarks", "Benchmarks\VecTiles.OpenMapTiles.Benchmarks\VecTiles.OpenMapTiles.Benchmarks.csproj", "{49CF2375-BE54-4D77-A8BF-5963297B1FB2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "VecTiles.MapLibre.Benchmarks", "Benchmarks\VecTiles.MapLibre.Benchmarks\VecTiles.MapLibre.Benchmarks.csproj", "{49CF2375-BE54-4D77-A8BF-5963297B1FB2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Packages", "Packages", "{7D9862DE-0950-4FC6-BFB0-940FBEC36D82}"
 EndProject

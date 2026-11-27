@@ -7,7 +7,7 @@ using VecTiles.Common.Primitives;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
 using VecTiles.Renderers.Skia;
-using VecTiles.Styles.OpenMapTiles.Extensions;
+using VecTiles.Styles.MapLibre.Extensions;
 using Xunit.Abstractions;
 
 namespace VecTiles.Renderers.Skia.Test;

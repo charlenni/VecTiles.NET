@@ -1,0 +1,841 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
+    <PackageReference Include="protobuf-net" Version="3.4.40" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Source\Controls\VecTiles.Control.Mapsui\VecTiles.Controls.Mapsui.csproj" />
+    <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" />
+    <ProjectReference Include="..\..\Source\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />
+    <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
+    <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />
+    <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.MapLibre\VecTiles.Styles.MapLibre.csproj" />
+    <ProjectReference Include="..\..\Source\VecTiles.Common\VecTiles.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\Files\OpenMapTiles\LICENSE.md" Link="Files\OpenMapTiles\LICENSE.md">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\Files\OpenMapTiles\zurich.mbtiles" Link="Files\OpenMapTiles\zurich.mbtiles">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic.ttf">
+      <Link>Files/OpenMapTiles/Fonts/Roboto Condensed Italic.ttf</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\0-255.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\0-255.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1024-1279.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1024-1279.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\10240-10495.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\10240-10495.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\10496-10751.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\10496-10751.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\10752-11007.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\10752-11007.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11008-11263.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11008-11263.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11264-11519.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11264-11519.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11520-11775.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11520-11775.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11776-12031.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\11776-12031.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12032-12287.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12032-12287.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12288-12543.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12288-12543.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12544-12799.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12544-12799.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1280-1535.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1280-1535.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12800-13055.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\12800-13055.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13056-13311.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13056-13311.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13312-13567.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13312-13567.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13568-13823.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13568-13823.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13824-14079.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\13824-14079.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14080-14335.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14080-14335.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14336-14591.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14336-14591.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14592-14847.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14592-14847.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14848-15103.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\14848-15103.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15104-15359.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15104-15359.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1536-1791.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1536-1791.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15360-15615.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15360-15615.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15616-15871.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15616-15871.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15872-16127.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\15872-16127.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16128-16383.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16128-16383.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16384-16639.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16384-16639.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16640-16895.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16640-16895.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16896-17151.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\16896-17151.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17152-17407.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17152-17407.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17408-17663.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17408-17663.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17664-17919.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17664-17919.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1792-2047.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\1792-2047.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17920-18175.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\17920-18175.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18176-18431.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18176-18431.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18432-18687.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18432-18687.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18688-18943.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18688-18943.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18944-19199.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\18944-19199.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19200-19455.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19200-19455.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19456-19711.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19456-19711.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19712-19967.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19712-19967.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19968-20223.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\19968-20223.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20224-20479.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20224-20479.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2048-2303.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2048-2303.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20480-20735.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20480-20735.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20736-20991.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20736-20991.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20992-21247.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\20992-21247.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\21248-21503.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\21248-21503.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\21504-21759.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\21504-21759.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\21760-22015.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\21760-22015.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22016-22271.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22016-22271.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22272-22527.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22272-22527.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22528-22783.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22528-22783.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22784-23039.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\22784-23039.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2304-2559.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2304-2559.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23040-23295.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23040-23295.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23296-23551.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23296-23551.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23552-23807.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23552-23807.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23808-24063.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\23808-24063.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24064-24319.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24064-24319.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24320-24575.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24320-24575.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24576-24831.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24576-24831.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24832-25087.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\24832-25087.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25088-25343.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25088-25343.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25344-25599.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25344-25599.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\256-511.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\256-511.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2560-2815.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2560-2815.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25600-25855.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25600-25855.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25856-26111.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\25856-26111.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26112-26367.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26112-26367.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26368-26623.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26368-26623.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26624-26879.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26624-26879.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26880-27135.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\26880-27135.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27136-27391.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27136-27391.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27392-27647.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27392-27647.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27648-27903.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27648-27903.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27904-28159.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\27904-28159.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2816-3071.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\2816-3071.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28160-28415.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28160-28415.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28416-28671.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28416-28671.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28672-28927.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28672-28927.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28928-29183.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\28928-29183.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29184-29439.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29184-29439.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29440-29695.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29440-29695.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29696-29951.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29696-29951.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29952-30207.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\29952-30207.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30208-30463.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30208-30463.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30464-30719.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30464-30719.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3072-3327.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3072-3327.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30720-30975.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30720-30975.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30976-31231.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\30976-31231.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\31232-31487.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\31232-31487.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\31488-31743.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\31488-31743.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\31744-31999.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\31744-31999.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32000-32255.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32000-32255.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32256-32511.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32256-32511.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32512-32767.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32512-32767.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32768-33023.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\32768-33023.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33024-33279.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33024-33279.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3328-3583.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3328-3583.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33280-33535.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33280-33535.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33536-33791.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33536-33791.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33792-34047.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\33792-34047.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34048-34303.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34048-34303.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34304-34559.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34304-34559.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34560-34815.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34560-34815.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34816-35071.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\34816-35071.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35072-35327.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35072-35327.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35328-35583.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35328-35583.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35584-35839.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35584-35839.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3584-3839.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3584-3839.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35840-36095.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\35840-36095.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36096-36351.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36096-36351.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36352-36607.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36352-36607.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36608-36863.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36608-36863.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36864-37119.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\36864-37119.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37120-37375.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37120-37375.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37376-37631.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37376-37631.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37632-37887.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37632-37887.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37888-38143.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\37888-38143.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38144-38399.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38144-38399.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3840-4095.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\3840-4095.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38400-38655.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38400-38655.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38656-38911.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38656-38911.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38912-39167.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\38912-39167.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39168-39423.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39168-39423.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39424-39679.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39424-39679.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39680-39935.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39680-39935.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39936-40191.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\39936-40191.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40192-40447.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40192-40447.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40448-40703.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40448-40703.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40704-40959.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40704-40959.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4096-4351.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4096-4351.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40960-41215.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\40960-41215.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41216-41471.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41216-41471.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41472-41727.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41472-41727.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41728-41983.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41728-41983.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41984-42239.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\41984-42239.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\42240-42495.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\42240-42495.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\42496-42751.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\42496-42751.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\42752-43007.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\42752-43007.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43008-43263.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43008-43263.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43264-43519.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43264-43519.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4352-4607.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4352-4607.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43520-43775.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43520-43775.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43776-44031.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\43776-44031.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44032-44287.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44032-44287.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44288-44543.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44288-44543.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44544-44799.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44544-44799.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44800-45055.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\44800-45055.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45056-45311.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45056-45311.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45312-45567.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45312-45567.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45568-45823.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45568-45823.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45824-46079.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\45824-46079.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4608-4863.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4608-4863.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46080-46335.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46080-46335.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46336-46591.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46336-46591.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46592-46847.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46592-46847.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46848-47103.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\46848-47103.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47104-47359.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47104-47359.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47360-47615.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47360-47615.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47616-47871.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47616-47871.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47872-48127.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\47872-48127.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48128-48383.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48128-48383.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48384-48639.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48384-48639.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4864-5119.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\4864-5119.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48640-48895.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48640-48895.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48896-49151.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\48896-49151.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49152-49407.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49152-49407.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49408-49663.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49408-49663.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49664-49919.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49664-49919.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49920-50175.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\49920-50175.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50176-50431.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50176-50431.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50432-50687.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50432-50687.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50688-50943.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50688-50943.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50944-51199.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\50944-51199.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\512-767.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\512-767.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5120-5375.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5120-5375.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51200-51455.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51200-51455.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51456-51711.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51456-51711.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51712-51967.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51712-51967.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51968-52223.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\51968-52223.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52224-52479.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52224-52479.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52480-52735.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52480-52735.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52736-52991.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52736-52991.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52992-53247.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\52992-53247.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\53248-53503.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\53248-53503.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\53504-53759.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\53504-53759.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5376-5631.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5376-5631.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\53760-54015.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\53760-54015.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54016-54271.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54016-54271.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54272-54527.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54272-54527.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54528-54783.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54528-54783.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54784-55039.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\54784-55039.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55040-55295.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55040-55295.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55296-55551.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55296-55551.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55552-55807.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55552-55807.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55808-56063.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\55808-56063.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56064-56319.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56064-56319.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5632-5887.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5632-5887.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56320-56575.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56320-56575.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56576-56831.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56576-56831.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56832-57087.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\56832-57087.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57088-57343.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57088-57343.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57344-57599.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57344-57599.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57600-57855.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57600-57855.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57856-58111.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\57856-58111.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58112-58367.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58112-58367.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58368-58623.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58368-58623.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58624-58879.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58624-58879.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5888-6143.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\5888-6143.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58880-59135.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\58880-59135.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59136-59391.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59136-59391.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59392-59647.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59392-59647.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59648-59903.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59648-59903.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59904-60159.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\59904-60159.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60160-60415.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60160-60415.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60416-60671.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60416-60671.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60672-60927.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60672-60927.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60928-61183.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\60928-61183.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61184-61439.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61184-61439.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6144-6399.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6144-6399.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61440-61695.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61440-61695.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61696-61951.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61696-61951.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61952-62207.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\61952-62207.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62208-62463.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62208-62463.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62464-62719.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62464-62719.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62720-62975.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62720-62975.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62976-63231.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\62976-63231.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\63232-63487.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\63232-63487.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\63488-63743.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\63488-63743.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\63744-63999.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\63744-63999.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6400-6655.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6400-6655.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64000-64255.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64000-64255.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64256-64511.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64256-64511.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64512-64767.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64512-64767.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64768-65023.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\64768-65023.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\65024-65279.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\65024-65279.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\65280-65535.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\65280-65535.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6656-6911.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6656-6911.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6912-7167.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\6912-7167.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7168-7423.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7168-7423.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7424-7679.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7424-7679.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\768-1023.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\768-1023.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7680-7935.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7680-7935.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7936-8191.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\7936-8191.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8192-8447.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8192-8447.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8448-8703.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8448-8703.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8704-8959.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8704-8959.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8960-9215.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\8960-9215.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9216-9471.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9216-9471.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9472-9727.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9472-9727.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9728-9983.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9728-9983.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9984-10239.pbf">
+      <Link>Files\OpenMapTiles\Fonts\Roboto Condensed Italic\9984-10239.pbf</Link>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Medium.ttf">
+      <Link>Files/OpenMapTiles/Fonts/Roboto Medium.ttf</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\Fonts\Roboto Regular.ttf">
+      <Link>Files/OpenMapTiles/Fonts/Roboto Regular.ttf</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\natural_earth_2_shaded_relief.raster.mbtiles">
+      <Link>Files/OpenMapTiles/natural_earth_2_shaded_relief.raster.mbtiles</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="..\..\Files\OpenMapTiles\osm-liberty.json">
+      <Link>Files/OpenMapTiles/osm-liberty.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty.json">
+      <Link>Files/OpenMapTiles/Sprites/osm-liberty.json</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty.png">
+      <Link>Files/OpenMapTiles/Sprites/osm-liberty.png</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty@2x.json">
+      <Link>Files/OpenMapTiles/Sprites/osm-liberty@2x.json</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\..\Files\OpenMapTiles\Sprites\osm-liberty@2x.png">
+      <Link>Files/OpenMapTiles/Sprites/osm-liberty@2x.png</Link>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="BenchmarkDotNet.Artifacts\results\" />
+  </ItemGroup>
+
+</Project>

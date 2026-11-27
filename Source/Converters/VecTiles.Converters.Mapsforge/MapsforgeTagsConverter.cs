@@ -5,18 +5,18 @@ using NetTopologySuite.Geometries;
 namespace VecTiles.Converters.Mapsforge;
 
 /// <summary>
-/// Static converter of the raw Mapsforge tags of a feature to the conventions of the OpenMapTiles
-/// schema, https://github.com/openmaptiles/openmaptiles/tree/master/layers: it determines the
+/// Static converter of the raw Mapsforge tags of a feature to the conventions of the MapLibre
+/// schema, https://maplibre.org/maplibre-style-spec/layers/: it determines the
 /// source layer of the feature from its tags (e.g. a feature tagged 'building=yes' belongs to the
 /// source layer 'building') and converts the tags to the attribute names and values expected by
-/// styles based on the OpenMapTiles schema (e.g. osm-liberty).
+/// styles based on the MapLibre schema (e.g. osm-liberty).
 /// </summary>
 /// <remarks>
-/// The mapping follows the OpenMapTiles layer definitions, restricted to the features that occur
-/// in Mapsforge map files: OpenMapTiles enriches its tiles with data from post processing steps
+/// The mapping follows the MapLibre layer definitions, restricted to the features that occur
+/// in Mapsforge map files: MapLibre enriches its tiles with data from post processing steps
 /// (e.g. computed building heights or place ranks) that Mapsforge files do not carry, such
 /// attributes are approximated or left out. One feature may map to several source layers, the
-/// OpenMapTiles schema lists street names as separate features in the 'transportation_name'
+/// MapLibre schema lists street names as separate features in the 'transportation_name'
 /// layer besides the road in the 'transportation' layer. A feature whose tags do not map to a
 /// source layer of the schema is dropped.
 /// </remarks>
@@ -24,7 +24,7 @@ public static class MapsforgeTagsConverter
 {
     /// <summary>
     /// Determines the source layer or layers of a feature from the tags and converts the tags of
-    /// the feature to the attribute names and values of the OpenMapTiles schema at those source
+    /// the feature to the attribute names and values of the MapLibre schema at those source
     /// layers.
     /// </summary>
     /// <param name="geometry">Geometry of the feature, in the normalized tile space; the geometry
@@ -60,7 +60,7 @@ public static class MapsforgeTagsConverter
     /// </summary>
     private static (string SourceLayer, IAttributesTable Attributes) ConvertPoint(Dictionary<string, string> tags)
     {
-        // Places are labels of administrative entities in their own source layer; the OpenMapTiles
+        // Places are labels of administrative entities in their own source layer; the MapLibre
         // schema requires a name for places
         if (tags.TryGetValue("place", out var place))
         {
@@ -115,7 +115,7 @@ public static class MapsforgeTagsConverter
     /// </summary>
     private static string? PoiClass(Dictionary<string, string> tags, out string subclass)
     {
-        // Transit stops and stations form classes of their own, the OpenMapTiles styles render
+        // Transit stops and stations form classes of their own, the MapLibre styles render
         // them with transit symbols (class in bus, rail, airport)
         if (tags.TryGetValue("highway", out var highway) && highway == "bus_stop")
         {
@@ -154,7 +154,7 @@ public static class MapsforgeTagsConverter
 
     /// <summary>
     /// Source layer priority of the POI tag keys: the first present key declares the POI. The
-    /// list follows the mapping of the OpenMapTiles poi layer (poi/mapping.yaml).
+    /// list follows the mapping of the MapLibre poi layer (poi/mapping.yaml).
     /// </summary>
     private static readonly string[] PoiTagKeys =
     [
@@ -171,8 +171,8 @@ public static class MapsforgeTagsConverter
     ];
 
     /// <summary>
-    /// Rank of a POI, a low rank is more important. OpenMapTiles computes the rank in a post
-    /// processing step; this simple mapping keeps the well-known POI classes of the OpenMapTiles
+    /// Rank of a POI, a low rank is more important. MapLibre computes the rank in a post
+    /// processing step; this simple mapping keeps the well-known POI classes of the MapLibre
     /// styles in the top rank band.
     /// </summary>
     private static int PoiRank(string poiClass)
@@ -185,7 +185,7 @@ public static class MapsforgeTagsConverter
 
     /// <summary>
     /// Convert the tags of an area feature. The source layers and their order follow the polygon
-    /// mappings of the OpenMapTiles layers (their mapping.yaml definitions).
+    /// mappings of the MapLibre layers (their mapping.yaml definitions).
     /// </summary>
     private static (string SourceLayer, IAttributesTable Attributes)[] Area(Dictionary<string, string> tags)
     {
@@ -205,7 +205,7 @@ public static class MapsforgeTagsConverter
             return [("water", NewAttributes("class", "fountain"))];
 
         // Land cover (see landcover/mapping.yaml with the class table of landcover.yaml; the
-        // class is derived from the subclass, the class 'park' of the OpenMapTiles styles is
+        // class is derived from the subclass, the class 'park' of the MapLibre styles is
         // not assigned here because the schema derives it to 'grass')
         if (LandcoverOf(tags) is { } landcover)
             return [("landcover", NewAttributes(("class", landcover.Class), ("subclass", landcover.Subclass)))];
@@ -547,7 +547,7 @@ public static class MapsforgeTagsConverter
     }
 
     /// <summary>
-    /// Oneway attribute of a road as used by the OpenMapTiles schema: 1 for a oneway road, -1
+    /// Oneway attribute of a road as used by the MapLibre schema: 1 for a oneway road, -1
     /// for a reversed oneway road, absent for a bidirectional road.
     /// </summary>
     private static void AddOneway(IAttributesTable attributes, Dictionary<string, string> tags)

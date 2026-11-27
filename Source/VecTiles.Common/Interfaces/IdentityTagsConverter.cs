@@ -7,7 +7,7 @@ namespace VecTiles.Common.Interfaces;
 /// Identity tags converter: it keeps the raw tags of a feature unchanged and passes the
 /// provisional source layer of the feature through. It is used by style flavours that render
 /// the features of the raw tile data directly, either with the source layers of the data (the
-/// OpenMapTiles schema already organizes the features in the source layers the styles expect)
+/// MapLibre schema already organizes the features in the source layers the styles expect)
 /// or in a single source layer named by <see cref="IdentityTagsConverter(string)"/> (raw
 /// Mapsforge data has no notion of source layers; a Mapsforge render theme references all
 /// features as the source layer 'mapsforge', see MFLayerStyle.SourceLayer).

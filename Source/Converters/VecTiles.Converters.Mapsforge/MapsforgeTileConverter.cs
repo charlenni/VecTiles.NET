@@ -24,7 +24,7 @@ namespace VecTiles.Converters.Mapsforge;
 /// https://github.com/mapsforge/mapsforge/blob/master/docs/Specification-Binary-Map-File.md.
 /// The source layer and the tags of the resulting features follow from the raw Mapsforge tags and
 /// are determined by an <see cref="ITagsConverter"/>; by default the
-/// <see cref="MapsforgeTagsConverter"/> is used, which implements the OpenMapTiles schema.
+/// <see cref="MapsforgeTagsConverter"/> is used, which implements the MapLibre schema.
 /// </remarks>
 public class MapsforgeTileConverter : ITileConverter
 {
@@ -64,7 +64,7 @@ public class MapsforgeTileConverter : ITileConverter
     /// <summary>
     /// Optional converter for the tags and source layers of the features to the conventions of
     /// the style rendering the converted tile. When null, the <see cref="MapsforgeTagsConverter"/>
-    /// with the OpenMapTiles schema is used.
+    /// with the MapLibre schema is used.
     /// </summary>
     private readonly ITagsConverter? _tagsConverter;
 
@@ -72,7 +72,7 @@ public class MapsforgeTileConverter : ITileConverter
     /// Initializes a new instance of the <see cref="MapsforgeTileConverter"/> class.
     /// </summary>
     /// <param name="tagsConverter">Optional tags and source layer converter; null uses the
-    /// <see cref="MapsforgeTagsConverter"/> with the OpenMapTiles schema.</param>
+    /// <see cref="MapsforgeTagsConverter"/> with the MapLibre schema.</param>
     public MapsforgeTileConverter(ITagsConverter? tagsConverter = null)
     {
         _tagsConverter = tagsConverter;
@@ -924,7 +924,7 @@ public class MapsforgeTileConverter : ITileConverter
     /// </summary>
     /// <param name="layers">Layers to add the feature to</param>
     /// <param name="tagsConverter">Tags and source layer converter of the tile conversion; null
-    /// uses the <see cref="MapsforgeTagsConverter"/> with the OpenMapTiles schema</param>
+    /// uses the <see cref="MapsforgeTagsConverter"/> with the MapLibre schema</param>
     /// <param name="geometry">Geometry of the feature, in the normalized tile space</param>
     /// <param name="sourceLayer">Provisional source layer of the feature</param>
     /// <param name="attributes">Raw or preconverted tags of the feature</param>
@@ -1146,7 +1146,7 @@ public class MapsforgeTileConverter : ITileConverter
 
     /// <summary>
     /// Y coordinate of a latitude in microdegrees in the normalized tile space of the requested
-    /// tile (top-left tile origin, y growing downwards, as in the OpenMapTiles vector tiles).
+    /// tile (top-left tile origin, y growing downwards, as in the MVT vector tiles).
     /// </summary>
     private static double MicrodegreesToTileY(long latMicro, Tile requestedTile)
     {

@@ -68,7 +68,7 @@ public static class TextLineSymbolRenderer
 
         var fontSize = symbol.FontSize.Invoke(context);
 
-        // A halo width of the OpenMapTiles spec is the distance of the halo to the glyph
+        // A halo width of the MapLibre spec is the distance of the halo to the glyph
         // outline outwards, so double it to compensate the centered stroke (see
         // TextPointSymbolRenderer); a Mapsforge stroke-width is a painted stroke width
         // and passes undoubled

@@ -3,7 +3,7 @@
 namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
-/// Represents a value in the OpenMapTiles PBF format, supporting multiple types.
+/// Represents a value in the MVT PBF format, supporting multiple types.
 /// </summary>
 [ProtoContract(Name = @"value")]
 public sealed class PbfValue

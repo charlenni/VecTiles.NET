@@ -1,0 +1,75 @@
+﻿using VecTiles.Common.Interfaces;
+using VecTiles.Common.Primitives;
+
+namespace VecTiles.Styles.MapLibre;
+
+/// <summary>
+/// Creates a <see cref="Paint"/> for a raster layer from the paint
+/// properties of a JSON style.
+/// </summary>
+public static class RasterPaint
+{
+    /// <summary>
+    /// Creates a paint from the raster properties (currently only opacity)
+    /// of the given layer style.
+    /// </summary>
+    /// <param name="style">The layer style; must be an <see cref="LayerStyle"/>.</param>
+    /// <param name="spriteFactory">Factory that resolves a sprite name into a sprite image.</param>
+    /// <returns>The paint for the raster layer.</returns>
+    /// <exception cref="ArgumentException">Thrown if the style is not an <see cref="LayerStyle"/>.</exception>
+    public static Paint CreatePaint(ILayerStyle style, Func<string, Sprite> spriteFactory)
+    {
+        if (style is not LayerStyle omtStyle)
+        {
+            throw new ArgumentException($"Style {style.GetType()} isn't a LayerStyle");
+        }
+
+        // Raster has only properties in Paint, no in Layout
+        var paint = omtStyle.Paint;
+
+        var brush = new Paint(omtStyle.Name);
+
+        // Set a default color, so that opacity is used
+        brush.SetFixColor(Colors.White);
+        
+        // raster-opacity
+        //   Optional number. Defaults to 1.
+        //   The opacity at which the image will be drawn.
+        if (paint.RasterOpacity.IsConstant)
+        {
+            brush.SetFixOpacity(paint.RasterOpacity.Evaluate(EvaluationContext.Empty));
+        }
+        else
+        {
+            brush.SetVariableOpacity((context) => paint.RasterOpacity.Evaluate(context));
+        }
+
+        // TODO: Create ColorFilter in SKPaint from the following values
+
+        // raster-hue-rotate
+        //   Optional number. Units in degrees. Defaults to 0.
+        //   Rotates hues around the color wheel.
+
+        // raster-brightness-min
+        //   Optional number.Defaults to 0.
+        //   Increase or reduce the brightness of the image. The value is the minimum brightness.
+
+        // raster-brightness-max
+        //   Optional number. Defaults to 1.
+        //   Increase or reduce the brightness of the image. The value is the maximum brightness.
+
+        // raster-saturation
+        //   Optional number.Defaults to 0.
+        //   Increase or reduce the saturation of the image.
+
+        // raster-contrast
+        //   Optional number. Defaults to 0.
+        //   Increase or reduce the contrast of the image.
+
+        // raster-fade-duration
+        //   Optional number.Units in milliseconds.Defaults to 300.
+        //   Fade duration when a new tile is added.
+
+        return brush;
+    }
+}

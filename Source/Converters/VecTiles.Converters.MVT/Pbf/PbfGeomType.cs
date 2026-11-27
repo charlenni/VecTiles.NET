@@ -3,7 +3,7 @@
 namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
-/// Represents the geometry type for OpenMapTiles PBF features.
+/// Represents the geometry type for MVT PBF features.
 /// </summary>
 [ProtoContract(Name = "GeomType")]
 public enum PbfGeomType

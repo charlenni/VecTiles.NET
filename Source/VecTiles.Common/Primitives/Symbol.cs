@@ -57,7 +57,7 @@ public abstract class Symbol : ISymbol
 
     /// <summary>
     /// Class attribute of the source vector data, independent of the
-    /// OpenMapTiles schema: set from the attribute key the source uses for
+    /// MapLibre schema: set from the attribute key the source uses for
     /// its class (e.g. "class" or "klasse"). Lets consumers of the symbol
     /// show a fallback for features without name.
     /// </summary>

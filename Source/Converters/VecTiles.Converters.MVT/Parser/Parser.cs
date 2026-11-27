@@ -8,7 +8,7 @@ using VecTiles.Converters.MVT.Pbf;
 namespace VecTiles.Converters.MVT.Parser;
 
 /// <summary>
-/// Parses tiles in OpenMapTiles PBF format into <see cref="VectorTile"/> instances.
+/// Parses tiles in MVT PBF format into <see cref="VectorTile"/> instances.
 /// </summary>
 public static class Parser
 {
@@ -248,7 +248,7 @@ public static class Parser
     }
 
     /// <summary>
-    /// Decodes a list of encoded geometry commands (from OpenMapTiles PBF format) into a list of coordinate lists.
+    /// Decodes a list of encoded geometry commands (from MVT PBF format) into a list of coordinate lists.
     /// Handles MoveTo, LineTo, and ClosePath commands for Point, LineString, and Polygon geometries.
     /// Optionally applies an overzoom transformation to each coordinate.
     /// </summary>

@@ -65,7 +65,7 @@ public static class RepoData
     });
 
     /// <summary>
-    /// The OpenMapTiles data Files folder of the repository
+    /// The OpenMapTiles data files folder of the repository
     /// (styles, mbtiles, mapsforge maps, fonts, sprites).
     /// </summary>
     public static string DataFiles => _dataFiles.Value;

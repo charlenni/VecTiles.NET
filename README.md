@@ -32,13 +32,13 @@ A local archive, referenced by a style file:
 ```csharp
 // The sources of protomaps-light-style.json reference the archive:
 // "url": "pmtiles://file://Files/Protomaps/zuerich.pmtiles"
-var tileSource = new OMTRenderedTileSource("file://Files/Protomaps/protomaps-light-style.json");
+var tileSource = new MLRenderedTileSource("file://Files/Protomaps/protomaps-light-style.json");
 ```
 
 Or a hosted style from the Protomaps style API, whose sources point to PMTiles on the web:
 
 ```csharp
-var tileSource = new OMTRenderedTileSource("https://api.protomaps.com/styles/v5/light/de.json?key=YOUR_API_KEY");
+var tileSource = new MLRenderedTileSource("https://api.protomaps.com/styles/v5/light/de.json?key=YOUR_API_KEY");
 ```
 
 ## Installation
@@ -48,7 +48,7 @@ VecTiles.NET targets `net10.0` and is available as five NuGet packages:
 | Package | Content |
 | --- | --- |
 | [VecTiles.Common](https://www.nuget.org/packages/VecTiles.Common) | Core types and interfaces, common renderer abstractions and tile data sources (HTTP(S), MBTiles, PMTiles) |
-| [VecTiles.OpenMapTiles](https://www.nuget.org/packages/VecTiles.OpenMapTiles) | Mapbox/OpenMapTiles (MVT) tile converter and Mapbox style support. Includes Protomaps PMTiles. |
+| [VecTiles.MapLibre](https://www.nuget.org/packages/VecTiles.MapLibre) | Mapbox/OpenMapTiles (MVT) tile converter and MapLibre style support. Includes Protomaps PMTiles. |
 | [VecTiles.Mapsforge](https://www.nuget.org/packages/VecTiles.Mapsforge) | Mapsforge map file tile converter and Mapsforge render theme support |
 | [VecTiles.Skia](https://www.nuget.org/packages/VecTiles.Skia) | SkiaSharp based renderer for styled vector tiles |
 | [VecTiles.Mapsui](https://www.nuget.org/packages/VecTiles.Mapsui) | Mapsui integration: the `RenderedTileLayer` for Mapsui map controls |
@@ -77,7 +77,7 @@ var styleSource = "file://Files/OpenMapTiles/osm-liberty.json";
 //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
 // Loads the style file, its data sources and its sprites
-var tileSource = new OMTRenderedTileSource(styleSource);
+var tileSource = new MLRenderedTileSource(styleSource);
 
 // The layer renders the styled vector tiles and shows them in the map.
 // The geometry of the tiles is drawn immediately; symbols are placed in a
@@ -151,7 +151,7 @@ using VecTiles.Controls.Mapsui;
 // Loads the map file and the sprites and patterns referenced by the render theme
 var tileSource = new MFRenderedTileSource(
     "file://Files/Mapsforge/zuerich.map",
-    new MapsforgeTagsConverter(),                       // maps raw Mapsforge tags to the OpenMapTiles
+    new MapsforgeTagsConverter(),                       // maps raw Mapsforge tags to the MapLibre
     "file://Files/Mapsforge/mapsforge/osmarender.xml"); // schema; an IdentityTagsConverter keeps
                                                         // the raw tags for render themes instead
 
@@ -161,14 +161,14 @@ MapControl.Map.Navigator.OverrideZoomBounds = tileLayer.ZoomBounds;
 ```
 
 The Mapsforge render theme format uses its own tag vocabulary, so a `MapsforgeTagsConverter` and a
-Mapbox style based on the OpenMapTiles schema (e.g. `osm-liberty-for-mapsforge.json`) work with
+JSON style based on the MapLibre schema (e.g. `osm-liberty-for-mapsforge.json`) work with
 Mapsforge map files as well. The rest of the setup (center, zoom, attribution) is identical to the
 style based example above.
 
 ## Loading styles and tile data
 
-VecTiles.NET addresses everything in URL notation. The `OMTStyleFileLoader` (used by
-`OMTRenderedTileSource`) loads the style file itself via `ByteDataSource`, which supports:
+VecTiles.NET addresses everything in URL notation. The `StyleFileLoader` (used by
+`MLRenderedTileSource`) loads the style file itself via `ByteDataSource`, which supports:
 
 | Scheme | Meaning |
 | --- | --- |
@@ -198,8 +198,8 @@ Examples for tile source URLs in a style file:
 
 Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the matching
 tile converter and applies the overzoom fallback described above: tile server, MBTiles and PMTiles
-MVT payloads with the OpenMapTiles converter, Mapsforge tiles with the Mapsforge converter, whose tag
-conversion by default maps the raw Mapsforge tags to the OpenMapTiles schema (so Mapbox style
+MVT payloads with the MVT converter, Mapsforge tiles with the Mapsforge converter, whose tag
+conversion by default maps the raw Mapsforge tags to the MapLibre schema (so MapLibre style
 based styles work unchanged on Mapsforge maps).
 
 ## How it fits together

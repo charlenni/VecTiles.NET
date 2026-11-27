@@ -9,7 +9,7 @@ namespace VecTiles.Renderers.Skia.Test;
 
 /// <summary>
 /// Smoke tests of <see cref="MFRenderedTileSource"/>: the Mapsforge map file of the repo is
-/// rendered with a Mapsforge render theme and with an OpenMapTiles style built for Mapsforge
+/// rendered with a Mapsforge render theme and with an MapLibre style built for Mapsforge
 /// data, and the tiles served for a tile covering Zürich must contain rendered layers.
 /// </summary>
 public class MFRenderedTileSourceTests

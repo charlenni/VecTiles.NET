@@ -69,7 +69,7 @@ public sealed class PlacedPointFeature : PointFeature
 
     /// <summary>
     /// The class attribute of the source vector data (e.g. the "klasse" of
-    /// basemap.de data) — independent of the OpenMapTiles schema keys. Lets
+    /// basemap.de data) — independent of the MapLibre schema keys. Lets
     /// the consumer decide what to show for features whose name is empty.
     /// </summary>
     public string SourceClass { get; }

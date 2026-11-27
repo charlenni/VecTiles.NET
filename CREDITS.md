@@ -16,7 +16,7 @@ These libraries are direct NuGet dependencies of VecTiles:
 | [SkiaSharp.HarfBuzz](https://github.com/mono/SkiaSharp) | MIT | Complex text shaping for symbol rendering |
 | [Topten.RichTextKit](https://github.com/toptensoftware/RichTextKit) | Apache-2.0 | Rich text layout and rendering |
 | [Earcut.NET](https://github.com/MichaCo/Earcut) | MIT | Polygon triangulation (a port of Mapbox's [Earcut](https://github.com/mapbox/earcut), ISC) |
-| [protobuf-net](https://github.com/protobuf-net/protobuf-net) | Apache-2.0 | Parsing of the Mapbox/OpenMapTiles PBF format |
+| [protobuf-net](https://github.com/protobuf-net/protobuf-net) | Apache-2.0 | Parsing of the MVT PBF format |
 | [BruTile](https://github.com/BruTile/BruTile) | Apache-2.0 | Tile math and predefined tile schemes |
 | [Mapsui](https://github.com/Mapsui/Mapsui) | MIT | Mapsui control (`VecTiles.Mapsui`) |
 | [sqlite-net-pcl](https://github.com/praeclarum/sqlite-net) | MIT | MBTiles (SQLite) tile data source |
@@ -57,6 +57,9 @@ VecTiles also builds on the open specifications and schemas of the following pro
 - [Mapbox](https://www.mapbox.com/) — VecTiles styles are written in the open
   [Mapbox style specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/) and it reads
   tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec) format.
+- [MapLibre](https://www.mapbox.com/) — VecTiles styles are written in the open
+  [MapLibre style specification](https://maplibre.org/maplibre-style-spec/) and it reads
+  tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec) format.
 - [OpenMapTiles](https://github.com/openmaptiles/openmaptiles) — the OpenMapTiles schema, whose
   layer and tag conventions are the base of the OpenMapTiles tile converter and of the
   Mapsforge tag conversion.
@@ -85,6 +88,8 @@ The sample styles and maps build on open data and open projects:
   [CC0](https://creativecommons.org/publicdomain/zero/1.0/)); the sample archive
   `zuerich.pmtiles` is an extract of the PMTiles builds of OpenStreetMap data published there
   (© [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, ODbL).
+- [VersaTiles](https://versatiles.org/) — the sample style `versatiles-en-style.json` is one of the VersaTiles basemap styles (visual design released under
+  [CC0](https://versatiles.org/versatiles-style/media/LICENSE-1.md))
 - The sample map files `zuerich.map` and `zurich.mbtiles` are derived from OpenStreetMap data
   (© [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, ODbL); `zuerich.map`
   was written with the mapsforge `map-writer`.

@@ -3,7 +3,7 @@
 namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
-/// Represents a OpenMapTiles vector tile containing one or more layers.
+/// Represents a MVT vector tile containing one or more layers.
 /// </summary>
 [ProtoContract(Name = "tile")]
 public sealed class PbfTile

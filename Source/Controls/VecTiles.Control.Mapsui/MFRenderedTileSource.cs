@@ -12,7 +12,7 @@ using VecTiles.Renderers.Common.Interfaces;
 using VecTiles.Renderers.Skia;
 using VecTiles.Renderers.Skia.Primitives;
 using VecTiles.Styles.Mapsforge;
-using VecTiles.Styles.OpenMapTiles;
+using VecTiles.Styles.MapLibre;
 using VecTiles.TileDataSources;
 using MapsuiLogLevel = Mapsui.Logging.LogLevel;
 using MapsuiLogger = Mapsui.Logging.Logger;
@@ -22,12 +22,12 @@ namespace VecTiles.Controls.Mapsui;
 /// <summary>
 /// A tile source that renders the map data of a Mapsforge map file (*.map) according to a style
 /// file, which may be a Mapsforge render theme (XML, matching the tag conventions of the map
-/// file) or an OpenMapTiles style file (JSON, expecting the OpenMapTiles tag schema).
+/// file) or an MapLibre style file (JSON, expecting the MapLibre tag schema).
 /// </summary>
 /// <remarks>
 /// The style flavour is chosen by the extension of the style source: ".xml" loads a Mapsforge
 /// render theme via <see cref="MFRenderThemeLoader"/>, anything else (typically a .json) loads
-/// an OpenMapTiles style via <see cref="OMTStyleFileLoader"/>. In the OpenMapTiles case the
+/// an MapLibre style via <see cref="StyleFileLoader"/>. In the MapLibre case the
 /// style's <c>sources</c> do not provide data of their own: the vector data always comes from
 /// the given Mapsforge map file and every vector source of the style is served from it. Non
 /// vector sources of the style (e.g. raster overlays) are created from the style file as usual
@@ -62,9 +62,9 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
     /// layer fallback of the theme, i.e. <c>new IdentityTagsConverter("mapsforge")</c> (or
     /// <see cref="IdentityTagsConverter.Instance"/> when the theme references empty source
     /// layers), for a Mapsforge render theme (data file and theme share the tag conventions);
-    /// leave null for an OpenMapTiles style, which applies the OpenMapTiles schema.</param>
+    /// leave null for an MapLibre style, which applies the MapLibre schema.</param>
     /// <param name="styleSource">The style file: a Mapsforge render theme (.xml) or an
-    /// OpenMapTiles style file (.json), as path or URL.</param>
+    /// MapLibre style file (.json), as path or URL.</param>
     public MFRenderedTileSource(string mapSource, ITagsConverter? tagConverter, string styleSource)
     {
         // Style loaders expect URL notation; a plain file path is normalized to file://
@@ -99,7 +99,7 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
         else
         {
             // Sources are created manually below, because vector data comes from the map file
-            var styleFile = OMTStyleFileLoader.Load(styleSource, createSources: false,
+            var styleFile = StyleFileLoader.Load(styleSource, createSources: false,
                 vectorTileConnectionFactory: DefaultVectorTileConverterFactory.Factory).Result;
 
             foreach (var omtSource in styleFile.Sources.Values)
@@ -134,7 +134,7 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
                     .Where(s => s.Value.DataSource != null)
                     .Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, s.Value.DataSource!)),
                 _styles,
-                new RenderFactory(_styles, new OMTPaintFactory(styleFile.Sprites), new OMTSymbolFactory(styleFile.Sprites)));
+                new RenderFactory(_styles, new PaintFactory(styleFile.Sprites), new SymbolFactory(styleFile.Sprites)));
 
             foreach (var s in styleFile.Sources.Values.Where(s => _styles.Any(l => l.Source == s.Name)))
             {
@@ -242,7 +242,7 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
 
     /// <summary>
     /// Determines whether the style source is a Mapsforge render theme (XML file) as opposed to
-    /// an OpenMapTiles style file (JSON).
+    /// a MapLibre style file (JSON).
     /// </summary>
     private static bool IsMapsforgeStyle(string styleSource)
     {

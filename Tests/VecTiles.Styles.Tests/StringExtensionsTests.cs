@@ -1,6 +1,6 @@
 using NetTopologySuite.Features;
 using VecTiles.Common.Primitives;
-using VecTiles.Styles.OpenMapTiles.Extensions;
+using VecTiles.Styles.MapLibre.Extensions;
 
 namespace VecTiles.Styles.MapboxTests
 {

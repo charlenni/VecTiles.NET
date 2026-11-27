@@ -148,7 +148,7 @@ public sealed class PlacementService
     /// <summary>
     /// Gets a value indicating whether the candidates of a placement pass are
     ///  ordered by the render priority (mapsforge data sources) instead of the
-    ///  style layer order (OpenMapTiles data sources); see
+    ///  style layer order (MapLibre data sources); see
     ///  <see cref="SymbolPlacementEngine.Compute"/>.
     /// </summary>
     public bool OrdersPlacementByPriority { get; }

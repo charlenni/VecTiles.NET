@@ -316,7 +316,7 @@
     <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" />
     <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Common\VecTiles.Renderers.Common.csproj" />
     <ProjectReference Include="..\..\Source\Renderers\VecTiles.Renderers.Skia\VecTiles.Renderers.Skia.csproj" />
-    <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.MapLibre\VecTiles.Styles.MapLibre.csproj" />
     <ProjectReference Include="..\..\Source\Controls\VecTiles.Control.Mapsui\VecTiles.Controls.Mapsui.csproj" />
   </ItemGroup>
 

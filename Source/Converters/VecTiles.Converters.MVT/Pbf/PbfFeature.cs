@@ -4,7 +4,7 @@ using ProtoBuf;
 namespace VecTiles.Converters.MVT.Pbf;
 
 /// <summary>
-/// Represents a OpenMapTiles PBF feature, containing geometry, tags, and an identifier.
+/// Represents a MVT PBF feature, containing geometry, tags, and an identifier.
 /// </summary>
 [ProtoContract(Name = "feature")]
 public sealed class PbfFeature

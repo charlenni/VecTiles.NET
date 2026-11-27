@@ -3,7 +3,7 @@ using NetTopologySuite.Geometries;
 using VecTiles.Common.Interfaces;
 using VecTiles.Common.Primitives;
 using VecTiles.Converters.MVT;
-using VecTiles.Styles.OpenMapTiles;
+using VecTiles.Styles.MapLibre;
 using Xunit.Abstractions;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -26,13 +26,13 @@ public class RoadShieldPlacementTests
     /// <param name="output">The xUnit output helper.</param>
     public RoadShieldPlacementTests(ITestOutputHelper output) => _output = output;
 
-    private static (OMTSymbolFactory Factory, OMTLayerStyle Layer) CreateRoadShield()
+    private static (SymbolFactory Factory, LayerStyle Layer) CreateRoadShield()
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var styleFile = OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance)).Result;
+        var styleFile = StyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new MVTTileConverter(IdentityTagsConverter.Instance)).Result;
         var layer = styleFile.Layers.First(l => l.Name == "road_shield");
 
-        return (new OMTSymbolFactory(styleFile.Sprites!), layer);
+        return (new SymbolFactory(styleFile.Sprites!), layer);
     }
 
     private static IFeature CreateRoadFeature()
@@ -84,9 +84,9 @@ public class RoadShieldPlacementTests
     public void RoadLabelsStayLineSymbols()
     {
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var styleFile = OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance)).Result;
+        var styleFile = StyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new MVTTileConverter(IdentityTagsConverter.Instance)).Result;
         var layer = styleFile.Layers.First(l => l.Name == "road_label");
-        var factory = new OMTSymbolFactory(styleFile.Sprites!);
+        var factory = new SymbolFactory(styleFile.Sprites!);
 
         var symbol = factory.CreateSymbol(new Tile(0, 0, 14), layer,
             new EvaluationContext(14), CreateRoadFeature());

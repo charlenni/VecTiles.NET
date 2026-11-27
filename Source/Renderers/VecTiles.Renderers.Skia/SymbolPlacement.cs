@@ -444,7 +444,7 @@ public static class SymbolPlacementEngine
         // display class ("always" before "order" before "ifspace"), then by
         // position (x descending, y ascending, matching the arithmetic of the
         // reference labeller), independent of the style layers.
-        // The default (OpenMapTiles) semantics: the highest style layer wins;
+        // The default (MapLibre) semantics: the highest style layer wins;
         // the layers are processed top first (highest style index; equal
         // indices order by list position, later entry first) so its symbols
         // occupy the quadtree first; symbols of lower layers that collide are
@@ -683,7 +683,7 @@ public static class SymbolPlacementEngine
     /// <summary>
     /// Gets or sets the mapsforge display class accessor of the running
     /// placement pass (2 = "always", 1 = "order", 0 = "ifspace"), or null for
-    /// the default OpenMapTiles semantics. Set by
+    /// the default MapLibre semantics. Set by
     /// <see cref="PlacementSemanticsScope"/>; a pass runs single-threaded on
     /// one thread, so the accessor is thread-static.
     /// </summary>
@@ -746,7 +746,7 @@ public static class SymbolPlacementEngine
     /// Runs the pairwise clash decision of a placement check: returns true
     /// when the two symbols clash under the active semantics (the rectangle
     /// intersection is already checked by the caller). Without an accessor
-    /// (default OpenMapTiles semantics) two symbols clash unless both allow
+    /// (default MapLibre semantics) two symbols clash unless both allow
     /// others; with the mapsforge accessor (see
     /// <see cref="MapsforgeDisplayClassAccessor"/>) symbols of display
     /// "always" clash with nothing and a symbol of display "order" clashes

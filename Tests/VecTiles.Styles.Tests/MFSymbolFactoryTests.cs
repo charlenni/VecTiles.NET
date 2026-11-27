@@ -62,7 +62,7 @@ namespace VecTiles.Styles.Mapsforge.Tests
         /// <summary>
         /// The point symbols of the factory are wrapped in a PointSymbol
         /// envelope (the form the symbol placement and draw paths consume,
-        /// like for the OpenMapTiles symbol factory); the tests read the
+        /// like for the MapLibre symbol factory); the tests read the
         /// inner parts.
         /// </summary>
         private static IconPointSymbol? IconOf(ISymbol? symbol)

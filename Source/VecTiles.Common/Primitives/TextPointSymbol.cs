@@ -178,7 +178,7 @@ public class TextPointSymbol : Symbol
 
     /// <summary>
     /// Gets a value indicating whether the halo width is the distance of the halo to the glyph
-    /// outline outwards (OpenMapTiles text-halo-width semantics; the renderer doubles it to
+    /// outline outwards (MapLibre text-halo-width semantics; the renderer doubles it to
     /// compensate the centered glyph stroke), or the stroke width painted over the glyph outline
     /// (Mapsforge caption stroke-width; half of it extends outwards)
     /// </summary>

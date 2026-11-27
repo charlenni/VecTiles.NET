@@ -11,7 +11,7 @@ using Mapsui.Styles;
 using Mapsui.Widgets.InfoWidgets;
 using VecTiles.Controls.Mapsui;
 using VecTiles.Controls.Mapsui.Extensions;
-using VecTiles.Styles.OpenMapTiles;
+using VecTiles.Styles.MapLibre;
 using SampleApp.Widgets;
 using VecTiles.Converters.Mapsforge;
 using VecTiles.Common.Interfaces;
@@ -43,9 +43,9 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        //var styleSource = $"file://{_pathOMT}/osm-liberty.json";
+        var styleSource = $"file://{_pathOMT}/osm-liberty.json";
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
-        var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
+        //var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
         //var styleSource = $"file://{_pathVT}/versatiles-en-style.json";
         //var styleSource = $"https://api.protomaps.com/styles/v5/light/en.json?key=YOUR_API_KEY";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
@@ -143,9 +143,14 @@ public partial class MainView : UserControl
         MapControl.Map.RefreshGraphics();
     }
 
-    private void StyleCheckBox_Click(OMTLayerStyle style, CheckBox checkBox)
+    private void StyleCheckBox_Click(ILayerStyle style, CheckBox checkBox)
     {
-        style.Layout.Visibility = checkBox.IsChecked == true ? "visible" : "none";
+        if (style is not LayerStyle layerStyle)
+        {
+            return;
+        }
+        
+        layerStyle.Layout.Visibility = checkBox.IsChecked == true ? "visible" : "none";
 
         // Styles are baked into the rendered tiles, so all caches have to be cleared, before redrawing the map
         _tileSource.ClearCache();

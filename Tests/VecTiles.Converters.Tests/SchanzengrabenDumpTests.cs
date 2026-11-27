@@ -30,7 +30,7 @@ public class SchanzengrabenDumpTests
     public async Task DumpPoiAndWaterwayFeatures()
     {
         var dataSource = new MbTilesTileDataSource(_path, determineZoomLevelsFromTilesTable: true, determineTileRangeFromTilesTable: true);
-        var tileConverter = new OMTTileConverter();
+        var tileConverter = new MVTTileConverter();
         var vectorDataSource = new VectorTileDataSource(dataSource, tileConverter);
 
         var tile = new Tile(68642, 45902, 17);

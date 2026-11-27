@@ -92,7 +92,7 @@ public class MFSymbolFactory : ISymbolFactory
         // The placement and draw paths accept point symbols only as
         // PointSymbol envelopes (see SymbolPlacementEngine / PointSymbolRenderer):
         // a bare IconPointSymbol is quietly skipped, so the icon is wrapped
-        // like the OpenMapTiles symbol factory does
+        // like the MapLibre symbol factory does
         return PointSymbolOf(icon);
     }
 
@@ -166,7 +166,7 @@ public class MFSymbolFactory : ISymbolFactory
         // The placement and draw paths accept point symbols only as
         // PointSymbol envelopes (see SymbolPlacementEngine / PointSymbolRenderer):
         // a bare TextPointSymbol is quietly skipped, so the caption is wrapped
-        // like the OpenMapTiles symbol factory does
+        // like the MapLibre symbol factory does
         return PointSymbolOf(text);
     }
 
@@ -611,7 +611,7 @@ public class MFSymbolFactory : ISymbolFactory
     /// the path) is placed along: the feature geometry itself, converted from
     /// the tile coordinates of the mapsforge vector data (0..512 px) into the
     /// world coordinates of the tile, the space the symbol placement and the
-    /// draw pass work with (the same conversion the OpenMapTiles symbol
+    /// draw pass work with (the same conversion the MapLibre symbol
     /// factory applies to its point symbols). Null for geometries without at
     /// least two points and for non finite coordinates (e.g. clipped away
     /// parts at high overzoom).
@@ -647,7 +647,7 @@ public class MFSymbolFactory : ISymbolFactory
     /// <summary>
     /// Converts tile coordinates (0..512 px of the tile top left corner) into
     /// the world (spherical mercator) coordinates of the tile; the same
-    /// conversion the OpenMapTiles symbol factory applies to its symbols.
+    /// conversion the MapLibre symbol factory applies to its symbols.
     /// </summary>
     private static (double X, double Y) ConvertFrom(Tile tile, double pointX, double pointY)
     {

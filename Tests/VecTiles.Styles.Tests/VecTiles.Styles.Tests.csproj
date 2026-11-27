@@ -403,7 +403,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Source\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" />
-    <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" />
+    <ProjectReference Include="..\..\Source\Styles\VecTiles.Styles.MapLibre\VecTiles.Styles.MapLibre.csproj" />
   </ItemGroup>
 
   <ItemGroup>

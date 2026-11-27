@@ -4,7 +4,7 @@ using VecTiles.Common.Primitives;
 using VecTiles.Converters.MVT;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.Renderers.Common;
-using VecTiles.Styles.OpenMapTiles;
+using VecTiles.Styles.MapLibre;
 using VecTiles.TileDataSources;
 
 namespace VecTiles.Renderers.Skia.Test;
@@ -26,15 +26,15 @@ public class LineAndFillTests
     public LineAndFillTests()
     {
         var dataSource = new MbTilesTileDataSource(_dataFile, determineZoomLevelsFromTilesTable: true, determineTileRangeFromTilesTable: true);
-        var converter = new OMTTileConverter();
+        var converter = new MVTTileConverter();
         var vectorDataSource = new VectorTileDataSource(dataSource, converter);
 
         var styleSource = $"file://{_path}/osm-liberty.json";
-        var styleFile = OMTStyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new OMTTileConverter(IdentityTagsConverter.Instance)).Result;
+        var styleFile = StyleFileLoader.Load(styleSource, vectorTileConnectionFactory: dataSource => new MVTTileConverter(IdentityTagsConverter.Instance)).Result;
 
         var spriteDictionary = styleFile.Sprites;
-        var paintFactory = new OMTPaintFactory(spriteDictionary);
-        var symbolFactory = new OMTSymbolFactory(spriteDictionary);
+        var paintFactory = new PaintFactory(spriteDictionary);
+        var symbolFactory = new SymbolFactory(spriteDictionary);
         var renderFactory = new RenderFactory(styleFile.Layers, paintFactory, symbolFactory);
 
         _renderer = new Renderer([new KeyValuePair<string, ITileDataSource>(vectorDataSource.Name, vectorDataSource)],  styleFile.Layers, renderFactory);

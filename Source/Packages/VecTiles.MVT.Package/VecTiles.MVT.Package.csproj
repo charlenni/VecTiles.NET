@@ -5,16 +5,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>VecTiles.OpenMapTiles</PackageId>
-    <Title>VecTiles.OpenMapTiles</Title>
-    <Description>OpenMapTiles support for the VecTiles.NET vector tile mapping stack. It bundles VecTiles.Styles.OpenMapTiles (styles in the Mapbox style format) and VecTiles.Converters.OpenMapTiles convert Mapbox/OpenMapTiles vector tiles (MVT, PBF optionally zipped) to VectorTile objects.</Description>
-    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;openmaptiles;mapbox;mvt;styles</PackageTags>
+    <Title>VecTiles.MapLibre</Title>
+    <Description>MapLibre support for the VecTiles.NET vector tile mapping stack. It bundles VecTiles.Styles.MapLibre (styles in the Mapbox/MapLibre style format) and VecTiles.Converters.MVT convert Mapbox/MapLibre vector tiles (MVT, PBF optionally zipped) to VectorTile objects.</Description>
+    <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;openmaptiles;mapbox;maplibre;mvt;pmtiles;styles</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);CopyProjectReferencesToPackage</TargetsForTfmSpecificContentInPackage>
-    <RootNamespace>VecTiles.OpenMapTiles.Package</RootNamespace>
+    <RootNamespace>VecTiles.MapLibre.Package</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Styles\VecTiles.Styles.OpenMapTiles\VecTiles.Styles.OpenMapTiles.csproj" PrivateAssets="all" />
+    <ProjectReference Include="..\..\Styles\VecTiles.Styles.MapLibre\VecTiles.Styles.MapLibre.csproj" PrivateAssets="all" />
     <ProjectReference Include="..\..\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" PrivateAssets="all" />
   </ItemGroup>
 

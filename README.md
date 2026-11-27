@@ -131,6 +131,15 @@ The tile sources referenced by the style file are created automatically:
 | `mapsforge://path/to/file.map` | Mapsforge map file (binary MAP format) |
 | `pmtiles://file://path/to/file.pmtiles` or `pmtiles://https://host/file.pmtiles` | PMTiles archive (single file, read in byte ranges; HTTP(S) servers must support range requests) |
 
+Examples for tile source URLs in a style file:
+
+- `https://tiles.example.com/data/{z}/{x}/{y}.pbf` — vector tiles from a tile server
+- `https://tiles.example.com/data/tilejson.json` — a TileJSON, from which the tile URLs, zoom
+  range and attribution are resolved
+- `file://Files/OpenMapTiles/zurich.mbtiles` — a local MBTiles file
+- `pmtiles://https://latest.protomaps.com/v4.pmtiles` — a PMTiles archive on a web server
+- `pmtiles://file://Files/Protomaps/zuerich.pmtiles` — a local PMTiles archive
+
 Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the matching
 tile converter and applies the overzoom fallback described above: tile server, MBTiles and PMTiles
 MVT payloads with the OpenMapTiles converter, Mapsforge tiles with the Mapsforge converter, whose tag
@@ -150,12 +159,13 @@ graphics library.
 ## Sample application
 
 [`Samples/Avalonia`](Samples/Avalonia) contains a desktop sample app that loads a local
-[OSM Liberty](https://github.com/maputnik/osm-liberty) style (and works with online styles as
-well), lets you toggle the visibility of individual style layers, shows the feature info of the
-tapped position, the mouse coordinates and a tile grid debug layer.
+[OSM Liberty](https://github.com/maputnik/osm-liberty) style, a
+[Protomaps](https://protomaps.com) style from a local PMTiles archive or online styles, lets you
+toggle the visibility of individual style layers, shows the feature info of the tapped position,
+the mouse coordinates and a tile grid debug layer.
 
 ## Credits
 
 VecTiles.NET builds on great open source projects. See [CREDITS.md](CREDITS.md) for the complete
 list — many thanks to all their contributors! The licenses of the parts of those projects included
-in VecTiles are collected in [LICENSE.md](LICENSE.md).
+in VecTiles are collected in [LICENSE](LICENSE).

@@ -39,7 +39,7 @@ sample app, is licensed under the [SIL Open Font License 1.1](https://openfontli
 ## Code adapted from other projects
 
 Parts of the VecTiles source are adapted from the following projects; the
-corresponding license texts are included in [LICENSE.md](LICENSE.md):
+corresponding license texts are included in [LICENSE](LICENSE):
 
 - [NetTopologySuite](https://github.com/NetTopologySuite/NetTopologySuite) (BSD-3-Clause) and
   [NetTopologySuite.IO.VectorTiles](https://github.com/NetTopologySuite/NetTopologySuite.IO.VectorTiles) (MIT) —
@@ -48,6 +48,9 @@ corresponding license texts are included in [LICENSE.md](LICENSE.md):
   `ByteDataSource` and stream extensions in `Source/DataSources/VecTiles.ByteDataSources/`.
 - [BruTile](https://github.com/BruTile/BruTile) (Apache-2.0) —
   MBTiles support in `Source/DataSources/VecTiles.TileDataSources/MBTilesTileDataSource/`.
+- [mapbox-vector-tile-cs](https://github.com/bertt/mapbox-vector-tile-cs) (MIT) —
+  the original reading routine for Mapbox Vector Tiles, reworked into the tile
+  parser in `Source/Converters/VecTiles.Converters.OpenMapTiles/Parser/`.
 
 VecTiles also implements the open [Mapbox style specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
 and reads tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec),
@@ -61,13 +64,18 @@ The sample application ships the Mapsforge render themes (`osmarender.xml`, `def
 `biker.xml`, `motorider.xml`, `dark.xml`, `indigo.xml`, `hillshading.xml`) together with the
 symbols and patterns they reference in [`Files/Mapsforge/`](Files/Mapsforge); they are part of
 the [mapsforge](https://github.com/mapsforge/mapsforge) project and are licensed under
-[LGPL-3.0](https://www.gnu.org/licenses/lgpl-3.0.html) (see [LICENSE.md](LICENSE.md)).
+[LGPL-3.0](https://www.gnu.org/licenses/lgpl-3.0.html) (see [LICENSE](LICENSE)).
 
 The sample styles and maps build on open data and open projects:
 
 - [OSM Liberty](https://github.com/maputnik/osm-liberty) — the sample style `osm-liberty.json`
   and its Mapsforge variant `osm-liberty-for-mapsforge.json`; license see
   [`Files/OpenMapTiles/LICENSE.md`](Files/OpenMapTiles/LICENSE.md).
+- [Protomaps](https://protomaps.com) — the sample style `protomaps-light-style.json` is one of the
+  [Protomaps basemap styles](https://github.com/protomaps/basemaps) (visual design released under
+  [CC0](https://creativecommons.org/publicdomain/zero/1.0/)); the sample archive
+  `zuerich.pmtiles` is an extract of the PMTiles builds of OpenStreetMap data published there
+  (© [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, ODbL).
 - The sample map files `zuerich.map` and `zurich.mbtiles` are derived from OpenStreetMap data
   (© [OpenStreetMap](https://www.openstreetmap.org/copyright) contributors, ODbL); `zuerich.map`
   was written with the mapsforge `map-writer`.

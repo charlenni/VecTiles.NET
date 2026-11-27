@@ -24,4 +24,10 @@ public interface IRenderedTileSource : ITileSource
     /// exists for the index.
     /// </summary>
     Task<IRenderedTile?> GetTileAsync(TileInfo tileInfo);
+
+    /// <summary>
+    /// Clears the cache of rendered tiles, so they are rendered again on the
+    /// next access, e.g. when the visibility of style layers has changed.
+    /// </summary>
+    void ClearCache();
 }

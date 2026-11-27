@@ -45,6 +45,7 @@ public partial class MainView : UserControl
         //var styleSource = $"file://{_pathOMT}/osm-liberty.json";
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
         var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
+        //var styleSource = $"https://api.protomaps.com/styles/v5/light/en.json?key=YOUR_API_KEY";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
         _tileSource = new OMTRenderedTileSource(styleSource);
@@ -136,7 +137,7 @@ public partial class MainView : UserControl
         style.Layout.Visibility = checkBox.IsChecked == true ? "visible" : "none";
 
         // Styles are baked into the rendered tiles, so all caches have to be cleared, before redrawing the map
-        //_tileSource.ClearCache();
+        _tileSource.ClearCache();
         _tileLayer.ClearCache();
 
         MapControl.Map.RefreshData(Mapsui.ChangeType.Discrete);

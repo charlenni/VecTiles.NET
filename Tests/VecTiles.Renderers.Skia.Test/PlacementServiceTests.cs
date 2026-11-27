@@ -38,6 +38,10 @@ internal static class PlacementServiceTestSupport
             await Gate.Task.ConfigureAwait(false);
             return new RenderedTile(tileInfo.ToTile());
         }
+
+        public void ClearCache()
+        {
+        }
     }
 
     /// <summary>
@@ -66,6 +70,10 @@ internal static class PlacementServiceTestSupport
             var (x, y, zoom) = (tileInfo.Index.Col, tileInfo.Index.Row, tileInfo.Index.Level);
             Requests.Add((x, y, zoom));
             return Task.FromResult<IRenderedTile?>(MissingTiles.Contains(x) ? null : new RenderedTile(tileInfo.ToTile()));
+        }
+
+        public void ClearCache()
+        {
         }
     }
 

@@ -29,6 +29,10 @@ public class TileFetchSchedulerTests
             return Task.FromResult(Respond?.Invoke(x, y));
         }
 
+        public void ClearCache()
+        {
+        }
+
         public ITileSchema Schema { get; } = new GlobalSphericalMercator512(YAxis.OSM, 0, 24);
 
         public string Name => "fake";

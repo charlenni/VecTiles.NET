@@ -19,6 +19,28 @@ If a tile is not available at the requested zoom level, VecTiles.NET falls back 
 lower zoom level, fetches it and clips it to the requested tile (overzoom), so maps keep working
 where data ends.
 
+## Protomaps PMTiles
+
+Since version 0.2.0 VecTiles.NET supports [Protomaps](https://protomaps.com/)
+[PMTiles](https://github.com/protomaps/PMTiles) archives: a single file containing the whole map,
+read directly in byte ranges — no tile server and no database in between. I have the feeling that
+PMTiles are faster than the other ways of loading tiles, probably because the tiles inside the
+archive are laid out in the order they are read.
+
+A local archive, referenced by a style file:
+
+```csharp
+// The sources of protomaps-light-style.json reference the archive:
+// "url": "pmtiles://file://Files/Protomaps/zuerich.pmtiles"
+var tileSource = new OMTRenderedTileSource("file://Files/Protomaps/protomaps-light-style.json");
+```
+
+Or a hosted style from the Protomaps style API, whose sources point to PMTiles on the web:
+
+```csharp
+var tileSource = new OMTRenderedTileSource("https://api.protomaps.com/styles/v5/light/de.json?key=YOUR_API_KEY");
+```
+
 ## Installation
 
 VecTiles.NET targets `net10.0` and is available as five NuGet packages:

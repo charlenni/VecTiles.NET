@@ -152,7 +152,9 @@ public class OMTTextBuilder
         }
 
         var id = feature.Attributes.Exists("id") ? (ulong)feature.Attributes["id"] : 0;
-        
+
+        var variableAnchors = CreateVariableAnchors(context);
+
         var symbol = new TextPointSymbol(tile, id, point, text)
         {
             Name = (feature?.Attributes?.Exists("name") ?? false) ? (feature?.Attributes?["name"].ToString() ?? string.Empty) : string.Empty,
@@ -163,22 +165,27 @@ public class OMTTextBuilder
             Rotation = GetRotation(context),
             RotationAlignment = _rotationAlignment == MapAlignment.Auto ? MapAlignment.Viewport : _rotationAlignment,
             Padding = GetPadding(context),
-            Anchor = _anchor,
-            Offset = GetOffset(context),
-            Color = _color,
-            Alignment = _alignment,
+            Anchor = variableAnchors.Anchors.Length > 0 ? variableAnchors.Anchors[0].ToPoint() : _anchor,
+            Offset = variableAnchors.Anchors.Length > 0 ? variableAnchors.Offsets[0] : GetOffset(context),
+            VariableAnchors = variableAnchors.Anchors,
+            VariableOffsets = variableAnchors.Offsets,
+            JustifyAuto = _style.Layout.TextJustify == TextJustify.Auto,
+            Alignment = variableAnchors.Anchors.Length > 0
+                ? CreateAlignment(_style.Layout.TextJustify, variableAnchors.Anchors[0])
+                : _alignment,
+            Color = GetColor(_style.Paint.TextColor, _color, feature),
             Direction = TextDirection.Auto,
-            Opacity = _opacity,
+            Opacity = GetFloat(_style.Paint.TextOpacity, _opacity, feature),
             FontNames = _fontNames,
-            FontSize = _fontSize,
+            FontSize = GetFloat(_style.Layout.TextSize, _fontSize, feature),
             LineHeight = GetLineHeight(context),
             LetterSpacing = GetLetterSpacing(context),
-            HaloBlur = _haloBlur,
-            HaloColor = _haloColor,
-            HaloWidth = _haloWidth,
+            HaloBlur = GetFloat(_style.Paint.TextHaloBlur, _haloBlur, feature),
+            HaloColor = GetColor(_style.Paint.TextHaloColor, _haloColor, feature),
+            HaloWidth = GetFloat(_style.Paint.TextHaloWidth, _haloWidth, feature),
             Translate = _translate,
             TranslateAnchor = _translateAnchor,
-            MaxWidth = _maxWidth,
+            MaxWidth = GetMaxWidth(_style, feature),
             SortOrder = _sortOrder(context, tile),
             Class = feature.Attributes.Exists("class") ? feature.Attributes["class"]!.ToString() ?? string.Empty : string.Empty,
             Subclass = feature.Attributes.Exists("subclass") ? feature.Attributes["subclass"].ToString() ?? string.Empty : string.Empty,
@@ -224,17 +231,17 @@ public class OMTTextBuilder
             Padding = GetPadding(context),
             Anchor = _anchor,
             Offset = GetOffset(context),
-            Color = _color,
+            Color = GetColor(_style.Paint.TextColor, _color, feature),
             Alignment = _alignment,
             Direction = TextDirection.Auto,
-            Opacity = _opacity,
+            Opacity = GetFloat(_style.Paint.TextOpacity, _opacity, feature),
             FontNames = _fontNames,
-            FontSize = _fontSize,
+            FontSize = GetFloat(_style.Layout.TextSize, _fontSize, feature),
             LineHeight = GetLineHeight(context),
             LetterSpacing = GetLetterSpacing(context),
-            HaloBlur = _haloBlur,
-            HaloColor = _haloColor,
-            HaloWidth = _haloWidth,
+            HaloBlur = GetFloat(_style.Paint.TextHaloBlur, _haloBlur, feature),
+            HaloColor = GetColor(_style.Paint.TextHaloColor, _haloColor, feature),
+            HaloWidth = GetFloat(_style.Paint.TextHaloWidth, _haloWidth, feature),
             Translate = _translate,
             TranslateAnchor = _translateAnchor,
             // The style spec applies text-max-width to point-placed text only;
@@ -297,6 +304,106 @@ public class OMTTextBuilder
     private bool GetAllowOthers(EvaluationContext context)
     {
         return _textIgnorePlacement.Expression != null ? _textIgnorePlacement.Evaluate(context) : _allowOthers;
+    }
+
+    /// <summary>
+    /// Paint value of a data-driven property (an expression): evaluated with
+    /// the draw context enriched with the feature of the symbol. The draw
+    /// context of the renderer carries zoom, scale and rotation, but no
+    /// feature, so feature-dependent paint would fall back to the expression
+    /// default otherwise.
+    /// </summary>
+    private static Func<EvaluationContext, Color> GetColor(StoppedColor property,
+        Func<EvaluationContext, Color> frozen, IFeature feature)
+    {
+        return property.Expression != null ? ctx => property.Evaluate(ctx.WithFeature(feature)) : frozen;
+    }
+
+    /// <summary>
+    /// Layout value of a data-driven property (an expression); see GetColor.
+    /// </summary>
+    private static Func<EvaluationContext, float> GetFloat(StoppedFloat property,
+        Func<EvaluationContext, float> frozen, IFeature feature)
+    {
+        return property.Expression != null ? ctx => property.Evaluate(ctx.WithFeature(feature)) : frozen;
+    }
+
+    private static Func<EvaluationContext, float, float> GetMaxWidth(OMTLayerStyle style, IFeature feature)
+    {
+        return style.Layout.TextMaxWidth.Expression != null
+            ? (ctx, fontsize) => style.Layout.TextMaxWidth.Evaluate(ctx.WithFeature(feature)) * fontsize
+            : (ctx, fontsize) => style.Layout.TextMaxWidth.Evaluate(ctx) * fontsize;
+    }
+
+    /// <summary>
+    /// The candidate anchors of text-variable-anchor with their pixel offsets:
+    /// the text is pushed away from the symbol point by the radial distance,
+    /// which is text-radial-offset or, if not set, the component of
+    /// text-offset along the anchor direction, in ems.
+    /// </summary>
+    private (Anchor[] Anchors, Point[] Offsets) CreateVariableAnchors(EvaluationContext context)
+    {
+        var names = _style.Layout.TextVariableAnchor;
+
+        if (names is not { Length: > 0 })
+        {
+            return ([], []);
+        }
+
+        var radial = _style.Layout.TextRadialOffset;
+        var radialEm = !radial.HasOnlyDefault ? radial.Evaluate(context) : 0f;
+
+        var textOffset = _style.Layout.TextOffset.Evaluate(context);
+        var offsetEm = textOffset is { Length: 2 } ? textOffset : [0f, 0f];
+
+        var fontSize = _fontSize.Invoke(context);
+
+        var anchors = new Anchor[names.Length];
+        var offsets = new Point[names.Length];
+
+        for (int i = 0; i < names.Length; i++)
+        {
+            var anchor = ParseAnchor(names[i]);
+            var gapEm = radialEm > 0
+                ? radialEm
+                : anchor switch
+                {
+                    Anchor.Left or Anchor.Right => Math.Abs(offsetEm[0]),
+                    Anchor.Top or Anchor.Bottom => Math.Abs(offsetEm[1]),
+                    Anchor.TopLeft or Anchor.TopRight or Anchor.BottomLeft or Anchor.BottomRight
+                        => Math.Max(Math.Abs(offsetEm[0]), Math.Abs(offsetEm[1])),
+                    _ => 0f,
+                };
+
+            // Direction away from the symbol point: anchor left means the
+            // left edge of the text is closest to the point, so the text lies
+            // to the right; anchor bottom means the bottom edge is closest,
+            // so the text lies above (screen y grows downwards)
+            var (dx, dy) = anchor switch
+            {
+                Anchor.Left => (1f, 0f),
+                Anchor.Right => (-1f, 0f),
+                Anchor.Top => (0f, 1f),
+                Anchor.Bottom => (0f, -1f),
+                Anchor.TopLeft => (-0.7071f, -0.7071f),
+                Anchor.TopRight => (0.7071f, -0.7071f),
+                Anchor.BottomLeft => (-0.7071f, 0.7071f),
+                Anchor.BottomRight => (0.7071f, 0.7071f),
+                _ => (0f, 0f),
+            };
+
+            anchors[i] = anchor;
+            offsets[i] = new Point(dx * gapEm * fontSize, dy * gapEm * fontSize);
+        }
+
+        return (anchors, offsets);
+    }
+
+    private static Anchor ParseAnchor(string value)
+    {
+        return Enum.TryParse<Anchor>(value.Replace("-", ""), ignoreCase: true, out var anchor)
+            ? anchor
+            : Anchor.Center;
     }
 
     private static TextJustify CreateAlignment(TextJustify justify, Anchor anchor)

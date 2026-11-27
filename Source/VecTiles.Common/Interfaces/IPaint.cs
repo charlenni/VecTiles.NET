@@ -54,6 +54,13 @@ public interface IPaint
     float StrokeMiter { get; }
 
     /// <summary>
+    /// Maximum miter ratio up to which ROUND joins of a stroked line are
+    /// converted to miter joins (shallow angles). Positive infinity
+    /// disables the conversion.
+    /// </summary>
+    float StrokeRoundLimit { get; }
+
+    /// <summary>
     /// Pattern sprite used for filling.
     /// </summary>
     ISprite? Pattern { get; }

@@ -90,6 +90,22 @@ public static class OMTLinePaint
             brush.SetVariableStrokeMiter((context) => layout.LineMiterLimit.Evaluate(context));
         }
 
+        // line-round-limit
+        //   Optional number. Defaults to 1.05. Requires line-join = round. Exponential.
+        //   Used to automatically convert round joins to miter joins for shallow
+        //   angles: the miter tip at a shallow corner extends the outer edge by
+        //   only miterRatio * half stroke width; when that ratio stays below the
+        //   round limit the (cheaper) miter join is visually identical to the
+        //   round join and is used instead.
+        if (layout.LineRoundLimit.IsConstant)
+        {
+            brush.SetFixStrokeRoundLimit(layout.LineRoundLimit.Evaluate(EvaluationContext.Empty));
+        }
+        else
+        {
+            brush.SetVariableStrokeRoundLimit((context) => layout.LineRoundLimit.Evaluate(context));
+        }
+
         // line-color
         //   Optional color. Defaults to #000000. Disabled by line-pattern. Exponential.
         //   The color with which the line will be drawn.

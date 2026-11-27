@@ -153,11 +153,17 @@ public static class Tessellation
     /// <param name="pos">List the vertex positions are appended to.</param>
     /// <param name="uv">List the vertex UVs are appended to.</param>
     /// <param name="closedRing">When true, treats the polyline as a closed ring and emits the join at the closing seam.</param>
+    /// <param name="roundLimit">
+    ///   Maximum miter ratio up to which ROUND joins are converted to miter
+    ///   joins (shallow angles, Mapbox line-round-limit; default 1.05).
+    ///   Positive infinity disables the conversion.
+    /// </param>
     public static void TessellatePolyline(
         PointF[] pts, float hw,
         StrokeCap startCap, StrokeCap endCap,
         StrokeJoin join, float miterLimit,
-        List<SKPoint> pos, List<SKPoint> uv, bool closedRing = false)
+        List<SKPoint> pos, List<SKPoint> uv, bool closedRing = false,
+        float roundLimit = float.PositiveInfinity)
     {
         int pointCount = pts.Length;
 
@@ -361,7 +367,9 @@ public static class Tessellation
         //                                    at distance hw from both
         //                                    centerlines)
         //      Round : wedge fan approximating a circular arc; the shader
-        //              cuts out the current width with AA
+        //              cuts out the current width with AA. Converted to
+        //              Miter at shallow angles (miterRatio <= roundLimit,
+        //              see line-round-limit in AddJoin)
         //      Bevel : single wedge triangle -> flat outer edge with AA
         //      Miter : two triangles leaning against each segment's
         //              centerline; falls back to Bevel when miterRatio
@@ -369,7 +377,7 @@ public static class Tessellation
         for (int i = 1; i < pointCount - 1; i++)
         {
             AddJoin(pts[i], normals[i - 1], normals[i], cumLen[i],
-                hw, join, miterLimit, pos, uv);
+                hw, join, miterLimit, roundLimit, pos, uv);
         }
 
         // --- 3b. Seam join for CLOSED rings ---------------------------
@@ -383,7 +391,7 @@ public static class Tessellation
         if (closedRing && pointCount >= 3)
         {
             AddJoin(pts[0], normals[pointCount - 2], normals[0], 0f,
-                hw, join, miterLimit, pos, uv);
+                hw, join, miterLimit, roundLimit, pos, uv);
         }
 
         // --- 4. End caps ----------------------------------------------
@@ -567,7 +575,7 @@ public static class Tessellation
 
     private static void AddJoin(
         PointF corner, PointF prevNormal, PointF nextNormal, float cornerArcLength,
-        float hw, StrokeJoin join, float miterLimit,
+        float hw, StrokeJoin join, float miterLimit, float roundLimit,
         List<SKPoint> pos, List<SKPoint> uv)
     {
         float cross = prevNormal.X * nextNormal.Y
@@ -576,20 +584,34 @@ public static class Tessellation
         PointF outerPrev = Add(corner, Scale(prevNormal, sideSign * hw));
         PointF outerNext = Add(corner, Scale(nextNormal, sideSign * hw));
 
+        // Miter direction: normalized sum of the two normals.
+        // Miter length (in hw units) = 2 / |n1 + n2|
+        var normalSum = new PointF(prevNormal.X + nextNormal.X,
+                                    prevNormal.Y + nextNormal.Y);
+        float sumLen = MathF.Sqrt(normalSum.X * normalSum.X
+                                + normalSum.Y * normalSum.Y);
+        float miterRatio = sumLen < 1e-4f
+            ? float.MaxValue                     // ~180-degree turn: no tip
+            : 2f / sumLen;
+
+        // line-round-limit: at SHALLOW angles (small deflection from
+        // straight) the miter join is visually identical to the round
+        // join -- its tip extends the outer edge by only miterRatio * hw,
+        // which stays within the round limit -- but needs two triangles
+        // instead of a fan. Convert Round to Miter when the ratio allows.
+        // Positive infinity disables the conversion (the <= comparison
+        // alone would be true for every finite ratio).
+        if (join == StrokeJoin.Round &&
+            roundLimit < float.PositiveInfinity &&
+            miterRatio <= roundLimit)
+        {
+            join = StrokeJoin.Miter;
+        }
+
         switch (join)
         {
             case StrokeJoin.Miter:
             {
-                // Miter direction: normalized sum of the two normals.
-                // Miter length (in hw units) = 2 / |n1 + n2|
-                var normalSum = new PointF(prevNormal.X + nextNormal.X,
-                                            prevNormal.Y + nextNormal.Y);
-                float sumLen = MathF.Sqrt(normalSum.X * normalSum.X
-                                        + normalSum.Y * normalSum.Y);
-                float miterRatio = sumLen < 1e-4f
-                    ? float.MaxValue                 // ~180-degree turn: no tip
-                    : 2f / sumLen;
-
                 if (miterRatio <= miterLimit)
                 {
                     var miterDir = new PointF(normalSum.X / sumLen,
@@ -950,7 +972,8 @@ public static class PolygonTriangulator
 //  1) Joins: selectable via AddLines(...). All three variants (Miter, Bevel,
 //     Round) use distance-based u values -> antialiasing on all outer
 //     edges. Miter checks miterRatio = 2/|n1+n2| against miterLimit and
-//     falls back to Bevel for very sharp angles (no spikes at ~180 deg).
+//     falls back to Bevel when exceeded; Round converts to Miter at
+//     shallow angles (miterRatio <= roundLimit).
 //
 //  2) Caps: Butt (no geometry), Square (box metric pre-baked in u, four
 //     distance triangles -- no special shader branch), Round (half-disc

@@ -86,13 +86,20 @@ public class VertexBuilder
     ///   (Skia default: 4). If exceeded (very sharp angles up to ~180
     ///   degrees) the join automatically falls back to Bevel -- no spikes.
     /// </param>
+    /// <param name="roundLimit">
+    ///   Only for SKStrokeJoin.Round: maximum miter ratio up to which round
+    ///   joins are converted to miter joins at shallow angles (Mapbox
+    ///   line-round-limit, default 1.05). Positive infinity disables the
+    ///   conversion.
+    /// </param>
     public void AddLines(
         IReadOnlyList<Coordinate[]> lines,
         float maxWidth,
         StrokeCap startCap = StrokeCap.Round,
         StrokeCap endCap = StrokeCap.Round,
         StrokeJoin join = StrokeJoin.Round,
-        float miterLimit = 4f)
+        float miterLimit = 4f,
+        float roundLimit = float.PositiveInfinity)
     {
         var maxHalfWidth = maxWidth / 2f;
 
@@ -107,7 +114,7 @@ public class VertexBuilder
             var pts = Tessellation.CompactToPoints(line);
             if (pts.Length < 2) continue;
             Tessellation.TessellatePolyline(pts, maxHalfWidth, startCap, endCap,
-                join, miterLimit, _pos, _uv);
+                join, miterLimit, _pos, _uv, roundLimit: roundLimit);
         }
     }
 
@@ -155,11 +162,16 @@ public class VertexBuilder
     /// <param name="maxHalfWidth">Maximum width for creating vertices</param>
     /// <param name="join">Type of join between lines</param>
     /// <param name="miterLimit">Miter limit for miter joins</param>
+    /// <param name="roundLimit">
+    ///   Maximum miter ratio up to which round joins are converted to miter
+    ///   joins at shallow angles (positive infinity disables the conversion).
+    /// </param>
     public void AddOutline(
         IReadOnlyList<Coordinate[]> rings,
         float maxWidth,
         StrokeJoin join = StrokeJoin.Round,
-        float miterLimit = 4f)
+        float miterLimit = 4f,
+        float roundLimit = float.PositiveInfinity)
     {
         var maxHalfWidth = maxWidth / 2f;
 
@@ -199,7 +211,7 @@ public class VertexBuilder
 
             Tessellation.TessellatePolyline(closed, maxHalfWidth,
                 StrokeCap.Butt, StrokeCap.Butt, // no caps on rings
-                join, miterLimit, _pos, _uv, true);
+                join, miterLimit, _pos, _uv, true, roundLimit);
         }
     }
 }

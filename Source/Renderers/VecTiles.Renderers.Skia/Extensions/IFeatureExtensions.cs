@@ -22,6 +22,7 @@ public static class IFeatureExtensions
     /// <param name="endCap">Cap style at the end of a line.</param>
     /// <param name="join">Join style at line corners.</param>
     /// <param name="miterLimit">Miter limit for miter joins (miter length / half stroke width).</param>
+    /// <param name="roundLimit">Maximum miter ratio up to which round joins are converted to miter joins.</param>
     /// <returns>The vertex builder with the added vertices.</returns>
     public static VertexBuilder ToVertices(this IFeature feature,
         VertexBuilder builder,
@@ -29,9 +30,10 @@ public static class IFeatureExtensions
         StrokeCap startCap,
         StrokeCap endCap,
         StrokeJoin join,
-        float miterLimit = 4f)
+        float miterLimit = 4f,
+        float roundLimit = float.PositiveInfinity)
     {
-        return LineGeometryToVertices(builder, feature.Geometry, maxWidth, startCap, endCap, join, miterLimit);
+        return LineGeometryToVertices(builder, feature.Geometry, maxWidth, startCap, endCap, join, miterLimit, roundLimit);
     }
 
     /// <summary>
@@ -57,46 +59,49 @@ public static class IFeatureExtensions
     /// <param name="maxWidth">Maximum stroke width the outline is expanded for.</param>
     /// <param name="join">Join style at polygon corners.</param>
     /// <param name="miterLimit">Miter limit for miter joins (miter length / half stroke width).</param>
+    /// <param name="roundLimit">Maximum miter ratio up to which round joins are converted to miter joins.</param>
     /// <returns>The vertex builder with the added vertices.</returns>
     public static VertexBuilder ToVertices(this IFeature feature,
         VertexBuilder builder,
         float maxWidth,
         StrokeJoin join,
-        float miterLimit = 4f)
+        float miterLimit = 4f,
+        float roundLimit = float.PositiveInfinity)
     {
-        return OutlinedPolygonGeometryToVertices(builder, feature.Geometry, maxWidth, join, miterLimit);
+        return OutlinedPolygonGeometryToVertices(builder, feature.Geometry, maxWidth, join, miterLimit, roundLimit);
     }
-    
+
     private static VertexBuilder LineGeometryToVertices(VertexBuilder builder, Geometry geometry,
             float maxWidth,
             StrokeCap startCap,
             StrokeCap endCap,
             StrokeJoin join,
-            float miterLimit)
+            float miterLimit,
+            float roundLimit)
     {
         switch (geometry)
         {
             case LineString line:
-                LineStringToVertices(builder, line, maxWidth, startCap, endCap, join, miterLimit);
+                LineStringToVertices(builder, line, maxWidth, startCap, endCap, join, miterLimit, roundLimit);
                 break;
 
             case MultiLineString multiLine:
                 foreach (LineString lineStr in multiLine.Geometries)
                 {
-                    LineStringToVertices(builder, lineStr, maxWidth, startCap, endCap, join, miterLimit);
+                    LineStringToVertices(builder, lineStr, maxWidth, startCap, endCap, join, miterLimit, roundLimit);
                 }
                 break;
 
             // Could happen for line layers
             case Polygon polygon:
-                OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join, miterLimit);
+                OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join, miterLimit, roundLimit);
                 break;
 
             // Could happen for line layers
             case MultiPolygon multiPolygon:
                 foreach (Polygon polygon in multiPolygon.Geometries)
                 {
-                    OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join, miterLimit);
+                    OutlinedPolygonGeometryToVertices(builder, polygon, maxWidth, join, miterLimit, roundLimit);
                 }
                 break;
 
@@ -144,18 +149,19 @@ public static class IFeatureExtensions
     private static VertexBuilder OutlinedPolygonGeometryToVertices(VertexBuilder builder, Geometry geometry,
         float maxWidth,
         StrokeJoin join,
-        float miterLimit)
+        float miterLimit,
+        float roundLimit)
     {
         switch (geometry)
         {
             case Polygon polygon:
-                OutlinedPolygonToVertices(builder, polygon, maxWidth, join, miterLimit);
+                OutlinedPolygonToVertices(builder, polygon, maxWidth, join, miterLimit, roundLimit);
                 break;
 
             case MultiPolygon multiPolygon:
                 foreach (Polygon poly in multiPolygon.Geometries)
                 {
-                    OutlinedPolygonToVertices(builder, poly, maxWidth, join, miterLimit);
+                    OutlinedPolygonToVertices(builder, poly, maxWidth, join, miterLimit, roundLimit);
                 }
                 break;
 
@@ -175,11 +181,12 @@ public static class IFeatureExtensions
         StrokeCap startCap,
         StrokeCap endCap,
         StrokeJoin join,
-        float miterLimit)
+        float miterLimit,
+        float roundLimit)
     {
         if (line.NumPoints == 0) return null;
         var coords = line.Coordinates;
-        builder.AddLines([coords], maxWidth, startCap, endCap, join, miterLimit);
+        builder.AddLines([coords], maxWidth, startCap, endCap, join, miterLimit, roundLimit);
         
         return builder;
     }
@@ -204,7 +211,8 @@ public static class IFeatureExtensions
     private static VertexBuilder OutlinedPolygonToVertices(VertexBuilder builder, Polygon polygon,
         float maxWidth,
         StrokeJoin join,
-        float miterLimit)
+        float miterLimit,
+        float roundLimit)
     {
         // Outer ring
         var outer = polygon.ExteriorRing.Coordinates;
@@ -216,7 +224,7 @@ public static class IFeatureExtensions
             rings.Add(polygon.GetInteriorRingN(i).Coordinates);
         }
 
-        builder.AddOutline(rings, maxWidth, join, miterLimit);
+        builder.AddOutline(rings, maxWidth, join, miterLimit, roundLimit);
         
         return builder;
     }

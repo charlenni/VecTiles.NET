@@ -103,7 +103,7 @@ public class RenderFactory : IRenderFactory
                     foreach (var feature in group)
                     {
                         feature.ToVertices(groupOutlineBuilder, groupPaint.GetMaxStrokeWidth(context), groupPaint.StrokeJoin,
-                            groupPaint.StrokeMiter);
+                            groupPaint.StrokeMiter, groupPaint.StrokeRoundLimit);
                     }
 
                     renderers.Add(new FillLayerRenderer(groupFillBuilder.Build(), groupOutlineBuilder.Build(), true, groupPaint));
@@ -132,7 +132,7 @@ public class RenderFactory : IRenderFactory
             foreach (var feature in features!)
             {
                 feature.ToVertices(outlineBuilder, paint.GetMaxStrokeWidth(context),
-                    paint.StrokeJoin, paint.StrokeMiter);
+                    paint.StrokeJoin, paint.StrokeMiter, paint.StrokeRoundLimit);
             }
 
             return new FillLayerRenderer(fillBuilder.Build(), outlineBuilder.Build(), true, paint);
@@ -180,7 +180,8 @@ public class RenderFactory : IRenderFactory
                         groupPaint.StrokeCap,
                         groupPaint.StrokeCap,
                         groupPaint.StrokeJoin,
-                        groupPaint.StrokeMiter);
+                        groupPaint.StrokeMiter,
+                        groupPaint.StrokeRoundLimit);
                 }
 
                 renderers.Add(new LineLayerRenderer(groupBuilder.Build(), false, groupPaint, groupMaxStrokeWidth));
@@ -207,7 +208,8 @@ public class RenderFactory : IRenderFactory
                 paint.StrokeCap,
                 paint.StrokeCap,
                 paint.StrokeJoin,
-                paint.StrokeMiter);
+                paint.StrokeMiter,
+                paint.StrokeRoundLimit);
         }
 
         return new LineLayerRenderer(builder.Build(), false, paint, maxStrokeWidth);
@@ -317,7 +319,7 @@ public class RenderFactory : IRenderFactory
     private static string PaintSignature(IPaint paint)
     {
         return $"{paint.Style};{paint.Color};{paint.Opacity};{paint.OutlineColor};{paint.IsAntialias};" +
-               $"{paint.StrokeWidth};{paint.StrokeCap};{paint.StrokeJoin};{paint.StrokeMiter};" +
+               $"{paint.StrokeWidth};{paint.StrokeCap};{paint.StrokeJoin};{paint.StrokeMiter};{paint.StrokeRoundLimit};" +
                $"{paint.Pattern?.GetHashCode()};{paint.DashArray};{paint.Radius};{paint.Blur}";
     }
 

@@ -67,6 +67,14 @@ public class Paint : IPaint
     public float StrokeMiter { get; private set; } = 4f;
 
     /// <inheritdoc/>
+    /// <remarks>
+    /// Default: positive infinity -- round joins are never converted to
+    /// miter joins (Skia has no such conversion; styles that want the
+    /// conversion set the value explicitly, the Mapbox default is 1.05).
+    /// </remarks>
+    public float StrokeRoundLimit { get; private set; } = float.PositiveInfinity;
+
+    /// <inheritdoc/>
     public ISprite? Pattern { get; private set; }
 
     /// <inheritdoc/>
@@ -164,6 +172,11 @@ public class Paint : IPaint
             StrokeMiter = funcStrokeMiter(context);
         }
 
+        if (variableStrokeRoundLimit && funcStrokeRoundLimit != null)
+        {
+            StrokeRoundLimit = funcStrokeRoundLimit(context);
+        }
+
         if (variablePattern)
         {
             if (funcISpritePattern != null)
@@ -229,6 +242,7 @@ public class Paint : IPaint
         (variableStrokeCap && funcStrokeCap != null) ||
         (variableStrokeJoin && funcStrokeJoin != null) ||
         (variableStrokeMiter && funcStrokeMiter != null) ||
+        (variableStrokeRoundLimit && funcStrokeRoundLimit != null) ||
         (variablePattern && (funcPattern != null || funcISpritePattern != null)) ||
         (variableDashArray && funcDashArray != null) ||
         (variableRadius && funcRadius != null) ||
@@ -259,6 +273,7 @@ public class Paint : IPaint
             StrokeCap = StrokeCap,
             StrokeJoin = StrokeJoin,
             StrokeMiter = StrokeMiter,
+            StrokeRoundLimit = StrokeRoundLimit,
             Pattern = Pattern,
         };
 
@@ -303,6 +318,8 @@ public class Paint : IPaint
             snapshot.SetFixStrokeJoin(funcStrokeJoin(featureContext));
         if (variableStrokeMiter && funcStrokeMiter != null)
             snapshot.SetFixStrokeMiter(funcStrokeMiter(featureContext));
+        if (variableStrokeRoundLimit && funcStrokeRoundLimit != null)
+            snapshot.SetFixStrokeRoundLimit(funcStrokeRoundLimit(featureContext));
         if (variablePattern)
         {
             if (funcISpritePattern != null)
@@ -610,6 +627,36 @@ public class Paint : IPaint
     {
         variableStrokeMiter = true;
         funcStrokeMiter = func;
+    }
+
+    #endregion
+
+    #region StrokeRoundLimit
+
+    bool variableStrokeRoundLimit = false;
+
+    Func<EvaluationContext, float>? funcStrokeRoundLimit;
+
+    /// <summary>
+    /// Sets the stroke round limit to a fixed value (maximum miter ratio up
+    /// to which round joins are converted to miter joins; positive infinity
+    /// disables the conversion).
+    /// </summary>
+    /// <param name="roundLimit">The fixed stroke round limit.</param>
+    public void SetFixStrokeRoundLimit(float roundLimit)
+    {
+        variableStrokeRoundLimit = false;
+        StrokeRoundLimit = roundLimit;
+    }
+
+    /// <summary>
+    /// Sets the stroke round limit from a function evaluated per context.
+    /// </summary>
+    /// <param name="func">The function that calculates the stroke round limit for an evaluation context.</param>
+    public void SetVariableStrokeRoundLimit(Func<EvaluationContext, float> func)
+    {
+        variableStrokeRoundLimit = true;
+        funcStrokeRoundLimit = func;
     }
 
     #endregion

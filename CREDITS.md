@@ -52,11 +52,20 @@ corresponding license texts are included in [LICENSE](LICENSE):
   the original reading routine for Mapbox Vector Tiles, reworked into the tile
   parser in `Source/Converters/VecTiles.Converters.OpenMapTiles/Parser/`.
 
-VecTiles also implements the open [Mapbox style specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
-and reads tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec),
-[OpenMapTiles](https://github.com/openmaptiles/openmaptiles) and
-[Mapsforge binary map file](https://github.com/mapsforge/mapsforge/blob/master/docs/Specification-Binary-Map-File.md)
-schemas, and styles them with [Mapsforge render themes](https://github.com/mapsforge/mapsforge/blob/master/docs/Rendertheme-V5.md).
+VecTiles also builds on the open specifications and schemas of the following projects:
+
+- [Mapbox](https://www.mapbox.com/) — VecTiles styles are written in the open
+  [Mapbox style specification](https://docs.mapbox.com/mapbox-gl-js/style-spec/) and it reads
+  tiles in the open [Mapbox Vector Tile](https://github.com/mapbox/vector-tile-spec) format.
+- [OpenMapTiles](https://github.com/openmaptiles/openmaptiles) — the OpenMapTiles schema, whose
+  layer and tag conventions are the base of the OpenMapTiles tile converter and of the
+  Mapsforge tag conversion.
+- [Protomaps](https://protomaps.com/) — the open
+  [PMTiles format](https://github.com/protomaps/PMTiles) that the PMTiles tile data source reads,
+  the [basemap tile schema](https://github.com/protomaps/basemaps) it serves and the basemap
+  styles VecTiles is developed and tested against.
+- [Mapsforge](https://github.com/mapsforge/mapsforge) — the binary map file schema and the
+  render theme format VecTiles reads and renders.
 
 ## Sample content
 

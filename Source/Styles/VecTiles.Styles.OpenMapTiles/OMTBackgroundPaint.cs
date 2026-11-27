@@ -29,6 +29,11 @@ public static class OMTBackgroundPaint
 
         brush.SetFixStyle(PaintStyle.Fill);
 
+        // No antialiasing: the background fills the whole tile rectangle, the
+        // antialiased edge pixels would only blend with the map canvas behind
+        // the tiles and show up as a light seam between neighboring tiles
+        brush.SetFixAntialias(false);
+
         // background-color
         //   Optional color. Defaults to #000000. Disabled by background-pattern. Transitionable.
         //   The color with which the background will be drawn.

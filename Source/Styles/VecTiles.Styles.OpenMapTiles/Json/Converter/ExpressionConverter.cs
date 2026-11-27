@@ -81,8 +81,19 @@ public class ExpressionConverter : JsonConverter<IExpression>
                 return operand != "$id" && operand != "$type";
             case "in":
             case "!in":
+                // Legacy form is ["in", key, value1, value2, ...] with a plain
+                // string key and scalar values; any array operand means the
+                // filter already uses expression syntax
+                for (int i = 1; i < filter.Count; i++)
+                {
+                    if (filter[i] is JsonArray)
+                        return true;
+                }
+
+                return false;
             case "!has":
             case "none":
+                // Pure legacy operators; expressions use ["!", ["has", ...]]
                 return false;
             case "==":
             case "!=":
@@ -196,8 +207,21 @@ public class ExpressionConverter : JsonConverter<IExpression>
         for (int i = 1; i < filter.Count; i++)
         {
             // Existing nodes keep their parent, so nested filter arrays are
-            // cloned before the recursive conversion
-            children.Add(filter[i] is JsonArray sub ? ConvertLegacyFilter((JsonArray)sub.DeepClone()) : filter[i]?.DeepClone());
+            // cloned before the recursive conversion. Children that are already
+            // in expression syntax (mixed legacy/expression filters occur in
+            // real-world styles) are kept unchanged.
+            if (filter[i] is not JsonArray sub)
+            {
+                children.Add(filter[i]?.DeepClone());
+            }
+            else if (IsExpressionFilter(sub))
+            {
+                children.Add((JsonArray)sub.DeepClone());
+            }
+            else
+            {
+                children.Add(ConvertLegacyFilter((JsonArray)sub.DeepClone()));
+            }
         }
 
         return children;

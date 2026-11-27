@@ -665,6 +665,10 @@
       <Link>Files/Protomaps/zuerich.pmtiles</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="..\..\..\Files\VersaTiles\versatiles-en-style.json">
+      <Link>Files/VersaTiles/versatiles-en-style.json</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <EmbeddedResource Include="..\..\..\Files\OpenMapTiles\Sprites\osm-liberty.json" Link="Files\OpenMapTiles\Sprites\osm-liberty.json" />
     <EmbeddedResource Include="..\..\..\Files\OpenMapTiles\Sprites\osm-liberty.png" Link="Files\OpenMapTiles\Sprites\osm-liberty.png" />
     <EmbeddedResource Include="..\..\..\Files\OpenMapTiles\Sprites\osm-liberty@2x.json" Link="Files\OpenMapTiles\Sprites\osm-liberty%402x.json" />

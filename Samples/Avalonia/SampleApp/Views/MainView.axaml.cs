@@ -29,6 +29,7 @@ public partial class MainView : UserControl
     private readonly string _pathOMT = "Files/OpenMapTiles";
     private readonly string _pathMF = "Files/Mapsforge";
     private readonly string _pathPMT = "Files/Protomaps";
+    private readonly string _pathVT = "Files/VersaTiles";
     private readonly TileGridDebugLayer _debugLayer;
     private readonly IRenderedTileSource _tileSource;
     private readonly RenderedTileLayer _tileLayer;
@@ -44,14 +45,24 @@ public partial class MainView : UserControl
 
         //var styleSource = $"file://{_pathOMT}/osm-liberty.json";
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
-        var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
+        //var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
+        var styleSource = $"file://{_pathVT}/versatiles-en-style.json";
         //var styleSource = $"https://api.protomaps.com/styles/v5/light/en.json?key=YOUR_API_KEY";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
         _tileSource = new OMTRenderedTileSource(styleSource);
         //_tileSource = new MFRenderedTileSource($"file://{_pathMF}/zuerich.map", new IdentityTagsConverter("mapsforge"), $"file://{_pathMF}/mapsforge/default.xml");
         
-        _tileLayer = new RenderedTileLayer(_tileSource);
+        // The style file references the fonts of a glyph server by their
+        // fontstack names ("noto_sans_regular"); the name resolver maps them
+        // to the installed "Noto Sans" family, whose weights are parsed from
+        // the returned names
+        _tileLayer = new RenderedTileLayer(_tileSource, fontNameResolver: f => f switch
+        {
+            "noto_sans_regular" => "Noto Sans Regular",
+            "noto_sans_bold" => "Noto Sans Bold",
+            _ => f
+        });
         MapControl.Map.Layers.Add(_tileLayer);
 
         _debugLayer = new TileGridDebugLayer(_tileLayer.TileSource.Schema)

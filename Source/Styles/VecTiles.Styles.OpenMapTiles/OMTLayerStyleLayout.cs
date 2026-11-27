@@ -224,6 +224,7 @@ public class OMTLayerStyleLayout
     /// Font names used to display the text; empty means the style has no text-font.
     /// </summary>
     [JsonPropertyName("text-font")]
+    [JsonConverter(typeof(TextFontConverter))]
     // Empty = the style does not specify a font; OMTTextBuilder falls back to
     // DefaultFontNames on its own, so that only really used fonts are reported
     public string[] TextFont { get; set; } = [];
@@ -344,6 +345,7 @@ public class OMTLayerStyleLayout
     /// used instead of a fixed text-anchor.
     /// </summary>
     [JsonPropertyName("text-variable-anchor")]
+    [JsonConverter(typeof(StringArrayConverter))]
     public string[] TextVariableAnchor { get; set; } = [];
 
     /// <summary>

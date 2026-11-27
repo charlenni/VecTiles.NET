@@ -274,6 +274,10 @@ internal static class CompoundOperators
         Register("image", args => args == 1, (ctx, args) =>
             args[0].Evaluate(ctx) is string s ? s : null);
 
+        // The renderer shapes all scripts with HarfBuzz and needs no RTL text plugin,
+        // so "is-supported-script" always reports script support
+        Register("is-supported-script", args => args == 1, (ctx, args) => true);
+
         Register("typeof", args => args == 1, (ctx, args) =>
             TypeOf(args[0].Evaluate(ctx)));
 

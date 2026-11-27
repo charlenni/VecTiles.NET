@@ -23,6 +23,7 @@ public class ExpressionParser
         { "coalesce", CoalesceExpression.Parse },
         { "collator", CollatorExpression.Parse },
         { "distance", DistanceExpression.Parse },
+        { "format", FormatExpression.Parse },
         { "get", GetExpression.Parse },
         { "in", InExpression.Parse },
         { "interpolate", InterpolateExpression.Parse },

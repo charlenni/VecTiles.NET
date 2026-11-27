@@ -1,3 +1,4 @@
+using SkiaSharp;
 using System.Collections.Concurrent;
 using Topten.RichTextKit;
 
@@ -75,7 +76,21 @@ public static class RenderedTextCache
     private static RenderedText LayoutRenderedText(string text, string styleName, string[] fontNames,
         float fontSize, float lineHeight, float letterSpacing, float? maxWidth, TextAlignment alignment)
     {
-        var result = new RenderedText(text, FontCache.CreateFonts(styleName, fontNames));
+        var textStyle = FontCache.CreateFonts(styleName, fontNames);
+
+        // Like MapLibre, a word wider than the maximum width must overflow on
+        // its own line instead of being broken mid-word. RichTextKit breaks
+        // such a word, so in that case the line breaks are determined here,
+        // inserted as newlines and the max width is dropped, so the text block
+        // cannot break words. Texts without an overflowing word keep the usual
+        // RichTextKit layout.
+        if (maxWidth is { } max && HasWordWiderThan(text, textStyle, fontSize, letterSpacing, max))
+        {
+            text = WrapBetweenWords(text, textStyle, fontSize, letterSpacing, max);
+            maxWidth = null;
+        }
+
+        var result = new RenderedText(text, textStyle);
 
         // Use the caching font mapper, so typefaces are resolved once per font
         // signature. The global default mapper is left untouched for other
@@ -112,5 +127,92 @@ public static class RenderedTextCache
         result.LeftRightCorrection = result.Text.MeasuredPadding.Left;
 
         return result;
+    }
+
+    /// <summary>
+    /// Checks whether any word of the text (newlines not counted) is wider than
+    /// the maximum width, using the same measurement as
+    /// <see cref="WrapBetweenWords"/>. Returns false if the font cannot be
+    /// resolved for measurement.
+    /// </summary>
+    private static bool HasWordWiderThan(string text, Style textStyle, float fontSize, float letterSpacing,
+        float maxWidth)
+    {
+        using var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
+
+        if (typeface is null)
+        {
+            return false;
+        }
+
+        using var font = new SKFont(typeface, fontSize);
+
+        foreach (var segment in text.Split('\n'))
+        {
+            foreach (var word in segment.Split(' '))
+            {
+                if (font.MeasureText(word) + letterSpacing * (word.Length - 1) > maxWidth)
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Wraps the text at spaces so that no line exceeds the maximum width,
+    /// keeping existing newlines. A word wider than the maximum width starts
+    /// (or occupies) a line unbroken, like MapLibre does; spaces at the break
+    /// points are dropped. Returns the text unchanged if the font cannot be
+    /// resolved for measurement.
+    /// </summary>
+    private static string WrapBetweenWords(string text, Style textStyle, float fontSize, float letterSpacing,
+        float maxWidth)
+    {
+        using var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
+
+        if (typeface is null)
+        {
+            return text;
+        }
+
+        using var font = new SKFont(typeface, fontSize);
+
+        float Measure(string value) => font.MeasureText(value) + letterSpacing * (value.Length - 1);
+
+        var lines = new List<string>();
+
+        foreach (var segment in text.Split('\n'))
+        {
+            var current = string.Empty;
+
+            foreach (var word in segment.Split(' '))
+            {
+                if (current.Length == 0)
+                {
+                    current = word;
+                }
+                else
+                {
+                    var candidate = current + ' ' + word;
+
+                    if (Measure(candidate) <= maxWidth)
+                    {
+                        current = candidate;
+                    }
+                    else
+                    {
+                        lines.Add(current);
+                        current = word;
+                    }
+                }
+            }
+
+            lines.Add(current.TrimEnd());
+        }
+
+        return string.Join('\n', lines);
     }
 }

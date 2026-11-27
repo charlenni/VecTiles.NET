@@ -4,6 +4,7 @@ using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.DataSources;
 using VecTiles.DataSources.MbTiles;
+using VecTiles.DataSources.PmTiles;
 using VecTiles.Styles.OpenMapTiles.Enums;
 using VecTiles.Styles.OpenMapTiles.Expressions;
 using VecTiles.Styles.OpenMapTiles.Json;
@@ -251,10 +252,37 @@ public class OMTSource
             return url;
 
         var scheme = url.Substring(0, separatorIndex);
-        if (scheme is not (DefaultTileDataSourceFactory.FileScheme or DefaultTileDataSourceFactory.MbTilesScheme or DefaultTileDataSourceFactory.MapsforgeScheme))
+        if (scheme is not (DefaultTileDataSourceFactory.FileScheme or DefaultTileDataSourceFactory.MbTilesScheme or DefaultTileDataSourceFactory.MapsforgeScheme or DefaultTileDataSourceFactory.PmTilesScheme))
             return url;
 
         var path = url.Substring(separatorIndex + 3);
+
+        if (scheme == DefaultTileDataSourceFactory.PmTilesScheme)
+        {
+            // A pmtiles source is 'pmtiles://file://path' or 'pmtiles://http(s)://url'; only the
+            // file variant is resolved against the base directory. The pmtiles scheme is kept,
+            // so the data source factory can route the URL to the PMTiles data source.
+            if (!path.StartsWith(DefaultTileDataSourceFactory.FileScheme + "://", StringComparison.Ordinal))
+                return url;
+
+            path = path.Substring(DefaultTileDataSourceFactory.FileScheme.Length + 3);
+
+            // Absolute paths and paths relative to the working directory are
+            // resolved by the data source itself
+            if (Path.IsPathRooted(path) || File.Exists(path))
+                return url;
+
+            var resolvedPath = baseDirectory.Length > 0
+                ? Path.Combine(baseDirectory, path)
+                : path;
+
+            // Only use the resolved path when it exists, otherwise keep the
+            // original URL, e.g. when the path is relative to the working
+            // directory of an application running from a different directory
+            return File.Exists(resolvedPath)
+                ? $"{DefaultTileDataSourceFactory.PmTilesScheme}://{resolvedPath}"
+                : url;
+        }
 
         if (Path.IsPathRooted(path))
             return url;
@@ -293,6 +321,11 @@ public class OMTSource
         {
             Center = mbTiles.Center;
             Zoom ??= mbTiles.CenterZoom;
+        }
+        else if (dataSource is PMTilesTileDataSource pmTiles)
+        {
+            Center = pmTiles.Center;
+            Zoom ??= pmTiles.CenterZoom;
         }
 
         if (dataSource.Attribution is not null)

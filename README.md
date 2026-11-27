@@ -4,7 +4,7 @@ VecTiles.NET is a .NET library suite that makes vector map data (vector tiles) u
 applications. It covers the full pipeline:
 
 - loading tile bytes from different sources (HTTP(S) tile servers, MBTiles/SQLite files, Mapsforge
-  map files),
+  map files, PMTiles archives),
 - converting Mapbox/OpenMapTiles vector tiles (MVT, PBF optionally zipped) and Mapsforge binary
   map tiles into feature objects,
 - styling them with map styles in the [Mapbox style format](https://docs.mapbox.com/mapbox-gl-js/style-spec/)
@@ -129,10 +129,11 @@ The tile sources referenced by the style file are created automatically:
 | `http(s)://…/{z}/{x}/{y}.pbf` (`pbf` or `.pbf.gz`) | Tile server; also works with a TileJSON (`…​.json`), from which tile URLs, zoom range and attribution are resolved |
 | `mbtiles://path/to/file.mbtiles` | MBTiles file (SQLite in Mapbox format) |
 | `mapsforge://path/to/file.map` | Mapsforge map file (binary MAP format) |
+| `pmtiles://file://path/to/file.pmtiles` or `pmtiles://https://host/file.pmtiles` | PMTiles archive (single file, read in byte ranges; HTTP(S) servers must support range requests) |
 
 Both are then wrapped in a `VectorTileDataSource` that converts the tile bytes with the matching
-tile converter and applies the overzoom fallback described above: tile server and MBTiles payloads
-with the OpenMapTiles converter, Mapsforge tiles with the Mapsforge converter, whose tag
+tile converter and applies the overzoom fallback described above: tile server, MBTiles and PMTiles
+MVT payloads with the OpenMapTiles converter, Mapsforge tiles with the Mapsforge converter, whose tag
 conversion by default maps the raw Mapsforge tags to the OpenMapTiles schema (so Mapbox style
 based styles work unchanged on Mapsforge maps).
 

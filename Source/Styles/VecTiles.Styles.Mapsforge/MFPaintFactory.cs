@@ -60,6 +60,11 @@ public static class MFBackgroundPaint
         brush.SetFixStyle(PaintStyle.Fill);
         brush.SetFixColor(backgroundStyle.MapBackground);
 
+        // No antialiasing: the background fills the whole tile rectangle, the
+        // antialiased edge pixels would only blend with the map canvas behind
+        // the tiles and show up as a light seam between neighboring tiles
+        brush.SetFixAntialias(false);
+
         return brush;
     }
 }

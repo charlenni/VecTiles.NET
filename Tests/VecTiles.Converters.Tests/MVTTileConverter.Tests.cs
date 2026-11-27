@@ -8,21 +8,21 @@ using VecTiles.Tests;
 namespace VecTiles.Converters.Tests;
 
 /// <summary>
-/// Integration tests for <see cref="OMTTileConverter" /> using a real OpenMapTiles MBTiles file.
+/// Integration tests for <see cref="MVTTileConverter" /> using a real MVT MBTiles file.
 /// </summary>
-public class OMTConverterTests
+public class MVTConverterTests
 {
     readonly string _path = Path.Combine(RepoData.DataFiles, "zurich.mbtiles");
 
     /// <summary>
-    /// Verifies that a Zurich MBTiles tile converted by <see cref="OMTTileConverter" />
+    /// Verifies that a Zurich MBTiles tile converted by <see cref="MVTTileConverter" />
     /// yields the expected layers, features and attributes.
     /// </summary>
     [Fact]
     public async Task VectorTileConverterTest()
     {
         var dataSource = new MbTilesTileDataSource(_path, determineZoomLevelsFromTilesTable: true, determineTileRangeFromTilesTable: true);
-        var tileConverter = new OMTTileConverter();
+        var tileConverter = new MVTTileConverter();
         var vectorDataSource = new VectorTileDataSource(dataSource, tileConverter);
 
         Assert.True(dataSource.Version == "3.15.0");

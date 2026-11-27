@@ -24,7 +24,7 @@ fi
 # Must be packed in this order, the later packages depend on the earlier ones.
 PACKAGES=(
     "Source/Packages/VecTiles.Common.Package/VecTiles.Common.Package.csproj"
-    "Source/Packages/VecTiles.OpenMapTiles.Package/VecTiles.OpenMapTiles.Package.csproj"
+    "Source/Packages/VecTiles.MapLibre.Package/VecTiles.MapLibre.Package.csproj"
     "Source/Packages/VecTiles.Mapsforge.Package/VecTiles.Mapsforge.Package.csproj"
     "Source/Packages/VecTiles.Skia.Package/VecTiles.Skia.Package.csproj"
     "Source/Packages/VecTiles.Mapsui.Package/VecTiles.Mapsui.Package.csproj"
@@ -35,7 +35,7 @@ mkdir -p "$OUT_DIR"
 # Remove previously built packages (same version) and the cached versions from
 # the global NuGet package folder, so packing the same version repeatedly works.
 rm -f "$OUT_DIR"/VecTiles.*.nupkg $OUT_DIR/*.snupkg 2>/dev/null || true
-for pkg in vectiles.common vectiles.openmaptiles vectiles.mapsforge vectiles.skia vectiles.mapsui; do
+for pkg in vectiles.common vectiles.maplibre vectiles.mapsforge vectiles.skia vectiles.mapsui; do
     rm -rf "$HOME/.nuget/packages/$pkg"
 done
 

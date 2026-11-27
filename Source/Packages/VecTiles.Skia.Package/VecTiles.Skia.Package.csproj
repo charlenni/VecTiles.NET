@@ -29,7 +29,7 @@
        (pack-nuget.sh passes -p:CreateNuGets=true). During normal builds the
        projects are referenced directly, so no NuGet feed is needed. -->
   <ItemGroup Condition="'$(CreateNuGets)' == 'true'">
-    <PackageReference Include="VecTiles.OpenMapTiles" Version="$(Version)" />
+    <PackageReference Include="VecTiles.MapLibre" Version="$(Version)" />
   </ItemGroup>
 
   <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">

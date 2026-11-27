@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <PackageId>VecTiles.OpenMapTiles</PackageId>
+    <PackageId>VecTiles.MapLibre</PackageId>
     <Title>VecTiles.MapLibre</Title>
     <Description>MapLibre support for the VecTiles.NET vector tile mapping stack. It bundles VecTiles.Styles.MapLibre (styles in the Mapbox/MapLibre style format) and VecTiles.Converters.MVT convert Mapbox/MapLibre vector tiles (MVT, PBF optionally zipped) to VectorTile objects.</Description>
     <PackageTags>map;maps;geo;gis;vector-tiles;tile;tiles;openmaptiles;mapbox;maplibre;mvt;pmtiles;styles</PackageTags>

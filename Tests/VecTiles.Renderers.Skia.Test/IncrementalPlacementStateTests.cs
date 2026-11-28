@@ -275,4 +275,34 @@ public class IncrementalPlacementStateTests
             second.PlacedByLayer["place_low"].Count);
         Assert.Empty(second.Rejected);
     }
+
+    /// <summary>
+    /// Verifies that feature ids are only matched within a style layer: MVT/MLT
+    /// feature ids are unique per layer only, so the same id in two layers is
+    /// two different features. The decisions were previously kept by the bare
+    /// id, so one layer's feature inherited the pinned decision of the other
+    /// layer's feature with the same id and was never placed (MapLibre
+    /// demotiles: the geolines labels share the ids 2, 3, 4 and 5 with the
+    /// country labels of the same tile).
+    /// </summary>
+    [Fact]
+    public void SameFeatureIdInDifferentLayers_IsPlacedInBothLayers()
+    {
+        var symbolA = TextSymbol(5, 100, 100, new Envelope(-10, 10, -10, 10));
+        var symbolB = TextSymbol(5, 500, 500, new Envelope(-10, 10, -10, 10));
+        var tile = Layer(("layer-a", [symbolA]), ("layer-b", [symbolB]));
+
+        var state = new IncrementalPlacementState();
+
+        var first = Compute(state, tile);
+        Assert.Single(first.PlacedByLayer["layer-a"]);
+        Assert.Single(first.PlacedByLayer["layer-b"]);
+        Assert.Empty(first.Rejected);
+
+        // The decision of each feature must also survive the next pass
+        var second = Compute(state, tile);
+        Assert.Single(second.PlacedByLayer["layer-a"]);
+        Assert.Single(second.PlacedByLayer["layer-b"]);
+        Assert.Empty(second.Rejected);
+    }
 }

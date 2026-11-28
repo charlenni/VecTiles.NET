@@ -217,11 +217,13 @@ public sealed class IncrementalPlacementState
     public const int MaxDecisions = 100_000;
 
     // Decisions by feature id (value non-null = the placed entry that is
-    // kept in the following passes); for symbols without feature id
-    // by the symbol instance (stable while the tile is in the tile cache),
-    // or — for point symbols — by their anchor (stable across re-renders,
-    // see <see cref="AnchorKey"/>)
-    private readonly Dictionary<ulong, PlacementEntry?> _decidedById = new();
+    // kept in the following passes). The key includes the style layer name:
+    // feature ids are only unique per layer (MVT/MLT convention), the same
+    // id in another layer is a different feature. For symbols without
+    // feature id by the symbol instance (stable while the tile is in the
+    // tile cache), or — for point symbols — by their anchor (stable across
+    // re-renders, see <see cref="AnchorKey"/>)
+    private readonly Dictionary<(string Layer, ulong Id), PlacementEntry?> _decidedById = new();
     private readonly Dictionary<ISymbol, PlacementEntry?> _decidedByReference = new();
     private readonly Dictionary<(ulong TileId, double X, double Y, string? Text), PlacementEntry?> _decidedByAnchor = new();
 
@@ -231,11 +233,11 @@ public sealed class IncrementalPlacementState
     /// symbol is examined again in every later pass, so it can appear when
     /// the space was freed by other symbols leaving the view.
     /// </summary>
-    internal bool TryGetDecision(ISymbol symbol, out PlacementEntry? entry)
+    internal bool TryGetDecision(ISymbol symbol, string layer, out PlacementEntry? entry)
     {
         if (symbol.Id != 0)
         {
-            return _decidedById.TryGetValue(symbol.Id, out entry);
+            return _decidedById.TryGetValue((layer, symbol.Id), out entry);
         }
 
         if (symbol is PointSymbol point)
@@ -264,11 +266,11 @@ public sealed class IncrementalPlacementState
     /// re-examined symbol that still collides is rejected again
     /// deterministically, so nothing flaps.
     /// </summary>
-    internal void Decide(ISymbol symbol, PlacementEntry entry)
+    internal void Decide(ISymbol symbol, string layer, PlacementEntry entry)
     {
         if (symbol.Id != 0)
         {
-            _decidedById[symbol.Id] = entry;
+            _decidedById[(layer, symbol.Id)] = entry;
         }
         else if (symbol is PointSymbol point)
         {
@@ -383,7 +385,7 @@ public static class SymbolPlacementEngine
         // means "no id" (data sources without feature ids): such symbols are
         // always examined; duplicate placement is prevented by the collision
         // detection instead.
-        var examinedIds = new HashSet<ulong>();
+        var examinedIds = new HashSet<(string Layer, ulong Id)>();
 
         // With a persistent state every decision is one per pass; see the
         // first occurrence rule in the loop below
@@ -537,7 +539,7 @@ public static class SymbolPlacementEngine
                 continue;
             }
 
-            if (symbol.Id != 0 && !examinedIds.Add(symbol.Id))
+            if (symbol.Id != 0 && !examinedIds.Add((layer, symbol.Id)))
             {
                 continue;
             }
@@ -551,7 +553,7 @@ public static class SymbolPlacementEngine
             // of the pinned symbol is re-affirmed in the current pass
             // and the boxes of vanished symbols free their space
             if (incremental is not null &&
-                incremental.TryGetDecision(symbol, out var decided) &&
+                incremental.TryGetDecision(symbol, layer, out var decided) &&
                 decided is not null)
             {
                 if (symbol is PointSymbol pinnedPoint)
@@ -587,7 +589,7 @@ public static class SymbolPlacementEngine
 
                 if (status == SymbolPlacementStatus.Success)
                 {
-                    placedByLayerAdd(symbol, null, placements);
+                    placedByLayerAdd(symbol, layer, null, placements);
                 }
                 else
                 {
@@ -608,7 +610,7 @@ public static class SymbolPlacementEngine
 
                     if (run.HasPlacements)
                     {
-                        placedByLayerAdd(symbol, run, placements);
+                        placedByLayerAdd(symbol, layer, run, placements);
                     }
                     else
                     {
@@ -622,7 +624,7 @@ public static class SymbolPlacementEngine
 
                     if (run.HasPlacements)
                     {
-                        placedByLayerAdd(symbol, run, placements);
+                        placedByLayerAdd(symbol, layer, run, placements);
                     }
                     else
                     {
@@ -649,7 +651,7 @@ public static class SymbolPlacementEngine
             }
         }
 
-        void placedByLayerAdd(ISymbol symbol, LineSymbolPlacementRun? run, List<PlacementEntry> placements)
+        void placedByLayerAdd(ISymbol symbol, string layer, LineSymbolPlacementRun? run, List<PlacementEntry> placements)
         {
             if (symbol is PointSymbol point)
             {
@@ -657,7 +659,7 @@ public static class SymbolPlacementEngine
             }
 
             placements.Add(new PlacementEntry(symbol, run));
-            incremental?.Decide(symbol, placements[^1]);
+            incremental?.Decide(symbol, layer, placements[^1]);
         }
 
         // Copy the placements into the result dictionary in the ascending

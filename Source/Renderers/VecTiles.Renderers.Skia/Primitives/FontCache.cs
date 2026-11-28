@@ -83,7 +83,10 @@ public static class FontCache
     /// installed on the system. Returning null or an empty string, or having
     /// no resolver set, leaves the font to the usual resolution order
     /// (registered files, search paths, system fonts, system default).
-    /// Call with null to remove the resolver again.
+    /// Call with null to remove the resolver again. The resolver should be
+    /// free of side effects: it is also consulted by
+    /// <see cref="GetMissingFonts"/> to decide whether a font counts as
+    /// missing.
     /// </summary>
     public static void SetFontSourceResolver(Func<string, string?>? fontSourceResolver)
     {
@@ -333,7 +336,9 @@ public static class FontCache
                 .CreateFontWeight(ref textStyle)
                 .CreateFontItalic(ref textStyle);
 
-            if (!IsAvailable(family))
+            // A font that the font source resolver can provide from a source
+            // is loaded on first use and is therefore not missing
+            if (!IsAvailable(family) && !CanResolveFontSource(resolvedName))
             {
                 missing.Add(name);
             }
@@ -537,6 +542,37 @@ public static class FontCache
         {
             Console.WriteLine($"Could not rename the font name '{fontName}': {ex.Message}");
             return fontName;
+        }
+    }
+
+    /// <summary>
+    /// Checks whether the font source resolver (see
+    /// <see cref="SetFontSourceResolver"/>) can provide a source for the
+    /// given font name. Only the source is asked for; the font itself is
+    /// loaded on first use (see <see cref="TryLoadFontFromResolver"/>).
+    /// </summary>
+    private static bool CanResolveFontSource(string fontName)
+    {
+        Func<string, string?>? resolver;
+
+        lock (FontSourceResolverLock)
+        {
+            resolver = FontSourceResolver;
+        }
+
+        if (resolver is null || string.IsNullOrWhiteSpace(fontName))
+        {
+            return false;
+        }
+
+        try
+        {
+            return !string.IsNullOrWhiteSpace(resolver(fontName));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Could not resolve a source for font '{fontName}': {ex.Message}");
+            return false;
         }
     }
 

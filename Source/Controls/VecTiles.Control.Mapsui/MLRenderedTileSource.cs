@@ -33,6 +33,7 @@ public class MLRenderedTileSource : IRenderedTileSource, IFontChecker
         var maxZoom = 24;
 
         _renderer = new Renderer(omtStyleFile.Sources.Where(s => s.Value.DataSource != null).Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, (ITileDataSource)s.Value.DataSource!)), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new PaintFactory(omtStyleFile.Sprites), new SymbolFactory(omtStyleFile.Sprites)));
+        SourceWarnings.ReportSourcesWithoutDataSource(omtStyleFile.Name, omtStyleFile);
         _cache = new MemoryCache<IRenderedTile>(200, 300);
 
         // The missing font check runs in RenderedTileLayer after the font

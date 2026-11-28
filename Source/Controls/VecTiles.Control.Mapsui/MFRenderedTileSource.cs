@@ -136,6 +136,8 @@ public class MFRenderedTileSource : IRenderedTileSource, IPlacementOrderSource, 
                 _styles,
                 new RenderFactory(_styles, new PaintFactory(styleFile.Sprites), new SymbolFactory(styleFile.Sprites)));
 
+            SourceWarnings.ReportSourcesWithoutDataSource(styleFile.Name, styleFile);
+
             foreach (var s in styleFile.Sources.Values.Where(s => _styles.Any(l => l.Source == s.Name)))
             {
                 if (string.IsNullOrEmpty(s.Attribution))

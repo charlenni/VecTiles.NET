@@ -221,8 +221,8 @@ public class Source
 
     /// <summary>
     /// Resolves the relative file URLs of the source (mbtiles://, mapsforge://,
-    /// file://) against the given base directory, so they can point to files
-    /// that live next to the style file.
+    /// file://) and scheme-less relative paths against the given base
+    /// directory, so they can point to files that live next to the style file.
     /// </summary>
     /// <param name="baseDirectory">Directory the relative URLs are resolved against.</param>
     internal void ResolveRelativeUrls(string baseDirectory)
@@ -237,7 +237,8 @@ public class Source
     }
 
     /// <summary>
-    /// Resolves a single source URL with a file based scheme against a base
+    /// Resolves a single source URL with a file based scheme, or a scheme-less
+    /// relative path (e.g. "tiles.json" next to the style file), against a base
     /// directory. Absolute paths and URLs of other schemes are returned unchanged.
     /// </summary>
     /// <param name="url">The source URL to resolve, may be null.</param>
@@ -247,6 +248,17 @@ public class Source
     {
         if (string.IsNullOrEmpty(url))
             return url;
+
+        // ResolveRelativeUrls is only called for file based styles, so a URL
+        // without a scheme is a path relative to the style file. Scheme-less
+        // URLs are not understood by the data sources and byte sources
+        // themselves, so they must be resolved here.
+        if (!url.StartsWith("//", StringComparison.Ordinal) && !url.Contains("://", StringComparison.Ordinal))
+        {
+            var resolvedPath = baseDirectory.Length > 0 ? Path.Combine(baseDirectory, url) : url;
+
+            return DefaultTileDataSourceFactory.FileScheme + "://" + resolvedPath;
+        }
 
         var separatorIndex = url.IndexOf("://", StringComparison.Ordinal);
         if (separatorIndex <= 0)
@@ -375,7 +387,7 @@ public class Source
             ?? throw new ArgumentException($"TileJSON '{tileJsonUrl}' isn't valid");
 
         if (tileJson.Tiles is { Count: > 0 })
-            Tiles = tileJson.Tiles;
+            Tiles = ResolveTileJsonTileUrls(tileJson.Tiles, tileJsonUrl);
 
         // The tile format of an HTTP source is not part of the HTTP response
         // headers (tiles are usually served as 'application/octet-stream');
@@ -392,6 +404,42 @@ public class Source
             Attribution = tileJson.Attribution;
 
         return Tiles![0];
+    }
+
+    /// <summary>
+    /// Resolves the tile URLs of a loaded TileJSON. A file based TileJSON may
+    /// reference its tiles relative to its own location (scheme-less or with a
+    /// file based scheme); those are resolved against the folder of the
+    /// TileJSON file. A network TileJSON has absolute tile URLs per
+    /// specification, so its entries are left unchanged.
+    /// </summary>
+    /// <param name="tiles">The tile URLs of the TileJSON.</param>
+    /// <param name="tileJsonUrl">URL the TileJSON was loaded from.</param>
+    /// <returns>The tile URLs with relative paths resolved.</returns>
+    internal static List<string> ResolveTileJsonTileUrls(IEnumerable<string> tiles, string tileJsonUrl)
+    {
+        var directory = GetFileUrlDirectory(tileJsonUrl);
+        if (directory == null)
+            return [.. tiles];
+
+        return tiles.Select(t => ResolveRelativeUrl(t, directory) ?? t).ToList();
+    }
+
+    /// <summary>
+    /// Directory part of a file URL, or null when the URL isn't a file URL
+    /// (e.g. a network URL) and relative paths cannot be resolved against it.
+    /// </summary>
+    /// <param name="url">File URL whose directory is returned.</param>
+    /// <returns>The containing directory, without trailing slash.</returns>
+    internal static string? GetFileUrlDirectory(string url)
+    {
+        if (!url.StartsWith(DefaultTileDataSourceFactory.FileScheme + "://", StringComparison.OrdinalIgnoreCase))
+            return null;
+
+        var path = url.Substring(DefaultTileDataSourceFactory.FileScheme.Length + 3);
+        var lastSeparator = path.LastIndexOf('/');
+
+        return lastSeparator < 0 ? string.Empty : path.Substring(0, lastSeparator);
     }
 
     private class TileJson

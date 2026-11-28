@@ -40,7 +40,7 @@ public class StyleFileLoader
 
         // Resolve relative source file URLs against the folder of the style
         // file, so styles are independent of the working directory.
-        var styleDirectory = GetStyleFileDirectory(source);
+        var styleDirectory = Source.GetFileUrlDirectory(source);
 
         if (styleDirectory != null)
         {
@@ -64,24 +64,6 @@ public class StyleFileLoader
         omtStyleFile.Sprites = await LoadSprites(omtStyleFile.SpriteDefinitions).ConfigureAwait(false);
 
         return omtStyleFile;
-    }
-
-    /// <summary>
-    /// Directory part of a style file source, or null when the source isn't a
-    /// file system path (e.g. a network URL) and relative paths cannot be
-    /// resolved against it.
-    /// </summary>
-    /// <param name="source">File path or URL of the style file.</param>
-    /// <returns>The directory containing the style file, without trailing slash.</returns>
-    private static string? GetStyleFileDirectory(string source)
-    {
-        if (!source.StartsWith(ByteDataSource.FileScheme + "://", StringComparison.OrdinalIgnoreCase))
-            return null;
-
-        var path = source.Substring(ByteDataSource.FileScheme.Length + 3);
-        var lastSeparator = path.LastIndexOf('/');
-
-        return lastSeparator < 0 ? string.Empty : path.Substring(0, lastSeparator);
     }
 
     /// <summary>

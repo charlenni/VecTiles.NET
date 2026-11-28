@@ -23,22 +23,42 @@ internal static class DefaultVectorTileConverterFactory
     private static readonly Func<ITileDataSource, ITileConverter> ForDataSource = dataSource =>
         dataSource is MapsforgeTileDataSource
             ? new MapsforgeTileConverter()
-            : dataSource is MbTilesTileDataSource { Format: MbTilesFormat.Mlt }
-                || dataSource is PmTilesTileDataSource { Header.TileType: PmTilesTileType.MapLibreVector }
-                || IsMltHttpSource(dataSource)
+            : UsesMltEncoding(dataSource)
                 ? new MltTileConverter(IdentityTagsConverter.Instance)
                 : new MVTTileConverter(IdentityTagsConverter.Instance);
 
     /// <summary>
-    /// HTTP sources declare their tile format either in the 'encoding' entry
-    /// of their TileJSON (the reliable place; HTTP response headers carry no
-    /// tile format) or in the file extension of their URL template,
-    /// e.g. the '.mlt' tiles of the MapLibre demotiles TileJSON.
+    /// Gets the tile format of a vector source: an explicit 'encoding' entry
+    /// (the 'encoding' of the style source or of the TileJSON of an HTTP
+    /// source) wins over the native format declarations of the data sources
+    /// (MBTiles metadata format, PMTiles header tile type). Without any
+    /// declaration the source is MVT, per style specification default.
     /// </summary>
-    private static bool IsMltHttpSource(ITileDataSource dataSource) =>
-        dataSource is HttpTileDataSource httpSource
-        && (string.Equals(httpSource.TileEncoding, "mlt", StringComparison.OrdinalIgnoreCase)
-            || httpSource.Sources.Any(s => s.EndsWith(".mlt", StringComparison.OrdinalIgnoreCase)));
+    private static bool UsesMltEncoding(ITileDataSource dataSource)
+    {
+        var explicitEncoding = dataSource switch
+        {
+            HttpTileDataSource httpSource => httpSource.TileEncoding,
+            PmTilesTileDataSource { TileEncoding: { } tileEncoding } => tileEncoding,
+            _ => null,
+        };
+
+        if (!string.IsNullOrWhiteSpace(explicitEncoding))
+            return explicitEncoding.Equals("mlt", StringComparison.OrdinalIgnoreCase)
+                || explicitEncoding.Equals("maplibre", StringComparison.OrdinalIgnoreCase);
+
+        return dataSource switch
+        {
+            MbTilesTileDataSource { Format: MbTilesFormat.Mlt } => true,
+            PmTilesTileDataSource { Header.TileType: PmTilesTileType.MapLibreVector } => true,
+            // HTTP sources have no format entry of their own; the file
+            // extension of the tile template is the only hint, e.g. the
+            // '.mlt' tiles of the MapLibre demotiles
+            HttpTileDataSource httpSource => httpSource.Sources.Any(
+                s => s.EndsWith(".mlt", StringComparison.OrdinalIgnoreCase)),
+            _ => false,
+        };
+    }
 
     /// <summary>
     /// Gets the tile converter factory of the vector sources of a style file.

@@ -110,6 +110,13 @@ public class PmTilesTileDataSource : ITileDataSource, IDisposable
     /// </summary>
     public PmTilesHeader Header { get; }
 
+    /// <summary>
+    /// Tile format of the tiles, as declared by the 'encoding' entry of the
+    /// style source ('mvt' or 'mlt'); overrides the tile type of the header.
+    /// Null when the style file declares none and the header tile type decides.
+    /// </summary>
+    public string? TileEncoding { get; set; }
+
     /// <inheritdoc/>
     public string Name { get; }
 

@@ -6,7 +6,6 @@ using VecTiles.DataSources;
 using VecTiles.DataSources.HttpTileDataSource;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.DataSources.PmTiles;
-using VecTiles.Styles.MapLibre.Enums;
 using VecTiles.Styles.MapLibre.Expressions;
 using VecTiles.Styles.MapLibre.Json;
 using VecTiles.Styles.MapLibre.Json.Converter;
@@ -73,11 +72,14 @@ public class Source
     public bool Dynamic { get; set; } = false;
 
     /// <summary>
-    /// Vertical encoding of the terrain (raster-dem sources).
+    /// Encoding of the source tiles. For vector sources 'mvt' (default) or
+    /// 'mlt' (MapLibre Tile); for raster-dem sources the vertical encoding of
+    /// the terrain ('terrarium' or 'mapbox'). 'maplibre' is accepted as an
+    /// alias of 'mlt' (older style specifications). Null when the style file
+    /// declares none.
     /// </summary>
-    [JsonConverter(typeof(JsonStringEnumConverter))]
     [JsonPropertyName("encoding")]
-    public Encoding Encoding { get; set; } = Encoding.MapLibre;
+    public string? Encoding { get; set; }
 
     /// <summary>
     /// Filter limiting the features of the source that are used.
@@ -337,8 +339,16 @@ public class Source
         if (dataSource == null)
             return;
 
+        // The tile format of the source: the 'encoding' entry of the source
+        // (vector sources: 'mvt' or 'mlt') declares it explicitly and wins
+        // over the native declarations of the data sources. An HTTP source
+        // falls back to the 'encoding' entry of its TileJSON.
         if (dataSource is HttpTileDataSource httpTileDataSource)
-            httpTileDataSource.TileEncoding = _tileEncoding;
+            httpTileDataSource.TileEncoding =
+                !string.IsNullOrWhiteSpace(Encoding) ? Encoding : _tileEncoding;
+        else if (dataSource is PmTilesTileDataSource pmTilesTileDataSource
+                 && !string.IsNullOrWhiteSpace(Encoding))
+            pmTilesTileDataSource.TileEncoding = Encoding;
 
         if (dataSource is MbTilesTileDataSource mbTiles)
         {

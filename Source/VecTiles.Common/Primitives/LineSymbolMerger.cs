@@ -89,7 +89,16 @@ public static class LineSymbolMerger
         {
             foreach (var part in ClipToTile(symbol))
             {
-                segments.Add(new List<Coordinate>(part.Coordinates));
+                var coordinates = new List<Coordinate>(part.Coordinates);
+
+                // A feature lying exactly on a tile border is contained in all
+                // adjacent tiles, so copies from the tile rows above and below
+                // the border are identical after clipping. Keep one of them,
+                // otherwise chaining walks the same line twice.
+                if (!segments.Any(s => s.SequenceEqual(coordinates)))
+                {
+                    segments.Add(coordinates);
+                }
             }
         }
 
@@ -128,15 +137,41 @@ public static class LineSymbolMerger
     /// Clips the geometry of a symbol to the exact bounds of its tile,
     /// removing the buffer overhang beyond the tile border.
     /// </summary>
+    /// <remarks>
+    /// The clip envelope is expanded by a small epsilon first: NTS destroys
+    /// lines that lie exactly on the envelope border into per-segment
+    /// fragments (e.g. the Equator crossing the shared border of two tile
+    /// rows). Inside the expanded envelope the line survives intact; the
+    /// remaining overhang of at most epsilon beyond the true border is
+    /// clamped back onto it afterwards.
+    /// </remarks>
     private static IEnumerable<LineString> ClipToTile(LineSymbol symbol)
     {
         var tile = symbol.Tile;
-        var envelope = new Envelope(tile.Left, tile.Right, tile.Bottom, tile.Top);
+        var size = Math.Max(tile.Right - tile.Left, tile.Top - tile.Bottom);
+        var epsilon = size / 1e4;
+
+        var envelope = new Envelope(tile.Left - epsilon, tile.Right + epsilon,
+            tile.Bottom - epsilon, tile.Top + epsilon);
 
         var clipped = symbol.Geometry.Intersection(Factory.ToGeometry(envelope));
 
         return ExtractLineStrings(clipped)
-            .Where(l => l.Coordinates.Length >= 2 && l.Length > 0);
+            .Where(l => l.Coordinates.Length >= 2 && l.Length > 0)
+            .Select(l => ClampToTile(l, tile));
+    }
+
+    private static LineString ClampToTile(LineString line, Tile tile)
+    {
+        var coordinates = line.Coordinates;
+
+        for (var i = 0; i < coordinates.Length; i++)
+        {
+            coordinates[i].X = Math.Clamp(coordinates[i].X, tile.Left, tile.Right);
+            coordinates[i].Y = Math.Clamp(coordinates[i].Y, tile.Bottom, tile.Top);
+        }
+
+        return (LineString)Factory.CreateLineString(coordinates);
     }
 
     /// <summary>

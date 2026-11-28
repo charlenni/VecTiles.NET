@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using VecTiles.Common.Enums;
 using VecTiles.Common.Interfaces;
 using VecTiles.DataSources;
+using VecTiles.DataSources.HttpTileDataSource;
 using VecTiles.DataSources.MbTiles;
 using VecTiles.DataSources.PmTiles;
 using VecTiles.Styles.MapLibre.Enums;
@@ -305,6 +306,13 @@ public class Source
         else if (Tiles != null && Tiles.Count > 0)
             sourceUrl = Tiles[0];
 
+        if (string.IsNullOrEmpty(sourceUrl))
+        {
+            // Sources without a tile URL cannot become tile data sources; e.g. a geojson
+            // source provides its data inline. Its DataSource stays null.
+            return;
+        }
+
         // If the source points to a TileJSON instead of a tile template,
         // resolve the actual tile urls, zoom range and attribution from it.
         if (sourceUrl.EndsWith(".json", StringComparison.InvariantCultureIgnoreCase))
@@ -316,6 +324,9 @@ public class Source
 
         if (dataSource == null)
             return;
+
+        if (dataSource is HttpTileDataSource httpTileDataSource)
+            httpTileDataSource.TileEncoding = _tileEncoding;
 
         if (dataSource is MbTilesTileDataSource mbTiles)
         {
@@ -353,6 +364,8 @@ public class Source
     /// Load a TileJSON and update this source with tile urls, zoom range and attribution.
     /// Returns the first tile url of that TileJSON.
     /// </summary>
+    private string? _tileEncoding;
+
     private async Task<string> ResolveTileJson(string tileJsonUrl)
     {
         var bytes = await ByteDataSource.GetBytesAsync(tileJsonUrl).ConfigureAwait(false)
@@ -363,6 +376,11 @@ public class Source
 
         if (tileJson.Tiles is { Count: > 0 })
             Tiles = tileJson.Tiles;
+
+        // The tile format of an HTTP source is not part of the HTTP response
+        // headers (tiles are usually served as 'application/octet-stream');
+        // the 'encoding' entry of the TileJSON is the reliable source for it.
+        _tileEncoding = tileJson.Encoding;
 
         if (tileJson.Minzoom > 0)
             MinZoom = tileJson.Minzoom;
@@ -389,5 +407,8 @@ public class Source
 
         [JsonPropertyName("tiles")]
         public IList<string>? Tiles { get; set; }
+
+        [JsonPropertyName("encoding")]
+        public string? Encoding { get; set; }
     }
 }

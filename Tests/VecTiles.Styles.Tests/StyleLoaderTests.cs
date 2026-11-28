@@ -1,6 +1,7 @@
 ﻿using VecTiles.Common.Interfaces;
 using VecTiles.Converters.MVT;
 using VecTiles.DataSources;
+using VecTiles.DataSources.HttpTileDataSource;
 using VecTiles.Styles.MapLibre;
 
 using VecTiles.Tests;
@@ -258,6 +259,107 @@ namespace VecTiles.Styles.MapboxTests
                 Assert.Equal(244, sprites.Sprites.Count);
                 // The unsuffixed json holds base sized coordinates, so this width proves the unsuffixed pair was loaded
                 Assert.Equal(15, sprites.Sprites["airport_11"].Width);
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        /// <summary>
+        /// Checks that a style file with a geojson source providing its data inline loads
+        /// without a tile data source for it: a source without a tile URL must be skipped
+        /// instead of failing in the tile data source factory.
+        /// </summary>
+        [Fact]
+        public async Task CheckStyleFileWithInlineGeoJsonSourceTest()
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), "VecTilesStyleLoaderTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                var stylePath = Path.Combine(tempDir, "geojson-style.json");
+                File.WriteAllText(stylePath,
+                    """
+                    {
+                      "version": 8,
+                      "sources": {
+                        "crimea": {
+                          "type": "geojson",
+                          "data": {
+                            "type": "FeatureCollection",
+                            "features": []
+                          }
+                        }
+                      },
+                      "layers": []
+                    }
+                    """);
+
+                var styleFile = await StyleFileLoader.Load($"file://{stylePath}", createSources: true,
+                    vectorTileConnectionFactory: dataSource => new MVTTileConverter(IdentityTagsConverter.Instance));
+
+                Assert.NotNull(styleFile.Sources["crimea"]);
+                Assert.Null(styleFile.Sources["crimea"].DataSource);
+            }
+            finally
+            {
+                Directory.Delete(tempDir, true);
+            }
+        }
+
+        /// <summary>
+        /// Checks that the tile encoding of an HTTP source is taken from the
+        /// 'encoding' entry of its TileJSON and exposed on its tile data source:
+        /// HTTP response headers carry no tile format, and the URL template may
+        /// have no format-revealing file extension either.
+        /// </summary>
+        [Fact]
+        public async Task CheckStyleFileHttpSourceEncodingFromTileJsonTest()
+        {
+            var tempDir = Path.Combine(Path.GetTempPath(), "VecTilesStyleLoaderTests", Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            try
+            {
+                var tileJsonPath = Path.Combine(tempDir, "tiles.json");
+                File.WriteAllText(tileJsonPath,
+                    """
+                    {
+                      "tilejson": "3.0.0",
+                      "format": "pbf",
+                      "encoding": "mlt",
+                      "minzoom": 0,
+                      "maxzoom": 6,
+                      "tiles": ["https://example.com/tiles-mlt/plain/{z}/{x}/{y}"]
+                    }
+                    """);
+
+                var stylePath = Path.Combine(tempDir, "mlt-style.json");
+                File.WriteAllText(stylePath,
+                    $$"""
+                    {
+                      "version": 8,
+                      "sources": {
+                        "demotiles": {
+                          "type": "vector",
+                          "url": "file://{{tileJsonPath}}"
+                        }
+                      },
+                      "layers": []
+                    }
+                    """);
+
+                HttpTileDataSource? httpTileDataSource = null;
+                var styleFile = await StyleFileLoader.Load($"file://{stylePath}", createSources: true,
+                    vectorTileConnectionFactory: dataSource =>
+                    {
+                        // The factory receives the raw tile data source before it is wrapped
+                        httpTileDataSource = dataSource as HttpTileDataSource;
+                        return new MVTTileConverter(IdentityTagsConverter.Instance);
+                    });
+
+                Assert.NotNull(httpTileDataSource);
+                Assert.Equal("mlt", httpTileDataSource.TileEncoding);
             }
             finally
             {

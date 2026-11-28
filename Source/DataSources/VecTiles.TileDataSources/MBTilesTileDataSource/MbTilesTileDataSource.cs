@@ -52,12 +52,18 @@ public class MbTilesTileDataSource : ITileDataSource
         Schema = schema ?? ReadSchemaFromDatabase(connection, determineZoomLevelsFromTilesTable);
         Scheme = Schema.YAxis == YAxis.OSM ? Scheme.Xyz : Scheme.Tms;
 
-        // If we have Pbf as format, then we have a vector source type. In all other cases 
+        // If we have Pbf or Mlt as format, then we have a vector source type. In all other cases 
         // it is a raster source type.
         if (Enum.TryParse<MbTilesFormat>(Schema.Format, true, out var format))
-            SourceType = format == MbTilesFormat.Pbf ? SourceType.Vector : SourceType.Raster;
+        {
+            Format = format;
+            SourceType = format is MbTilesFormat.Pbf or MbTilesFormat.Mlt ? SourceType.Vector : SourceType.Raster;
+        }
         else
+        {
+            Format = MbTilesFormat.Png;
             SourceType = SourceType.Raster;
+        }
         
         MinZoom = Schema.Resolutions.Keys.Min();
         MaxZoom = Schema.Resolutions.Keys.Max();
@@ -109,6 +115,11 @@ public class MbTilesTileDataSource : ITileDataSource
     /// Type of MBTiles file
     /// </summary>
     public MbTilesType Type { get; }
+
+    /// <summary>
+    /// Tile format of the MBTiles file (from the format entry of the metadata table)
+    /// </summary>
+    public MbTilesFormat Format { get; }
 
     /// <summary>
     /// Version of MBTiles files content
@@ -379,7 +390,11 @@ public class MbTilesTileDataSource : ITileDataSource
 
         if (Enum.TryParse<MbTilesFormat>(formatString, true, out var format))
             return format;
-        
+
+        // MLT files use the mime type 'application/vnd.maplibre-tile' as their format
+        if (string.Equals(formatString, "application/vnd.maplibre-tile", StringComparison.OrdinalIgnoreCase))
+            return MbTilesFormat.Mlt;
+
         return MbTilesFormat.Png;
     }
 

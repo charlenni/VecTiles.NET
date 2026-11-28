@@ -236,6 +236,14 @@ public class RenderedTileLayer : BaseLayer, ILayerFeatureInfo
             FontCache.SetFontNameResolver(fontNameResolver);
         }
 
+        // The missing font check runs here and not in the tile source
+        // constructor, so that a font loadable via the resolvers above is
+        // not wrongly reported as missing
+        if (TileSource is IFontChecker fontChecker)
+        {
+            fontChecker.ReportMissingFonts();
+        }
+
         _extent = TileSource.Schema.Extent.ToMRect();
     }
 

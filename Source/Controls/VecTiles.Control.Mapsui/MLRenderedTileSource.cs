@@ -14,7 +14,7 @@ namespace VecTiles.Controls.Mapsui;
 /// <summary>
 /// A tile source that renders vector tile data according to a loaded MapLibre style file.
 /// </summary>
-public class MLRenderedTileSource : IRenderedTileSource
+public class MLRenderedTileSource : IRenderedTileSource, IFontChecker
 {
     private readonly Renderer _renderer;
     private readonly MemoryCache<IRenderedTile> _cache;
@@ -32,10 +32,11 @@ public class MLRenderedTileSource : IRenderedTileSource
         var minZoom = 0;
         var maxZoom = 24;
 
-        _renderer = new Renderer(omtStyleFile.Sources.Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, (ITileDataSource)s.Value.DataSource)), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new PaintFactory(omtStyleFile.Sprites), new SymbolFactory(omtStyleFile.Sprites)));
+        _renderer = new Renderer(omtStyleFile.Sources.Where(s => s.Value.DataSource != null).Select(s => new KeyValuePair<string, ITileDataSource>(s.Key, (ITileDataSource)s.Value.DataSource!)), omtStyleFile.Layers, new RenderFactory(omtStyleFile.Layers, new PaintFactory(omtStyleFile.Sprites), new SymbolFactory(omtStyleFile.Sprites)));
         _cache = new MemoryCache<IRenderedTile>(200, 300);
 
-        ReportMissingFonts(omtStyleFile);
+        // The missing font check runs in RenderedTileLayer after the font
+        // resolvers passed to it were registered (see IFontChecker)
 
         Schema = new GlobalSphericalMercator512(YAxis.OSM, minZoom, maxZoom);  // Default format in VecTiles.NET
         Name = omtStyleFile.Name;
@@ -129,6 +130,13 @@ public class MLRenderedTileSource : IRenderedTileSource
         return tile;
     }
     
+    /// <summary>
+    /// Reports the fonts of the style file that cannot be resolved. Called by
+    /// RenderedTileLayer via IFontChecker, after the font resolvers passed to
+    /// it were registered.
+    /// </summary>
+    void IFontChecker.ReportMissingFonts() => ReportMissingFonts(_styleFile);
+
     private static void ReportMissingFonts(StyleFile styleFile)
     {
         var textFonts = styleFile.Layers

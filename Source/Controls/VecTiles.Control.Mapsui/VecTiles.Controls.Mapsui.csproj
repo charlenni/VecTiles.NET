@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\Converters\VecTiles.Converters.MLT\VecTiles.Converters.MLT.csproj" />
     <ProjectReference Include="..\..\Converters\VecTiles.Converters.Mapsforge\VecTiles.Converters.Mapsforge.csproj" />
     <ProjectReference Include="..\..\Converters\VecTiles.Converters.MVT\VecTiles.Converters.MVT.csproj" />
     <ProjectReference Include="..\..\DataSources\VecTiles.TileDataSources\VecTiles.TileDataSources.csproj" />

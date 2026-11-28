@@ -32,7 +32,24 @@ public class HttpTileDataSource : ITileDataSource
         // VectorTileDataSource relies on it
         MinZoom = minZoom;
         MaxZoom = maxZoom;
+        // Expose the tile URL templates: consumers like the tile converter factory derive
+        // the tile format (e.g. MLT tiles) from them
+        Sources = sources;
     }
+
+    /// <summary>
+    /// Gets the tile URL templates of this source.
+    /// </summary>
+    public IReadOnlyList<string> Sources { get; }
+
+    /// <summary>
+    /// Gets or sets the tile encoding declared for this source, e.g. the
+    /// 'encoding' entry of the TileJSON ('mlt' for MapLibre tile data).
+    /// Consumers like the tile converter factory derive the tile format from
+    /// it; HTTP response headers don't carry the tile format (tiles are
+    /// usually served as 'application/octet-stream').
+    /// </summary>
+    public string? TileEncoding { get; set; }
 
     /// <inheritdoc/>
     public string Name => _httpTileSource.Name;

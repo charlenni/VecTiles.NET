@@ -146,7 +146,9 @@ public static class RenderedTextCache
     /// </summary>
     private static float RichTextLineHeight(float lineHeight, float fontSize, Style textStyle)
     {
-        using var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
+        // The typeface is shared via the font mapper cache and must not be
+        // disposed here ( disposing it crashes the next layout that uses it)
+        var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
 
         if (typeface is null || fontSize <= 0)
         {
@@ -168,7 +170,9 @@ public static class RenderedTextCache
     private static bool HasWordWiderThan(string text, Style textStyle, float fontSize, float letterSpacing,
         float maxWidth)
     {
-        using var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
+        // The typeface is shared via the font mapper cache and must not be
+        // disposed here (disposing it crashes the next layout that uses it)
+        var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
 
         if (typeface is null)
         {
@@ -201,7 +205,9 @@ public static class RenderedTextCache
     private static string WrapBetweenWords(string text, Style textStyle, float fontSize, float letterSpacing,
         float maxWidth)
     {
-        using var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
+        // The typeface is shared via the font mapper cache and must not be
+        // disposed here (disposing it crashes the next layout that uses it)
+        var typeface = CachedFontMapper.Instance.TypefaceFromStyle(textStyle, ignoreFontVariants: false);
 
         if (typeface is null)
         {

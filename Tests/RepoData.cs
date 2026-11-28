@@ -107,4 +107,36 @@ public static class RepoData
     /// (pmtiles archives and styles).
     /// </summary>
     public static string ProtomapsFiles => _pmTilesFiles.Value;
+
+    private static readonly Lazy<string> _mapLibreTilesFiles = new(() =>
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "VecTiles.NET.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        var repoRoot = directory?.FullName
+            ?? throw new InvalidOperationException(
+                $"Repository root (VecTiles.NET.sln) not found walking up from '{AppContext.BaseDirectory}' " +
+                $"(cwd: '{Directory.GetCurrentDirectory()}').");
+
+        var dataFiles = Path.Combine(repoRoot, "Files", "MapLibreTiles");
+
+        if (!File.Exists(Path.Combine(dataFiles, "zuerich.pmtiles")))
+        {
+            throw new InvalidOperationException(
+                $"Data folder not found in '{repoRoot}'. " +
+                $"Expected '{Path.Combine(dataFiles, "zuerich.pmtiles")}'.");
+        }
+
+        return dataFiles;
+    });
+
+    /// <summary>
+    /// The MapLibre Tiles data Files folder of the repository
+    /// (MLT sample data and styles).
+    /// </summary>
+    public static string MapLibreTilesFiles => _mapLibreTilesFiles.Value;
 }

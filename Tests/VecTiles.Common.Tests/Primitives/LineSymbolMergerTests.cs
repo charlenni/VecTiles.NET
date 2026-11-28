@@ -168,12 +168,66 @@ public class LineSymbolMergerTests
         Assert.Equal(first.TextSymbol, merged.TextSymbol);
     }
 
+    /// <summary>
+    /// Verifies that segments lying exactly on the shared border of vertically
+    /// adjacent tiles (e.g. the Equator) are merged into one full-length line.
+    /// Without the epsilon-expanded clip envelope, the geometry library
+    /// destroys a line collinear with the envelope border into fragments.
+    /// </summary>
+    [Fact]
+    public void MergeById_MergesSegmentsLyingExactlyOnSharedTileBorder()
+    {
+        var top = new Tile(1, 0, 1);
+        var bottom = new Tile(1, 1, 1);
+        Assert.Equal(top.Bottom, bottom.Top, 10);
+
+        var border = top.Bottom;
+
+        // Line exactly on the shared border, with buffer overhang in x and
+        // many vertices, like the Equator geometry of the demo tiles
+        var segments = new List<ISymbol>
+        {
+            CreateLineSymbol(top, 2, BorderLine(top.Left, top.Right, border)),
+            CreateLineSymbol(bottom, 2, BorderLine(bottom.Left, bottom.Right, border)),        };
+
+        var result = LineSymbolMerger.MergeById(segments);
+
+        var merged = Assert.IsType<LineSymbol>(Assert.Single(result));
+        var line = Assert.IsType<LineString>(merged.Geometry);
+
+        Assert.Equal(top.Left, line.Coordinates.Min(c => c.X), 10);
+        Assert.Equal(top.Right, line.Coordinates.Max(c => c.X), 10);
+        Assert.All(line.Coordinates, c => Assert.Equal(border, c.Y, 10));
+        Assert.Equal(top.Right - top.Left, line.Length, 1e6);
+    }
+
+    private static Coordinate[] BorderLine(double left, double right, double y)
+    {
+        var points = new List<Coordinate>();
+
+        for (var i = 0; i <= 180; i++)
+        {
+            points.Add(new Coordinate(left + (right - left) * i / 180.0, y));
+        }
+
+        points.Insert(0, new Coordinate(left - 78271, y));
+        points.Add(new Coordinate(right + 78271, y));
+
+        return points.ToArray();
+    }
+
     private static (Tile first, Tile second, double y) AdjacentTiles()
     {
         var tileA = new Tile(1, 1, 6);
         var tileB = new Tile(2, 1, 6);
         var y = (tileA.Bottom + tileA.Top) / 2;
         return (tileA, tileB, y);
+    }
+
+    private static LineSymbol CreateLineSymbol(Tile tile, ulong id, Coordinate[] points)
+    {
+        var geometry = new LineString(points);
+        return new LineSymbol(tile, id, geometry, null, null);
     }
 
     private static LineSymbol CreateLineSymbol(Tile tile, ulong id, params (double x, double y)[] points)

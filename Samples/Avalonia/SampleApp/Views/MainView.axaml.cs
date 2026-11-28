@@ -30,6 +30,7 @@ public partial class MainView : UserControl
     private readonly string _pathMF = "Files/Mapsforge";
     private readonly string _pathPMT = "Files/Protomaps";
     private readonly string _pathVT = "Files/VersaTiles";
+    private readonly string _pathMLT = "Files/MapLibreTiles";
     private readonly TileGridDebugLayer _debugLayer;
     private readonly IRenderedTileSource _tileSource;
     private readonly RenderedTileLayer _tileLayer;
@@ -43,10 +44,11 @@ public partial class MainView : UserControl
     {
         InitializeComponent();
 
-        var styleSource = $"file://{_pathOMT}/osm-liberty.json";
+        //var styleSource = $"file://{_pathOMT}/osm-liberty.json";
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
         //var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
         //var styleSource = $"file://{_pathVT}/versatiles-en-style.json";
+        var styleSource = $"file://{_pathMLT}/MapLibreTiles-style.json";
         //var styleSource = $"https://api.protomaps.com/styles/v5/light/en.json?key=YOUR_API_KEY";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
@@ -62,6 +64,10 @@ public partial class MainView : UserControl
             "noto_sans_regular" => "Noto Sans Regular",
             "noto_sans_bold" => "Noto Sans Bold",
             _ => f
+        }, fontSourceResolver: (f) => f switch
+        {
+            "Open Sans Semibold" => "https://github.com/googlefonts/opensans/raw/refs/heads/main/fonts/noto-set/ttf/OpenSans-SemiBold.ttf",
+            _ => null
         });
         MapControl.Map.Layers.Add(_tileLayer);
 

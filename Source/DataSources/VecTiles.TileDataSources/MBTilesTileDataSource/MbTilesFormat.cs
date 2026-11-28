@@ -32,5 +32,10 @@ public enum MbTilesFormat
     /// <summary>
     /// Protobuf vector format
     /// </summary>
-    Pbf
+    Pbf,
+
+    /// <summary>
+    /// MapLibre Tile vector format
+    /// </summary>
+    Mlt
 }

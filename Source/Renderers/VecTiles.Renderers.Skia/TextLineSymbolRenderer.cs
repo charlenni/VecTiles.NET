@@ -34,12 +34,6 @@ public static class TextLineSymbolRenderer
     private static readonly SKPaint DebugPaint = new SKPaint { Color = SKColors.Red, StrokeWidth = 1, IsStroke = true };
 
     /// <summary>
-    /// Cache of resolved typefaces, so that font matching is not repeated for
-    /// every drawn label.
-    /// </summary>
-    private static readonly ConcurrentDictionary<(string Family, int Weight, int Width, bool Italic), SKTypeface> TypefaceCache = new();
-
-    /// <summary>
     /// Returns the measured width of the label in the placement screen space,
     /// creating the cached layout if necessary. Used to distribute the anchors
     /// like MapLibre does.
@@ -367,18 +361,11 @@ public static class TextLineSymbolRenderer
     /// </summary>
     private static SKTypeface ResolveTypeface(RenderedText text)
     {
-        var style = text.TextStyle;
-
-        var key = (style.FontFamily, (int)style.FontWeight, (int)style.FontWidth, style.FontItalic);
-
-        return TypefaceCache.GetOrAdd(key, static key =>
-        {
-            var fontStyle = new SKFontStyle((SKFontStyleWeight)key.Weight,
-                (SKFontStyleWidth)key.Width,
-                key.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright);
-
-            return SKFontManager.Default.MatchFamily(key.Family, fontStyle);
-        });
+        // Resolve like the layout does: fonts registered via FontCache (e.g.
+        // supplied by a font source resolver) are not visible to the system
+        // font manager. The typeface is shared via the mapper cache and must
+        // not be disposed here
+        return CachedFontMapper.Instance.TypefaceFromStyle(text.TextStyle, ignoreFontVariants: false);
     }
 
     /// <summary>

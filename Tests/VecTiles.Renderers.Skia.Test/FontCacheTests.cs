@@ -174,6 +174,24 @@ public class FontCacheTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that <see cref="FontCache.GetMissingFonts" /> does not report
+    /// a font as missing when the font source resolver can provide a source
+    /// for it: such a font is loaded on first use.
+    /// </summary>
+    [Fact]
+    public void GetMissingFonts_IgnoresFontsProvidedBySourceResolver()
+    {
+        FontCache.SetFontSourceResolver(name => name == "Bungee"
+            ? "file://" + Path.GetFullPath(GetFontPath("Bungee Regular.ttf"))
+            : null);
+
+        var missing = FontCache.GetMissingFonts(["Bungee", "This Family Does Not Exist 12345"]);
+
+        Assert.DoesNotContain("Bungee", missing);
+        Assert.Contains("This Family Does Not Exist 12345", missing);
+    }
+
+    /// <summary>
     /// Verifies that a font name resolver maps a style file name to a
     /// registered family, also when the resolver is set after the style was
     /// already resolved to the system default.

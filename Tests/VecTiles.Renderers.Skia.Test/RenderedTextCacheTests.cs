@@ -51,6 +51,35 @@ public class RenderedTextCacheTests : IDisposable
     }
 
     /// <summary>
+    /// Verifies that laying out a text which takes the word wrap path does not
+    /// dispose the typeface shared via <see cref="CachedFontMapper"/>. The wrap
+    /// path (<see cref="RenderedTextCache"/>) resolves the shared typeface
+    /// several times per layout; disposing it crashed the next layout that uses
+    /// the same font signature with a native access violation.
+    /// </summary>
+    [Fact]
+    public void GetOrCreate_WordWrapDoesNotDisposeSharedTypeface()
+    {
+        FontCache.RegisterFontFile(GetFontPath("Roboto Regular.ttf"));
+
+        var fontNames = new[] { "Roboto Regular" };
+
+        // A single word wider than the maximum width triggers HasWordWiderThan,
+        // WrapBetweenWords and RichTextLineHeight, which all resolve the shared
+        // typeface
+        var wrapped = RenderedTextCache.GetOrCreate("Regression Regression Regression", "test_layer",
+            fontNames, 22f, 1.2f, 0f, 60f, TextAlignment.Left, 0);
+        Assert.True(wrapped.MeasuredWidth > 0);
+        Assert.True(wrapped.Text.LineCount > 1);
+
+        // A second layout with the same font signature reuses the cached
+        // typeface: this crashed with SIGSEGV when the first layout disposed it
+        var second = RenderedTextCache.GetOrCreate("SecondEntry", "test_layer",
+            fontNames, 22f, 1.2f, 0f, null, TextAlignment.Left, 0);
+        Assert.True(second.MeasuredWidth > 0);
+    }
+
+    /// <summary>
     /// Paints the entry on a white bitmap and measures the height of the ink.
     /// </summary>
     private static float MeasureInkHeight(RenderedText entry)

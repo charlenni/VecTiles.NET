@@ -537,8 +537,9 @@
     "bearing": 0,
     "sources": {
         "maplibre": {
-            "url": "https://demotiles.maplibre.org/tiles-mlt/plain/tiles.json",
-            "type": "vector"
+            "url": "pmtiles://file://./Files/MapLibreTiles/zuerich.pmtiles",
+            "type": "vector",
+            "encoding": "mlt"
         },
         "crimea": {
             "type": "geojson",

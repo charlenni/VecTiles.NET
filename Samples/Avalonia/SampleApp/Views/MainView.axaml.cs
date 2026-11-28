@@ -48,7 +48,7 @@ public partial class MainView : UserControl
         //var styleSource = $"file://{_pathOMT}/osm-liberty-for-mapsforge.json";
         //var styleSource = $"file://{_pathPMT}/protomaps-light-style.json";
         //var styleSource = $"file://{_pathVT}/versatiles-en-style.json";
-        var styleSource = $"file://{_pathMLT}/MapLibreTiles-style.json";
+        var styleSource = $"file://{_pathMLT}/osm-liberty.json";
         //var styleSource = $"https://api.protomaps.com/styles/v5/light/en.json?key=YOUR_API_KEY";
         //var styleSource = "https://sgx.geodatenzentrum.de/gdz_basemapde_vektor/styles/bm_web_col.json";
 
